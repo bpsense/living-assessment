@@ -1,0 +1,291 @@
+import { useState, useCallback, useEffect } from 'react'
+import { supabase } from './supabase'
+import type {
+  School,
+  SchoolContext,
+  SchoolDocument,
+  Dimension,
+  StandardsFramework,
+  Standard,
+} from '../types/database'
+
+// ============================================================
+// Types
+// ============================================================
+
+export interface StandardsFrameworkWithStandards extends StandardsFramework {
+  standards: Standard[]
+}
+
+interface SchoolProfileState {
+  school: School | null
+  documents: SchoolDocument[]
+  dimensions: Dimension[]
+  frameworks: StandardsFrameworkWithStandards[]
+  loading: boolean
+  saving: boolean
+  error: string | null
+  saveSuccess: boolean
+}
+
+export interface UseSchoolProfileReturn extends SchoolProfileState {
+  /** Update the school's pedagogical context fields (stored in settings JSONB) */
+  updateSchoolContext: (context: SchoolContext) => Promise<void>
+  /** Upload a document to Supabase Storage + insert metadata row */
+  uploadDocument: (file: File, description: string) => Promise<void>
+  /** Delete a document from storage + remove metadata row */
+  deleteDocument: (doc: SchoolDocument) => Promise<void>
+  /** Update a document's description */
+  updateDocumentDescription: (docId: string, description: string) => Promise<void>
+}
+
+const INITIAL_STATE: SchoolProfileState = {
+  school: null,
+  documents: [],
+  dimensions: [],
+  frameworks: [],
+  loading: true,
+  saving: false,
+  error: null,
+  saveSuccess: false,
+}
+
+// ============================================================
+// Hook
+// ============================================================
+
+export function useSchoolProfile(schoolId: string | undefined): UseSchoolProfileReturn {
+  const [state, setState] = useState<SchoolProfileState>(INITIAL_STATE)
+
+  // ── Load school + documents ────────────────────────────────
+
+  const load = useCallback(async () => {
+    if (!schoolId) return
+
+    setState((prev) => ({ ...prev, loading: true, error: null }))
+
+    try {
+      const [schoolRes, docsRes, dimsRes, fwRes, stdRes] = await Promise.all([
+        supabase.from('schools').select('*').eq('id', schoolId).single(),
+        supabase
+          .from('school_documents')
+          .select('*')
+          .eq('school_id', schoolId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('dimensions')
+          .select('*')
+          .eq('school_id', schoolId)
+          .order('display_order'),
+        supabase
+          .from('standards_frameworks')
+          .select('*')
+          .eq('school_id', schoolId)
+          .order('name'),
+        supabase
+          .from('standards')
+          .select('*')
+          .eq('school_id', schoolId)
+          .order('display_order'),
+      ])
+
+      if (schoolRes.error) throw schoolRes.error
+
+      // Group standards under their frameworks
+      const allStandards = (stdRes.data as Standard[]) ?? []
+      const rawFrameworks = (fwRes.data as StandardsFramework[]) ?? []
+      const frameworks: StandardsFrameworkWithStandards[] = rawFrameworks.map((fw) => ({
+        ...fw,
+        standards: allStandards.filter((s) => s.framework_id === fw.id),
+      }))
+
+      setState({
+        school: schoolRes.data as School,
+        documents: (docsRes.data as SchoolDocument[]) ?? [],
+        dimensions: (dimsRes.data as Dimension[]) ?? [],
+        frameworks,
+        loading: false,
+        saving: false,
+        error: docsRes.error ? 'Could not load documents' : null,
+        saveSuccess: false,
+      })
+    } catch (err) {
+      setState((prev) => ({
+        ...prev,
+        loading: false,
+        error: err instanceof Error ? err.message : 'Failed to load school profile',
+      }))
+    }
+  }, [schoolId])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  // ── Update pedagogical context (settings JSONB) ────────────
+
+  const updateSchoolContext = useCallback(
+    async (context: SchoolContext) => {
+      if (!schoolId || !state.school) return
+
+      setState((prev) => ({ ...prev, saving: true, error: null, saveSuccess: false }))
+
+      try {
+        // Merge new context into existing settings
+        const updatedSettings = {
+          ...state.school.settings,
+          ...context,
+        }
+
+        const { error } = await supabase
+          .from('schools')
+          .update({ settings: updatedSettings })
+          .eq('id', schoolId)
+
+        if (error) throw error
+
+        setState((prev) => ({
+          ...prev,
+          school: prev.school
+            ? { ...prev.school, settings: updatedSettings }
+            : null,
+          saving: false,
+          saveSuccess: true,
+        }))
+
+        // Clear success indicator after 2s
+        setTimeout(() => {
+          setState((prev) => ({ ...prev, saveSuccess: false }))
+        }, 2000)
+      } catch (err) {
+        setState((prev) => ({
+          ...prev,
+          saving: false,
+          error: err instanceof Error ? err.message : 'Failed to save',
+        }))
+      }
+    },
+    [schoolId, state.school]
+  )
+
+  // ── Upload document ────────────────────────────────────────
+
+  const uploadDocument = useCallback(
+    async (file: File, description: string) => {
+      if (!schoolId) return
+
+      setState((prev) => ({ ...prev, saving: true, error: null }))
+
+      try {
+        // Upload to Supabase Storage
+        const filePath = `${schoolId}/${Date.now()}-${file.name}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('school-documents')
+          .upload(filePath, file)
+
+        if (uploadError) throw uploadError
+
+        // Insert metadata row
+        const { data: inserted, error: insertError } = await supabase
+          .from('school_documents')
+          .insert({
+            school_id: schoolId,
+            file_name: file.name,
+            file_path: filePath,
+            file_type: file.type || 'application/octet-stream',
+            file_size: file.size,
+            description: description || null,
+            uploaded_by: (await supabase.auth.getUser()).data.user?.id,
+          })
+          .select('*')
+          .single()
+
+        if (insertError) throw insertError
+
+        setState((prev) => ({
+          ...prev,
+          documents: [inserted as SchoolDocument, ...prev.documents],
+          saving: false,
+        }))
+      } catch (err) {
+        setState((prev) => ({
+          ...prev,
+          saving: false,
+          error: err instanceof Error ? err.message : 'Failed to upload document',
+        }))
+      }
+    },
+    [schoolId]
+  )
+
+  // ── Delete document ────────────────────────────────────────
+
+  const deleteDocument = useCallback(
+    async (doc: SchoolDocument) => {
+      setState((prev) => ({ ...prev, error: null }))
+
+      try {
+        // Remove from storage
+        const { error: storageError } = await supabase.storage
+          .from('school-documents')
+          .remove([doc.file_path])
+
+        if (storageError) {
+          console.warn('Storage delete failed (may already be removed):', storageError.message)
+        }
+
+        // Remove metadata row
+        const { error: dbError } = await supabase
+          .from('school_documents')
+          .delete()
+          .eq('id', doc.id)
+
+        if (dbError) throw dbError
+
+        setState((prev) => ({
+          ...prev,
+          documents: prev.documents.filter((d) => d.id !== doc.id),
+        }))
+      } catch (err) {
+        setState((prev) => ({
+          ...prev,
+          error: err instanceof Error ? err.message : 'Failed to delete document',
+        }))
+      }
+    },
+    []
+  )
+
+  // ── Update document description ────────────────────────────
+
+  const updateDocumentDescription = useCallback(
+    async (docId: string, description: string) => {
+      const { error } = await supabase
+        .from('school_documents')
+        .update({ description: description || null })
+        .eq('id', docId)
+
+      if (error) {
+        console.error('Failed to update document description:', error.message)
+        return
+      }
+
+      setState((prev) => ({
+        ...prev,
+        documents: prev.documents.map((d) =>
+          d.id === docId ? { ...d, description: description || null } : d
+        ),
+      }))
+    },
+    []
+  )
+
+  return {
+    ...state,
+    updateSchoolContext,
+    uploadDocument,
+    deleteDocument,
+    updateDocumentDescription,
+  }
+}
