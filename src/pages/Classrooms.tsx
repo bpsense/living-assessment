@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import { useAccessControl } from '../lib/access-control'
 import { useToast } from '../components/Toast'
 import type { Classroom, Student } from '../types/database'
 
@@ -26,7 +27,8 @@ interface ClassroomRow extends Classroom {
 // ============================================================
 
 export default function Classrooms() {
-  const { profile, actualRole } = useAuth()
+  const { profile } = useAuth()
+  const { role, canEditClassrooms, isDepartmentAdmin, departmentAdminIds, isReadOnly } = useAccessControl()
   const navigate = useNavigate()
   const { toast } = useToast()
   const [classrooms, setClassrooms] = useState<ClassroomRow[]>([])
@@ -35,8 +37,6 @@ export default function Classrooms() {
   const [newName, setNewName] = useState('')
   const [newGrade, setNewGrade] = useState('')
   const [creating, setCreating] = useState(false)
-
-  const isAdmin = actualRole === 'admin'
 
   useEffect(() => {
     if (!profile) return
@@ -49,14 +49,85 @@ export default function Classrooms() {
     setLoading(true)
 
     try {
-      // All classrooms in the school
-      const { data: classroomData } = await supabase
-        .from('classrooms')
-        .select('*')
-        .eq('school_id', profile.school_id)
-        .order('name')
+      let rooms: Classroom[] = []
 
-      const rooms = (classroomData ?? []) as Classroom[]
+      if (role === 'parent') {
+        // Parents see only classrooms their children are in
+        const { data: linkedData } = await supabase
+          .from('parent_students')
+          .select('student_id')
+          .eq('parent_id', profile.id)
+
+        const linkedStudentIds = (linkedData ?? []).map((r) => (r as { student_id: string }).student_id)
+
+        if (linkedStudentIds.length === 0) {
+          setClassrooms([])
+          setLoading(false)
+          return
+        }
+
+        const { data: studentsData } = await supabase
+          .from('students')
+          .select('classroom_id')
+          .in('id', linkedStudentIds)
+
+        const classIds = [...new Set((studentsData ?? []).map((s) => (s as { classroom_id: string }).classroom_id))]
+
+        if (classIds.length === 0) {
+          setClassrooms([])
+          setLoading(false)
+          return
+        }
+
+        const { data: classroomData } = await supabase
+          .from('classrooms')
+          .select('*')
+          .in('id', classIds)
+          .order('name')
+
+        rooms = (classroomData ?? []) as Classroom[]
+      } else if (role === 'educator' && !canEditClassrooms) {
+        // Educators see only their assigned classrooms
+        const { data: ecData } = await supabase
+          .from('educator_classrooms')
+          .select('classroom_id')
+          .eq('educator_id', profile.id)
+
+        const assignedIds = (ecData ?? []).map((r) => (r as { classroom_id: string }).classroom_id)
+
+        if (assignedIds.length === 0) {
+          setClassrooms([])
+          setLoading(false)
+          return
+        }
+
+        const { data: classroomData } = await supabase
+          .from('classrooms')
+          .select('*')
+          .in('id', assignedIds)
+          .order('name')
+
+        rooms = (classroomData ?? []) as Classroom[]
+      } else if (isDepartmentAdmin && !canEditClassrooms) {
+        // Department admins see classrooms in their departments
+        const { data: classroomData } = await supabase
+          .from('classrooms')
+          .select('*')
+          .eq('school_id', profile.school_id)
+          .in('department_id', departmentAdminIds)
+          .order('name')
+
+        rooms = (classroomData ?? []) as Classroom[]
+      } else {
+        // Admin / System Admin: all classrooms
+        const { data: classroomData } = await supabase
+          .from('classrooms')
+          .select('*')
+          .eq('school_id', profile.school_id)
+          .order('name')
+
+        rooms = (classroomData ?? []) as Classroom[]
+      }
 
       if (rooms.length === 0) {
         setClassrooms([])
@@ -172,7 +243,7 @@ export default function Classrooms() {
             {classrooms.reduce((s, c) => s + c.student_count, 0)} learners total
           </p>
         </div>
-        {isAdmin && (
+        {canEditClassrooms && !isReadOnly && (
           <button
             onClick={() => setShowCreate((v) => !v)}
             className="flex items-center gap-2 rounded-lg bg-primary-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-600"
@@ -184,7 +255,7 @@ export default function Classrooms() {
       </div>
 
       {/* Create classroom form (admin only) */}
-      {isAdmin && showCreate && (
+      {canEditClassrooms && !isReadOnly && showCreate && (
         <form
           onSubmit={handleCreate}
           className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm"
@@ -240,7 +311,7 @@ export default function Classrooms() {
         <div className="rounded-xl border border-bg-muted bg-bg-card p-10 text-center shadow-sm">
           <School className="mx-auto h-10 w-10 text-text-light" />
           <p className="mt-3 text-sm text-text-muted">
-            No classrooms yet.{isAdmin ? ' Create your first classroom to get started.' : ''}
+            No classrooms yet.{canEditClassrooms ? ' Create your first classroom to get started.' : ''}
           </p>
         </div>
       ) : (

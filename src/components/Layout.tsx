@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import { useAccessControl } from '../lib/access-control'
 import { supabase } from '../lib/supabase'
 import { clsx } from 'clsx'
 import {
@@ -34,7 +35,12 @@ interface NavItem {
   icon: React.ReactNode
 }
 
-function getNavItems(role: UserRole, isSystemAdmin: boolean, isAllSchoolsView: boolean): NavItem[] {
+function getNavItems(
+  role: UserRole,
+  isSystemAdmin: boolean,
+  isAllSchoolsView: boolean,
+  isDepartmentAdmin: boolean
+): NavItem[] {
   // System admin viewing "All Schools" gets the system nav
   if (isSystemAdmin && isAllSchoolsView) {
     return [
@@ -59,13 +65,26 @@ function getNavItems(role: UserRole, isSystemAdmin: boolean, isAllSchoolsView: b
   }
 
   switch (role) {
-    case 'educator':
-      return [
+    case 'educator': {
+      const items: NavItem[] = [
         { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
         { to: '/classrooms', label: 'My Classrooms', icon: <School className="h-5 w-5" /> },
+        { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
         { to: '/observe', label: 'Quick Observe', icon: <PlusCircle className="h-5 w-5" /> },
-        { to: '/profile', label: 'Profile', icon: <User className="h-5 w-5" /> },
       ]
+      // Department admins get extra nav items
+      if (isDepartmentAdmin) {
+        items.push(
+          { to: '/department', label: 'Department', icon: <MapPin className="h-5 w-5" /> },
+          { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
+        )
+      }
+      items.push(
+        { to: '/settings', label: 'School Profile', icon: <Building2 className="h-5 w-5" /> },
+        { to: '/profile', label: 'Profile', icon: <User className="h-5 w-5" /> },
+      )
+      return items
+    }
     case 'admin':
       return [
         { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
@@ -81,6 +100,9 @@ function getNavItems(role: UserRole, isSystemAdmin: boolean, isAllSchoolsView: b
     case 'parent':
       return [
         { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+        { to: '/students', label: 'My Children', icon: <Users className="h-5 w-5" /> },
+        { to: '/classrooms', label: 'Classrooms', icon: <School className="h-5 w-5" /> },
+        { to: '/settings', label: 'School Info', icon: <Building2 className="h-5 w-5" /> },
         { to: '/profile', label: 'Profile', icon: <User className="h-5 w-5" /> },
       ]
     default:
@@ -111,6 +133,7 @@ function getSwitchableRoles(actualRole: UserRole): UserRole[] {
 
 export default function Layout() {
   const { profile, actualRole, signOut, viewAsRole, setViewAs, viewAsUserId, viewAsUserName, isSystemAdmin, activeSchoolId } = useAuth()
+  const { isDepartmentAdmin } = useAccessControl()
   const navigate = useNavigate()
   const [quickObserveOpen, setQuickObserveOpen] = useState(false)
   const [schoolName, setSchoolName] = useState<string>('')
@@ -153,7 +176,7 @@ export default function Layout() {
   }, [profile?.school_id, isSystemAdmin, activeSchoolId])
 
   const role = profile?.role ?? 'educator'
-  const navItems = getNavItems(role, isSystemAdmin, isAllSchoolsView)
+  const navItems = getNavItems(role, isSystemAdmin, isAllSchoolsView, isDepartmentAdmin)
   // Hide FAB when impersonating (read-only context) or in All Schools view
   const showFab = (role === 'educator' || role === 'admin' || isSystemAdmin) && !isAllSchoolsView && !viewAsUserId
   // System admins can switch roles when viewing a specific school, but not in the "All Schools" view

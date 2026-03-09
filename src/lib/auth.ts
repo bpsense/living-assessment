@@ -28,6 +28,10 @@ export interface AuthState {
   setViewAs: (role: UserRole | null, userId?: string | null, userName?: string | null) => void
   /** Whether the authenticated user is a system admin */
   isSystemAdmin: boolean
+  /** Department IDs where the user is a department admin */
+  departmentAdminIds: string[]
+  /** Whether the user is a department admin for at least one department */
+  isDepartmentAdmin: boolean
   /** The currently active school context (for system admins switching schools). Null = "All Schools" view */
   activeSchoolId: string | null
   /** Set the active school (system admin only). Pass null for "All Schools" view */
@@ -55,6 +59,7 @@ export function useAuthProvider(): AuthState {
   const [viewAsUserName, setViewAsUserName] = useState<string | null>(null)
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false)
   const [isSystemAdmin, setIsSystemAdmin] = useState(false)
+  const [departmentAdminIds, setDepartmentAdminIds] = useState<string[]>([])
   const [activeSchoolId, setActiveSchoolId] = useState<string | null>(null)
   const [allSchools, setAllSchools] = useState<School[]>([])
 
@@ -88,14 +93,25 @@ export function useAuthProvider(): AuthState {
 
     if (!error && data) {
       setRawProfile(data as Profile)
-      // Check if user is a system admin
-      const { data: sysAdmin } = await supabase
-        .from('system_admins')
-        .select('user_id')
-        .eq('user_id', userId)
-        .maybeSingle()
-      const isSysAdmin = !!sysAdmin
+
+      // Parallel checks: system admin + department admin
+      const [sysAdminRes, deptAdminRes] = await Promise.all([
+        supabase
+          .from('system_admins')
+          .select('user_id')
+          .eq('user_id', userId)
+          .maybeSingle(),
+        supabase
+          .from('department_admins')
+          .select('department_id')
+          .eq('user_id', userId),
+      ])
+
+      const isSysAdmin = !!sysAdminRes.data
       setIsSystemAdmin(isSysAdmin)
+
+      const deptIds = (deptAdminRes.data ?? []).map((d: { department_id: string }) => d.department_id)
+      setDepartmentAdminIds(deptIds)
 
       if (isSysAdmin) {
         // Fetch all schools for the switcher
@@ -252,6 +268,7 @@ export function useAuthProvider(): AuthState {
   }, [])
 
   const actualRole = rawProfile?.role ?? null
+  const isDepartmentAdmin = departmentAdminIds.length > 0
 
   return {
     user,
@@ -271,6 +288,8 @@ export function useAuthProvider(): AuthState {
     viewAsUserName,
     setViewAs,
     isSystemAdmin,
+    departmentAdminIds,
+    isDepartmentAdmin,
     activeSchoolId,
     setActiveSchool,
     allSchools,

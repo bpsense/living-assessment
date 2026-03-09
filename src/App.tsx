@@ -21,6 +21,7 @@ import SchoolProfile from './pages/SchoolProfile'
 import StudentProfile from './pages/StudentProfile'
 import RecordObservation from './pages/RecordObservation'
 import ClassroomPage from './pages/Classroom'
+import DepartmentDashboard from './pages/DepartmentDashboard'
 import InterestSurvey from './pages/InterestSurvey'
 import ResetPassword from './pages/ResetPassword'
 import ExportReport from './pages/Export'
@@ -60,6 +61,8 @@ function AppRoutes() {
         <Route path="/student/:id/observe" element={<RecordObservation />} />
         <Route path="/export/:id" element={<ExportReport />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/department" element={<DepartmentDashboard />} />
+        <Route path="/settings" element={<SchoolProfile />} />
 
         {/* System admin routes */}
         <Route path="/system/schools" element={<SchoolsPage />} />
@@ -84,7 +87,7 @@ function AppRoutes() {
         <Route
           path="/admin/families"
           element={
-            <ProtectedRoute requiredRole="admin">
+            <ProtectedRoute requiredRole="admin" allowDepartmentAdmin>
               <Families />
             </ProtectedRoute>
           }
@@ -92,7 +95,7 @@ function AppRoutes() {
         <Route
           path="/admin/family-view/:parentId"
           element={
-            <ProtectedRoute requiredRole="admin">
+            <ProtectedRoute requiredRole="admin" allowDepartmentAdmin>
               <FamilyView />
             </ProtectedRoute>
           }
@@ -118,14 +121,6 @@ function AppRoutes() {
           element={
             <ProtectedRoute requiredRole="admin">
               <Standards />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <SchoolProfile />
             </ProtectedRoute>
           }
         />

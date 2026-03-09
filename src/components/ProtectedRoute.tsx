@@ -5,11 +5,21 @@ import type { UserRole } from '../types/database'
 
 interface Props {
   children: React.ReactNode
+  /** Requires this exact role (system admins always pass) */
   requiredRole?: UserRole
+  /** Also allow department admins to access this route */
+  allowDepartmentAdmin?: boolean
+  /** Also allow parents to access this route */
+  allowParent?: boolean
 }
 
-export default function ProtectedRoute({ children, requiredRole }: Props) {
-  const { user, profile, actualRole, loading, isSystemAdmin } = useAuth()
+export default function ProtectedRoute({
+  children,
+  requiredRole,
+  allowDepartmentAdmin,
+  allowParent,
+}: Props) {
+  const { user, profile, actualRole, loading, isSystemAdmin, isDepartmentAdmin } = useAuth()
 
   if (loading) {
     return (
@@ -25,6 +35,15 @@ export default function ProtectedRoute({ children, requiredRole }: Props) {
 
   // System admins can access any admin-required route
   if (requiredRole && actualRole !== requiredRole && !isSystemAdmin) {
+    // Check if department admin is allowed
+    if (allowDepartmentAdmin && isDepartmentAdmin) {
+      return <>{children}</>
+    }
+    // Check if parent is allowed
+    if (allowParent && actualRole === 'parent') {
+      return <>{children}</>
+    }
+
     return (
       <div className="flex min-h-screen items-center justify-center bg-bg px-4">
         <div className="text-center">

@@ -536,3 +536,26 @@ export interface DepartmentAdmin {
   school_id: string
   created_at: string
 }
+
+// ============================================================
+// School Profile Visibility
+// ============================================================
+
+export type SchoolProfileSectionKey =
+  | 'school_identity'
+  | 'pedagogical_approach'
+  | 'curriculum_standards'
+  | 'dimensions_overview'
+  | 'standards_frameworks'
+  | 'supporting_documents'
+
+export type SchoolProfileVisibility = Record<SchoolProfileSectionKey, boolean>
+
+export const DEFAULT_PROFILE_VISIBILITY: SchoolProfileVisibility = {
+  school_identity: true,
+  pedagogical_approach: true,
+  curriculum_standards: true,
+  dimensions_overview: true,
+  standards_frameworks: true,
+  supporting_documents: true,
+}

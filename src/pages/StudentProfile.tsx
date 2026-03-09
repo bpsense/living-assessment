@@ -4,6 +4,7 @@ import { differenceInYears } from 'date-fns'
 import { Loader2, AlertCircle, ClipboardPen, ClipboardList, ArrowLeft, TrendingUp, FileDown, Eye, EyeOff, Copy, Check } from 'lucide-react'
 import { useStudentProfile } from '../lib/student-data'
 import { useAuth } from '../lib/auth'
+import { useAccessControl } from '../lib/access-control'
 import { useToast } from '../components/Toast'
 import { supabase } from '../lib/supabase'
 import { buildSnapshots, getSnapshotObservationDate, smoothSnapshots } from '../lib/living-data'
@@ -53,7 +54,8 @@ function StudentAvatar({
 export default function StudentProfile() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { profile } = useAuth()
+  useAuth()
+  const { role, formatStudentName } = useAccessControl()
   const { toast } = useToast()
   const [launchingSurvey, setLaunchingSurvey] = useState(false)
   const [showSISEdit, setShowSISEdit] = useState(false)
@@ -73,7 +75,6 @@ export default function StudentProfile() {
     refetch,
   } = useStudentProfile(id)
 
-  const role = profile?.role ?? 'educator'
   const isFamilyView = role === 'parent'
 
   // Filter dimensions for family view — only show those marked visible_to_family
@@ -251,7 +252,7 @@ export default function StudentProfile() {
               <StudentAvatar student={student} />
               <div>
                 <h1 className="text-xl font-bold text-text">
-                  {student.first_name} {student.last_name}
+                  {formatStudentName(student.first_name, student.last_name)}
                 </h1>
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-muted">
                   {classroom && <span>{classroom.name}</span>}
