@@ -13,6 +13,7 @@ import Educators from './pages/admin/Educators'
 import EducatorProfilePage from './pages/admin/EducatorProfile'
 import Families from './pages/admin/Families'
 import FamilyView from './pages/admin/FamilyView'
+import Departments from './pages/admin/Departments'
 import Standards from './pages/Standards'
 import Observe from './pages/Observe'
 import Profile from './pages/Profile'
@@ -24,6 +25,7 @@ import InterestSurvey from './pages/InterestSurvey'
 import ResetPassword from './pages/ResetPassword'
 import ExportReport from './pages/Export'
 import NotFound from './pages/NotFound'
+import SchoolsPage from './pages/system/Schools'
 
 function PasswordRecoveryRedirect() {
   const { isPasswordRecovery } = useAuth()
@@ -58,6 +60,11 @@ function AppRoutes() {
         <Route path="/student/:id/observe" element={<RecordObservation />} />
         <Route path="/export/:id" element={<ExportReport />} />
         <Route path="/profile" element={<Profile />} />
+
+        {/* System admin routes */}
+        <Route path="/system/schools" element={<SchoolsPage />} />
+
+        {/* Admin routes */}
         <Route
           path="/admin/educators"
           element={
@@ -87,6 +94,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute requiredRole="admin">
               <FamilyView />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/departments"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <Departments />
             </ProtectedRoute>
           }
         />

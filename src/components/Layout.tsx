@@ -18,9 +18,12 @@ import {
   GraduationCap,
   Plus,
   Eye,
+  Globe,
+  MapPin,
 } from 'lucide-react'
 import type { UserRole } from '../types/database'
 import QuickObserveModal from './QuickObserveModal'
+import SchoolSwitcher from './SchoolSwitcher'
 
 interface NavItem {
   to: string
@@ -28,7 +31,30 @@ interface NavItem {
   icon: React.ReactNode
 }
 
-function getNavItems(role: UserRole): NavItem[] {
+function getNavItems(role: UserRole, isSystemAdmin: boolean, isAllSchoolsView: boolean): NavItem[] {
+  // System admin viewing "All Schools" gets the system nav
+  if (isSystemAdmin && isAllSchoolsView) {
+    return [
+      { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+      { to: '/system/schools', label: 'Schools', icon: <Building2 className="h-5 w-5" /> },
+    ]
+  }
+
+  // System admin viewing a specific school gets school admin nav + system nav
+  if (isSystemAdmin) {
+    return [
+      { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+      { to: '/classrooms', label: 'Classrooms', icon: <School className="h-5 w-5" /> },
+      { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
+      { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
+      { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
+      { to: '/admin/departments', label: 'Departments', icon: <MapPin className="h-5 w-5" /> },
+      { to: '/admin/dimensions', label: 'Dimensions', icon: <Layers className="h-5 w-5" /> },
+      { to: '/standards', label: 'Standards', icon: <BookOpen className="h-5 w-5" /> },
+      { to: '/settings', label: 'School Profile', icon: <Building2 className="h-5 w-5" /> },
+    ]
+  }
+
   switch (role) {
     case 'educator':
       return [
@@ -44,6 +70,7 @@ function getNavItems(role: UserRole): NavItem[] {
         { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
         { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
         { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
+        { to: '/admin/departments', label: 'Departments', icon: <MapPin className="h-5 w-5" /> },
         { to: '/admin/dimensions', label: 'Dimensions', icon: <Layers className="h-5 w-5" /> },
         { to: '/standards', label: 'Standards', icon: <BookOpen className="h-5 w-5" /> },
         { to: '/settings', label: 'School Profile', icon: <Building2 className="h-5 w-5" /> },
@@ -80,33 +107,41 @@ function getSwitchableRoles(actualRole: UserRole): UserRole[] {
 }
 
 export default function Layout() {
-  const { profile, actualRole, signOut, viewAsRole, setViewAsRole } = useAuth()
+  const { profile, actualRole, signOut, viewAsRole, setViewAsRole, isSystemAdmin, activeSchoolId } = useAuth()
   const navigate = useNavigate()
   const [quickObserveOpen, setQuickObserveOpen] = useState(false)
   const [schoolName, setSchoolName] = useState<string>('')
 
-  // Fetch school name once
+  const isAllSchoolsView = isSystemAdmin && activeSchoolId === null
+
+  // Fetch school name once (based on active school for system admins)
   useEffect(() => {
-    if (!profile?.school_id) return
+    const schoolId = isSystemAdmin ? activeSchoolId : profile?.school_id
+    if (!schoolId) {
+      setSchoolName('')
+      return
+    }
     supabase
       .from('schools')
       .select('name')
-      .eq('id', profile.school_id)
+      .eq('id', schoolId)
       .single()
       .then(({ data }) => {
         if (data?.name) setSchoolName(data.name)
       })
-  }, [profile?.school_id])
+  }, [profile?.school_id, isSystemAdmin, activeSchoolId])
 
   const role = profile?.role ?? 'educator'
-  const navItems = getNavItems(role)
-  const showFab = role === 'educator' || role === 'admin'
-  const switchableRoles = getSwitchableRoles(actualRole ?? role)
+  const navItems = getNavItems(role, isSystemAdmin, isAllSchoolsView)
+  const showFab = (role === 'educator' || role === 'admin' || isSystemAdmin) && !isAllSchoolsView
+  const switchableRoles = isSystemAdmin ? [] : getSwitchableRoles(actualRole ?? role)
 
   async function handleSignOut() {
     await signOut()
     navigate('/login')
   }
+
+  const roleLabel = isSystemAdmin ? 'System Admin' : ROLE_LABELS[role]
 
   return (
     <div className="flex min-h-screen bg-bg">
@@ -153,7 +188,7 @@ export default function Layout() {
                 {profile?.full_name ?? 'Loading...'}
               </p>
               <span className="inline-block rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700">
-                {ROLE_LABELS[role]}
+                {roleLabel}
               </span>
             </div>
           </div>
@@ -179,18 +214,22 @@ export default function Layout() {
             <span className="text-sm font-bold text-text">Living Assessment</span>
           </div>
 
-          {/* Desktop: school name */}
+          {/* Desktop: school name or school switcher for system admins */}
           <div className="hidden md:block">
-            <h2 className="text-sm font-medium text-text-muted">
-              {schoolName || 'Loading…'}
-            </h2>
+            {isSystemAdmin ? (
+              <SchoolSwitcher />
+            ) : (
+              <h2 className="text-sm font-medium text-text-muted">
+                {schoolName || 'Loading…'}
+              </h2>
+            )}
           </div>
 
           {/* Right side: user info (desktop only) + sign out */}
           <div className="hidden items-center gap-3 md:flex">
             <span className="text-sm text-text-muted">{profile?.full_name}</span>
             <span className="rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700">
-              {ROLE_LABELS[role]}
+              {roleLabel}
             </span>
             <button
               onClick={handleSignOut}
@@ -211,7 +250,7 @@ export default function Layout() {
           </button>
         </header>
 
-        {/* View-as role switcher — only shown for admin and educator */}
+        {/* View-as role switcher — only shown for admin and educator (not system admin) */}
         {switchableRoles.length > 1 && (
           <div className="flex items-center gap-2 border-b border-bg-muted bg-bg-card/80 px-4 py-1.5 md:px-6 print:!hidden">
             <Eye className="h-3.5 w-3.5 text-text-light" />
@@ -238,6 +277,14 @@ export default function Layout() {
                 ✕ reset
               </button>
             )}
+          </div>
+        )}
+
+        {/* System admin: show which school context is active */}
+        {isSystemAdmin && !isAllSchoolsView && (
+          <div className="flex items-center gap-2 border-b border-bg-muted bg-primary-50/50 px-4 py-1.5 md:hidden print:!hidden">
+            <Building2 className="h-3.5 w-3.5 text-primary-500" />
+            <span className="text-xs font-medium text-primary-700">{schoolName}</span>
           </div>
         )}
 

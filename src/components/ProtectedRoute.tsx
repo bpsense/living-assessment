@@ -9,7 +9,7 @@ interface Props {
 }
 
 export default function ProtectedRoute({ children, requiredRole }: Props) {
-  const { user, profile, actualRole, loading } = useAuth()
+  const { user, profile, actualRole, loading, isSystemAdmin } = useAuth()
 
   if (loading) {
     return (
@@ -23,7 +23,8 @@ export default function ProtectedRoute({ children, requiredRole }: Props) {
     return <Navigate to="/login" replace />
   }
 
-  if (requiredRole && actualRole !== requiredRole) {
+  // System admins can access any admin-required route
+  if (requiredRole && actualRole !== requiredRole && !isSystemAdmin) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-bg px-4">
         <div className="text-center">

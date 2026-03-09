@@ -35,6 +35,7 @@ export interface Classroom {
   school_id: string
   name: string
   grade_level: string | null
+  department_id: string | null
   created_at: string
   updated_at: string
 }
@@ -496,4 +497,42 @@ export interface LearningSuggestionsRow {
   prompt_version: string
   created_at: string
   updated_at: string
+}
+
+// ============================================================
+// Multi-School / System Admin
+// ============================================================
+
+export interface SystemAdmin {
+  user_id: string
+  created_at: string
+  created_by: string | null
+}
+
+// ============================================================
+// Departments / Locations
+// ============================================================
+
+export interface Department {
+  id: string
+  school_id: string
+  name: string
+  description: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type DepartmentInsert = Omit<Department, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  description?: string | null
+}
+
+export type DepartmentUpdate = Partial<Omit<Department, 'id' | 'school_id' | 'created_at' | 'updated_at'>>
+
+export interface DepartmentAdmin {
+  id: string
+  user_id: string
+  department_id: string
+  school_id: string
+  created_at: string
 }
