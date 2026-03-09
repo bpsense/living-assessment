@@ -90,15 +90,20 @@ export interface EducatorDashboardData {
   error: string | null
 }
 
-export function useEducatorDashboard(profile: Profile | null): EducatorDashboardData {
+export function useEducatorDashboard(
+  profile: Profile | null,
+  educatorIdOverride?: string
+): EducatorDashboardData {
   const [classrooms, setClassrooms] = useState<ClassroomCard[]>([])
   const [attentionFlags, setAttentionFlags] = useState<AttentionFlag[]>([])
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const effectiveId = educatorIdOverride ?? profile?.id
+
   useEffect(() => {
-    if (!profile) return
+    if (!effectiveId || !profile) return
     let cancelled = false
 
     async function fetch() {
@@ -107,7 +112,7 @@ export function useEducatorDashboard(profile: Profile | null): EducatorDashboard
         const { data: ecRows } = await supabase
           .from('educator_classrooms')
           .select('classroom_id')
-          .eq('educator_id', profile!.id)
+          .eq('educator_id', effectiveId!)
 
         const classroomIds = (ecRows ?? []).map((r) => r.classroom_id)
         if (classroomIds.length === 0) {
@@ -257,7 +262,7 @@ export function useEducatorDashboard(profile: Profile | null): EducatorDashboard
     return () => {
       cancelled = true
     }
-  }, [profile])
+  }, [profile, effectiveId])
 
   return { classrooms, attentionFlags, recentActivity, loading, error }
 }
@@ -374,10 +379,10 @@ export function useParentDashboard(
   const refetch = useCallback(() => setFetchCount((c) => c + 1), [])
 
   useEffect(() => {
-    if (!profile) return
+    const parentId = parentIdOverride ?? profile?.id
+    const schoolId = profile?.school_id
+    if (!parentId || !schoolId) return
     let cancelled = false
-
-    const parentId = parentIdOverride ?? profile.id
 
     async function fetch() {
       try {
@@ -400,11 +405,11 @@ export function useParentDashboard(
             supabase
               .from('classrooms')
               .select('*')
-              .eq('school_id', profile!.school_id),
+              .eq('school_id', schoolId),
             supabase
               .from('dimensions')
               .select('*')
-              .eq('school_id', profile!.school_id)
+              .eq('school_id', schoolId)
               .eq('is_active', true)
               .order('display_order'),
             supabase

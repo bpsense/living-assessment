@@ -18,8 +18,8 @@ import SystemDashboard from './system/SystemDashboard'
 // ============================================================
 
 function EducatorView() {
-  const { profile } = useAuth()
-  const data = useEducatorDashboard(profile)
+  const { profile, viewAsUserId, viewAsUserName } = useAuth()
+  const data = useEducatorDashboard(profile, viewAsUserId ?? undefined)
 
   if (data.loading) return <DashboardSkeleton />
   if (data.error) return <DashboardError message={data.error} />
@@ -27,14 +27,14 @@ function EducatorView() {
   return (
     <EducatorDashboard
       data={data}
-      userName={profile?.full_name ?? 'Educator'}
+      userName={viewAsUserName ?? profile?.full_name ?? 'Educator'}
     />
   )
 }
 
 function ParentView() {
-  const { profile } = useAuth()
-  const data = useParentDashboard(profile)
+  const { profile, viewAsUserId, viewAsUserName } = useAuth()
+  const data = useParentDashboard(profile, viewAsUserId ?? undefined)
 
   if (data.loading) return <DashboardSkeleton />
   if (data.error) return <DashboardError message={data.error} />
@@ -42,7 +42,7 @@ function ParentView() {
   return (
     <ParentDashboard
       data={data}
-      userName={profile?.full_name ?? 'Family'}
+      userName={viewAsUserName ?? profile?.full_name ?? 'Family'}
     />
   )
 }
