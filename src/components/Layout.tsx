@@ -133,7 +133,8 @@ export default function Layout() {
   const role = profile?.role ?? 'educator'
   const navItems = getNavItems(role, isSystemAdmin, isAllSchoolsView)
   const showFab = (role === 'educator' || role === 'admin' || isSystemAdmin) && !isAllSchoolsView
-  const switchableRoles = isSystemAdmin ? [] : getSwitchableRoles(actualRole ?? role)
+  // System admins can switch roles when viewing a specific school, but not in the "All Schools" view
+  const switchableRoles = isAllSchoolsView ? [] : getSwitchableRoles(isSystemAdmin ? 'admin' : (actualRole ?? role))
 
   async function handleSignOut() {
     await signOut()
