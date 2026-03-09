@@ -18,7 +18,6 @@ import {
   GraduationCap,
   Plus,
   Eye,
-  Globe,
   MapPin,
 } from 'lucide-react'
 import type { UserRole } from '../types/database'

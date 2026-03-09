@@ -1,5 +1,5 @@
 import { useAuth } from '../../lib/auth'
-import { Building2, Users, School, UserCheck, ArrowRight } from 'lucide-react'
+import { Building2, Users, UserCheck, ArrowRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 export default function SystemDashboard() {

@@ -24,7 +24,7 @@ import { useAuth } from '../lib/auth'
 import { useSchoolProfile } from '../lib/school-data'
 import { DimensionIcon } from '../components/student/DimensionIcon'
 import type { SchoolContext, SchoolDocument, Dimension } from '../types/database'
-import type { StandardsFrameworkWithStandards } from '../lib/school-data'
+
 
 // ============================================================
 // Category badge colors (mirrors DimensionListItem.tsx)

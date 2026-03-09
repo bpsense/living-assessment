@@ -12,7 +12,6 @@ import type {
   Classroom,
   Observation,
   Student,
-  Dimension,
 } from '../types/database'
 
 // ============================================================

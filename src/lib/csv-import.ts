@@ -295,6 +295,9 @@ export function transformRowToStudentInsert(
     medications: getValue('medications') || null,
     enrollment_date: enrollmentDate ? parseDate(enrollmentDate) : null,
     student_status: 'active' as StudentStatus,
+    avatar_url: null,
+    family_code: null,
+    student_number: null,
   }
 }
 

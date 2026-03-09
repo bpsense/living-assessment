@@ -7,8 +7,6 @@ import {
   X,
   Search,
   ClipboardPen,
-  Calendar,
-  User as UserIcon,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { format } from 'date-fns'

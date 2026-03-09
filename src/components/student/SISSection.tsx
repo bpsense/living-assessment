@@ -12,7 +12,6 @@ import {
   MapPin,
   Shield,
   Star,
-  Plus,
   Copy,
   RefreshCw,
   Check,

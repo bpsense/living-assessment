@@ -6,9 +6,9 @@ import { User, Mail, Shield, Lock, Loader2, CheckCircle } from 'lucide-react'
 
 export default function Profile() {
   const { user, profile, updatePassword } = useAuth()
-  const { addToast } = useToast()
+  const { toast } = useToast()
 
-  const [currentPassword, setCurrentPassword] = useState('')
+  const [_currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -39,7 +39,7 @@ export default function Profile() {
         setCurrentPassword('')
         setNewPassword('')
         setConfirmPassword('')
-        addToast('Password updated successfully.', 'success')
+        toast('Password updated successfully.', 'success')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update password')

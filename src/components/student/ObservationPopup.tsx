@@ -67,7 +67,7 @@ export default function ObservationPopup({
   anchorX,
   anchorY,
   containerWidth,
-  containerHeight,
+  containerHeight: _containerHeight,
   dimensionName,
   dimensionId,
   competency,
