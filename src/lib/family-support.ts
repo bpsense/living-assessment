@@ -135,14 +135,16 @@ export function useFamilySupport(
       )
 
       if (error) {
-        // supabase-js wraps non-2xx responses in FunctionsHttpError with a
-        // generic message. The actual error from the Edge Function is in the
-        // response body accessible via error.context.
+        // supabase-js@2.98 wraps non-2xx responses in FunctionsHttpError.
+        // error.context is the raw Response object — read its body for the
+        // real error message returned by the Edge Function.
         let detail: string | undefined
         try {
-          // error.context is the parsed response body (JSON) from the Edge Function
-          const ctx = (error as { context?: { error?: string } }).context
-          detail = ctx?.error
+          const ctx = (error as { context?: Response }).context
+          if (ctx && typeof ctx.json === 'function') {
+            const body = await ctx.json()
+            detail = body?.error
+          }
         } catch {
           // ignore — fall through to generic message
         }
