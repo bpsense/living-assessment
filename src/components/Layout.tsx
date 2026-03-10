@@ -46,10 +46,11 @@ function getNavItems(
     return [
       { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
       { to: '/system/schools', label: 'Schools', icon: <Building2 className="h-5 w-5" /> },
+      { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
     ]
   }
 
-  // System admin viewing a specific school gets school admin nav + system nav
+  // System admin viewing a specific school gets school admin nav + Users
   if (isSystemAdmin) {
     return [
       { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
@@ -60,6 +61,7 @@ function getNavItems(
       { to: '/admin/departments', label: 'Departments', icon: <MapPin className="h-5 w-5" /> },
       { to: '/admin/dimensions', label: 'Dimensions', icon: <Layers className="h-5 w-5" /> },
       { to: '/standards', label: 'Standards', icon: <BookOpen className="h-5 w-5" /> },
+      { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
       { to: '/settings', label: 'School Profile', icon: <Building2 className="h-5 w-5" /> },
     ]
   }
@@ -76,7 +78,9 @@ function getNavItems(
       if (isDepartmentAdmin) {
         items.push(
           { to: '/department', label: 'Department', icon: <MapPin className="h-5 w-5" /> },
+          { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
           { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
+          { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
         )
       }
       items.push(
@@ -95,6 +99,7 @@ function getNavItems(
         { to: '/admin/departments', label: 'Departments', icon: <MapPin className="h-5 w-5" /> },
         { to: '/admin/dimensions', label: 'Dimensions', icon: <Layers className="h-5 w-5" /> },
         { to: '/standards', label: 'Standards', icon: <BookOpen className="h-5 w-5" /> },
+        { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
         { to: '/settings', label: 'School Profile', icon: <Building2 className="h-5 w-5" /> },
       ]
     case 'parent':
@@ -104,6 +109,11 @@ function getNavItems(
         { to: '/classrooms', label: 'Classrooms', icon: <School className="h-5 w-5" /> },
         { to: '/settings', label: 'School Info', icon: <Building2 className="h-5 w-5" /> },
         { to: '/profile', label: 'Profile', icon: <User className="h-5 w-5" /> },
+      ]
+    case 'learner':
+      return [
+        { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+        { to: '/learner/profile', label: 'My Profile', icon: <User className="h-5 w-5" /> },
       ]
     default:
       return [
@@ -116,6 +126,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
   admin: 'Admin',
   educator: 'Educator',
   parent: 'Family',
+  learner: 'Learner',
 }
 
 /** Which roles can the current user's actual role switch to? */
@@ -132,7 +143,7 @@ function getSwitchableRoles(actualRole: UserRole): UserRole[] {
 }
 
 export default function Layout() {
-  const { profile, actualRole, signOut, viewAsRole, setViewAs, viewAsUserId, viewAsUserName, isSystemAdmin, activeSchoolId } = useAuth()
+  const { profile, actualRole, signOut, viewAsRole, setViewAs, viewAsUserId, viewAsUserName, isSystemAdmin, activeSchoolId, accessLevel } = useAuth()
   const { isDepartmentAdmin } = useAccessControl()
   const navigate = useNavigate()
   const [quickObserveOpen, setQuickObserveOpen] = useState(false)
@@ -187,7 +198,11 @@ export default function Layout() {
     navigate('/login')
   }
 
-  const roleLabel = isSystemAdmin ? 'System Admin' : ROLE_LABELS[role]
+  const roleLabel = isSystemAdmin
+    ? 'System Admin'
+    : isDepartmentAdmin
+      ? 'Dept Admin'
+      : ROLE_LABELS[role]
 
   return (
     <div className="flex min-h-screen bg-bg">

@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
 import type { User, AuthError } from '@supabase/supabase-js'
 import { supabase } from './supabase'
-import type { Profile, UserRole, School } from '../types/database'
+import type { Profile, UserRole, AccessLevel, School } from '../types/database'
 
 export interface AuthState {
   user: User | null
@@ -38,6 +38,8 @@ export interface AuthState {
   setActiveSchool: (schoolId: string | null) => void
   /** List of all schools (populated only for system admins) */
   allSchools: School[]
+  /** Numeric access level: 6=sysadmin, 5=school admin, 4=dept admin, 3=educator, 2=parent, 1=learner */
+  accessLevel: AccessLevel
 }
 
 export const AuthContext = createContext<AuthState | undefined>(undefined)
@@ -270,6 +272,15 @@ export function useAuthProvider(): AuthState {
   const actualRole = rawProfile?.role ?? null
   const isDepartmentAdmin = departmentAdminIds.length > 0
 
+  const accessLevel: AccessLevel = useMemo(() => {
+    if (isSystemAdmin) return 6
+    if (actualRole === 'admin') return 5
+    if (actualRole === 'educator') return isDepartmentAdmin ? 4 : 3
+    if (actualRole === 'parent') return 2
+    if (actualRole === 'learner') return 1
+    return 1 as AccessLevel
+  }, [isSystemAdmin, actualRole, isDepartmentAdmin])
+
   return {
     user,
     profile,
@@ -293,5 +304,6 @@ export function useAuthProvider(): AuthState {
     activeSchoolId,
     setActiveSchool,
     allSchools,
+    accessLevel,
   }
 }

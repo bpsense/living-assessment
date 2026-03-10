@@ -27,6 +27,8 @@ import ResetPassword from './pages/ResetPassword'
 import ExportReport from './pages/Export'
 import NotFound from './pages/NotFound'
 import SchoolsPage from './pages/system/Schools'
+import UsersPage from './pages/admin/Users'
+import LearnerProfile from './pages/LearnerProfile'
 
 function PasswordRecoveryRedirect() {
   const { isPasswordRecovery } = useAuth()
@@ -64,14 +66,27 @@ function AppRoutes() {
         <Route path="/department" element={<DepartmentDashboard />} />
         <Route path="/settings" element={<SchoolProfile />} />
 
+        {/* Learner routes */}
+        <Route path="/learner/profile" element={<LearnerProfile />} />
+
         {/* System admin routes */}
         <Route path="/system/schools" element={<SchoolsPage />} />
+
+        {/* User management — dept admins (4) and up */}
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute minAccessLevel={4}>
+              <UsersPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Admin routes */}
         <Route
           path="/admin/educators"
           element={
-            <ProtectedRoute requiredRole="admin">
+            <ProtectedRoute requiredRole="admin" allowDepartmentAdmin>
               <Educators />
             </ProtectedRoute>
           }

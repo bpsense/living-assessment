@@ -1,15 +1,52 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, Users, ClipboardPen, School, Plus, Mail, Send } from 'lucide-react'
+import { Loader2, Users, ClipboardPen, School, Plus, Mail, Send, UserX, UserCheck, MoreVertical } from 'lucide-react'
 import { useAuth } from '../../lib/auth'
+import { useAccessControl } from '../../lib/access-control'
 import { useToast } from '../../components/Toast'
 import { useEducatorList, inviteEducator } from '../../lib/educator-data'
+import { supabase } from '../../lib/supabase'
 
 export default function Educators() {
   const { profile } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const { canDeactivateUsers } = useAccessControl()
   const { educators, loading, error, refetch } = useEducatorList(profile?.school_id)
+  const [actionMenu, setActionMenu] = useState<string | null>(null)
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
+
+  const handleDeactivate = useCallback(async (userId: string, name: string) => {
+    setActionLoading(userId)
+    const { error: err } = await supabase
+      .from('profiles')
+      .update({ is_active: false })
+      .eq('id', userId)
+    if (err) {
+      toast(err.message, 'error')
+    } else {
+      toast(`${name} has been deactivated`, 'success')
+      refetch()
+    }
+    setActionLoading(null)
+    setActionMenu(null)
+  }, [toast, refetch])
+
+  const handleReactivate = useCallback(async (userId: string, name: string) => {
+    setActionLoading(userId)
+    const { error: err } = await supabase
+      .from('profiles')
+      .update({ is_active: true })
+      .eq('id', userId)
+    if (err) {
+      toast(err.message, 'error')
+    } else {
+      toast(`${name} has been reactivated`, 'success')
+      refetch()
+    }
+    setActionLoading(null)
+    setActionMenu(null)
+  }, [toast, refetch])
 
   // Invite form state
   const [showInvite, setShowInvite] = useState(false)
@@ -172,11 +209,57 @@ export default function Educators() {
               .slice(0, 2)
 
             return (
-              <button
+              <div
                 key={edu.id}
-                onClick={() => navigate(`/admin/educator/${edu.id}`)}
-                className="group rounded-xl border border-bg-muted bg-bg-card p-5 text-left shadow-sm transition-shadow hover:shadow-md"
+                className="group relative rounded-xl border border-bg-muted bg-bg-card p-5 text-left shadow-sm transition-shadow hover:shadow-md"
               >
+                {/* Action menu */}
+                {canDeactivateUsers && (
+                  <div className="absolute right-3 top-3">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setActionMenu(actionMenu === edu.id ? null : edu.id)
+                      }}
+                      className="rounded p-1 text-text-light hover:bg-bg-muted hover:text-text"
+                    >
+                      {actionLoading === edu.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <MoreVertical className="h-4 w-4" />
+                      )}
+                    </button>
+                    {actionMenu === edu.id && (
+                      <div className="absolute right-0 top-full z-10 mt-1 w-40 rounded-lg border border-bg-muted bg-bg-card py-1 shadow-lg">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            navigate(`/admin/educator/${edu.id}`)
+                          }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-xs text-text hover:bg-bg-muted"
+                        >
+                          View Profile
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeactivate(edu.id, edu.full_name)
+                          }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-xs text-alert-600 hover:bg-alert-50"
+                        >
+                          <UserX className="h-3 w-3" />
+                          Deactivate
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Clickable card body */}
+                <button
+                  onClick={() => navigate(`/admin/educator/${edu.id}`)}
+                  className="w-full text-left"
+                >
                 {/* Avatar + Name */}
                 <div className="flex items-center gap-3">
                   {edu.avatar_url ? (
@@ -229,7 +312,8 @@ export default function Educators() {
                     {edu.total_observations} total
                   </span>
                 </div>
-              </button>
+                </button>
+              </div>
             )
           })}
         </div>

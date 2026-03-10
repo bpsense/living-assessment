@@ -1,7 +1,14 @@
 // database.ts — Manual TypeScript types matching the Supabase schema.
 // Replace with auto-generated types from `supabase gen types typescript` later.
 
-export type UserRole = 'admin' | 'educator' | 'parent'
+export type UserRole = 'admin' | 'educator' | 'parent' | 'learner'
+
+/**
+ * Numeric access level hierarchy:
+ * 6 = System Admin, 5 = School Admin, 4 = Department Admin,
+ * 3 = Educator, 2 = Family/Parent, 1 = Learner
+ */
+export type AccessLevel = 1 | 2 | 3 | 4 | 5 | 6
 /** Numeric competency rating on a 1-4 scale with 1/3 increments.
  *  Valid values: 0.33, 0.67, 1, 1.33, 1.67, 2, 2.33, 2.67, 3, 3.33, 3.67, 4 */
 export type ObservationRating = number
@@ -26,6 +33,10 @@ export interface Profile {
   full_name: string
   email: string
   avatar_url: string | null
+  /** Links a learner auth account to their student record */
+  student_id: string | null
+  /** Soft deactivation — inactive users cannot access the platform */
+  is_active: boolean
   created_at: string
   updated_at: string
 }

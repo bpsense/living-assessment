@@ -12,6 +12,7 @@ import EducatorDashboard from '../components/dashboard/EducatorDashboard'
 import ParentDashboard from '../components/dashboard/ParentDashboard'
 import AdminDashboard from '../components/dashboard/AdminDashboard'
 import SystemDashboard from './system/SystemDashboard'
+import LearnerProfile from './LearnerProfile'
 
 // ============================================================
 // Role-specific wrappers (each calls its own data hook)
@@ -203,6 +204,8 @@ export default function Dashboard() {
       return <AdminView />
     case 'parent':
       return <ParentView />
+    case 'learner':
+      return <LearnerProfile />
     case 'educator':
     default:
       return <EducatorView />
