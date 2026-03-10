@@ -21,10 +21,11 @@ import {
   ListTree,
 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
-import { useSchoolProfile } from '../lib/school-data'
+import { useAccessControl } from '../lib/access-control'
+import { useSchoolProfile, useSchoolProfileVisibility, updateSchoolProfileVisibility } from '../lib/school-data'
 import { DimensionIcon } from '../components/student/DimensionIcon'
-import type { SchoolContext, SchoolDocument, Dimension } from '../types/database'
-import type { StandardsFrameworkWithStandards } from '../lib/school-data'
+import type { SchoolContext, SchoolDocument, Dimension, SchoolProfileSectionKey, SchoolProfileVisibility } from '../types/database'
+
 
 // ============================================================
 // Category badge colors (mirrors DimensionListItem.tsx)
@@ -124,11 +125,19 @@ function Section({
   description,
   icon,
   children,
+  sectionKey,
+  visibility,
+  onToggleVisibility,
+  canEdit,
 }: {
   title: string
   description: string
   icon: React.ReactNode
   children: React.ReactNode
+  sectionKey?: SchoolProfileSectionKey
+  visibility?: SchoolProfileVisibility
+  onToggleVisibility?: (key: SchoolProfileSectionKey, visible: boolean) => void
+  canEdit?: boolean
 }) {
   return (
     <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
@@ -136,12 +145,67 @@ function Section({
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-50">
           {icon}
         </div>
-        <div>
+        <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold text-text">{title}</h3>
           <p className="text-xs text-text-muted">{description}</p>
         </div>
+        {canEdit && sectionKey && visibility && onToggleVisibility && (
+          <label className="flex shrink-0 items-center gap-2 cursor-pointer">
+            <span className="text-[10px] text-text-light">Visible to families</span>
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={visibility[sectionKey]}
+                onChange={(e) => onToggleVisibility(sectionKey, e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="h-5 w-9 rounded-full bg-bg-muted peer-checked:bg-primary-500 transition-colors" />
+              <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform peer-checked:translate-x-4" />
+            </div>
+          </label>
+        )}
       </div>
       {children}
+    </div>
+  )
+}
+
+// ============================================================
+// ReadOnlyField — displays text content in read-only mode
+// ============================================================
+
+function ReadOnlyField({ label, value }: { label: string; value: string }) {
+  if (!value) return null
+  return (
+    <div>
+      <p className="mb-1 text-sm font-medium text-text">{label}</p>
+      <p className="whitespace-pre-wrap rounded-lg bg-bg px-3 py-2 text-sm text-text-muted">
+        {value}
+      </p>
+    </div>
+  )
+}
+
+// ============================================================
+// ReadOnlyDocumentCard
+// ============================================================
+
+function ReadOnlyDocumentCard({ doc }: { doc: SchoolDocument }) {
+  return (
+    <div className="flex items-start gap-3 rounded-lg border border-bg-muted bg-bg p-3">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-50">
+        <FileText className="h-5 w-5 text-primary-500" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium text-text">{doc.file_name}</p>
+        <p className="text-xs text-text-light">
+          {formatFileSize(doc.file_size)} &middot;{' '}
+          {new Date(doc.created_at).toLocaleDateString()}
+        </p>
+        {doc.description && (
+          <p className="mt-1 text-xs text-text-muted">{doc.description}</p>
+        )}
+      </div>
     </div>
   )
 }
@@ -254,6 +318,7 @@ function DocumentCard({
 
 export default function SchoolProfile() {
   const { profile } = useAuth()
+  const { canEditSchoolProfile, role } = useAccessControl()
   const {
     school,
     documents,
@@ -268,6 +333,11 @@ export default function SchoolProfile() {
     deleteDocument,
     updateDocumentDescription,
   } = useSchoolProfile(profile?.school_id)
+  const { visibility, loading: visLoading } = useSchoolProfileVisibility(profile?.school_id)
+  const [localVisibility, setLocalVisibility] = useState<SchoolProfileVisibility | null>(null)
+
+  // Use local visibility state once loaded
+  const effectiveVisibility = localVisibility ?? visibility
 
   // Group dimensions by category
   const activeDimensions = dimensions.filter((d) => d.is_active)
@@ -345,9 +415,30 @@ export default function SchoolProfile() {
     [handleFileUpload]
   )
 
+  const handleToggleVisibility = useCallback(
+    async (sectionKey: SchoolProfileSectionKey, visible: boolean) => {
+      if (!profile?.school_id) return
+      // Optimistic update
+      setLocalVisibility((prev) => ({
+        ...(prev ?? effectiveVisibility),
+        [sectionKey]: visible,
+      }))
+      await updateSchoolProfileVisibility(profile.school_id, sectionKey, visible)
+    },
+    [profile?.school_id, effectiveVisibility]
+  )
+
+  /** Should a section be shown for the current role? */
+  function isSectionVisible(key: SchoolProfileSectionKey): boolean {
+    if (canEditSchoolProfile) return true // Admins always see everything
+    if (role === 'educator') return true  // Educators see full read-only
+    // Parents: only if toggle is on
+    return effectiveVisibility[key]
+  }
+
   // ── Loading state ──────────────────────────────────────────
 
-  if (loading) {
+  if (loading || visLoading) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
@@ -364,30 +455,33 @@ export default function SchoolProfile() {
         <div>
           <h1 className="text-2xl font-bold text-text">School Profile</h1>
           <p className="mt-1 text-sm text-text-muted">
-            Define your school's pedagogical orientation. This context is used by the
-            AI Learning Guide to personalize suggestions.
+            {canEditSchoolProfile
+              ? 'Define your school\'s pedagogical orientation. This context is used by the AI Learning Guide to personalize suggestions.'
+              : 'Your school\'s pedagogical orientation and curriculum framework.'}
           </p>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className={clsx(
-            'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors',
-            saveSuccess
-              ? 'bg-success-500 text-white'
-              : 'bg-primary-500 text-white hover:bg-primary-600',
-            saving && 'opacity-50'
-          )}
-        >
-          {saving ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : saveSuccess ? (
-            <CheckCircle2 className="h-4 w-4" />
-          ) : (
-            <Save className="h-4 w-4" />
-          )}
-          {saving ? 'Saving…' : saveSuccess ? 'Saved!' : 'Save Changes'}
-        </button>
+        {canEditSchoolProfile && (
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className={clsx(
+              'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors',
+              saveSuccess
+                ? 'bg-success-500 text-white'
+                : 'bg-primary-500 text-white hover:bg-primary-600',
+              saving && 'opacity-50'
+            )}
+          >
+            {saving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : saveSuccess ? (
+              <CheckCircle2 className="h-4 w-4" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            {saving ? 'Saving…' : saveSuccess ? 'Saved!' : 'Save Changes'}
+          </button>
+        )}
       </div>
 
       {/* Error */}
@@ -414,64 +508,109 @@ export default function SchoolProfile() {
       </div>
 
       {/* Section 1: School Identity */}
-      <Section
-        title="School Identity"
-        description="Your school's mission and values"
-        icon={<Heart className="h-5 w-5 text-primary-500" />}
-      >
-        <div className="space-y-4">
-          {IDENTITY_FIELDS.map((f) => (
-            <ContextField
-              key={f.key}
-              config={f}
-              value={(formState[f.key] as string) ?? ''}
-              onChange={handleFieldChange}
-            />
-          ))}
-        </div>
-      </Section>
+      {isSectionVisible('school_identity') && (
+        <Section
+          title="School Identity"
+          description="Your school's mission and values"
+          icon={<Heart className="h-5 w-5 text-primary-500" />}
+          sectionKey="school_identity"
+          visibility={effectiveVisibility}
+          onToggleVisibility={handleToggleVisibility}
+          canEdit={canEditSchoolProfile}
+        >
+          <div className="space-y-4">
+            {canEditSchoolProfile ? (
+              IDENTITY_FIELDS.map((f) => (
+                <ContextField
+                  key={f.key}
+                  config={f}
+                  value={(formState[f.key] as string) ?? ''}
+                  onChange={handleFieldChange}
+                />
+              ))
+            ) : (
+              <>
+                <ReadOnlyField label="Mission Statement" value={(formState.mission as string) ?? ''} />
+                <ReadOnlyField label="Core Values" value={(formState.core_values as string) ?? ''} />
+              </>
+            )}
+          </div>
+        </Section>
+      )}
 
       {/* Section 2: Pedagogical Approach */}
-      <Section
-        title="Pedagogical Approach"
-        description="Your teaching philosophy and methodologies"
-        icon={<BookOpen className="h-5 w-5 text-primary-500" />}
-      >
-        <div className="space-y-4">
-          {PEDAGOGY_FIELDS.map((f) => (
-            <ContextField
-              key={f.key}
-              config={f}
-              value={(formState[f.key] as string) ?? ''}
-              onChange={handleFieldChange}
-            />
-          ))}
-        </div>
-      </Section>
+      {isSectionVisible('pedagogical_approach') && (
+        <Section
+          title="Pedagogical Approach"
+          description="Your teaching philosophy and methodologies"
+          icon={<BookOpen className="h-5 w-5 text-primary-500" />}
+          sectionKey="pedagogical_approach"
+          visibility={effectiveVisibility}
+          onToggleVisibility={handleToggleVisibility}
+          canEdit={canEditSchoolProfile}
+        >
+          <div className="space-y-4">
+            {canEditSchoolProfile ? (
+              PEDAGOGY_FIELDS.map((f) => (
+                <ContextField
+                  key={f.key}
+                  config={f}
+                  value={(formState[f.key] as string) ?? ''}
+                  onChange={handleFieldChange}
+                />
+              ))
+            ) : (
+              <>
+                <ReadOnlyField label="Pedagogical Philosophy" value={(formState.pedagogical_approach as string) ?? ''} />
+                <ReadOnlyField label="Key Teaching Methodologies" value={(formState.teaching_methodologies as string) ?? ''} />
+                <ReadOnlyField label="Assessment Philosophy" value={(formState.assessment_philosophy as string) ?? ''} />
+              </>
+            )}
+          </div>
+        </Section>
+      )}
 
       {/* Section 3: Curriculum & Standards */}
-      <Section
-        title="Curriculum & Standards"
-        description="Curriculum frameworks and learning standards"
-        icon={<GraduationCap className="h-5 w-5 text-primary-500" />}
-      >
-        <div className="space-y-4">
-          {CURRICULUM_FIELDS.map((f) => (
-            <ContextField
-              key={f.key}
-              config={f}
-              value={(formState[f.key] as string) ?? ''}
-              onChange={handleFieldChange}
-            />
-          ))}
-        </div>
-      </Section>
+      {isSectionVisible('curriculum_standards') && (
+        <Section
+          title="Curriculum & Standards"
+          description="Curriculum frameworks and learning standards"
+          icon={<GraduationCap className="h-5 w-5 text-primary-500" />}
+          sectionKey="curriculum_standards"
+          visibility={effectiveVisibility}
+          onToggleVisibility={handleToggleVisibility}
+          canEdit={canEditSchoolProfile}
+        >
+          <div className="space-y-4">
+            {canEditSchoolProfile ? (
+              CURRICULUM_FIELDS.map((f) => (
+                <ContextField
+                  key={f.key}
+                  config={f}
+                  value={(formState[f.key] as string) ?? ''}
+                  onChange={handleFieldChange}
+                />
+              ))
+            ) : (
+              <>
+                <ReadOnlyField label="Curriculum Framework" value={(formState.curriculum_framework as string) ?? ''} />
+                <ReadOnlyField label="Standards & Learning Goals Notes" value={(formState.standards_notes as string) ?? ''} />
+              </>
+            )}
+          </div>
+        </Section>
+      )}
 
       {/* Section 4: Dimensions Overview */}
+      {isSectionVisible('dimensions_overview') && (
       <Section
         title="Dimensions"
         description={`${activeDimensions.length} active dimension${activeDimensions.length !== 1 ? 's' : ''} across ${Object.keys(dimensionsByCategory).length} categor${Object.keys(dimensionsByCategory).length !== 1 ? 'ies' : 'y'}`}
         icon={<Layers className="h-5 w-5 text-primary-500" />}
+        sectionKey="dimensions_overview"
+        visibility={effectiveVisibility}
+        onToggleVisibility={handleToggleVisibility}
+        canEdit={canEditSchoolProfile}
       >
         {activeDimensions.length === 0 ? (
           <div className="py-4 text-center">
@@ -548,18 +687,22 @@ export default function SchoolProfile() {
               </p>
             )}
 
-            <Link
-              to="/admin/dimensions"
-              className="inline-flex items-center gap-1 text-xs font-medium text-primary-500 hover:text-primary-600"
-            >
-              Manage dimensions
-              <ExternalLink className="h-3 w-3" />
-            </Link>
+            {canEditSchoolProfile && (
+              <Link
+                to="/admin/dimensions"
+                className="inline-flex items-center gap-1 text-xs font-medium text-primary-500 hover:text-primary-600"
+              >
+                Manage dimensions
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            )}
           </div>
         )}
       </Section>
+      )}
 
       {/* Section 5: Standards Frameworks */}
+      {isSectionVisible('standards_frameworks') && (
       <Section
         title="Standards Frameworks"
         description={
@@ -568,6 +711,10 @@ export default function SchoolProfile() {
             : 'Learning standards linked to your dimensions'
         }
         icon={<ListTree className="h-5 w-5 text-primary-500" />}
+        sectionKey="standards_frameworks"
+        visibility={effectiveVisibility}
+        onToggleVisibility={handleToggleVisibility}
+        canEdit={canEditSchoolProfile}
       >
         {frameworks.length === 0 ? (
           <div className="py-4 text-center">
@@ -654,114 +801,144 @@ export default function SchoolProfile() {
               </div>
             ))}
 
-            <Link
-              to="/standards"
-              className="inline-flex items-center gap-1 text-xs font-medium text-primary-500 hover:text-primary-600"
-            >
-              Manage standards
-              <ExternalLink className="h-3 w-3" />
-            </Link>
+            {canEditSchoolProfile && (
+              <Link
+                to="/standards"
+                className="inline-flex items-center gap-1 text-xs font-medium text-primary-500 hover:text-primary-600"
+              >
+                Manage standards
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            )}
           </div>
         )}
       </Section>
+      )}
 
       {/* Section 6: Supporting Documents */}
+      {isSectionVisible('supporting_documents') && (
       <Section
         title="Supporting Documents"
-        description="Upload curriculum guides, standards documents, or pedagogical references"
+        description={canEditSchoolProfile
+          ? 'Upload curriculum guides, standards documents, or pedagogical references'
+          : 'Curriculum guides, standards documents, and pedagogical references'}
         icon={<FileUp className="h-5 w-5 text-primary-500" />}
+        sectionKey="supporting_documents"
+        visibility={effectiveVisibility}
+        onToggleVisibility={handleToggleVisibility}
+        canEdit={canEditSchoolProfile}
       >
-        {/* Upload area */}
-        <div
-          onDragOver={(e) => {
-            e.preventDefault()
-            setDragOver(true)
-          }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={handleDrop}
-          className={clsx(
-            'mb-4 rounded-lg border-2 border-dashed p-6 text-center transition-colors',
-            dragOver
-              ? 'border-primary-400 bg-primary-50'
-              : 'border-bg-muted bg-bg hover:border-primary-300'
-          )}
-        >
-          <Upload className="mx-auto h-8 w-8 text-text-light" />
-          <p className="mt-2 text-sm text-text-muted">
-            Drag &amp; drop files here, or{' '}
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="font-medium text-primary-500 hover:text-primary-600"
+        {canEditSchoolProfile ? (
+          <>
+            {/* Upload area */}
+            <div
+              onDragOver={(e) => {
+                e.preventDefault()
+                setDragOver(true)
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
+              className={clsx(
+                'mb-4 rounded-lg border-2 border-dashed p-6 text-center transition-colors',
+                dragOver
+                  ? 'border-primary-400 bg-primary-50'
+                  : 'border-bg-muted bg-bg hover:border-primary-300'
+              )}
             >
-              browse
-            </button>
-          </p>
-          <p className="mt-1 text-xs text-text-light">
-            PDF, DOCX, images — up to 10 MB each
-          </p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg"
-            onChange={(e) => {
-              if (e.target.files) handleFileUpload(e.target.files)
-            }}
-            className="hidden"
-          />
-        </div>
-
-        {/* Description for next upload */}
-        <div className="mb-4">
-          <input
-            type="text"
-            value={uploadDesc}
-            onChange={(e) => setUploadDesc(e.target.value)}
-            placeholder="Optional description for next upload…"
-            className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100"
-          />
-        </div>
-
-        {/* Uploading indicator */}
-        {uploading && (
-          <div className="mb-4 flex items-center gap-2 text-sm text-text-muted">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Uploading…
-          </div>
-        )}
-
-        {/* Document list */}
-        {documents.length === 0 ? (
-          <p className="py-4 text-center text-sm text-text-light">
-            No documents uploaded yet. Upload curriculum guides, standards, or
-            pedagogical reference materials.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {documents.map((doc) => (
-              <DocumentCard
-                key={doc.id}
-                doc={doc}
-                onDelete={() => deleteDocument(doc)}
-                onUpdateDescription={(desc) =>
-                  updateDocumentDescription(doc.id, desc)
-                }
+              <Upload className="mx-auto h-8 w-8 text-text-light" />
+              <p className="mt-2 text-sm text-text-muted">
+                Drag &amp; drop files here, or{' '}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="font-medium text-primary-500 hover:text-primary-600"
+                >
+                  browse
+                </button>
+              </p>
+              <p className="mt-1 text-xs text-text-light">
+                PDF, DOCX, images — up to 10 MB each
+              </p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg"
+                onChange={(e) => {
+                  if (e.target.files) handleFileUpload(e.target.files)
+                }}
+                className="hidden"
               />
-            ))}
-          </div>
+            </div>
+
+            {/* Description for next upload */}
+            <div className="mb-4">
+              <input
+                type="text"
+                value={uploadDesc}
+                onChange={(e) => setUploadDesc(e.target.value)}
+                placeholder="Optional description for next upload…"
+                className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              />
+            </div>
+
+            {/* Uploading indicator */}
+            {uploading && (
+              <div className="mb-4 flex items-center gap-2 text-sm text-text-muted">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Uploading…
+              </div>
+            )}
+
+            {/* Document list (editable) */}
+            {documents.length === 0 ? (
+              <p className="py-4 text-center text-sm text-text-light">
+                No documents uploaded yet. Upload curriculum guides, standards, or
+                pedagogical reference materials.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {documents.map((doc) => (
+                  <DocumentCard
+                    key={doc.id}
+                    doc={doc}
+                    onDelete={() => deleteDocument(doc)}
+                    onUpdateDescription={(desc) =>
+                      updateDocumentDescription(doc.id, desc)
+                    }
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          /* Read-only document list */
+          documents.length === 0 ? (
+            <p className="py-4 text-center text-sm text-text-light">
+              No documents available.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {documents.map((doc) => (
+                <ReadOnlyDocumentCard key={doc.id} doc={doc} />
+              ))}
+            </div>
+          )
         )}
       </Section>
+      )}
 
-      {/* Info note */}
-      <div className="rounded-lg bg-primary-50 px-4 py-3">
-        <p className="text-xs leading-relaxed text-primary-700">
-          <span className="font-semibold">How this is used:</span> When an educator
-          generates AI learning suggestions for a student, your school's pedagogical
-          context — including mission, teaching methodologies, dimensions, and standards
-          — is included so suggestions align with your school's unique philosophy and
-          curriculum framework.
-        </p>
-      </div>
+      {/* Info note (admin only) */}
+      {canEditSchoolProfile && (
+        <div className="rounded-lg bg-primary-50 px-4 py-3">
+          <p className="text-xs leading-relaxed text-primary-700">
+            <span className="font-semibold">How this is used:</span> When an educator
+            generates AI learning suggestions for a student, your school's pedagogical
+            context — including mission, teaching methodologies, dimensions, and standards
+            — is included so suggestions align with your school's unique philosophy and
+            curriculum framework.
+          </p>
+        </div>
+      )}
     </div>
   )
 }

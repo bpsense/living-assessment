@@ -123,11 +123,16 @@ function flattenStandards(
   parent_id: string | null
   display_order: number
 }[] {
-  const result: typeof flattenStandards extends (
-    ...args: unknown[]
-  ) => infer R
-    ? R
-    : never = []
+  const result: {
+    id: string
+    framework_id: string
+    school_id: string
+    code: string
+    description: string
+    grade_level: string | null
+    parent_id: string | null
+    display_order: number
+  }[] = []
 
   for (const node of nodes) {
     const id = crypto.randomUUID()

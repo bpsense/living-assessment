@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import { useAccessControl } from '../lib/access-control'
 import { useToast } from '../components/Toast'
 import type { Student, Classroom } from '../types/database'
 
@@ -29,6 +30,7 @@ interface StudentRow extends Student {
 
 export default function Students() {
   const { profile } = useAuth()
+  const { role, canEditStudents, canViewAllStudents, isDepartmentAdmin, departmentAdminIds, isReadOnly, formatStudentName } = useAccessControl()
   const navigate = useNavigate()
   const { toast } = useToast()
   const [students, setStudents] = useState<StudentRow[]>([])
@@ -56,16 +58,110 @@ export default function Students() {
     setLoading(true)
 
     try {
-      const [classroomRes, studentRes, obsRes] = await Promise.all([
-        supabase
+      // 1. Determine which classrooms the user can see
+      let accessibleClassroomIds: string[] | null = null // null = all
+
+      if (role === 'parent') {
+        // Parents see only their linked students (fetch via parent_students)
+        const { data: linkedData } = await supabase
+          .from('parent_students')
+          .select('student_id')
+          .eq('parent_id', profile.id)
+
+        const linkedStudentIds = (linkedData ?? []).map((r) => (r as { student_id: string }).student_id)
+
+        if (linkedStudentIds.length === 0) {
+          setStudents([])
+          setClassrooms([])
+          setLoading(false)
+          return
+        }
+
+        // Fetch only linked students
+        const { data: linkedStudents } = await supabase
+          .from('students')
+          .select('*')
+          .in('id', linkedStudentIds)
+          .order('last_name')
+
+        const studs = (linkedStudents ?? []) as Student[]
+        const classIds = [...new Set(studs.map((s) => s.classroom_id))]
+
+        const { data: classroomData } = await supabase
           .from('classrooms')
           .select('*')
+          .in('id', classIds)
+
+        const rooms = (classroomData ?? []) as Classroom[]
+        setClassrooms(rooms)
+
+        const classroomMap = new Map(rooms.map((c) => [c.id, c.name]))
+
+        setStudents(
+          studs.map((s) => ({
+            ...s,
+            classroom_name: classroomMap.get(s.classroom_id) ?? 'Unknown',
+            observation_count: 0, // Parents don't need obs counts in the list
+          }))
+        )
+        setLoading(false)
+        return
+      }
+
+      if (role === 'educator' && !canViewAllStudents) {
+        // Educators see only students in their assigned classrooms
+        const { data: ecData } = await supabase
+          .from('educator_classrooms')
+          .select('classroom_id')
+          .eq('educator_id', profile.id)
+
+        accessibleClassroomIds = (ecData ?? []).map((r) => (r as { classroom_id: string }).classroom_id)
+      } else if (isDepartmentAdmin && !canViewAllStudents) {
+        // Department admins see students in their department classrooms
+        const { data: deptClassrooms } = await supabase
+          .from('classrooms')
+          .select('id')
           .eq('school_id', profile.school_id)
-          .order('name'),
+          .in('department_id', departmentAdminIds)
+
+        accessibleClassroomIds = (deptClassrooms ?? []).map((r) => (r as { id: string }).id)
+      }
+
+      // 2. Fetch classrooms
+      let classroomQuery = supabase
+        .from('classrooms')
+        .select('*')
+        .eq('school_id', profile.school_id)
+        .order('name')
+
+      if (accessibleClassroomIds !== null) {
+        if (accessibleClassroomIds.length === 0) {
+          setStudents([])
+          setClassrooms([])
+          setLoading(false)
+          return
+        }
+        classroomQuery = classroomQuery.in('id', accessibleClassroomIds)
+      }
+
+      const { data: classroomData } = await classroomQuery
+      const rooms = (classroomData ?? []) as Classroom[]
+      setClassrooms(rooms)
+
+      if (rooms.length === 0) {
+        setStudents([])
+        setLoading(false)
+        return
+      }
+
+      const roomIds = rooms.map((r) => r.id)
+
+      // 3. Fetch students and observations
+      const [studentRes, obsRes] = await Promise.all([
         supabase
           .from('students')
           .select('*')
-          .eq('school_id', profile.school_id)
+          .in('classroom_id', roomIds)
           .order('last_name'),
         supabase
           .from('observations')
@@ -73,11 +169,8 @@ export default function Students() {
           .eq('school_id', profile.school_id),
       ])
 
-      const rooms = (classroomRes.data ?? []) as Classroom[]
       const studs = (studentRes.data ?? []) as Student[]
       const obs = (obsRes.data ?? []) as { id: string; student_id: string }[]
-
-      setClassrooms(rooms)
 
       const classroomMap = new Map(rooms.map((c) => [c.id, c.name]))
       const obsCounts = new Map<string, number>()
@@ -186,19 +279,23 @@ export default function Students() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-text">Learners</h1>
+          <h1 className="text-2xl font-bold text-text">
+            {role === 'parent' ? 'My Children' : 'Learners'}
+          </h1>
           <p className="mt-1 text-sm text-text-muted">
             {students.length} learner{students.length !== 1 ? 's' : ''} across{' '}
             {classrooms.length} classroom{classrooms.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <button
-          onClick={openAddForm}
-          className="flex items-center gap-2 rounded-lg bg-primary-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-600"
-        >
-          <Plus className="h-4 w-4" />
-          Add Learner
-        </button>
+        {canEditStudents && !isReadOnly && (
+          <button
+            onClick={openAddForm}
+            className="flex items-center gap-2 rounded-lg bg-primary-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-600"
+          >
+            <Plus className="h-4 w-4" />
+            Add Learner
+          </button>
+        )}
       </div>
 
       {/* Search */}
@@ -321,12 +418,15 @@ export default function Students() {
                 <th className="hidden px-4 py-3 text-left font-medium text-text-muted sm:table-cell">
                   Grade
                 </th>
-                <th className="px-4 py-3 text-center font-medium text-text-muted">Obs</th>
+                {role !== 'parent' && (
+                  <th className="px-4 py-3 text-center font-medium text-text-muted">Obs</th>
+                )}
                 <th className="px-4 py-3 text-right font-medium text-text-muted">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((student) => {
+                const displayName = formatStudentName(student.first_name, student.last_name)
                 const initials =
                   `${student.first_name[0]}${student.last_name[0]}`.toUpperCase()
                 return (
@@ -344,7 +444,7 @@ export default function Students() {
                             onClick={() => navigate(`/student/${student.id}`)}
                             className="font-medium text-text hover:text-primary-600"
                           >
-                            {student.first_name} {student.last_name}
+                            {displayName}
                           </button>
                           <p className="text-xs text-text-light sm:hidden">
                             {student.classroom_name}
@@ -358,25 +458,31 @@ export default function Students() {
                     <td className="hidden px-4 py-3 text-text-muted sm:table-cell">
                       {student.grade_level ?? '—'}
                     </td>
-                    <td className="px-4 py-3 text-center text-text-muted">
-                      {student.observation_count}
-                    </td>
+                    {role !== 'parent' && (
+                      <td className="px-4 py-3 text-center text-text-muted">
+                        {student.observation_count}
+                      </td>
+                    )}
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => navigate(`/student/${student.id}/observe`)}
-                          title="Record observation"
-                          className="rounded-lg p-1.5 text-text-light transition-colors hover:bg-primary-50 hover:text-primary-600"
-                        >
-                          <ClipboardPen className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => openEditForm(student)}
-                          title="Edit learner"
-                          className="rounded-lg p-1.5 text-text-light transition-colors hover:bg-bg-muted hover:text-text"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
+                        {canEditStudents && !isReadOnly && (
+                          <>
+                            <button
+                              onClick={() => navigate(`/student/${student.id}/observe`)}
+                              title="Record observation"
+                              className="rounded-lg p-1.5 text-text-light transition-colors hover:bg-primary-50 hover:text-primary-600"
+                            >
+                              <ClipboardPen className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => openEditForm(student)}
+                              title="Edit learner"
+                              className="rounded-lg p-1.5 text-text-light transition-colors hover:bg-bg-muted hover:text-text"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

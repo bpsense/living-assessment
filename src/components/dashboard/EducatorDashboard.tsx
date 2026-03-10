@@ -5,7 +5,6 @@ import {
   Users,
   ClipboardPen,
   AlertTriangle,
-  TrendingUp,
   Eye,
   ArrowRight,
   Clock,

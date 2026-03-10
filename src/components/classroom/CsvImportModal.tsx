@@ -155,7 +155,7 @@ export default function CsvImportModal({
   }
 
   function goToPreview() {
-    const errors = runValidation()
+    runValidation()
     setStep('preview')
   }
 

@@ -257,7 +257,6 @@ export function smoothSnapshots(
 ): Snapshot[] {
   if (snapshots.length <= 1) return snapshots
 
-  const n = snapshots.length
   const dimCount = snapshots[0].dimensionScores.length
   if (dimCount === 0) return snapshots
 

@@ -25,7 +25,7 @@ export default function FamilyView() {
       })
   }, [parentId])
 
-  const dashData = useParentDashboard(parentId)
+  const dashData = useParentDashboard(null, parentId)
 
   if (loadingName || dashData.loading) {
     return (

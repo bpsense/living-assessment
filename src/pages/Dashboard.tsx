@@ -11,14 +11,15 @@ import {
 import EducatorDashboard from '../components/dashboard/EducatorDashboard'
 import ParentDashboard from '../components/dashboard/ParentDashboard'
 import AdminDashboard from '../components/dashboard/AdminDashboard'
+import SystemDashboard from './system/SystemDashboard'
 
 // ============================================================
 // Role-specific wrappers (each calls its own data hook)
 // ============================================================
 
 function EducatorView() {
-  const { profile } = useAuth()
-  const data = useEducatorDashboard(profile)
+  const { profile, viewAsUserId, viewAsUserName } = useAuth()
+  const data = useEducatorDashboard(profile, viewAsUserId ?? undefined)
 
   if (data.loading) return <DashboardSkeleton />
   if (data.error) return <DashboardError message={data.error} />
@@ -26,14 +27,14 @@ function EducatorView() {
   return (
     <EducatorDashboard
       data={data}
-      userName={profile?.full_name ?? 'Educator'}
+      userName={viewAsUserName ?? profile?.full_name ?? 'Educator'}
     />
   )
 }
 
 function ParentView() {
-  const { profile } = useAuth()
-  const data = useParentDashboard(profile)
+  const { profile, viewAsUserId, viewAsUserName } = useAuth()
+  const data = useParentDashboard(profile, viewAsUserId ?? undefined)
 
   if (data.loading) return <DashboardSkeleton />
   if (data.error) return <DashboardError message={data.error} />
@@ -41,7 +42,7 @@ function ParentView() {
   return (
     <ParentDashboard
       data={data}
-      userName={profile?.full_name ?? 'Family'}
+      userName={viewAsUserName ?? profile?.full_name ?? 'Family'}
     />
   )
 }
@@ -170,7 +171,7 @@ function ProfileSetupNeeded() {
 // ============================================================
 
 export default function Dashboard() {
-  const { profile, loading, user } = useAuth()
+  const { profile, loading, user, isSystemAdmin, activeSchoolId } = useAuth()
 
   // Still checking auth / fetching profile
   if (loading) {
@@ -185,6 +186,16 @@ export default function Dashboard() {
   // Not authenticated (shouldn't happen if ProtectedRoute works)
   if (!profile) {
     return <DashboardSkeleton />
+  }
+
+  // System admin with "All Schools" view
+  if (isSystemAdmin && activeSchoolId === null) {
+    return <SystemDashboard />
+  }
+
+  // System admin viewing a specific school — show that school's admin dashboard
+  if (isSystemAdmin) {
+    return <AdminView />
   }
 
   switch (profile.role) {

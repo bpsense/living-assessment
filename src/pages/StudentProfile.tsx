@@ -4,12 +4,14 @@ import { differenceInYears } from 'date-fns'
 import { Loader2, AlertCircle, ClipboardPen, ClipboardList, ArrowLeft, TrendingUp, FileDown, Eye, EyeOff, Copy, Check } from 'lucide-react'
 import { useStudentProfile } from '../lib/student-data'
 import { useAuth } from '../lib/auth'
+import { useAccessControl } from '../lib/access-control'
 import { useToast } from '../components/Toast'
 import { supabase } from '../lib/supabase'
 import { buildSnapshots, getSnapshotObservationDate, smoothSnapshots } from '../lib/living-data'
 import LivingVisualization from '../components/student/LivingVisualization'
 import ZoneMatrix from '../components/student/ZoneMatrix'
 import AILearningGuide from '../components/student/AILearningGuide'
+import FamilySupportGuide from '../components/student/FamilySupportGuide'
 import DimensionCard from '../components/student/DimensionCard'
 import Timeline from '../components/student/Timeline'
 import SISSection from '../components/student/SISSection'
@@ -53,7 +55,8 @@ function StudentAvatar({
 export default function StudentProfile() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { profile } = useAuth()
+  useAuth()
+  const { role, formatStudentName } = useAccessControl()
   const { toast } = useToast()
   const [launchingSurvey, setLaunchingSurvey] = useState(false)
   const [showSISEdit, setShowSISEdit] = useState(false)
@@ -73,7 +76,6 @@ export default function StudentProfile() {
     refetch,
   } = useStudentProfile(id)
 
-  const role = profile?.role ?? 'educator'
   const isFamilyView = role === 'parent'
 
   // Filter dimensions for family view — only show those marked visible_to_family
@@ -251,7 +253,7 @@ export default function StudentProfile() {
               <StudentAvatar student={student} />
               <div>
                 <h1 className="text-xl font-bold text-text">
-                  {student.first_name} {student.last_name}
+                  {formatStudentName(student.first_name, student.last_name)}
                 </h1>
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-muted">
                   {classroom && <span>{classroom.name}</span>}
@@ -375,6 +377,20 @@ export default function StudentProfile() {
         <ParentNotes studentId={student.id} schoolId={student.school_id} editable={true} />
       )}
 
+      {/* ========== FAMILY SUPPORT GUIDE (family view) ========== */}
+      {isFamilyView && student && (
+        <section>
+          <FamilySupportGuide
+            studentId={student.id}
+            schoolId={student.school_id}
+            studentName={student.first_name}
+            gradeLevel={student.grade_level}
+            dimensionScores={filteredDimensionScores}
+            mode="family"
+          />
+        </section>
+      )}
+
       {/* SIS Edit Modal */}
       {showSISEdit && (
         <SISEditModal
@@ -414,59 +430,69 @@ export default function StudentProfile() {
         </section>
       )}
 
+      {/* ========== FAMILY SUPPORT GUIDE — admin view (educator/admin only) ========== */}
+      {!isFamilyView && student && (
+        <section>
+          <FamilySupportGuide
+            studentId={student.id}
+            schoolId={student.school_id}
+            studentName={student.first_name}
+            gradeLevel={student.grade_level}
+            dimensionScores={dimensionScores}
+            mode="admin"
+          />
+        </section>
+      )}
+
       {/* ========== STUDENT CONTEXT DOCUMENT (educator/admin only) ========== */}
       {!isFamilyView && student && (
         <StudentContextDoc studentId={student.id} schoolId={student.school_id} />
       )}
 
-      {/* ========== DIMENSION CARDS ========== */}
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-text">
-            {isFamilyView ? 'Areas of Learning' : 'Dimensions'}
-          </h2>
-          {!isFamilyView && (
+      {/* ========== DIMENSION CARDS (educator/admin only) ========== */}
+      {!isFamilyView && (
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-text">Dimensions</h2>
             <p className="text-xs text-text-muted">
               Click a competency level to quick-rate
             </p>
-          )}
-        </div>
-
-        {/* Historical period banner for dimension cards */}
-        {isHistorical && !isFamilyView && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg bg-accent-50 px-4 py-2">
-            <TrendingUp className="h-4 w-4 text-accent-600" />
-            <span className="text-xs font-medium text-accent-700">
-              Viewing {observationPeriodLabel} — click a competency level to back-date an observation
-            </span>
-            <button
-              onClick={() => {
-                setPlaying(false)
-                setSnapshotIdx(snapshots.length - 1)
-              }}
-              className="ml-auto text-xs font-semibold text-accent-600 hover:text-accent-700"
-            >
-              Jump to now →
-            </button>
           </div>
-        )}
 
-        <div className="grid gap-4 md:grid-cols-2">
-          {displayScoresForCards.map((score) => (
-            <DimensionCard
-              key={score.dimension_id}
-              score={score}
-              studentId={student.id}
-              {...(!isFamilyView && {
-                schoolId: student.school_id,
-                observationDate: observationDate,
-                observationPeriodLabel: observationPeriodLabel,
-                onObservationCreated: handleObservationCreated,
-              })}
-            />
-          ))}
-        </div>
-      </section>
+          {/* Historical period banner for dimension cards */}
+          {isHistorical && (
+            <div className="mb-4 flex items-center gap-2 rounded-lg bg-accent-50 px-4 py-2">
+              <TrendingUp className="h-4 w-4 text-accent-600" />
+              <span className="text-xs font-medium text-accent-700">
+                Viewing {observationPeriodLabel} — click a competency level to back-date an observation
+              </span>
+              <button
+                onClick={() => {
+                  setPlaying(false)
+                  setSnapshotIdx(snapshots.length - 1)
+                }}
+                className="ml-auto text-xs font-semibold text-accent-600 hover:text-accent-700"
+              >
+                Jump to now →
+              </button>
+            </div>
+          )}
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {displayScoresForCards.map((score) => (
+              <DimensionCard
+                key={score.dimension_id}
+                score={score}
+                studentId={student.id}
+                schoolId={student.school_id}
+                observationDate={observationDate}
+                observationPeriodLabel={observationPeriodLabel}
+                onObservationCreated={handleObservationCreated}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ========== TIMELINE (educator/admin only) ========== */}
       {!isFamilyView && (

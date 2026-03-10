@@ -14,7 +14,6 @@ import {
   AlertCircle,
   ArrowLeft,
   Printer,
-  FileDown,
   TrendingUp,
   Trophy,
   Compass,

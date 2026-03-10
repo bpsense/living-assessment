@@ -49,7 +49,15 @@ Deno.serve(async (req: Request) => {
       .eq('id', user.id)
       .single()
 
-    if (!callerProfile || callerProfile.role !== 'admin') {
+    // Check if caller is a system admin
+    const { data: sysAdmin } = await anonClient
+      .from('system_admins')
+      .select('user_id')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    const isSystemAdmin = !!sysAdmin
+
+    if (!callerProfile || (callerProfile.role !== 'admin' && !isSystemAdmin)) {
       return jsonResponse({ error: 'Only admins can invite family members' })
     }
 
@@ -64,7 +72,8 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: 'email, full_name, and school_id are required' })
     }
 
-    if (callerProfile.school_id !== school_id) {
+    // System admins can invite to any school
+    if (!isSystemAdmin && callerProfile.school_id !== school_id) {
       return jsonResponse({ error: 'Cannot invite family members to a different school' })
     }
 

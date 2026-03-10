@@ -92,7 +92,7 @@ const LEVEL_LABEL: Record<number, string> = {
 export default function ClassroomPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { profile, actualRole } = useAuth()
+  const { actualRole } = useAuth()
   const { toast } = useToast()
   const {
     classroom,
@@ -833,8 +833,8 @@ function ClassInterestPulse({
                 borderRadius: 8,
                 border: '1px solid #F3F1EC',
               }}
-              formatter={(value: number) => [
-                `${value.toFixed(1)} / 5`,
+              formatter={(value: number | undefined) => [
+                `${(value ?? 0).toFixed(1)} / 5`,
                 'Avg Interest',
               ]}
             />

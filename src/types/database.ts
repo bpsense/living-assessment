@@ -35,6 +35,7 @@ export interface Classroom {
   school_id: string
   name: string
   grade_level: string | null
+  department_id: string | null
   created_at: string
   updated_at: string
 }
@@ -519,4 +520,109 @@ export interface LearningSuggestionsRow {
   prompt_version: string
   created_at: string
   updated_at: string
+}
+
+// ============================================================
+// Multi-School / System Admin
+// ============================================================
+
+export interface SystemAdmin {
+  user_id: string
+  created_at: string
+  created_by: string | null
+}
+
+// ============================================================
+// Departments / Locations
+// ============================================================
+
+export interface Department {
+  id: string
+  school_id: string
+  name: string
+  description: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type DepartmentInsert = Omit<Department, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  description?: string | null
+}
+
+export type DepartmentUpdate = Partial<Omit<Department, 'id' | 'school_id' | 'created_at' | 'updated_at'>>
+
+export interface DepartmentAdmin {
+  id: string
+  user_id: string
+  department_id: string
+  school_id: string
+  created_at: string
+}
+
+// ============================================================
+// Family Support AI Suggestions
+// ============================================================
+
+export type FamilySuggestionCategory =
+  | 'daily-routine'
+  | 'weekend-activity'
+  | 'reading'
+  | 'conversation'
+  | 'creative-play'
+  | 'outdoor'
+  | 'social'
+
+export interface FamilySuggestion {
+  id: string
+  category: FamilySuggestionCategory
+  dimension_name: string
+  title: string
+  description: string
+  why_it_helps: string
+  materials_needed: string
+}
+
+export interface EducatorNote {
+  note: string
+  author_id: string
+  author_name: string
+  updated_at: string
+}
+
+export interface FamilySupportRow {
+  id: string
+  school_id: string
+  student_id: string
+  zone_hash: string
+  zone_data: unknown
+  suggestions: FamilySuggestion[]
+  educator_notes: Record<string, EducatorNote>
+  requested_by: string
+  prompt_version: string
+  created_at: string
+  updated_at: string
+}
+
+// ============================================================
+// School Profile Visibility
+// ============================================================
+
+export type SchoolProfileSectionKey =
+  | 'school_identity'
+  | 'pedagogical_approach'
+  | 'curriculum_standards'
+  | 'dimensions_overview'
+  | 'standards_frameworks'
+  | 'supporting_documents'
+
+export type SchoolProfileVisibility = Record<SchoolProfileSectionKey, boolean>
+
+export const DEFAULT_PROFILE_VISIBILITY: SchoolProfileVisibility = {
+  school_identity: true,
+  pedagogical_approach: true,
+  curriculum_standards: true,
+  dimensions_overview: true,
+  standards_frameworks: true,
+  supporting_documents: true,
 }

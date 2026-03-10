@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
 import type { User, AuthError } from '@supabase/supabase-js'
 import { supabase } from './supabase'
-import type { Profile, UserRole } from '../types/database'
+import type { Profile, UserRole, School } from '../types/database'
 
 export interface AuthState {
   user: User | null
@@ -20,6 +20,24 @@ export interface AuthState {
   /** Override the active role for demo/testing — null means use real role */
   viewAsRole: UserRole | null
   setViewAsRole: (role: UserRole | null) => void
+  /** The impersonated user's profile ID (read-only view) */
+  viewAsUserId: string | null
+  /** Display name for the impersonated user */
+  viewAsUserName: string | null
+  /** Set the view-as role and optionally impersonate a specific user */
+  setViewAs: (role: UserRole | null, userId?: string | null, userName?: string | null) => void
+  /** Whether the authenticated user is a system admin */
+  isSystemAdmin: boolean
+  /** Department IDs where the user is a department admin */
+  departmentAdminIds: string[]
+  /** Whether the user is a department admin for at least one department */
+  isDepartmentAdmin: boolean
+  /** The currently active school context (for system admins switching schools). Null = "All Schools" view */
+  activeSchoolId: string | null
+  /** Set the active school (system admin only). Pass null for "All Schools" view */
+  setActiveSchool: (schoolId: string | null) => void
+  /** List of all schools (populated only for system admins) */
+  allSchools: School[]
 }
 
 export const AuthContext = createContext<AuthState | undefined>(undefined)
@@ -37,14 +55,28 @@ export function useAuthProvider(): AuthState {
   const [rawProfile, setRawProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [viewAsRole, setViewAsRole] = useState<UserRole | null>(null)
+  const [viewAsUserId, setViewAsUserId] = useState<string | null>(null)
+  const [viewAsUserName, setViewAsUserName] = useState<string | null>(null)
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false)
+  const [isSystemAdmin, setIsSystemAdmin] = useState(false)
+  const [departmentAdminIds, setDepartmentAdminIds] = useState<string[]>([])
+  const [activeSchoolId, setActiveSchoolId] = useState<string | null>(null)
+  const [allSchools, setAllSchools] = useState<School[]>([])
 
-  // When viewAsRole is set, return a profile copy with the overridden role
+  // Override profile fields based on viewAsRole and active school context
   const profile = useMemo(() => {
     if (!rawProfile) return null
-    if (!viewAsRole || viewAsRole === rawProfile.role) return rawProfile
-    return { ...rawProfile, role: viewAsRole }
-  }, [rawProfile, viewAsRole])
+    let p = rawProfile
+    // Override role for view-as mode
+    if (viewAsRole && viewAsRole !== rawProfile.role) {
+      p = { ...p, role: viewAsRole }
+    }
+    // Override school_id when system admin views a specific school
+    if (isSystemAdmin && activeSchoolId && activeSchoolId !== rawProfile.school_id) {
+      p = { ...p, school_id: activeSchoolId }
+    }
+    return p
+  }, [rawProfile, viewAsRole, isSystemAdmin, activeSchoolId])
 
   /**
    * Try to fetch the profile. If it doesn't exist, call the
@@ -61,6 +93,36 @@ export function useAuthProvider(): AuthState {
 
     if (!error && data) {
       setRawProfile(data as Profile)
+
+      // Parallel checks: system admin + department admin
+      const [sysAdminRes, deptAdminRes] = await Promise.all([
+        supabase
+          .from('system_admins')
+          .select('user_id')
+          .eq('user_id', userId)
+          .maybeSingle(),
+        supabase
+          .from('department_admins')
+          .select('department_id')
+          .eq('user_id', userId),
+      ])
+
+      const isSysAdmin = !!sysAdminRes.data
+      setIsSystemAdmin(isSysAdmin)
+
+      const deptIds = (deptAdminRes.data ?? []).map((d: { department_id: string }) => d.department_id)
+      setDepartmentAdminIds(deptIds)
+
+      if (isSysAdmin) {
+        // Fetch all schools for the switcher
+        const { data: schools } = await supabase
+          .from('schools')
+          .select('*')
+          .order('name')
+        setAllSchools((schools as School[]) ?? [])
+        // Default to user's own school
+        setActiveSchoolId(data.school_id)
+      }
       return
     }
 
@@ -165,6 +227,11 @@ export function useAuthProvider(): AuthState {
     setRawProfile(null)
     setIsPasswordRecovery(false)
     setViewAsRole(null)
+    setViewAsUserId(null)
+    setViewAsUserName(null)
+    setIsSystemAdmin(false)
+    setActiveSchoolId(null)
+    setAllSchools([])
   }, [])
 
   const resetPassword = useCallback(async (email: string) => {
@@ -186,7 +253,45 @@ export function useAuthProvider(): AuthState {
     setIsPasswordRecovery(false)
   }, [])
 
-  const actualRole = rawProfile?.role ?? null
+  const setViewAs = useCallback((role: UserRole | null, userId?: string | null, userName?: string | null) => {
+    setViewAsRole(role)
+    setViewAsUserId(userId ?? null)
+    setViewAsUserName(userName ?? null)
+  }, [])
 
-  return { user, profile, actualRole, loading, signIn, signInWithGoogle, signOut, resetPassword, updatePassword, isPasswordRecovery, clearPasswordRecovery, viewAsRole, setViewAsRole }
+  const setActiveSchool = useCallback((schoolId: string | null) => {
+    setActiveSchoolId(schoolId)
+    // Clear impersonation when switching schools
+    setViewAsRole(null)
+    setViewAsUserId(null)
+    setViewAsUserName(null)
+  }, [])
+
+  const actualRole = rawProfile?.role ?? null
+  const isDepartmentAdmin = departmentAdminIds.length > 0
+
+  return {
+    user,
+    profile,
+    actualRole,
+    loading,
+    signIn,
+    signInWithGoogle,
+    signOut,
+    resetPassword,
+    updatePassword,
+    isPasswordRecovery,
+    clearPasswordRecovery,
+    viewAsRole,
+    setViewAsRole,
+    viewAsUserId,
+    viewAsUserName,
+    setViewAs,
+    isSystemAdmin,
+    departmentAdminIds,
+    isDepartmentAdmin,
+    activeSchoolId,
+    setActiveSchool,
+    allSchools,
+  }
 }
