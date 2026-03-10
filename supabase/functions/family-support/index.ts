@@ -232,22 +232,40 @@ async function callClaude(
   prompt: string,
   apiKey: string
 ): Promise<FamilySuggestion[]> {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
-      messages: [{ role: 'user', content: prompt }],
-    }),
-  })
+  console.log('[family-support] Calling Claude API…')
+
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 60_000) // 60s timeout
+
+  let res: Response
+  try {
+    res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4096,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      signal: controller.signal,
+    })
+  } catch (fetchErr) {
+    clearTimeout(timeout)
+    if (fetchErr instanceof DOMException && fetchErr.name === 'AbortError') {
+      throw new Error('Claude API request timed out after 60 seconds')
+    }
+    throw new Error(`Claude API network error: ${fetchErr instanceof Error ? fetchErr.message : String(fetchErr)}`)
+  } finally {
+    clearTimeout(timeout)
+  }
 
   if (!res.ok) {
     const errorText = await res.text()
+    console.error(`[family-support] Claude API error ${res.status}:`, errorText)
     throw new Error(`Claude API error ${res.status}: ${errorText}`)
   }
 
@@ -257,10 +275,13 @@ async function callClaude(
   // Extract JSON array from response (Claude may occasionally wrap in markdown)
   const jsonMatch = text.match(/\[[\s\S]*\]/)
   if (!jsonMatch) {
+    console.error('[family-support] No JSON array in Claude response:', text.slice(0, 200))
     throw new Error('No JSON array found in Claude response')
   }
 
-  return JSON.parse(jsonMatch[0]) as FamilySuggestion[]
+  const suggestions = JSON.parse(jsonMatch[0]) as FamilySuggestion[]
+  console.log(`[family-support] Generated ${suggestions.length} suggestions`)
+  return suggestions
 }
 
 // ── Main handler ───────────────────────────────────────────────
@@ -304,6 +325,7 @@ Deno.serve(async (req) => {
 
     // 2. Parse body
     const body: RequestBody = await req.json()
+    console.log(`[family-support] Request from user=${user.id}, student=${body.student_id}, zones=${body.zones?.length ?? 0}`)
 
     if (!body.student_id || !body.school_id || !body.zones?.length) {
       return jsonResponse({ error: 'Missing required fields: student_id, school_id, zones' }, 400)
@@ -362,7 +384,7 @@ Deno.serve(async (req) => {
       .single()
 
     if (insertError) {
-      console.error('Cache insert failed:', insertError.message)
+      console.error('[family-support] Cache insert failed:', insertError.message, insertError.details)
     }
 
     return jsonResponse({

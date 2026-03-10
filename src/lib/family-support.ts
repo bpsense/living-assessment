@@ -134,7 +134,20 @@ export function useFamilySupport(
         }
       )
 
-      if (error) throw error
+      if (error) {
+        // supabase-js wraps non-2xx responses in FunctionsHttpError with a
+        // generic message. The actual error from the Edge Function is in the
+        // response body accessible via error.context.
+        let detail: string | undefined
+        try {
+          // error.context is the parsed response body (JSON) from the Edge Function
+          const ctx = (error as { context?: { error?: string } }).context
+          detail = ctx?.error
+        } catch {
+          // ignore — fall through to generic message
+        }
+        throw new Error(detail || error.message || 'Failed to generate suggestions')
+      }
 
       setState({
         suggestions: data.suggestions ?? [],
