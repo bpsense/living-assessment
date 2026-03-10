@@ -119,36 +119,35 @@ export function useFamilySupport(
         // Non-critical — continue without school context
       }
 
-      const { data, error } = await supabase.functions.invoke(
-        'family-support',
-        {
-          body: {
-            student_id: studentId,
-            school_id: schoolId,
-            student_name: studentName,
-            grade_level: gradeLevel ?? null,
-            zones,
-            school_context: schoolContext ?? null,
-            student_context: studentContext,
-          },
-        }
-      )
+      // Use direct fetch instead of supabase.functions.invoke so we can
+      // reliably read the response body on errors.
+      const supabaseUrl = (supabase as unknown as { supabaseUrl: string }).supabaseUrl
+        ?? import.meta.env.VITE_SUPABASE_URL as string
+      const session = (await supabase.auth.getSession()).data.session
+      const fnUrl = `${supabaseUrl}/functions/v1/family-support`
 
-      if (error) {
-        // supabase-js@2.98 wraps non-2xx responses in FunctionsHttpError.
-        // error.context is the raw Response object — read its body for the
-        // real error message returned by the Edge Function.
-        let detail: string | undefined
-        try {
-          const ctx = (error as { context?: Response }).context
-          if (ctx && typeof ctx.json === 'function') {
-            const body = await ctx.json()
-            detail = body?.error
-          }
-        } catch {
-          // ignore — fall through to generic message
-        }
-        throw new Error(detail || error.message || 'Failed to generate suggestions')
+      const res = await fetch(fnUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token ?? ''}`,
+          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY as string,
+        },
+        body: JSON.stringify({
+          student_id: studentId,
+          school_id: schoolId,
+          student_name: studentName,
+          grade_level: gradeLevel ?? null,
+          zones,
+          school_context: schoolContext ?? null,
+          student_context: studentContext,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data?.error ?? `Edge Function error ${res.status}`)
       }
 
       setState({
