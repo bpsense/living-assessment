@@ -3,28 +3,40 @@
  * System admins: see all users across schools.
  * School admins: see all users in their school.
  * Dept admins: see educators/families/learners in their department scope.
+ *
+ * Features:
+ * - Invite new users at any role (admin, educator, parent, learner)
+ * - Inline editing of name and role
+ * - Department admin assignment / removal for educators
+ * - Deactivate / reactivate users
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Users as UsersIcon,
   Search,
   UserX,
   UserCheck,
+  UserPlus,
   ChevronDown,
+  ChevronUp,
   Loader2,
   AlertTriangle,
   Shield,
   MapPin,
+  X,
+  Plus,
 } from 'lucide-react'
 import { useAuth } from '../../lib/auth'
 import { useAccessControl } from '../../lib/access-control'
 import { useUserManagement, type ManagedUser } from '../../lib/user-management'
 import { useActiveSchoolId } from '../../lib/school-context'
+import { inviteUser } from '../../lib/invite-user'
+import { supabase } from '../../lib/supabase'
 import type { UserRole, AccessLevel } from '../../types/database'
 
 const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
-  { value: 'admin', label: 'Admin' },
+  { value: 'admin', label: 'School Admin' },
   { value: 'educator', label: 'Educator' },
   { value: 'parent', label: 'Family' },
   { value: 'learner', label: 'Learner' },
@@ -48,36 +60,74 @@ const ACCESS_LEVEL_COLORS: Record<number, string> = {
   6: 'bg-alert-50 text-alert-700',
 }
 
+/** Minimum access level required to invite a given role */
+function minLevelToInvite(role: UserRole): number {
+  return role === 'admin' ? 5 : 4
+}
+
 export default function UsersPage() {
   const { isSystemAdmin, allSchools } = useAuth()
-  const { accessLevel, canChangeRoles, canDeactivateUsers, canManageUser } = useAccessControl()
+  const { accessLevel, canInviteUsers, canChangeRoles, canDeactivateUsers, canManageUser } = useAccessControl()
   const activeSchoolId = useActiveSchoolId() ?? null
 
+  // ── Filters ──────────────────────────────────────────────
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<UserRole | null>(null)
   const [showInactive, setShowInactive] = useState(false)
+
+  // ── Action state ─────────────────────────────────────────
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
-  // Editing state
+  // ── Editing state ────────────────────────────────────────
   const [editingUser, setEditingUser] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editRole, setEditRole] = useState<UserRole>('educator')
+
+  // ── Invite form state ────────────────────────────────────
+  const [showInvite, setShowInvite] = useState(false)
+  const [inviteName, setInviteName] = useState('')
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteRole, setInviteRole] = useState<UserRole>('educator')
+  const [inviteDeptId, setInviteDeptId] = useState<string>('')
+  const [inviting, setInviting] = useState(false)
+  const [inviteSuccess, setInviteSuccess] = useState<string | null>(null)
+
+  // ── Department data (for invite form + inline management) ──
+  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([])
+  const [deptDropdownUser, setDeptDropdownUser] = useState<string | null>(null)
 
   const {
     users,
     loading,
     error,
+    refresh,
     updateProfile,
     changeRole,
     deactivateUser,
     reactivateUser,
+    assignToDepartment,
+    removeFromDepartment,
   } = useUserManagement({
     schoolId: activeSchoolId,
     role: roleFilter,
     search: search || undefined,
     includeInactive: showInactive,
   })
+
+  // Fetch departments for the current school
+  useEffect(() => {
+    const schoolId = activeSchoolId
+    if (!schoolId) { setDepartments([]); return }
+    supabase
+      .from('departments')
+      .select('id, name')
+      .eq('school_id', schoolId)
+      .order('name')
+      .then(({ data }) => setDepartments(data ?? []))
+  }, [activeSchoolId])
+
+  // ── Handlers ─────────────────────────────────────────────
 
   const handleDeactivate = useCallback(async (userId: string) => {
     setActionLoading(userId)
@@ -110,45 +160,202 @@ export default function UsersPage() {
     setActionLoading(user.id)
     setActionError(null)
 
-    // Update name if changed
     if (editName !== user.full_name) {
       const result = await updateProfile(user.id, { full_name: editName })
-      if (result.error) {
-        setActionError(result.error)
-        setActionLoading(null)
-        return
-      }
+      if (result.error) { setActionError(result.error); setActionLoading(null); return }
     }
 
-    // Update role if changed
     if (editRole !== user.role) {
       const result = await changeRole(user.id, editRole)
-      if (result.error) {
-        setActionError(result.error)
-        setActionLoading(null)
-        return
-      }
+      if (result.error) { setActionError(result.error); setActionLoading(null); return }
     }
 
     setEditingUser(null)
     setActionLoading(null)
   }, [editName, editRole, updateProfile, changeRole])
 
+  const handleInvite = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!activeSchoolId || !inviteName.trim() || !inviteEmail.trim()) return
+
+    setInviting(true)
+    setActionError(null)
+    setInviteSuccess(null)
+
+    const { error: err } = await inviteUser({
+      email: inviteEmail.trim(),
+      fullName: inviteName.trim(),
+      schoolId: activeSchoolId,
+      role: inviteRole,
+      departmentId: inviteRole === 'educator' && inviteDeptId ? inviteDeptId : undefined,
+    })
+
+    if (err) {
+      setActionError(err)
+    } else {
+      const roleLabel = ROLE_OPTIONS.find(o => o.value === inviteRole)?.label ?? inviteRole
+      setInviteSuccess(`Invitation sent to ${inviteEmail.trim()} as ${roleLabel}`)
+      setInviteName('')
+      setInviteEmail('')
+      setInviteRole('educator')
+      setInviteDeptId('')
+      setShowInvite(false)
+      refresh()
+    }
+    setInviting(false)
+  }, [activeSchoolId, inviteName, inviteEmail, inviteRole, inviteDeptId, refresh])
+
+  const handleAssignDept = useCallback(async (userId: string, deptId: string) => {
+    if (!activeSchoolId) return
+    setActionLoading(userId)
+    setActionError(null)
+    const result = await assignToDepartment(userId, deptId, activeSchoolId)
+    if (result.error) setActionError(result.error)
+    setDeptDropdownUser(null)
+    setActionLoading(null)
+  }, [activeSchoolId, assignToDepartment])
+
+  const handleRemoveDept = useCallback(async (userId: string, deptId: string) => {
+    setActionLoading(userId)
+    setActionError(null)
+    const result = await removeFromDepartment(userId, deptId)
+    if (result.error) setActionError(result.error)
+    setActionLoading(null)
+  }, [removeFromDepartment])
+
+  // Roles the current user can invite
+  const inviteRoleOptions = ROLE_OPTIONS.filter(opt => accessLevel >= minLevelToInvite(opt.value))
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-text">User Management</h1>
-        <p className="mt-1 text-sm text-text-muted">
-          {isSystemAdmin && !activeSchoolId
-            ? 'All users across all schools'
-            : 'Manage users in this school'}
-        </p>
+      {/* ── Header ─────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-text">User Management</h1>
+          <p className="mt-1 text-sm text-text-muted">
+            {isSystemAdmin && !activeSchoolId
+              ? 'All users across all schools'
+              : 'Manage users in this school'}
+          </p>
+        </div>
+        {canInviteUsers && activeSchoolId && (
+          <button
+            onClick={() => { setShowInvite(v => !v); setInviteSuccess(null); setActionError(null) }}
+            className="flex items-center gap-2 rounded-lg bg-primary-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-600"
+          >
+            {showInvite ? <ChevronUp className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+            {showInvite ? 'Close' : 'Invite User'}
+          </button>
+        )}
       </div>
 
-      {/* Filters bar */}
+      {/* ── Invite form ─────────────────────────────────────── */}
+      {showInvite && activeSchoolId && (
+        <form
+          onSubmit={handleInvite}
+          className="rounded-xl border border-primary-200 bg-primary-50/30 p-5 shadow-sm"
+        >
+          <h2 className="mb-4 text-sm font-semibold text-text">Invite New User</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Full Name */}
+            <div>
+              <label className="mb-1 block text-xs font-medium text-text-muted">Full Name</label>
+              <input
+                type="text"
+                required
+                value={inviteName}
+                onChange={e => setInviteName(e.target.value)}
+                placeholder="Jane Smith"
+                className="w-full rounded-lg border border-bg-muted bg-bg-card px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-300"
+              />
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="mb-1 block text-xs font-medium text-text-muted">Email</label>
+              <input
+                type="email"
+                required
+                value={inviteEmail}
+                onChange={e => setInviteEmail(e.target.value)}
+                placeholder="jane@school.edu"
+                className="w-full rounded-lg border border-bg-muted bg-bg-card px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-300"
+              />
+            </div>
+
+            {/* Role selector */}
+            <div>
+              <label className="mb-1 block text-xs font-medium text-text-muted">Role</label>
+              <div className="relative">
+                <select
+                  value={inviteRole}
+                  onChange={e => { setInviteRole(e.target.value as UserRole); setInviteDeptId('') }}
+                  className="w-full appearance-none rounded-lg border border-bg-muted bg-bg-card px-3 py-2 pr-8 text-sm text-text focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-300"
+                >
+                  {inviteRoleOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
+              </div>
+            </div>
+
+            {/* Department picker (only for educators) */}
+            {inviteRole === 'educator' && departments.length > 0 && (
+              <div>
+                <label className="mb-1 block text-xs font-medium text-text-muted">
+                  Department <span className="font-normal text-text-light">(optional — makes them Dept Admin)</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={inviteDeptId}
+                    onChange={e => setInviteDeptId(e.target.value)}
+                    className="w-full appearance-none rounded-lg border border-bg-muted bg-bg-card px-3 py-2 pr-8 text-sm text-text focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-300"
+                  >
+                    <option value="">No department</option>
+                    {departments.map(d => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={inviting || !inviteName.trim() || !inviteEmail.trim()}
+              className="flex items-center gap-2 rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-600 disabled:opacity-50"
+            >
+              {inviting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+              Send Invite
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowInvite(false)}
+              className="rounded-lg px-4 py-2 text-sm font-medium text-text-muted hover:bg-bg-muted"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* ── Success banner ─────────────────────────────────── */}
+      {inviteSuccess && (
+        <div className="flex items-center gap-2 rounded-lg bg-success-50 px-4 py-3 text-sm text-success-700">
+          <UserCheck className="h-4 w-4 shrink-0" />
+          {inviteSuccess}
+          <button onClick={() => setInviteSuccess(null)} className="ml-auto">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {/* ── Filters bar ────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* Search */}
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
           <input
@@ -160,7 +367,6 @@ export default function UsersPage() {
           />
         </div>
 
-        {/* Role filter */}
         <div className="relative">
           <select
             value={roleFilter ?? ''}
@@ -175,7 +381,6 @@ export default function UsersPage() {
           <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
         </div>
 
-        {/* Show inactive toggle */}
         <label className="flex items-center gap-2 text-sm text-text-muted">
           <input
             type="checkbox"
@@ -187,15 +392,20 @@ export default function UsersPage() {
         </label>
       </div>
 
-      {/* Error banner */}
+      {/* ── Error banner ───────────────────────────────────── */}
       {(error || actionError) && (
         <div className="flex items-center gap-2 rounded-lg bg-alert-50 px-4 py-3 text-sm text-alert-700">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           {error || actionError}
+          {actionError && (
+            <button onClick={() => setActionError(null)} className="ml-auto">
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
       )}
 
-      {/* Users table */}
+      {/* ── Users table ────────────────────────────────────── */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
@@ -229,10 +439,13 @@ export default function UsersPage() {
                 const isEditing = editingUser === user.id
                 const canManage = canManageUser(user.computed_access_level)
                 const isLoading = actionLoading === user.id
+                const isEducator = user.role === 'educator'
+                const showDeptDropdown = deptDropdownUser === user.id
+                const unassignedDepts = departments.filter(d => !user.department_ids.includes(d.id))
 
                 return (
                   <tr key={user.id} className={`transition-colors hover:bg-bg-muted/30 ${!user.is_active ? 'opacity-60' : ''}`}>
-                    {/* Name */}
+                    {/* Name + Departments */}
                     <td className="px-4 py-3">
                       {isEditing ? (
                         <input
@@ -248,13 +461,79 @@ export default function UsersPage() {
                           </div>
                           <div>
                             <p className="font-medium text-text">{user.full_name}</p>
-                            {user.department_names.length > 0 && (
-                              <p className="flex items-center gap-1 text-xs text-text-light">
-                                <MapPin className="h-3 w-3" />
-                                {user.department_names.join(', ')}
-                              </p>
+                            {/* Department badges for educators */}
+                            {isEducator && user.department_names.length > 0 && (
+                              <div className="mt-0.5 flex flex-wrap items-center gap-1">
+                                <MapPin className="h-3 w-3 text-purple-500" />
+                                {user.department_ids.map((deptId, i) => (
+                                  <span key={deptId} className="inline-flex items-center gap-0.5 rounded-full bg-purple-50 px-1.5 py-0.5 text-[10px] font-medium text-purple-700">
+                                    {user.department_names[i]}
+                                    {canChangeRoles && canManage && (
+                                      <button
+                                        onClick={() => handleRemoveDept(user.id, deptId)}
+                                        className="ml-0.5 rounded-full p-0.5 hover:bg-purple-200"
+                                        title={`Remove from ${user.department_names[i]}`}
+                                      >
+                                        <X className="h-2.5 w-2.5" />
+                                      </button>
+                                    )}
+                                  </span>
+                                ))}
+                                {/* Add department button */}
+                                {canChangeRoles && canManage && unassignedDepts.length > 0 && (
+                                  <div className="relative">
+                                    <button
+                                      onClick={() => setDeptDropdownUser(showDeptDropdown ? null : user.id)}
+                                      className="inline-flex items-center gap-0.5 rounded-full bg-purple-50 px-1.5 py-0.5 text-[10px] font-medium text-purple-500 hover:bg-purple-100"
+                                      title="Add department"
+                                    >
+                                      <Plus className="h-2.5 w-2.5" />
+                                    </button>
+                                    {showDeptDropdown && (
+                                      <div className="absolute left-0 top-full z-20 mt-1 min-w-[160px] rounded-lg border border-bg-muted bg-bg-card py-1 shadow-lg">
+                                        {unassignedDepts.map(d => (
+                                          <button
+                                            key={d.id}
+                                            onClick={() => handleAssignDept(user.id, d.id)}
+                                            className="block w-full px-3 py-1.5 text-left text-xs text-text hover:bg-bg-muted"
+                                          >
+                                            {d.name}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             )}
-                            {user.classroom_names.length > 0 && (
+                            {/* Show "Add dept" for educators with no departments */}
+                            {isEducator && user.department_names.length === 0 && canChangeRoles && canManage && departments.length > 0 && (
+                              <div className="relative mt-0.5">
+                                <button
+                                  onClick={() => setDeptDropdownUser(showDeptDropdown ? null : user.id)}
+                                  className="inline-flex items-center gap-1 text-[10px] text-purple-500 hover:text-purple-700"
+                                  title="Assign as department admin"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                  Add department
+                                </button>
+                                {showDeptDropdown && (
+                                  <div className="absolute left-0 top-full z-20 mt-1 min-w-[160px] rounded-lg border border-bg-muted bg-bg-card py-1 shadow-lg">
+                                    {departments.map(d => (
+                                      <button
+                                        key={d.id}
+                                        onClick={() => handleAssignDept(user.id, d.id)}
+                                        className="block w-full px-3 py-1.5 text-left text-xs text-text hover:bg-bg-muted"
+                                      >
+                                        {d.name}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {/* Classroom names for regular educators */}
+                            {isEducator && user.classroom_names.length > 0 && user.department_names.length === 0 && (
                               <p className="text-xs text-text-light">
                                 {user.classroom_names.join(', ')}
                               </p>
@@ -276,7 +555,6 @@ export default function UsersPage() {
                           className="rounded border border-primary-300 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary-300"
                         >
                           {ROLE_OPTIONS.filter(opt => {
-                            // Only show roles below the current user's level
                             const optLevel = opt.value === 'admin' ? 5 : opt.value === 'educator' ? 3 : opt.value === 'parent' ? 2 : 1
                             return optLevel < accessLevel
                           }).map(opt => (
@@ -284,11 +562,11 @@ export default function UsersPage() {
                           ))}
                         </select>
                       ) : (
-                        <span className="capitalize">{user.role}</span>
+                        <span className="capitalize">{user.role === 'admin' ? 'School Admin' : user.role}</span>
                       )}
                     </td>
 
-                    {/* School (only for cross-school view) */}
+                    {/* School (cross-school view only) */}
                     {isSystemAdmin && !activeSchoolId && (
                       <td className="px-4 py-3 text-text-muted">{user.school_name ?? '—'}</td>
                     )}
@@ -371,7 +649,7 @@ export default function UsersPage() {
         </div>
       )}
 
-      {/* Summary */}
+      {/* ── Summary ────────────────────────────────────────── */}
       {!loading && users.length > 0 && (
         <p className="text-xs text-text-light">
           Showing {users.length} user{users.length !== 1 ? 's' : ''}

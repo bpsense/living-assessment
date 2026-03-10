@@ -13,6 +13,7 @@ export interface ManagedUser extends Profile {
   is_system_admin: boolean
   is_department_admin: boolean
   department_names: string[]
+  department_ids: string[]
   classroom_names: string[]
   /** Computed access level for this user */
   computed_access_level: AccessLevel
@@ -106,15 +107,16 @@ export function useUserManagement(filters: UserFilters = {}) {
       // Fetch department admin status
       const { data: deptAdmins } = await supabase
         .from('department_admins')
-        .select('user_id, departments(name)')
+        .select('user_id, department_id, departments(name)')
         .in('user_id', userIds)
 
-      const deptAdminMap = new Map<string, string[]>()
+      const deptAdminMap = new Map<string, { id: string; name: string }[]>()
       for (const da of deptAdmins ?? []) {
         const uid = (da as { user_id: string }).user_id
+        const deptId = (da as { department_id: string }).department_id
         const deptName = (da as { departments: { name: string } | null }).departments?.name
         if (!deptAdminMap.has(uid)) deptAdminMap.set(uid, [])
-        if (deptName) deptAdminMap.get(uid)!.push(deptName)
+        if (deptId && deptName) deptAdminMap.get(uid)!.push({ id: deptId, name: deptName })
       }
 
       // Fetch classroom assignments for educators
@@ -145,8 +147,9 @@ export function useUserManagement(filters: UserFilters = {}) {
           ...p,
           school_name: p.schools?.name ?? null,
           is_system_admin: isSysAdmin,
-          is_department_admin: isDeptAdmin,
-          department_names: deptAdminMap.get(p.id) ?? [],
+          is_department_admin: isDeptAdmin && (deptAdminMap.get(p.id)?.length ?? 0) > 0,
+          department_names: (deptAdminMap.get(p.id) ?? []).map(d => d.name),
+          department_ids: (deptAdminMap.get(p.id) ?? []).map(d => d.id),
           classroom_names: classroomMap.get(p.id) ?? [],
           computed_access_level: computeAccessLevel(p.role, isSysAdmin, isDeptAdmin),
         }
