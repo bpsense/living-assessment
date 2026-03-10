@@ -95,8 +95,8 @@ export function useAccessControl(): AccessControl {
     canManageUsers: accessLevel >= 4,
     // Level 4+ can deactivate users below them
     canDeactivateUsers: accessLevel >= 4,
-    // Level 5+ (school admin and up) can change roles
-    canChangeRoles: accessLevel >= 5,
+    // Level 4+ (dept admin and up) can change roles of users below them
+    canChangeRoles: accessLevel >= 4,
     // Level 5+ can use view-as
     canViewAsOtherRole: accessLevel >= 5,
     // Parent, learner, or impersonation mode = read-only

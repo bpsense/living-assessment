@@ -457,7 +457,6 @@ export default function UsersPage() {
                 <th className="px-4 py-3 text-left font-medium text-text-muted">Role</th>
                 <th className="px-4 py-3 text-left font-medium text-text-muted">School</th>
                 <th className="px-4 py-3 text-left font-medium text-text-muted">Department</th>
-                <th className="px-4 py-3 text-left font-medium text-text-muted">Access Level</th>
                 <th className="px-4 py-3 text-right font-medium text-text-muted">Actions</th>
               </tr>
             </thead>
@@ -504,9 +503,9 @@ export default function UsersPage() {
                     {/* Email */}
                     <td className="px-4 py-3 text-text-muted">{user.email}</td>
 
-                    {/* Role */}
+                    {/* Role (merged with access level) */}
                     <td className="px-4 py-3">
-                      {isEditing && canChangeRoles ? (
+                      {isEditing && canChangeRoles && canManage ? (
                         <select
                           value={editRole}
                           onChange={(e) => setEditRole(e.target.value as UserRole)}
@@ -520,12 +519,15 @@ export default function UsersPage() {
                           ))}
                         </select>
                       ) : (
-                        <span className="capitalize">{user.role === 'admin' ? 'School Admin' : user.role}</span>
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${ACCESS_LEVEL_COLORS[user.computed_access_level] ?? 'bg-gray-100 text-gray-600'}`}>
+                          {user.is_system_admin && <Shield className="h-3 w-3" />}
+                          {ACCESS_LEVEL_LABELS[user.computed_access_level] ?? `Level ${user.computed_access_level}`}
+                        </span>
                       )}
                     </td>
 
                     {/* School */}
-                    <td className="px-4 py-3 text-text-muted">{user.school_name ?? '—'}</td>
+                    <td className="px-4 py-3 text-text-muted">{user.is_system_admin ? 'All Schools' : (user.school_name ?? '—')}</td>
 
                     {/* Department */}
                     <td className="px-4 py-3">
@@ -598,14 +600,6 @@ export default function UsersPage() {
                       ) : (
                         <span className="text-text-light">—</span>
                       )}
-                    </td>
-
-                    {/* Access Level */}
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${ACCESS_LEVEL_COLORS[user.computed_access_level] ?? 'bg-gray-100 text-gray-600'}`}>
-                        {user.is_system_admin && <Shield className="h-3 w-3" />}
-                        {ACCESS_LEVEL_LABELS[user.computed_access_level] ?? `Level ${user.computed_access_level}`}
-                      </span>
                     </td>
 
                     {/* Actions */}
