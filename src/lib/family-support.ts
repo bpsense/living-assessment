@@ -121,17 +121,24 @@ export function useFamilySupport(
 
       // Use direct fetch instead of supabase.functions.invoke so we can
       // reliably read the response body on errors.
-      const supabaseUrl = (supabase as unknown as { supabaseUrl: string }).supabaseUrl
-        ?? import.meta.env.VITE_SUPABASE_URL as string
-      const session = (await supabase.auth.getSession()).data.session
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+
+      // Ensure we have a valid session (refreshes expired tokens)
+      const { data: sessionData, error: sessionErr } = await supabase.auth.getSession()
+      if (sessionErr || !sessionData.session) {
+        throw new Error('Session expired — please refresh the page and try again.')
+      }
+      const accessToken = sessionData.session.access_token
+
       const fnUrl = `${supabaseUrl}/functions/v1/family-support`
 
       const res = await fetch(fnUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session?.access_token ?? ''}`,
-          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY as string,
+          Authorization: `Bearer ${accessToken}`,
+          apikey: anonKey,
         },
         body: JSON.stringify({
           student_id: studentId,
@@ -144,10 +151,19 @@ export function useFamilySupport(
         }),
       })
 
-      const data = await res.json()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let data: any
+      try {
+        data = await res.json()
+      } catch {
+        throw new Error(`Edge Function returned ${res.status} with non-JSON body`)
+      }
 
       if (!res.ok) {
-        throw new Error(data?.error ?? `Edge Function error ${res.status}`)
+        // Edge Function returns { error: "..." }, but the Supabase gateway
+        // may return { message: "..." } or { msg: "..." } on auth failures
+        const detail = data?.error || data?.message || data?.msg
+        throw new Error(typeof detail === 'string' ? detail : `Edge Function error ${res.status}: ${JSON.stringify(data)}`)
       }
 
       setState({
