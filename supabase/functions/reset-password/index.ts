@@ -120,28 +120,10 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: 'Cannot reset password for a user in a different school' })
     }
 
-    // 6. Generate and send the password reset email
-    const { data: linkData, error: linkError } = await serviceClient.auth.admin.generateLink({
-      type: 'recovery',
-      email: targetProfile.email,
-    })
-
-    if (linkError) {
-      console.error('generateLink error:', linkError)
-      return jsonResponse({ error: linkError.message || 'Failed to generate reset link' })
-    }
-
-    // The generateLink API returns the link but doesn't send an email.
-    // We need to use the magiclink/recovery email sending directly.
-    // Use resetPasswordForEmail via the service client instead.
-    // NOTE: generateLink with type 'recovery' on the admin API generates but doesn't email.
-    // Instead, let's use the admin API to update the user and force a recovery.
-
-    // Actually, the correct approach: use the regular auth API with service client
-    // to send the recovery email.
+    // 6. Send the password reset email
     const { error: resetError } = await serviceClient.auth.resetPasswordForEmail(
       targetProfile.email,
-      { redirectTo: `${Deno.env.get('SUPABASE_URL')!.replace('.supabase.co', '.supabase.co')}/auth/v1/callback` }
+      { redirectTo: 'https://sproutmap.org/reset-password' }
     )
 
     if (resetError) {
