@@ -29,6 +29,8 @@ interface Props {
   onClose: () => void
   onUploaded: () => void
   uploadFramework: (payload: StandardsUploadPayload) => Promise<string>
+  /** When true, shows "All Schools" banner and adjusts messaging */
+  isGlobal?: boolean
 }
 
 type UploadStep = 'upload' | 'preview' | 'uploading' | 'complete'
@@ -150,6 +152,7 @@ export default function UploadStandardsModal({
   onClose,
   onUploaded,
   uploadFramework,
+  isGlobal = false,
 }: Props) {
   const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -311,10 +314,19 @@ export default function UploadStandardsModal({
           {/* ── Upload step ───────────────────────────── */}
           {step === 'upload' && (
             <div className="space-y-4">
+              {isGlobal && (
+                <div className="flex items-start gap-2 rounded-lg bg-primary-50 px-3 py-2.5">
+                  <span className="mt-0.5 text-xs text-primary-700">
+                    This framework will be distributed to <span className="font-semibold">all schools</span>, including any new schools added later.
+                  </span>
+                </div>
+              )}
               <p className="text-sm text-text-muted">
                 Upload a JSON file containing a standards framework and its
-                standards. The framework will appear in the report export
-                dropdown.
+                standards.{' '}
+                {isGlobal
+                  ? 'It will be copied to every school automatically.'
+                  : 'The framework will appear in the report export dropdown.'}
               </p>
 
               {/* Drop zone */}
@@ -477,7 +489,9 @@ export default function UploadStandardsModal({
             <div className="flex flex-col items-center gap-3 py-10">
               <Loader2 className="h-8 w-8 animate-spin text-primary-400" />
               <p className="text-sm text-text-muted">
-                Uploading {standardCount} standards...
+                {isGlobal
+                  ? `Uploading and distributing ${standardCount} standards to all schools...`
+                  : `Uploading ${standardCount} standards...`}
               </p>
             </div>
           )}
@@ -490,7 +504,9 @@ export default function UploadStandardsModal({
               </div>
               <div className="text-center">
                 <p className="text-sm font-semibold text-text">
-                  Framework uploaded successfully
+                  {isGlobal
+                    ? 'Framework distributed to all schools'
+                    : 'Framework uploaded successfully'}
                 </p>
                 <p className="mt-1 text-xs text-text-muted">
                   {payload.framework.name} — {standardCount} standard

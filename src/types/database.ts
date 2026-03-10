@@ -127,6 +127,29 @@ export interface StandardsFramework {
   name: string
   description: string | null
   version: string | null
+  global_framework_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface GlobalStandardsFramework {
+  id: string
+  name: string
+  description: string | null
+  version: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface GlobalStandard {
+  id: string
+  framework_id: string
+  code: string
+  description: string
+  grade_level: string | null
+  parent_id: string | null
+  display_order: number
   created_at: string
   updated_at: string
 }
