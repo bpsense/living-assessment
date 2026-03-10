@@ -234,7 +234,10 @@ export function useUserManagement(filters: UserFilters = {}) {
         }
       })
 
-      setUsers(mapped)
+      // System admins only appear in the "All Schools" view (no school filter).
+      // They oversee all schools and aren't "inside" any specific one.
+      const isAllSchoolsView = isSystemAdmin && !filters.schoolId
+      setUsers(isAllSchoolsView ? mapped : mapped.filter(u => !u.is_system_admin))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
       setUsers([])
