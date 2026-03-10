@@ -26,12 +26,14 @@ import {
   MapPin,
   X,
   Plus,
+  KeyRound,
 } from 'lucide-react'
 import { useAuth } from '../../lib/auth'
 import { useAccessControl } from '../../lib/access-control'
 import { useUserManagement, type ManagedUser } from '../../lib/user-management'
 import { useActiveSchoolId } from '../../lib/school-context'
 import { inviteUser } from '../../lib/invite-user'
+import { adminResetPassword } from '../../lib/reset-password'
 import { supabase } from '../../lib/supabase'
 import type { UserRole, AccessLevel } from '../../types/database'
 
@@ -66,7 +68,7 @@ function minLevelToInvite(role: UserRole): number {
 }
 
 export default function UsersPage() {
-  const { isSystemAdmin, allSchools } = useAuth()
+  const { isSystemAdmin, allSchools, departmentAdminIds, accessLevel: authAccessLevel } = useAuth()
   const { accessLevel, canInviteUsers, canChangeRoles, canDeactivateUsers, canManageUser } = useAccessControl()
   const activeSchoolId = useActiveSchoolId() ?? null
 
@@ -113,6 +115,7 @@ export default function UsersPage() {
     role: roleFilter,
     search: search || undefined,
     includeInactive: showInactive,
+    departmentIds: authAccessLevel === 4 ? departmentAdminIds : undefined,
   })
 
   // Fetch departments for the current school
@@ -222,6 +225,23 @@ export default function UsersPage() {
     if (result.error) setActionError(result.error)
     setActionLoading(null)
   }, [removeFromDepartment])
+
+  // ── Password reset ──────────────────────────────────────
+  const [resetSuccess, setResetSuccess] = useState<string | null>(null)
+
+  const handleResetPassword = useCallback(async (userId: string, userName: string) => {
+    setActionLoading(userId)
+    setActionError(null)
+    setResetSuccess(null)
+
+    const { error: err, email } = await adminResetPassword(userId)
+    if (err) {
+      setActionError(err)
+    } else {
+      setResetSuccess(`Password reset email sent to ${email ?? userName}`)
+    }
+    setActionLoading(null)
+  }, [])
 
   // Roles the current user can invite
   const inviteRoleOptions = ROLE_OPTIONS.filter(opt => accessLevel >= minLevelToInvite(opt.value))
@@ -343,12 +363,21 @@ export default function UsersPage() {
         </form>
       )}
 
-      {/* ── Success banner ─────────────────────────────────── */}
+      {/* ── Success banners ────────────────────────────────── */}
       {inviteSuccess && (
         <div className="flex items-center gap-2 rounded-lg bg-success-50 px-4 py-3 text-sm text-success-700">
           <UserCheck className="h-4 w-4 shrink-0" />
           {inviteSuccess}
           <button onClick={() => setInviteSuccess(null)} className="ml-auto">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+      {resetSuccess && (
+        <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          <KeyRound className="h-4 w-4 shrink-0" />
+          {resetSuccess}
+          <button onClick={() => setResetSuccess(null)} className="ml-auto">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -614,6 +643,14 @@ export default function UsersPage() {
                                 className="rounded px-2 py-1 text-xs font-medium text-primary-600 hover:bg-primary-50"
                               >
                                 Edit
+                              </button>
+                              <button
+                                onClick={() => handleResetPassword(user.id, user.full_name)}
+                                className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-amber-600 hover:bg-amber-50"
+                                title="Send password reset email"
+                              >
+                                <KeyRound className="h-3 w-3" />
+                                Reset PW
                               </button>
                               {canDeactivateUsers && (
                                 user.is_active ? (
