@@ -455,11 +455,9 @@ export default function UsersPage() {
                 <th className="px-4 py-3 text-left font-medium text-text-muted">Name</th>
                 <th className="px-4 py-3 text-left font-medium text-text-muted">Email</th>
                 <th className="px-4 py-3 text-left font-medium text-text-muted">Role</th>
-                {isSystemAdmin && !activeSchoolId && (
-                  <th className="px-4 py-3 text-left font-medium text-text-muted">School</th>
-                )}
+                <th className="px-4 py-3 text-left font-medium text-text-muted">School</th>
+                <th className="px-4 py-3 text-left font-medium text-text-muted">Department</th>
                 <th className="px-4 py-3 text-left font-medium text-text-muted">Access Level</th>
-                <th className="px-4 py-3 text-left font-medium text-text-muted">Status</th>
                 <th className="px-4 py-3 text-right font-medium text-text-muted">Actions</th>
               </tr>
             </thead>
@@ -473,8 +471,8 @@ export default function UsersPage() {
                 const unassignedDepts = departments.filter(d => !user.department_ids.includes(d.id))
 
                 return (
-                  <tr key={user.id} className={`transition-colors hover:bg-bg-muted/30 ${!user.is_active ? 'opacity-60' : ''}`}>
-                    {/* Name + Departments */}
+                  <tr key={user.id} className={`transition-colors hover:bg-bg-muted/30 ${!user.is_active ? 'opacity-40 grayscale' : ''}`}>
+                    {/* Name */}
                     <td className="px-4 py-3">
                       {isEditing ? (
                         <input
@@ -485,83 +483,14 @@ export default function UsersPage() {
                         />
                       ) : (
                         <div className="flex items-center gap-2">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700">
+                          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${user.is_active ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-400'}`}>
                             {user.full_name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-medium text-text">{user.full_name}</p>
-                            {/* Department badges for educators */}
-                            {isEducator && user.department_names.length > 0 && (
-                              <div className="mt-0.5 flex flex-wrap items-center gap-1">
-                                <MapPin className="h-3 w-3 text-purple-500" />
-                                {user.department_ids.map((deptId, i) => (
-                                  <span key={deptId} className="inline-flex items-center gap-0.5 rounded-full bg-purple-50 px-1.5 py-0.5 text-[10px] font-medium text-purple-700">
-                                    {user.department_names[i]}
-                                    {canChangeRoles && canManage && (
-                                      <button
-                                        onClick={() => handleRemoveDept(user.id, deptId)}
-                                        className="ml-0.5 rounded-full p-0.5 hover:bg-purple-200"
-                                        title={`Remove from ${user.department_names[i]}`}
-                                      >
-                                        <X className="h-2.5 w-2.5" />
-                                      </button>
-                                    )}
-                                  </span>
-                                ))}
-                                {/* Add department button */}
-                                {canChangeRoles && canManage && unassignedDepts.length > 0 && (
-                                  <div className="relative">
-                                    <button
-                                      onClick={() => setDeptDropdownUser(showDeptDropdown ? null : user.id)}
-                                      className="inline-flex items-center gap-0.5 rounded-full bg-purple-50 px-1.5 py-0.5 text-[10px] font-medium text-purple-500 hover:bg-purple-100"
-                                      title="Add department"
-                                    >
-                                      <Plus className="h-2.5 w-2.5" />
-                                    </button>
-                                    {showDeptDropdown && (
-                                      <div className="absolute left-0 top-full z-20 mt-1 min-w-[160px] rounded-lg border border-bg-muted bg-bg-card py-1 shadow-lg">
-                                        {unassignedDepts.map(d => (
-                                          <button
-                                            key={d.id}
-                                            onClick={() => handleAssignDept(user.id, d.id)}
-                                            className="block w-full px-3 py-1.5 text-left text-xs text-text hover:bg-bg-muted"
-                                          >
-                                            {d.name}
-                                          </button>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                            {/* Show "Add dept" for educators with no departments */}
-                            {isEducator && user.department_names.length === 0 && canChangeRoles && canManage && departments.length > 0 && (
-                              <div className="relative mt-0.5">
-                                <button
-                                  onClick={() => setDeptDropdownUser(showDeptDropdown ? null : user.id)}
-                                  className="inline-flex items-center gap-1 text-[10px] text-purple-500 hover:text-purple-700"
-                                  title="Assign as department admin"
-                                >
-                                  <Plus className="h-3 w-3" />
-                                  Add department
-                                </button>
-                                {showDeptDropdown && (
-                                  <div className="absolute left-0 top-full z-20 mt-1 min-w-[160px] rounded-lg border border-bg-muted bg-bg-card py-1 shadow-lg">
-                                    {departments.map(d => (
-                                      <button
-                                        key={d.id}
-                                        onClick={() => handleAssignDept(user.id, d.id)}
-                                        className="block w-full px-3 py-1.5 text-left text-xs text-text hover:bg-bg-muted"
-                                      >
-                                        {d.name}
-                                      </button>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                            {/* Classroom names for regular educators */}
+                            <p className={`font-medium ${user.is_active ? 'text-text' : 'text-text-light line-through'}`}>
+                              {user.full_name}
+                            </p>
+                            {/* Classroom names for regular educators (not dept admins) */}
                             {isEducator && user.classroom_names.length > 0 && user.department_names.length === 0 && (
                               <p className="text-xs text-text-light">
                                 {user.classroom_names.join(', ')}
@@ -595,23 +524,87 @@ export default function UsersPage() {
                       )}
                     </td>
 
-                    {/* School (cross-school view only) */}
-                    {isSystemAdmin && !activeSchoolId && (
-                      <td className="px-4 py-3 text-text-muted">{user.school_name ?? '—'}</td>
-                    )}
+                    {/* School */}
+                    <td className="px-4 py-3 text-text-muted">{user.school_name ?? '—'}</td>
+
+                    {/* Department */}
+                    <td className="px-4 py-3">
+                      {isEducator && user.department_names.length > 0 ? (
+                        <div className="flex flex-wrap items-center gap-1">
+                          {user.department_ids.map((deptId, i) => (
+                            <span key={deptId} className="inline-flex items-center gap-0.5 rounded-full bg-purple-50 px-1.5 py-0.5 text-[10px] font-medium text-purple-700">
+                              {user.department_names[i]}
+                              {canChangeRoles && canManage && (
+                                <button
+                                  onClick={() => handleRemoveDept(user.id, deptId)}
+                                  className="ml-0.5 rounded-full p-0.5 hover:bg-purple-200"
+                                  title={`Remove from ${user.department_names[i]}`}
+                                >
+                                  <X className="h-2.5 w-2.5" />
+                                </button>
+                              )}
+                            </span>
+                          ))}
+                          {/* Add department button */}
+                          {canChangeRoles && canManage && unassignedDepts.length > 0 && (
+                            <div className="relative">
+                              <button
+                                onClick={() => setDeptDropdownUser(showDeptDropdown ? null : user.id)}
+                                className="inline-flex items-center gap-0.5 rounded-full bg-purple-50 px-1.5 py-0.5 text-[10px] font-medium text-purple-500 hover:bg-purple-100"
+                                title="Add department"
+                              >
+                                <Plus className="h-2.5 w-2.5" />
+                              </button>
+                              {showDeptDropdown && (
+                                <div className="absolute left-0 top-full z-20 mt-1 min-w-[160px] rounded-lg border border-bg-muted bg-bg-card py-1 shadow-lg">
+                                  {unassignedDepts.map(d => (
+                                    <button
+                                      key={d.id}
+                                      onClick={() => handleAssignDept(user.id, d.id)}
+                                      className="block w-full px-3 py-1.5 text-left text-xs text-text hover:bg-bg-muted"
+                                    >
+                                      {d.name}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ) : isEducator && canChangeRoles && canManage && departments.length > 0 ? (
+                        <div className="relative">
+                          <button
+                            onClick={() => setDeptDropdownUser(showDeptDropdown ? null : user.id)}
+                            className="inline-flex items-center gap-1 text-[10px] text-purple-500 hover:text-purple-700"
+                            title="Assign to department"
+                          >
+                            <Plus className="h-3 w-3" />
+                            Add
+                          </button>
+                          {showDeptDropdown && (
+                            <div className="absolute left-0 top-full z-20 mt-1 min-w-[160px] rounded-lg border border-bg-muted bg-bg-card py-1 shadow-lg">
+                              {departments.map(d => (
+                                <button
+                                  key={d.id}
+                                  onClick={() => handleAssignDept(user.id, d.id)}
+                                  className="block w-full px-3 py-1.5 text-left text-xs text-text hover:bg-bg-muted"
+                                >
+                                  {d.name}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-text-light">—</span>
+                      )}
+                    </td>
 
                     {/* Access Level */}
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${ACCESS_LEVEL_COLORS[user.computed_access_level] ?? 'bg-gray-100 text-gray-600'}`}>
                         {user.is_system_admin && <Shield className="h-3 w-3" />}
                         {ACCESS_LEVEL_LABELS[user.computed_access_level] ?? `Level ${user.computed_access_level}`}
-                      </span>
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-4 py-3">
-                      <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${user.is_active ? 'bg-success-50 text-success-700' : 'bg-alert-50 text-alert-700'}`}>
-                        {user.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
 
