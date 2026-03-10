@@ -10,6 +10,7 @@ interface InviteUserParams {
   schoolId: string
   role: UserRole
   departmentId?: string // only for educator → dept admin
+  isSystemAdmin?: boolean // only for system admin invites from All Schools view
 }
 
 export async function inviteUser(
@@ -25,6 +26,7 @@ export async function inviteUser(
           school_id: params.schoolId,
           role: params.role,
           department_id: params.departmentId,
+          is_system_admin: params.isSystemAdmin,
         },
       }
     )

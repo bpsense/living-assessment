@@ -84,12 +84,13 @@ Deno.serve(async (req: Request) => {
     }
 
     // 3. Parse request body
-    const { email, full_name, school_id, role, department_id } = await req.json() as {
+    const { email, full_name, school_id, role, department_id, is_system_admin } = await req.json() as {
       email?: string
       full_name?: string
       school_id?: string
       role?: string
       department_id?: string
+      is_system_admin?: boolean
     }
 
     if (!email || !full_name || !school_id || !role) {
@@ -102,7 +103,11 @@ Deno.serve(async (req: Request) => {
     }
 
     // 4. Permission gates based on target role
-    if (role === 'admin' && callerLevel < 5) {
+    if (is_system_admin && callerLevel < 6) {
+      return jsonResponse({ error: 'Only system admins can invite other system admins' })
+    }
+
+    if (role === 'admin' && !is_system_admin && callerLevel < 5) {
       return jsonResponse({ error: 'Only school admins and above can invite school admins' })
     }
 
@@ -185,10 +190,25 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    // 9. If is_system_admin, add to system_admins table
+    let systemAdminAssigned = false
+    if (is_system_admin) {
+      const { error: sysAdminErr } = await serviceClient
+        .from('system_admins')
+        .upsert({ user_id: newUserId }, { onConflict: 'user_id' })
+
+      if (sysAdminErr) {
+        console.error('System admin assignment error:', sysAdminErr)
+      } else {
+        systemAdminAssigned = true
+      }
+    }
+
     return jsonResponse({
       success: true,
       user_id: newUserId,
       department_assigned: departmentAssigned,
+      system_admin_assigned: systemAdminAssigned,
     })
   } catch (err) {
     console.error('invite-user error:', err)

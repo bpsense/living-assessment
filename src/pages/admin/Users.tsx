@@ -92,8 +92,12 @@ export default function UsersPage() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<UserRole>('educator')
   const [inviteDeptId, setInviteDeptId] = useState<string>('')
+  const [inviteSchoolId, setInviteSchoolId] = useState<string>('')
   const [inviting, setInviting] = useState(false)
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null)
+
+  // True when system admin is on "All Schools" view — invite is for system admins only
+  const isAllSchoolsInvite = isSystemAdmin && !activeSchoolId
 
   // ── Department data (for invite form + inline management) ──
   const [departments, setDepartments] = useState<{ id: string; name: string }[]>([])
@@ -179,7 +183,8 @@ export default function UsersPage() {
 
   const handleInvite = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!activeSchoolId || !inviteName.trim() || !inviteEmail.trim()) return
+    const effectiveSchoolId = activeSchoolId || inviteSchoolId
+    if (!effectiveSchoolId || !inviteName.trim() || !inviteEmail.trim()) return
 
     setInviting(true)
     setActionError(null)
@@ -188,25 +193,27 @@ export default function UsersPage() {
     const { error: err } = await inviteUser({
       email: inviteEmail.trim(),
       fullName: inviteName.trim(),
-      schoolId: activeSchoolId,
-      role: inviteRole,
-      departmentId: inviteRole === 'educator' && inviteDeptId ? inviteDeptId : undefined,
+      schoolId: effectiveSchoolId,
+      role: isAllSchoolsInvite ? 'admin' : inviteRole,
+      departmentId: !isAllSchoolsInvite && inviteRole === 'educator' && inviteDeptId ? inviteDeptId : undefined,
+      isSystemAdmin: isAllSchoolsInvite || undefined,
     })
 
     if (err) {
       setActionError(err)
     } else {
-      const roleLabel = ROLE_OPTIONS.find(o => o.value === inviteRole)?.label ?? inviteRole
+      const roleLabel = isAllSchoolsInvite ? 'System Admin' : (ROLE_OPTIONS.find(o => o.value === inviteRole)?.label ?? inviteRole)
       setInviteSuccess(`Invitation sent to ${inviteEmail.trim()} as ${roleLabel}`)
       setInviteName('')
       setInviteEmail('')
       setInviteRole('educator')
       setInviteDeptId('')
+      setInviteSchoolId('')
       setShowInvite(false)
       refresh()
     }
     setInviting(false)
-  }, [activeSchoolId, inviteName, inviteEmail, inviteRole, inviteDeptId, refresh])
+  }, [activeSchoolId, inviteSchoolId, isAllSchoolsInvite, inviteName, inviteEmail, inviteRole, inviteDeptId, refresh])
 
   const handleAssignDept = useCallback(async (userId: string, deptId: string) => {
     if (!activeSchoolId) return
@@ -258,25 +265,27 @@ export default function UsersPage() {
               : 'Manage users in this school'}
           </p>
         </div>
-        {canInviteUsers && activeSchoolId && (
+        {(canInviteUsers && activeSchoolId) || isAllSchoolsInvite ? (
           <button
             onClick={() => { setShowInvite(v => !v); setInviteSuccess(null); setActionError(null) }}
             className="flex items-center gap-2 rounded-lg bg-primary-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-600"
           >
             {showInvite ? <ChevronUp className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-            {showInvite ? 'Close' : 'Invite User'}
+            {showInvite ? 'Close' : isAllSchoolsInvite ? 'Invite System Admin' : 'Invite User'}
           </button>
-        )}
+        ) : null}
       </div>
 
       {/* ── Invite form ─────────────────────────────────────── */}
-      {showInvite && activeSchoolId && (
+      {showInvite && (activeSchoolId || isAllSchoolsInvite) && (
         <form
           onSubmit={handleInvite}
           className="rounded-xl border border-primary-200 bg-primary-50/30 p-5 shadow-sm"
         >
-          <h2 className="mb-4 text-sm font-semibold text-text">Invite New User</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <h2 className="mb-4 text-sm font-semibold text-text">
+            {isAllSchoolsInvite ? 'Invite New System Admin' : 'Invite New User'}
+          </h2>
+          <div className={`grid gap-4 sm:grid-cols-2 ${isAllSchoolsInvite ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
             {/* Full Name */}
             <div>
               <label className="mb-1 block text-xs font-medium text-text-muted">Full Name</label>
@@ -303,25 +312,48 @@ export default function UsersPage() {
               />
             </div>
 
-            {/* Role selector */}
-            <div>
-              <label className="mb-1 block text-xs font-medium text-text-muted">Role</label>
-              <div className="relative">
-                <select
-                  value={inviteRole}
-                  onChange={e => { setInviteRole(e.target.value as UserRole); setInviteDeptId('') }}
-                  className="w-full appearance-none rounded-lg border border-bg-muted bg-bg-card px-3 py-2 pr-8 text-sm text-text focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-300"
-                >
-                  {inviteRoleOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
+            {/* School picker (All Schools invite) */}
+            {isAllSchoolsInvite && (
+              <div>
+                <label className="mb-1 block text-xs font-medium text-text-muted">Home School</label>
+                <div className="relative">
+                  <select
+                    required
+                    value={inviteSchoolId}
+                    onChange={e => setInviteSchoolId(e.target.value)}
+                    className="w-full appearance-none rounded-lg border border-bg-muted bg-bg-card px-3 py-2 pr-8 text-sm text-text focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-300"
+                  >
+                    <option value="">Select a school…</option>
+                    {allSchools.map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Department picker (only for educators) */}
-            {inviteRole === 'educator' && departments.length > 0 && (
+            {/* Role selector (school-scoped invite only) */}
+            {!isAllSchoolsInvite && (
+              <div>
+                <label className="mb-1 block text-xs font-medium text-text-muted">Role</label>
+                <div className="relative">
+                  <select
+                    value={inviteRole}
+                    onChange={e => { setInviteRole(e.target.value as UserRole); setInviteDeptId('') }}
+                    className="w-full appearance-none rounded-lg border border-bg-muted bg-bg-card px-3 py-2 pr-8 text-sm text-text focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-300"
+                  >
+                    {inviteRoleOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
+                </div>
+              </div>
+            )}
+
+            {/* Department picker (only for educators in school-scoped invite) */}
+            {!isAllSchoolsInvite && inviteRole === 'educator' && departments.length > 0 && (
               <div>
                 <label className="mb-1 block text-xs font-medium text-text-muted">
                   Department <span className="font-normal text-text-light">(optional — makes them Dept Admin)</span>
@@ -346,7 +378,7 @@ export default function UsersPage() {
           <div className="mt-4 flex items-center gap-3">
             <button
               type="submit"
-              disabled={inviting || !inviteName.trim() || !inviteEmail.trim()}
+              disabled={inviting || !inviteName.trim() || !inviteEmail.trim() || (isAllSchoolsInvite && !inviteSchoolId)}
               className="flex items-center gap-2 rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-600 disabled:opacity-50"
             >
               {inviting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
