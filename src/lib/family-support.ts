@@ -124,12 +124,17 @@ export function useFamilySupport(
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
       const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
 
-      // Ensure we have a valid session (refreshes expired tokens)
-      const { data: sessionData, error: sessionErr } = await supabase.auth.getSession()
-      if (sessionErr || !sessionData.session) {
-        throw new Error('Session expired — please refresh the page and try again.')
+      // Force-refresh the session so the access token is guaranteed valid
+      const { data: refreshData } = await supabase.auth.refreshSession()
+      let accessToken = refreshData.session?.access_token
+      if (!accessToken) {
+        // Fallback to cached session
+        const { data: sessionData } = await supabase.auth.getSession()
+        accessToken = sessionData.session?.access_token
       }
-      const accessToken = sessionData.session.access_token
+      if (!accessToken) {
+        throw new Error('Not authenticated — please sign in again.')
+      }
 
       const fnUrl = `${supabaseUrl}/functions/v1/family-support`
 
@@ -153,17 +158,18 @@ export function useFamilySupport(
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let data: any
+      const responseText = await res.text()
       try {
-        data = await res.json()
+        data = JSON.parse(responseText)
       } catch {
-        throw new Error(`Edge Function returned ${res.status} with non-JSON body`)
+        throw new Error(`Edge Function ${res.status}: ${responseText.slice(0, 200)}`)
       }
 
       if (!res.ok) {
         // Edge Function returns { error: "..." }, but the Supabase gateway
         // may return { message: "..." } or { msg: "..." } on auth failures
         const detail = data?.error || data?.message || data?.msg
-        throw new Error(typeof detail === 'string' ? detail : `Edge Function error ${res.status}: ${JSON.stringify(data)}`)
+        throw new Error(typeof detail === 'string' ? detail : `Edge Function ${res.status}: ${responseText.slice(0, 300)}`)
       }
 
       setState({
