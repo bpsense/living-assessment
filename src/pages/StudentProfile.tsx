@@ -11,6 +11,7 @@ import { buildSnapshots, getSnapshotObservationDate, smoothSnapshots } from '../
 import LivingVisualization from '../components/student/LivingVisualization'
 import ZoneMatrix from '../components/student/ZoneMatrix'
 import AILearningGuide from '../components/student/AILearningGuide'
+import FamilySupportGuide from '../components/student/FamilySupportGuide'
 import DimensionCard from '../components/student/DimensionCard'
 import Timeline from '../components/student/Timeline'
 import SISSection from '../components/student/SISSection'
@@ -376,6 +377,20 @@ export default function StudentProfile() {
         <ParentNotes studentId={student.id} schoolId={student.school_id} editable={true} />
       )}
 
+      {/* ========== FAMILY SUPPORT GUIDE (family view) ========== */}
+      {isFamilyView && student && (
+        <section>
+          <FamilySupportGuide
+            studentId={student.id}
+            schoolId={student.school_id}
+            studentName={student.first_name}
+            gradeLevel={student.grade_level}
+            dimensionScores={filteredDimensionScores}
+            mode="family"
+          />
+        </section>
+      )}
+
       {/* SIS Edit Modal */}
       {showSISEdit && (
         <SISEditModal
@@ -415,59 +430,69 @@ export default function StudentProfile() {
         </section>
       )}
 
+      {/* ========== FAMILY SUPPORT GUIDE — admin view (educator/admin only) ========== */}
+      {!isFamilyView && student && (
+        <section>
+          <FamilySupportGuide
+            studentId={student.id}
+            schoolId={student.school_id}
+            studentName={student.first_name}
+            gradeLevel={student.grade_level}
+            dimensionScores={dimensionScores}
+            mode="admin"
+          />
+        </section>
+      )}
+
       {/* ========== STUDENT CONTEXT DOCUMENT (educator/admin only) ========== */}
       {!isFamilyView && student && (
         <StudentContextDoc studentId={student.id} schoolId={student.school_id} />
       )}
 
-      {/* ========== DIMENSION CARDS ========== */}
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-text">
-            {isFamilyView ? 'Areas of Learning' : 'Dimensions'}
-          </h2>
-          {!isFamilyView && (
+      {/* ========== DIMENSION CARDS (educator/admin only) ========== */}
+      {!isFamilyView && (
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-text">Dimensions</h2>
             <p className="text-xs text-text-muted">
               Click a competency level to quick-rate
             </p>
-          )}
-        </div>
-
-        {/* Historical period banner for dimension cards */}
-        {isHistorical && !isFamilyView && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg bg-accent-50 px-4 py-2">
-            <TrendingUp className="h-4 w-4 text-accent-600" />
-            <span className="text-xs font-medium text-accent-700">
-              Viewing {observationPeriodLabel} — click a competency level to back-date an observation
-            </span>
-            <button
-              onClick={() => {
-                setPlaying(false)
-                setSnapshotIdx(snapshots.length - 1)
-              }}
-              className="ml-auto text-xs font-semibold text-accent-600 hover:text-accent-700"
-            >
-              Jump to now →
-            </button>
           </div>
-        )}
 
-        <div className="grid gap-4 md:grid-cols-2">
-          {displayScoresForCards.map((score) => (
-            <DimensionCard
-              key={score.dimension_id}
-              score={score}
-              studentId={student.id}
-              {...(!isFamilyView && {
-                schoolId: student.school_id,
-                observationDate: observationDate,
-                observationPeriodLabel: observationPeriodLabel,
-                onObservationCreated: handleObservationCreated,
-              })}
-            />
-          ))}
-        </div>
-      </section>
+          {/* Historical period banner for dimension cards */}
+          {isHistorical && (
+            <div className="mb-4 flex items-center gap-2 rounded-lg bg-accent-50 px-4 py-2">
+              <TrendingUp className="h-4 w-4 text-accent-600" />
+              <span className="text-xs font-medium text-accent-700">
+                Viewing {observationPeriodLabel} — click a competency level to back-date an observation
+              </span>
+              <button
+                onClick={() => {
+                  setPlaying(false)
+                  setSnapshotIdx(snapshots.length - 1)
+                }}
+                className="ml-auto text-xs font-semibold text-accent-600 hover:text-accent-700"
+              >
+                Jump to now →
+              </button>
+            </div>
+          )}
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {displayScoresForCards.map((score) => (
+              <DimensionCard
+                key={score.dimension_id}
+                score={score}
+                studentId={student.id}
+                schoolId={student.school_id}
+                observationDate={observationDate}
+                observationPeriodLabel={observationPeriodLabel}
+                onObservationCreated={handleObservationCreated}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ========== TIMELINE (educator/admin only) ========== */}
       {!isFamilyView && (

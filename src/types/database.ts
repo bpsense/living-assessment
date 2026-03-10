@@ -538,6 +538,50 @@ export interface DepartmentAdmin {
 }
 
 // ============================================================
+// Family Support AI Suggestions
+// ============================================================
+
+export type FamilySuggestionCategory =
+  | 'daily-routine'
+  | 'weekend-activity'
+  | 'reading'
+  | 'conversation'
+  | 'creative-play'
+  | 'outdoor'
+  | 'social'
+
+export interface FamilySuggestion {
+  id: string
+  category: FamilySuggestionCategory
+  dimension_name: string
+  title: string
+  description: string
+  why_it_helps: string
+  materials_needed: string
+}
+
+export interface EducatorNote {
+  note: string
+  author_id: string
+  author_name: string
+  updated_at: string
+}
+
+export interface FamilySupportRow {
+  id: string
+  school_id: string
+  student_id: string
+  zone_hash: string
+  zone_data: unknown
+  suggestions: FamilySuggestion[]
+  educator_notes: Record<string, EducatorNote>
+  requested_by: string
+  prompt_version: string
+  created_at: string
+  updated_at: string
+}
+
+// ============================================================
 // School Profile Visibility
 // ============================================================
 
