@@ -7,7 +7,8 @@ import { useAuth } from './auth'
  */
 export function useActiveSchoolId(): string | undefined {
   const { profile, isSystemAdmin, activeSchoolId } = useAuth()
-  if (isSystemAdmin && activeSchoolId) return activeSchoolId
+  // System admins: return selected school, or undefined for "All Schools" view
+  if (isSystemAdmin) return activeSchoolId ?? undefined
   return profile?.school_id
 }
 
