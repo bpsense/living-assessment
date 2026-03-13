@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Search, Loader2, MessageCircle, Users, User } from 'lucide-react'
+import { X, Search, Loader2, MessageCircle, Users } from 'lucide-react'
 import { searchMessagingUsers, createDirectConversation, createGroupConversation } from '../../lib/messaging-data'
 import type { Profile } from '../../types/database'
 
