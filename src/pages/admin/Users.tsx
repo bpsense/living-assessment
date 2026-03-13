@@ -95,6 +95,14 @@ export default function UsersPage() {
   const [inviting, setInviting] = useState(false)
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null)
 
+  // ── Learner invite state ───────────────────────────────
+  const [learnerLinkMode, setLearnerLinkMode] = useState<'existing' | 'new'>('existing')
+  const [inviteStudentId, setInviteStudentId] = useState<string>('')
+  const [inviteClassroomId, setInviteClassroomId] = useState<string>('')
+  const [unlinkedStudents, setUnlinkedStudents] = useState<{ id: string; first_name: string; last_name: string; classroom_name: string | null }[]>([])
+  const [classrooms, setClassrooms] = useState<{ id: string; name: string }[]>([])
+  const [studentSearch, setStudentSearch] = useState('')
+
   // True when system admin is on "All Schools" view — invite is for system admins only
   const isAllSchoolsInvite = isSystemAdmin && !activeSchoolId
 
@@ -132,6 +140,65 @@ export default function UsersPage() {
       .order('name')
       .then(({ data }) => setDepartments(data ?? []))
   }, [activeSchoolId])
+
+  // Fetch classrooms + unlinked students when learner role is selected
+  useEffect(() => {
+    const schoolId = activeSchoolId
+    if (!schoolId || inviteRole !== 'learner') {
+      setUnlinkedStudents([])
+      setClassrooms([])
+      return
+    }
+
+    // Fetch classrooms
+    supabase
+      .from('classrooms')
+      .select('id, name')
+      .eq('school_id', schoolId)
+      .order('name')
+      .then(({ data }) => setClassrooms(data ?? []))
+
+    // Fetch students that don't have a linked learner account
+    // A student is "unlinked" if no profile has student_id pointing to it
+    const fetchUnlinked = async () => {
+      // Get all student IDs that are already linked to profiles
+      const { data: linkedProfiles } = await supabase
+        .from('profiles')
+        .select('student_id')
+        .eq('school_id', schoolId)
+        .not('student_id', 'is', null)
+
+      const linkedIds = (linkedProfiles ?? []).map(p => p.student_id).filter(Boolean) as string[]
+
+      // Get students NOT in that list
+      let query = supabase
+        .from('students')
+        .select('id, first_name, last_name, classroom:classrooms(name)')
+        .eq('school_id', schoolId)
+        .eq('student_status', 'active')
+        .order('last_name')
+
+      if (linkedIds.length > 0) {
+        // Supabase doesn't have a direct "not in" for arrays > 0 items,
+        // but we can filter client-side for now
+      }
+
+      const { data: students } = await query
+
+      const filtered = (students ?? [])
+        .filter(s => !linkedIds.includes(s.id))
+        .map(s => ({
+          id: s.id,
+          first_name: s.first_name,
+          last_name: s.last_name,
+          classroom_name: (s.classroom as any)?.name ?? null,
+        }))
+
+      setUnlinkedStudents(filtered)
+    }
+
+    fetchUnlinked()
+  }, [activeSchoolId, inviteRole])
 
   // ── Handlers ─────────────────────────────────────────────
 
@@ -196,6 +263,8 @@ export default function UsersPage() {
       role: isAllSchoolsInvite ? 'admin' : inviteRole,
       departmentId: !isAllSchoolsInvite && inviteRole === 'educator' && inviteDeptId ? inviteDeptId : undefined,
       isSystemAdmin: isAllSchoolsInvite || undefined,
+      studentId: !isAllSchoolsInvite && inviteRole === 'learner' && learnerLinkMode === 'existing' && inviteStudentId ? inviteStudentId : undefined,
+      classroomId: !isAllSchoolsInvite && inviteRole === 'learner' && learnerLinkMode === 'new' && inviteClassroomId ? inviteClassroomId : undefined,
     })
 
     if (err) {
@@ -208,11 +277,15 @@ export default function UsersPage() {
       setInviteRole('educator')
       setInviteDeptId('')
       setInviteSchoolId('')
+      setInviteStudentId('')
+      setInviteClassroomId('')
+      setLearnerLinkMode('existing')
+      setStudentSearch('')
       setShowInvite(false)
       refresh()
     }
     setInviting(false)
-  }, [activeSchoolId, inviteSchoolId, isAllSchoolsInvite, inviteName, inviteEmail, inviteRole, inviteDeptId, refresh])
+  }, [activeSchoolId, inviteSchoolId, isAllSchoolsInvite, inviteName, inviteEmail, inviteRole, inviteDeptId, learnerLinkMode, inviteStudentId, inviteClassroomId, refresh])
 
   const handleAssignDept = useCallback(async (userId: string, deptId: string) => {
     if (!activeSchoolId) return
@@ -373,6 +446,104 @@ export default function UsersPage() {
               </div>
             )}
           </div>
+
+          {/* Learner linking options (only for learner role) */}
+          {!isAllSchoolsInvite && inviteRole === 'learner' && (
+            <div className="mt-4 rounded-lg border border-bg-muted bg-bg p-4">
+              <p className="mb-3 text-xs font-semibold text-text">Link to Student Record</p>
+              <div className="mb-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setLearnerLinkMode('existing'); setInviteClassroomId('') }}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                    learnerLinkMode === 'existing'
+                      ? 'bg-primary-500 text-white'
+                      : 'bg-bg-muted text-text-muted hover:bg-bg-muted/80'
+                  }`}
+                >
+                  Link to Existing Student
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setLearnerLinkMode('new'); setInviteStudentId('') }}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                    learnerLinkMode === 'new'
+                      ? 'bg-primary-500 text-white'
+                      : 'bg-bg-muted text-text-muted hover:bg-bg-muted/80'
+                  }`}
+                >
+                  Create New Student
+                </button>
+              </div>
+
+              {learnerLinkMode === 'existing' ? (
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-text-muted">
+                    Select Student <span className="font-normal text-text-light">(students without a learner account)</span>
+                  </label>
+                  {unlinkedStudents.length === 0 ? (
+                    <p className="text-xs text-text-light italic">All students already have linked accounts</p>
+                  ) : (
+                    <>
+                      <input
+                        type="text"
+                        placeholder="Search students..."
+                        value={studentSearch}
+                        onChange={e => setStudentSearch(e.target.value)}
+                        className="mb-2 w-full rounded-lg border border-bg-muted bg-bg-card px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-300"
+                      />
+                      <div className="max-h-40 overflow-y-auto rounded-lg border border-bg-muted bg-bg-card">
+                        {unlinkedStudents
+                          .filter(s => {
+                            if (!studentSearch) return true
+                            const q = studentSearch.toLowerCase()
+                            return `${s.first_name} ${s.last_name}`.toLowerCase().includes(q)
+                          })
+                          .map(s => (
+                            <button
+                              key={s.id}
+                              type="button"
+                              onClick={() => setInviteStudentId(s.id)}
+                              className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors hover:bg-bg-muted ${
+                                inviteStudentId === s.id ? 'bg-primary-50 text-primary-700' : 'text-text'
+                              }`}
+                            >
+                              <span className="font-medium">{s.first_name} {s.last_name}</span>
+                              {s.classroom_name && (
+                                <span className="text-[10px] text-text-light">{s.classroom_name}</span>
+                              )}
+                            </button>
+                          ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-text-muted">
+                    Classroom <span className="font-normal text-text-light">(a student record will be auto-created)</span>
+                  </label>
+                  {classrooms.length === 0 ? (
+                    <p className="text-xs text-text-light italic">No classrooms available</p>
+                  ) : (
+                    <div className="relative">
+                      <select
+                        value={inviteClassroomId}
+                        onChange={e => setInviteClassroomId(e.target.value)}
+                        className="w-full appearance-none rounded-lg border border-bg-muted bg-bg-card px-3 py-2 pr-8 text-sm text-text focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-300"
+                      >
+                        <option value="">Select a classroom…</option>
+                        {classrooms.map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="mt-4 flex items-center gap-3">
             <button

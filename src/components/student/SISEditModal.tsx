@@ -74,6 +74,7 @@ export default function SISEditModal({ open, onClose, student, onSaved }: Props)
   const [pronouns, setPronouns] = useState('')
   const [dob, setDob] = useState('')
   const [gradeLevel, setGradeLevel] = useState('')
+  const [classroomId, setClassroomId] = useState('')
   const [nationality, setNationality] = useState('')
   const [firstLanguage, setFirstLanguage] = useState('')
   const [additionalLanguages, setAdditionalLanguages] = useState('')
@@ -84,11 +85,25 @@ export default function SISEditModal({ open, onClose, student, onSaved }: Props)
   const [enrollmentDate, setEnrollmentDate] = useState('')
   const [studentStatus, setStudentStatus] = useState<StudentStatus>('active')
 
+  // Classrooms for the dropdown
+  const [classrooms, setClassrooms] = useState<{ id: string; name: string }[]>([])
+
   // Contact rows
   const [contactRows, setContactRows] = useState<ContactRow[]>([])
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Fetch classrooms for the school
+  useEffect(() => {
+    if (!open || !student.school_id) return
+    supabase
+      .from('classrooms')
+      .select('id, name')
+      .eq('school_id', student.school_id)
+      .order('name')
+      .then(({ data }) => setClassrooms(data ?? []))
+  }, [open, student.school_id])
 
   // Populate form on open
   useEffect(() => {
@@ -100,6 +115,7 @@ export default function SISEditModal({ open, onClose, student, onSaved }: Props)
     setPronouns(student.pronouns ?? '')
     setDob(student.date_of_birth ?? '')
     setGradeLevel(student.grade_level ?? '')
+    setClassroomId(student.classroom_id ?? '')
     setNationality(student.nationality ?? '')
     setFirstLanguage(student.first_language ?? '')
     setAdditionalLanguages(student.additional_languages?.join(', ') ?? '')
@@ -204,6 +220,7 @@ export default function SISEditModal({ open, onClose, student, onSaved }: Props)
           pronouns: pronouns.trim() || null,
           date_of_birth: dob || null,
           grade_level: gradeLevel.trim() || null,
+          ...(classroomId ? { classroom_id: classroomId } : {}),
           nationality: nationality.trim() || null,
           first_language: firstLanguage.trim() || null,
           additional_languages: langArray.length > 0 ? langArray : null,
@@ -329,6 +346,21 @@ export default function SISEditModal({ open, onClose, student, onSaved }: Props)
               </div>
               <FormField label="Pronouns" value={pronouns} onChange={setPronouns} placeholder="e.g. she/her" />
               <FormField label="Grade Level" value={gradeLevel} onChange={setGradeLevel} placeholder="e.g. 3" />
+              <div>
+                <label className="mb-1 block text-xs font-medium text-text-muted">
+                  Classroom
+                </label>
+                <select
+                  value={classroomId}
+                  onChange={(e) => setClassroomId(e.target.value)}
+                  className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                >
+                  <option value="">Select classroom...</option>
+                  {classrooms.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-text-muted">
                   Enrollment Date

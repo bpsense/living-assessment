@@ -87,13 +87,15 @@ Deno.serve(async (req: Request) => {
     }
 
     // 3. Parse request body
-    const { email, full_name, school_id, role, department_id, is_system_admin } = await req.json() as {
+    const { email, full_name, school_id, role, department_id, is_system_admin, student_id, classroom_id } = await req.json() as {
       email?: string
       full_name?: string
       school_id?: string
       role?: string
       department_id?: string
       is_system_admin?: boolean
+      student_id?: string      // Link learner to existing student record
+      classroom_id?: string    // Auto-create student record in this classroom
     }
 
     if (!email || !full_name || !school_id || !role) {
@@ -160,6 +162,33 @@ Deno.serve(async (req: Request) => {
     const newUserId = inviteData.user.id
 
     // 7. Ensure profile exists with correct role
+    let linkedStudentId = student_id || null
+
+    // 7a. For learners: if classroom_id provided but no student_id, auto-create student record
+    if (role === 'learner' && classroom_id && !student_id) {
+      const nameParts = full_name.split(' ')
+      const firstName = nameParts[0] || full_name
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : ''
+
+      const { data: newStudent, error: studentErr } = await serviceClient
+        .from('students')
+        .insert({
+          school_id,
+          classroom_id,
+          first_name: firstName,
+          last_name: lastName || firstName, // Fallback if single name
+          student_status: 'active',
+        })
+        .select('id')
+        .single()
+
+      if (studentErr) {
+        console.error('Auto-create student error:', studentErr)
+      } else if (newStudent) {
+        linkedStudentId = newStudent.id
+      }
+    }
+
     const { error: upsertErr } = await serviceClient
       .from('profiles')
       .upsert({
@@ -169,6 +198,7 @@ Deno.serve(async (req: Request) => {
         full_name,
         email,
         avatar_url: null,
+        ...(linkedStudentId ? { student_id: linkedStudentId } : {}),
       }, { onConflict: 'id' })
 
     if (upsertErr) {
@@ -210,6 +240,7 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({
       success: true,
       user_id: newUserId,
+      student_linked: !!linkedStudentId,
       department_assigned: departmentAssigned,
       system_admin_assigned: systemAdminAssigned,
     })
