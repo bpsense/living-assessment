@@ -27,6 +27,7 @@ import {
   LayoutGrid,
   List,
   Phone,
+  MessageCircle,
 } from 'lucide-react'
 import { useClassroomView } from '../lib/classroom-data'
 import { useAuth } from '../lib/auth'
@@ -38,6 +39,7 @@ import MiniRadar from '../components/dashboard/MiniRadar'
 import AddStudentModal from '../components/classroom/AddStudentModal'
 import CsvImportModal from '../components/classroom/CsvImportModal'
 import CreateAssignmentModal from '../components/assignment/CreateAssignmentModal'
+import { createClassConversation } from '../lib/messaging-data'
 import type { DimensionScore } from '../lib/student-data'
 import type { Student, Dimension, StudentContact } from '../types/database'
 
@@ -93,7 +95,7 @@ const LEVEL_LABEL: Record<number, string> = {
 export default function ClassroomPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { actualRole } = useAuth()
+  const { actualRole, profile } = useAuth()
   const { toast } = useToast()
   const {
     classroom,
@@ -120,6 +122,7 @@ export default function ClassroomPage() {
   const [showCsvModal, setShowCsvModal] = useState(false)
   const [showCreateAssignment, setShowCreateAssignment] = useState(false)
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card')
+  const [creatingClassChat, setCreatingClassChat] = useState(false)
 
   // ------ Loading / Error ------
   if (loading) {
@@ -212,6 +215,30 @@ export default function ClassroomPage() {
                 >
                   <ClipboardList className="h-3.5 w-3.5" />
                   New Assignment
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!classroom || !profile || creatingClassChat) return
+                    setCreatingClassChat(true)
+                    try {
+                      await createClassConversation(
+                        classroom.id,
+                        classroom.name,
+                        profile.id,
+                        classroom.school_id
+                      )
+                      navigate('/messages')
+                    } catch (err: any) {
+                      toast(err.message || 'Failed to open class chat', 'error')
+                    } finally {
+                      setCreatingClassChat(false)
+                    }
+                  }}
+                  disabled={creatingClassChat}
+                  className="flex items-center gap-1.5 rounded-lg border border-primary-300 bg-primary-50 px-3 py-2 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100 disabled:opacity-50"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  Class Chat
                 </button>
               </>
             )}

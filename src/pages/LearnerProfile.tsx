@@ -3,11 +3,13 @@
  * Shows the learner's own student record, classroom, and observation progress.
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
-import { Loader2, User, School, BarChart3, BookOpen } from 'lucide-react'
+import { Loader2, User, School, BarChart3, BookOpen, ClipboardList } from 'lucide-react'
 import type { Student, Dimension, Observation } from '../types/database'
+import AssignmentKanban from '../components/learner/AssignmentKanban'
+import { fetchLearnerAssignments, type LearnerAssignment } from '../lib/learner-assignments-data'
 
 interface DimensionProgress {
   dimension: Dimension
@@ -20,6 +22,7 @@ export default function LearnerProfile() {
   const [student, setStudent] = useState<Student | null>(null)
   const [classroom, setClassroom] = useState<{ name: string; grade_level: string | null } | null>(null)
   const [progress, setProgress] = useState<DimensionProgress[]>([])
+  const [assignments, setAssignments] = useState<LearnerAssignment[]>([])
   const [loading, setLoading] = useState(true)
   const [schoolName, setSchoolName] = useState('')
 
@@ -91,11 +94,30 @@ export default function LearnerProfile() {
       })
 
       setProgress(dimProgress)
+
+      // Fetch assignments for kanban
+      try {
+        const learnerAssignments = await fetchLearnerAssignments(studentData.id)
+        setAssignments(learnerAssignments)
+      } catch (err) {
+        console.error('[LearnerProfile] Failed to fetch assignments:', err)
+      }
+
       setLoading(false)
     }
 
     loadData()
   }, [profile?.student_id])
+
+  const refetchAssignments = useCallback(async () => {
+    if (!student) return
+    try {
+      const learnerAssignments = await fetchLearnerAssignments(student.id)
+      setAssignments(learnerAssignments)
+    } catch (err) {
+      console.error('[LearnerProfile] Failed to refetch assignments:', err)
+    }
+  }, [student])
 
   if (loading) {
     return (
@@ -120,7 +142,7 @@ export default function LearnerProfile() {
   const displayName = student.preferred_name ?? student.first_name
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-100 text-2xl font-bold text-primary-700">
@@ -152,6 +174,20 @@ export default function LearnerProfile() {
           value={String(progress.reduce((sum, p) => sum + p.observationCount, 0))}
         />
       </div>
+
+      {/* My Assignments — kanban board */}
+      <section className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+        <div className="mb-4 flex items-center gap-2">
+          <ClipboardList className="h-5 w-5 text-primary-600" />
+          <h2 className="text-base font-bold text-text">My Assignments</h2>
+          {assignments.length > 0 && (
+            <span className="rounded-full bg-bg-muted px-2 py-0.5 text-xs font-medium text-text-muted">
+              {assignments.length}
+            </span>
+          )}
+        </div>
+        <AssignmentKanban assignments={assignments} onUpdate={refetchAssignments} />
+      </section>
 
       {/* Dimension progress */}
       <section className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">

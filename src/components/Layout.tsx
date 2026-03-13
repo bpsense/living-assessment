@@ -22,6 +22,7 @@ import {
   ChevronDown,
   X,
   ClipboardList,
+  MessageCircle,
 } from 'lucide-react'
 import type { UserRole } from '../types/database'
 import QuickObserveModal from './QuickObserveModal'
@@ -58,6 +59,7 @@ function getNavItems(
       { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
       { to: '/classrooms', label: 'Classrooms', icon: <School className="h-5 w-5" /> },
       { to: '/assignments', label: 'Assignments', icon: <ClipboardList className="h-5 w-5" /> },
+      { to: '/messages', label: 'Messages', icon: <MessageCircle className="h-5 w-5" /> },
       { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
       { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
       { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
@@ -75,6 +77,7 @@ function getNavItems(
         { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
         { to: '/classrooms', label: 'My Classrooms', icon: <School className="h-5 w-5" /> },
         { to: '/assignments', label: 'Assignments', icon: <ClipboardList className="h-5 w-5" /> },
+        { to: '/messages', label: 'Messages', icon: <MessageCircle className="h-5 w-5" /> },
         { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
         { to: '/observe', label: 'Quick Observe', icon: <PlusCircle className="h-5 w-5" /> },
       ]
@@ -98,6 +101,7 @@ function getNavItems(
         { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
         { to: '/classrooms', label: 'Classrooms', icon: <School className="h-5 w-5" /> },
         { to: '/assignments', label: 'Assignments', icon: <ClipboardList className="h-5 w-5" /> },
+        { to: '/messages', label: 'Messages', icon: <MessageCircle className="h-5 w-5" /> },
         { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
         { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
         { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
@@ -110,6 +114,7 @@ function getNavItems(
     case 'parent':
       return [
         { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+        { to: '/messages', label: 'Messages', icon: <MessageCircle className="h-5 w-5" /> },
         { to: '/students', label: 'My Children', icon: <Users className="h-5 w-5" /> },
         { to: '/classrooms', label: 'Classrooms', icon: <School className="h-5 w-5" /> },
         { to: '/settings', label: 'School Info', icon: <Building2 className="h-5 w-5" /> },
@@ -118,6 +123,7 @@ function getNavItems(
     case 'learner':
       return [
         { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+        { to: '/messages', label: 'Messages', icon: <MessageCircle className="h-5 w-5" /> },
         { to: '/learner/profile', label: 'My Profile', icon: <User className="h-5 w-5" /> },
       ]
     default:

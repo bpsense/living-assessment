@@ -697,6 +697,7 @@ export type CompetencyInsert = Omit<Competency, 'id' | 'created_at'> & {
 export type AssignmentType = 'individual' | 'class'
 export type AssignmentStatus = 'draft' | 'active' | 'completed'
 export type StudentAssignmentStatus = 'assigned' | 'in_progress' | 'submitted' | 'graded'
+export type LearnerColumn = 'on_deck' | 'researching' | 'actively_exploring' | 'blocked'
 export type CompetencyScoreSource = 'teacher' | 'ai_inferred' | 'observation'
 
 export interface Assignment {
@@ -742,6 +743,7 @@ export interface StudentAssignment {
   assignment_id: string
   student_id: string
   status: StudentAssignmentStatus
+  learner_column: LearnerColumn
   assigned_at: string
   submitted_at: string | null
   graded_at: string | null
@@ -755,6 +757,7 @@ export interface StudentAssignment {
 export type StudentAssignmentInsert = Pick<StudentAssignment, 'assignment_id' | 'student_id'> & {
   id?: string
   status?: StudentAssignmentStatus
+  learner_column?: LearnerColumn
   assigned_at?: string
   submitted_at?: string | null
   graded_at?: string | null
@@ -764,6 +767,61 @@ export type StudentAssignmentInsert = Pick<StudentAssignment, 'assignment_id' | 
 }
 
 export type StudentAssignmentUpdate = Partial<Omit<StudentAssignment, 'id' | 'assignment_id' | 'student_id' | 'created_at' | 'updated_at'>>
+
+// ============================================================
+// Community Messaging
+// ============================================================
+
+export type ConversationType = 'direct' | 'class' | 'group'
+
+export interface Conversation {
+  id: string
+  school_id: string
+  conversation_type: ConversationType
+  title: string | null
+  classroom_id: string | null
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+export type ConversationInsert = Pick<Conversation, 'school_id' | 'conversation_type' | 'created_by'> & {
+  id?: string
+  title?: string | null
+  classroom_id?: string | null
+}
+
+export interface ConversationParticipant {
+  id: string
+  conversation_id: string
+  user_id: string
+  role: string
+  joined_at: string
+  last_read_at: string | null
+}
+
+export type ConversationParticipantInsert = Pick<ConversationParticipant, 'conversation_id' | 'user_id'> & {
+  id?: string
+  role?: string
+  last_read_at?: string | null
+}
+
+export interface Message {
+  id: string
+  conversation_id: string
+  sender_id: string
+  content: string
+  is_flagged: boolean
+  flagged_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type MessageInsert = Pick<Message, 'conversation_id' | 'sender_id' | 'content'> & {
+  id?: string
+  is_flagged?: boolean
+  flagged_by?: string | null
+}
 
 export interface CompetencyScoreRow {
   id: string
