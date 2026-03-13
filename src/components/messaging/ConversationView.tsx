@@ -16,9 +16,10 @@ interface Props {
   conversation: ConversationWithDetails
   isParentView?: boolean
   childName?: string
+  onMessageSent?: () => void
 }
 
-export default function ConversationView({ conversation, isParentView = false, childName }: Props) {
+export default function ConversationView({ conversation, isParentView = false, childName, onMessageSent }: Props) {
   const { profile } = useAuth()
   const [messages, setMessages] = useState<MessageWithSender[]>([])
   const [loading, setLoading] = useState(true)
@@ -102,15 +103,35 @@ export default function ConversationView({ conversation, isParentView = false, c
     setLoadingMore(false)
   }, [conversation.id, messages, hasMore, loadingMore])
 
-  // Send message
+  // Send message — optimistically add to local state so it appears immediately
   async function handleSend() {
     if (!input.trim() || !profile || sending) return
+    const messageText = input.trim()
     setSending(true)
+    setInput('')
     try {
-      await sendMessage(conversation.id, input.trim(), profile.id)
-      setInput('')
+      const sentMsg = await sendMessage(conversation.id, messageText, profile.id)
+      // Build the MessageWithSender from the returned message + current profile
+      const msgWithSender: MessageWithSender = {
+        ...sentMsg,
+        sender: {
+          id: profile.id,
+          full_name: profile.full_name,
+          avatar_url: profile.avatar_url ?? null,
+          role: profile.role,
+        },
+      }
+      // Add to local messages (dedup in case realtime already delivered it)
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === sentMsg.id)) return prev
+        return [...prev, msgWithSender]
+      })
+      // Notify parent to refresh conversation list (last message, ordering)
+      onMessageSent?.()
     } catch (err) {
       console.error('Failed to send message:', err)
+      // Restore input so user doesn't lose their message
+      setInput(messageText)
     }
     setSending(false)
   }

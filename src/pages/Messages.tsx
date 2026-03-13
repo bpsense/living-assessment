@@ -105,6 +105,7 @@ export default function Messages() {
               <ConversationView
                 conversation={activeConversation}
                 isParentView={isParentViewingChildConv || false}
+                onMessageSent={loadConversations}
               />
             ) : (
               <div className="flex h-full flex-col items-center justify-center text-center">
@@ -144,6 +145,7 @@ export default function Messages() {
                 <ConversationView
                   conversation={activeConversation}
                   isParentView={isParentViewingChildConv || false}
+                  onMessageSent={loadConversations}
                 />
               </div>
             </>
