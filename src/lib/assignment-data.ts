@@ -170,7 +170,7 @@ export interface CompetencyTreeNode {
 
 export async function fetchCompetencyTree(schoolId: string): Promise<CompetencyTreeNode[]> {
   // Get the school's active framework (prefer non-default, fall back to default)
-  const { data: frameworks } = await supabase
+  const { data: frameworks, error: fwErr } = await supabase
     .from('competency_frameworks')
     .select('id')
     .eq('school_id', schoolId)
@@ -178,29 +178,44 @@ export async function fetchCompetencyTree(schoolId: string): Promise<CompetencyT
     .order('created_at', { ascending: false })
     .limit(1)
 
-  if (!frameworks || frameworks.length === 0) return []
+  if (fwErr) {
+    console.error('[fetchCompetencyTree] frameworks query failed:', fwErr.message)
+    return []
+  }
+  if (!frameworks || frameworks.length === 0) {
+    console.warn('[fetchCompetencyTree] no frameworks found for school', schoolId)
+    return []
+  }
 
   const frameworkId = frameworks[0].id
 
-  const { data: domains } = await supabase
+  const { data: domains, error: domErr } = await supabase
     .from('competency_domains')
     .select('*')
     .eq('framework_id', frameworkId)
     .order('display_order')
 
+  if (domErr) {
+    console.error('[fetchCompetencyTree] domains query failed:', domErr.message)
+    return []
+  }
   if (!domains || domains.length === 0) return []
 
-  const { data: subdomains } = await supabase
+  const { data: subdomains, error: sdErr } = await supabase
     .from('competency_subdomains')
     .select('*')
     .in('domain_id', domains.map((d) => d.id))
     .order('display_order')
 
-  const { data: competencies } = await supabase
+  if (sdErr) console.error('[fetchCompetencyTree] subdomains query failed:', sdErr.message)
+
+  const { data: competencies, error: compErr } = await supabase
     .from('competencies')
     .select('*')
     .eq('framework_id', frameworkId)
     .order('code')
+
+  if (compErr) console.error('[fetchCompetencyTree] competencies query failed:', compErr.message)
 
   const tree: CompetencyTreeNode[] = domains.map((domain) => {
     const domainSubdomains = (subdomains || []).filter((sd) => sd.domain_id === domain.id)

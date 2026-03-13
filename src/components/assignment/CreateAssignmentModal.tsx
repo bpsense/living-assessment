@@ -607,7 +607,6 @@ export default function CreateAssignmentModal({
 
   const canSubmit =
     title.trim() &&
-    selectedCompetencies.size > 0 &&
     studentIds.length > 0 &&
     classroomId &&
     !submitting
