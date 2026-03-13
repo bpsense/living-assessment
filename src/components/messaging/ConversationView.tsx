@@ -11,7 +11,6 @@ import {
   type ConversationWithDetails,
 } from '../../lib/messaging-data'
 import { useRealtimeMessages } from '../../hooks/useRealtimeMessages'
-import type { Profile } from '../../types/database'
 
 interface Props {
   conversation: ConversationWithDetails

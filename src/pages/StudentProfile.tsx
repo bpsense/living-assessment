@@ -18,6 +18,7 @@ import SISSection from '../components/student/SISSection'
 import SISEditModal from '../components/student/SISEditModal'
 import TeacherNotes from '../components/student/TeacherNotes'
 import ParentNotes from '../components/student/ParentNotes'
+import LearnerMessagesSection from '../components/student/LearnerMessagesSection'
 import StudentContextDoc from '../components/student/StudentContextDoc'
 
 // ============================================================
@@ -55,7 +56,7 @@ function StudentAvatar({
 export default function StudentProfile() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  useAuth()
+  const { profile } = useAuth()
   const { role, formatStudentName } = useAccessControl()
   const { toast } = useToast()
   const [launchingSurvey, setLaunchingSurvey] = useState(false)
@@ -390,6 +391,15 @@ export default function StudentProfile() {
             mode="family"
           />
         </section>
+      )}
+
+      {/* ========== LEARNER MESSAGES (family view) ========== */}
+      {isFamilyView && student && profile && (
+        <LearnerMessagesSection
+          studentId={student.id}
+          parentId={profile.id}
+          childName={student.first_name}
+        />
       )}
 
       {/* SIS Edit Modal */}

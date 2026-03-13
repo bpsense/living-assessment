@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { formatDistanceToNow } from 'date-fns'
-import { Search, Plus, Users, User, MessageCircle, Hash } from 'lucide-react'
+import { Search, Plus, Users, User, MessageCircle, Hash, Eye } from 'lucide-react'
 import type { ConversationWithDetails } from '../../lib/messaging-data'
 
 interface Props {
   conversations: ConversationWithDetails[]
   activeConversationId: string | null
   currentUserId: string
+  isParent?: boolean
   onSelect: (conversationId: string) => void
   onNewMessage: () => void
 }
@@ -15,6 +16,7 @@ export default function ConversationList({
   conversations,
   activeConversationId,
   currentUserId,
+  isParent = false,
   onSelect,
   onNewMessage,
 }: Props) {
@@ -25,6 +27,10 @@ export default function ConversationList({
     const label = getConversationLabel(c, currentUserId).toLowerCase()
     return label.includes(search.toLowerCase())
   })
+
+  // Split conversations for parent view
+  const ownConversations = filtered.filter((c) => !c.isChildConversation)
+  const childConversations = filtered.filter((c) => c.isChildConversation)
 
   return (
     <div className="flex h-full flex-col border-r border-bg-muted bg-bg-card">
@@ -71,6 +77,62 @@ export default function ConversationList({
               </button>
             )}
           </div>
+        ) : isParent ? (
+          <>
+            {/* Parent's own conversations */}
+            {ownConversations.length > 0 && (
+              <>
+                <div className="px-4 pt-3 pb-1">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+                    My Conversations
+                  </h3>
+                </div>
+                {ownConversations.map((conv) => (
+                  <ConversationRow
+                    key={conv.id}
+                    conversation={conv}
+                    isActive={conv.id === activeConversationId}
+                    currentUserId={currentUserId}
+                    onClick={() => onSelect(conv.id)}
+                  />
+                ))}
+              </>
+            )}
+
+            {/* Children's conversations (read-only) */}
+            {childConversations.length > 0 && (
+              <>
+                <div className="px-4 pt-4 pb-1">
+                  <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-text-muted">
+                    <Eye className="h-3 w-3" />
+                    Learner Messages
+                  </h3>
+                </div>
+                {childConversations.map((conv) => (
+                  <ConversationRow
+                    key={conv.id}
+                    conversation={conv}
+                    isActive={conv.id === activeConversationId}
+                    currentUserId={currentUserId}
+                    isReadOnly
+                    onClick={() => onSelect(conv.id)}
+                  />
+                ))}
+              </>
+            )}
+
+            {/* Empty state for own section when parent has no own conversations */}
+            {ownConversations.length === 0 && childConversations.length > 0 && (
+              <div className="px-4 py-3 text-center">
+                <button
+                  onClick={onNewMessage}
+                  className="text-xs font-medium text-primary-600 hover:text-primary-700"
+                >
+                  + Start a conversation with an educator
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           filtered.map((conv) => (
             <ConversationRow
@@ -91,11 +153,13 @@ function ConversationRow({
   conversation,
   isActive,
   currentUserId,
+  isReadOnly,
   onClick,
 }: {
   conversation: ConversationWithDetails
   isActive: boolean
   currentUserId: string
+  isReadOnly?: boolean
   onClick: () => void
 }) {
   const label = getConversationLabel(conversation, currentUserId)
@@ -138,9 +202,14 @@ function ConversationRow({
           <span className={`text-sm font-medium truncate ${unread > 0 ? 'text-text-primary' : 'text-text-secondary'}`}>
             {label}
           </span>
-          {time && (
-            <span className="ml-2 shrink-0 text-xs text-text-muted">{time}</span>
-          )}
+          <div className="ml-2 flex shrink-0 items-center gap-1">
+            {isReadOnly && (
+              <Eye className="h-3 w-3 text-blue-400" aria-label="Read-only — learner messages" />
+            )}
+            {time && (
+              <span className="text-xs text-text-muted">{time}</span>
+            )}
+          </div>
         </div>
         <div className="flex items-center justify-between">
           <p className={`text-xs truncate ${unread > 0 ? 'font-medium text-text-secondary' : 'text-text-muted'}`}>

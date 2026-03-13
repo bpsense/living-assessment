@@ -19,7 +19,6 @@ import SubmitAssignmentModal from './SubmitAssignmentModal'
 import {
   getKanbanGroups,
   updateLearnerColumn,
-  KANBAN_COLUMNS,
   type LearnerAssignment,
   type KanbanColumn,
 } from '../../lib/learner-assignments-data'
