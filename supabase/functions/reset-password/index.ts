@@ -63,14 +63,21 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: 'Missing authorization header' })
     }
 
+    // Extract the JWT from the Bearer token
+    const token = authHeader.replace('Bearer ', '')
+
     const anonClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!,
       { global: { headers: { Authorization: authHeader } } }
     )
 
-    const { data: { user }, error: authError } = await anonClient.auth.getUser()
+    // Pass the JWT directly to getUser() — relying on global headers alone
+    // can fail in newer @supabase/supabase-js versions where getUser()
+    // checks the local session first (which is empty in Edge Functions).
+    const { data: { user }, error: authError } = await anonClient.auth.getUser(token)
     if (authError || !user) {
+      console.error('getUser failed:', authError?.message)
       return jsonResponse({ error: 'Unauthorized' })
     }
 
