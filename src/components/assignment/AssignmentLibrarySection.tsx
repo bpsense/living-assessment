@@ -103,9 +103,6 @@ function TemplateEditModal({
 
   if (!open) return null
 
-  // Flatten competencies for selection
-  const allCompetencies = competencyTree.flatMap((domain) => domain.competencies)
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
@@ -187,12 +184,12 @@ function TemplateEditModal({
               {competencyTree.length === 0 ? (
                 <p className="py-2 text-center text-xs text-text-light">No competencies found</p>
               ) : (
-                competencyTree.map((domain) => (
-                  <div key={domain.domain_id}>
+                competencyTree.map((node) => (
+                  <div key={node.domain.id}>
                     <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide px-1 pt-1">
-                      {domain.domain_name}
+                      {node.domain.name}
                     </p>
-                    {domain.competencies.map((comp) => (
+                    {node.subdomains.flatMap((sd) => sd.competencies).map((comp) => (
                       <label
                         key={comp.id}
                         className="flex items-center gap-2 rounded px-1.5 py-1 text-xs cursor-pointer hover:bg-primary-50"

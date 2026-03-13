@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, Users, ClipboardPen, School, Plus, Mail, Send, UserX, UserCheck, MoreVertical } from 'lucide-react'
+import { Loader2, Users, ClipboardPen, School, Plus, Mail, Send, UserX, MoreVertical } from 'lucide-react'
 import { useAuth } from '../../lib/auth'
 import { useAccessControl } from '../../lib/access-control'
 import { useToast } from '../../components/Toast'
@@ -26,22 +26,6 @@ export default function Educators() {
       toast(err.message, 'error')
     } else {
       toast(`${name} has been deactivated`, 'success')
-      refetch()
-    }
-    setActionLoading(null)
-    setActionMenu(null)
-  }, [toast, refetch])
-
-  const handleReactivate = useCallback(async (userId: string, name: string) => {
-    setActionLoading(userId)
-    const { error: err } = await supabase
-      .from('profiles')
-      .update({ is_active: true })
-      .eq('id', userId)
-    if (err) {
-      toast(err.message, 'error')
-    } else {
-      toast(`${name} has been reactivated`, 'success')
       refetch()
     }
     setActionLoading(null)

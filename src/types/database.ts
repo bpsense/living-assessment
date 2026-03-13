@@ -752,7 +752,7 @@ export interface StudentAssignment {
   updated_at: string
 }
 
-export type StudentAssignmentInsert = Omit<StudentAssignment, 'id' | 'created_at' | 'updated_at'> & {
+export type StudentAssignmentInsert = Pick<StudentAssignment, 'assignment_id' | 'student_id'> & {
   id?: string
   status?: StudentAssignmentStatus
   assigned_at?: string
@@ -825,7 +825,7 @@ export interface Skill {
   updated_at: string
 }
 
-export type SkillInsert = Omit<Skill, 'id' | 'created_at' | 'updated_at'> & {
+export type SkillInsert = Pick<Skill, 'school_id' | 'name'> & {
   id?: string
   description?: string | null
   category?: string | null

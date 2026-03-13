@@ -32,8 +32,6 @@ import {
 import type {
   Classroom,
   Student,
-  Competency,
-  Skill,
   AssignmentType,
   AssignmentTemplate,
 } from '../../types/database'
@@ -580,6 +578,10 @@ export default function CreateAssignmentModal({
       const skillId = await createSkill({
         school_id: profile.school_id,
         name,
+        description: null,
+        category: null,
+        min_grade: null,
+        max_grade: null,
         is_default: false,
         created_by: profile.id,
       })

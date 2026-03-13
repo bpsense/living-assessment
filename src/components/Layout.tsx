@@ -17,7 +17,6 @@ import {
   User,
   LogOut,
   GraduationCap,
-  Plus,
   Eye,
   MapPin,
   ChevronDown,
@@ -149,7 +148,7 @@ function getSwitchableRoles(actualRole: UserRole): UserRole[] {
 }
 
 export default function Layout() {
-  const { profile, actualRole, signOut, viewAsRole, setViewAs, viewAsUserId, viewAsUserName, isSystemAdmin, activeSchoolId, accessLevel } = useAuth()
+  const { profile, actualRole, signOut, viewAsRole, setViewAs, viewAsUserId, viewAsUserName, isSystemAdmin, activeSchoolId } = useAuth()
   const { isDepartmentAdmin } = useAccessControl()
   const navigate = useNavigate()
   const [quickObserveOpen, setQuickObserveOpen] = useState(false)

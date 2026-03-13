@@ -193,7 +193,7 @@ export function useUserManagement(filters: UserFilters = {}) {
       for (const da of deptAdmins ?? []) {
         const uid = (da as { user_id: string }).user_id
         const deptId = (da as { department_id: string }).department_id
-        const deptName = (da as { departments: { name: string } | null }).departments?.name
+        const deptName = (da as unknown as { departments: { name: string } | null }).departments?.name
         if (!deptAdminMap.has(uid)) deptAdminMap.set(uid, [])
         if (deptId && deptName) deptAdminMap.get(uid)!.push({ id: deptId, name: deptName })
       }
@@ -212,7 +212,7 @@ export function useUserManagement(filters: UserFilters = {}) {
 
         for (const ec of ecData ?? []) {
           const eid = (ec as { educator_id: string }).educator_id
-          const cName = (ec as { classrooms: { name: string } | null }).classrooms?.name
+          const cName = (ec as unknown as { classrooms: { name: string } | null }).classrooms?.name
           if (!classroomMap.has(eid)) classroomMap.set(eid, [])
           if (cName) classroomMap.get(eid)!.push(cName)
         }

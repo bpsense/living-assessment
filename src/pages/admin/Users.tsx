@@ -23,7 +23,6 @@ import {
   Loader2,
   AlertTriangle,
   Shield,
-  MapPin,
   X,
   Plus,
   KeyRound,
@@ -35,7 +34,7 @@ import { useActiveSchoolId } from '../../lib/school-context'
 import { inviteUser } from '../../lib/invite-user'
 import { adminResetPassword } from '../../lib/reset-password'
 import { supabase } from '../../lib/supabase'
-import type { UserRole, AccessLevel } from '../../types/database'
+import type { UserRole } from '../../types/database'
 
 const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
   { value: 'admin', label: 'School Admin' },

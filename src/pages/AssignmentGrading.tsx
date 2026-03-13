@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { clsx } from 'clsx'
+// clsx available if needed for conditional styling
 import { useAuth } from '../lib/auth'
 import { useToast } from '../components/Toast'
 import { fetchAssignment, type AssignmentWithDetails } from '../lib/assignment-data'
