@@ -8,6 +8,8 @@ import {
   ClipboardPen,
   Pencil,
   X,
+  AlertCircle,
+  UserPlus,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
@@ -22,6 +24,13 @@ import type { Student, Classroom } from '../types/database'
 interface StudentRow extends Student {
   classroom_name: string
   observation_count: number
+}
+
+/** Learner profile that hasn't been linked to a student record */
+interface UnlinkedLearner {
+  id: string
+  full_name: string
+  email: string
 }
 
 // ============================================================
@@ -40,6 +49,12 @@ export default function Students() {
   const [showForm, setShowForm] = useState(false)
   const [editStudent, setEditStudent] = useState<Student | null>(null)
   const [saving, setSaving] = useState(false)
+
+  // Unlinked learner profiles (role = learner, student_id = NULL)
+  const [unlinkedLearners, setUnlinkedLearners] = useState<UnlinkedLearner[]>([])
+  const [assigningLearnerId, setAssigningLearnerId] = useState<string | null>(null)
+  const [assignClassroomId, setAssignClassroomId] = useState('')
+  const [assignSaving, setAssignSaving] = useState(false)
 
   // Form state
   const [firstName, setFirstName] = useState('')
@@ -185,6 +200,21 @@ export default function Students() {
           observation_count: obsCounts.get(s.id) ?? 0,
         }))
       )
+
+      // 4. Fetch learner profiles without a linked student record
+      if (canViewAllStudents) {
+        const { data: unlinkedData } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .eq('school_id', profile.school_id)
+          .eq('role', 'learner')
+          .is('student_id', null)
+          .order('full_name')
+
+        setUnlinkedLearners((unlinkedData ?? []) as UnlinkedLearner[])
+      } else {
+        setUnlinkedLearners([])
+      }
     } catch {
       toast('Failed to load learners', 'error')
     } finally {
@@ -252,6 +282,50 @@ export default function Students() {
     setSaving(false)
     setShowForm(false)
     fetchAll()
+  }
+
+  /** Assign an unlinked learner profile to a classroom by creating a student record and linking */
+  async function handleAssignLearner(learner: UnlinkedLearner) {
+    if (!profile || !assignClassroomId) return
+    setAssignSaving(true)
+
+    try {
+      const nameParts = learner.full_name.trim().split(' ')
+      const firstName = nameParts[0] || learner.full_name
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : firstName
+
+      // Create a student record
+      const { data: newStudent, error: studentErr } = await supabase
+        .from('students')
+        .insert({
+          school_id: profile.school_id,
+          classroom_id: assignClassroomId,
+          first_name: firstName,
+          last_name: lastName,
+          student_status: 'active',
+        })
+        .select('id')
+        .single()
+
+      if (studentErr) throw studentErr
+
+      // Link the profile to the new student record
+      const { error: linkErr } = await supabase
+        .from('profiles')
+        .update({ student_id: newStudent.id })
+        .eq('id', learner.id)
+
+      if (linkErr) throw linkErr
+
+      toast('Learner assigned to classroom!', 'success')
+      setAssigningLearnerId(null)
+      setAssignClassroomId('')
+      fetchAll()
+    } catch {
+      toast('Failed to assign learner', 'error')
+    } finally {
+      setAssignSaving(false)
+    }
   }
 
   // ---------- Loading ----------
@@ -490,6 +564,73 @@ export default function Students() {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Unlinked learner accounts */}
+      {unlinkedLearners.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-warning-500" />
+            <h2 className="text-sm font-semibold text-text">
+              Unassigned Learner Accounts ({unlinkedLearners.length})
+            </h2>
+          </div>
+          <p className="text-xs text-text-muted">
+            These users have learner accounts but haven't been assigned to a classroom yet.
+          </p>
+          <div className="overflow-hidden rounded-xl border border-warning-200 bg-bg-card shadow-sm">
+            {unlinkedLearners.map((learner) => (
+              <div
+                key={learner.id}
+                className="flex items-center justify-between border-b border-bg-muted px-4 py-3 last:border-0"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-text">{learner.full_name}</p>
+                  <p className="text-xs text-text-light">{learner.email}</p>
+                </div>
+
+                {assigningLearnerId === learner.id ? (
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={assignClassroomId}
+                      onChange={(e) => setAssignClassroomId(e.target.value)}
+                      className="rounded-lg border border-bg-muted bg-bg px-2 py-1.5 text-xs text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-300"
+                    >
+                      <option value="">Select classroom...</option>
+                      {classrooms.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}{c.grade_level ? ` (${c.grade_level})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => handleAssignLearner(learner)}
+                      disabled={!assignClassroomId || assignSaving}
+                      className="flex items-center gap-1 rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-600 disabled:opacity-50"
+                    >
+                      {assignSaving && <Loader2 className="h-3 w-3 animate-spin" />}
+                      Assign
+                    </button>
+                    <button
+                      onClick={() => { setAssigningLearnerId(null); setAssignClassroomId('') }}
+                      className="rounded-lg p-1 text-text-light hover:text-text"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { setAssigningLearnerId(learner.id); setAssignClassroomId('') }}
+                    className="flex items-center gap-1.5 rounded-lg border border-bg-muted px-3 py-1.5 text-xs font-medium text-text-muted transition-colors hover:bg-bg-muted hover:text-text"
+                  >
+                    <UserPlus className="h-3.5 w-3.5" />
+                    Assign to Classroom
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

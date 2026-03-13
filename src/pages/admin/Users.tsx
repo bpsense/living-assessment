@@ -450,7 +450,7 @@ export default function UsersPage() {
           {/* Learner linking options (only for learner role) */}
           {!isAllSchoolsInvite && inviteRole === 'learner' && (
             <div className="mt-4 rounded-lg border border-bg-muted bg-bg p-4">
-              <p className="mb-3 text-xs font-semibold text-text">Link to Student Record</p>
+              <p className="mb-3 text-xs font-semibold text-text">Link to Learner Record</p>
               <div className="mb-3 flex gap-2">
                 <button
                   type="button"
@@ -461,7 +461,7 @@ export default function UsersPage() {
                       : 'bg-bg-muted text-text-muted hover:bg-bg-muted/80'
                   }`}
                 >
-                  Link to Existing Student
+                  Link to Existing Learner
                 </button>
                 <button
                   type="button"
@@ -472,22 +472,22 @@ export default function UsersPage() {
                       : 'bg-bg-muted text-text-muted hover:bg-bg-muted/80'
                   }`}
                 >
-                  Create New Student
+                  Create New Learner
                 </button>
               </div>
 
               {learnerLinkMode === 'existing' ? (
                 <div>
                   <label className="mb-1 block text-xs font-medium text-text-muted">
-                    Select Student <span className="font-normal text-text-light">(students without a learner account)</span>
+                    Select Learner <span className="font-normal text-text-light">(learners without a linked account)</span>
                   </label>
                   {unlinkedStudents.length === 0 ? (
-                    <p className="text-xs text-text-light italic">All students already have linked accounts</p>
+                    <p className="text-xs text-text-light italic">All learners already have linked accounts</p>
                   ) : (
                     <>
                       <input
                         type="text"
-                        placeholder="Search students..."
+                        placeholder="Search learners..."
                         value={studentSearch}
                         onChange={e => setStudentSearch(e.target.value)}
                         className="mb-2 w-full rounded-lg border border-bg-muted bg-bg-card px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-300"
@@ -521,7 +521,7 @@ export default function UsersPage() {
               ) : (
                 <div>
                   <label className="mb-1 block text-xs font-medium text-text-muted">
-                    Classroom <span className="font-normal text-text-light">(a student record will be auto-created)</span>
+                    Classroom <span className="font-normal text-text-light">(a learner record will be auto-created)</span>
                   </label>
                   {classrooms.length === 0 ? (
                     <p className="text-xs text-text-light italic">No classrooms available</p>

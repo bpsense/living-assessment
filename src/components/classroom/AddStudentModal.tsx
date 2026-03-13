@@ -184,7 +184,7 @@ export default function AddStudentModal({
 
   async function handleAddExisting() {
     if (selectedStudentIds.size === 0) {
-      setError('Select at least one student')
+      setError('Select at least one learner')
       return
     }
 
@@ -292,7 +292,7 @@ export default function AddStudentModal({
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
                 <input
                   type="text"
-                  placeholder="Search students by name..."
+                  placeholder="Search learners by name..."
                   value={existingSearch}
                   onChange={e => setExistingSearch(e.target.value)}
                   className="w-full rounded-lg border border-bg-muted bg-bg py-2 pl-10 pr-3 text-sm text-text placeholder:text-text-light focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-300"
@@ -305,13 +305,13 @@ export default function AddStudentModal({
                 </div>
               ) : filteredExisting.length === 0 ? (
                 <p className="py-6 text-center text-sm text-text-light">
-                  {existingSearch ? 'No students found matching your search' : 'No students available to add'}
+                  {existingSearch ? 'No learners found matching your search' : 'No learners available to add'}
                 </p>
               ) : (
                 <>
                   {selectedStudentIds.size > 0 && (
                     <p className="text-xs font-medium text-primary-600">
-                      {selectedStudentIds.size} student{selectedStudentIds.size > 1 ? 's' : ''} selected
+                      {selectedStudentIds.size} learner{selectedStudentIds.size > 1 ? 's' : ''} selected
                     </p>
                   )}
                   <div className="max-h-[400px] overflow-y-auto rounded-lg border border-bg-muted">
