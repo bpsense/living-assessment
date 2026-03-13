@@ -93,6 +93,7 @@ export default function Messages() {
               conversations={conversations}
               activeConversationId={activeConvId}
               currentUserId={profile.id}
+              isParent={profile.role === 'parent'}
               onSelect={handleSelectConversation}
               onNewMessage={() => setShowNewMessage(true)}
             />
@@ -151,6 +152,7 @@ export default function Messages() {
               conversations={conversations}
               activeConversationId={activeConvId}
               currentUserId={profile.id}
+              isParent={profile.role === 'parent'}
               onSelect={handleSelectConversation}
               onNewMessage={() => setShowNewMessage(true)}
             />
@@ -164,6 +166,7 @@ export default function Messages() {
           open={showNewMessage}
           schoolId={profile.school_id}
           currentUserId={profile.id}
+          userRole={profile.role}
           onClose={() => setShowNewMessage(false)}
           onCreated={handleConversationCreated}
         />

@@ -18,6 +18,8 @@ export interface ConversationWithDetails extends Conversation {
   participants: (ConversationParticipant & { profile: Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'role'> })[]
   lastMessage: Message | null
   unreadCount: number
+  /** True when the current user is NOT a direct participant (e.g. parent viewing child's conversation) */
+  isChildConversation?: boolean
 }
 
 export interface MessageWithSender extends Message {
@@ -70,6 +72,7 @@ export async function fetchConversations(userId: string): Promise<ConversationWi
   const myReadMap = new Map(
     (myParticipation || []).map((p) => [p.conversation_id, p.last_read_at])
   )
+  const myConvIds = new Set((myParticipation || []).map((p) => p.conversation_id))
 
   // Group data
   const participantMap = new Map<string, typeof participants>()
@@ -103,6 +106,7 @@ export async function fetchConversations(userId: string): Promise<ConversationWi
     participants: (participantMap.get(c.id) || []) as ConversationWithDetails['participants'],
     lastMessage: lastMessageMap.get(c.id) || null,
     unreadCount: unreadCounts.get(c.id) || 0,
+    isChildConversation: !myConvIds.has(c.id),
   }))
 }
 
@@ -419,6 +423,94 @@ export async function fetchParentConversations(parentId: string): Promise<Conver
 // ============================================================
 // User search for new conversations
 // ============================================================
+
+/**
+ * Search for educators/admins a parent can message.
+ * Uses the SECURITY DEFINER RPC which checks linked children's classrooms.
+ */
+export async function searchParentContactableUsers(
+  parentId: string,
+  query: string
+): Promise<Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'role'>[]> {
+  const { data, error } = await supabase.rpc('search_parent_contactable_users', {
+    p_parent_id: parentId,
+    p_query: query,
+  })
+
+  if (error) {
+    console.error('[searchParentContactableUsers] RPC failed:', error.message)
+    return []
+  }
+
+  return (data || []) as Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'role'>[]
+}
+
+/**
+ * Fetch conversations for a specific linked child (used on student profile page).
+ * Returns read-only conversation data with isChildConversation = true.
+ */
+export async function fetchLearnerConversations(
+  parentId: string,
+  studentId: string
+): Promise<ConversationWithDetails[]> {
+  // Get conversation IDs for this specific child
+  const { data: convIdRows, error: rpcErr } = await supabase.rpc('get_learner_conversation_ids', {
+    p_parent_id: parentId,
+    p_student_id: studentId,
+  })
+
+  if (rpcErr) {
+    console.error('[fetchLearnerConversations] RPC failed:', rpcErr.message)
+    return []
+  }
+
+  const convIds: string[] = (convIdRows || []).map((r: any) => r.get_learner_conversation_ids ?? r)
+  if (convIds.length === 0) return []
+
+  // Fetch conversation details
+  const { data: conversations } = await supabase
+    .from('conversations')
+    .select('*')
+    .in('id', convIds)
+    .order('updated_at', { ascending: false })
+
+  if (!conversations || conversations.length === 0) return []
+
+  // Get participants
+  const { data: participants } = await supabase
+    .from('conversation_participants')
+    .select('*, profile:profiles(id, full_name, avatar_url, role)')
+    .in('conversation_id', convIds)
+
+  // Get last message per conversation
+  const { data: allMessages } = await supabase
+    .from('messages')
+    .select('*')
+    .in('conversation_id', convIds)
+    .order('created_at', { ascending: false })
+
+  const participantMap = new Map<string, typeof participants>()
+  for (const p of participants || []) {
+    const list = participantMap.get(p.conversation_id) || []
+    list.push(p)
+    participantMap.set(p.conversation_id, list)
+  }
+
+  const lastMessageMap = new Map<string, Message>()
+  for (const m of allMessages || []) {
+    if (!lastMessageMap.has(m.conversation_id)) {
+      lastMessageMap.set(m.conversation_id, m)
+    }
+  }
+
+  return conversations.map((c) => ({
+    ...c,
+    participants: (participantMap.get(c.id) || []) as ConversationWithDetails['participants'],
+    lastMessage: lastMessageMap.get(c.id) || null,
+    unreadCount: 0,
+    isChildConversation: true,
+  }))
+}
 
 /**
  * Search for users in the school that can be messaged.

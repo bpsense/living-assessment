@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, Search, Loader2, MessageCircle, Users } from 'lucide-react'
-import { searchMessagingUsers, createDirectConversation, createGroupConversation } from '../../lib/messaging-data'
+import { searchMessagingUsers, searchParentContactableUsers, createDirectConversation, createGroupConversation } from '../../lib/messaging-data'
 import type { Profile } from '../../types/database'
 
 type UserResult = Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'role'>
@@ -9,11 +9,13 @@ interface Props {
   open: boolean
   schoolId: string
   currentUserId: string
+  userRole?: string
   onClose: () => void
   onCreated: (conversationId: string) => void
 }
 
-export default function NewConversationModal({ open, schoolId, currentUserId, onClose, onCreated }: Props) {
+export default function NewConversationModal({ open, schoolId, currentUserId, userRole, onClose, onCreated }: Props) {
+  const isParent = userRole === 'parent'
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<UserResult[]>([])
   const [selected, setSelected] = useState<UserResult[]>([])
@@ -34,7 +36,9 @@ export default function NewConversationModal({ open, schoolId, currentUserId, on
     const timer = setTimeout(async () => {
       setSearching(true)
       try {
-        const users = await searchMessagingUsers(schoolId, query, currentUserId)
+        const users = isParent
+          ? await searchParentContactableUsers(currentUserId, query)
+          : await searchMessagingUsers(schoolId, query, currentUserId)
         // Filter out already selected users
         const selectedIds = new Set(selected.map((s) => s.id))
         setResults(users.filter((u) => !selectedIds.has(u.id)))
@@ -61,6 +65,16 @@ export default function NewConversationModal({ open, schoolId, currentUserId, on
 
   async function handleCreate() {
     if (selected.length === 0) return
+
+    // Safety guard: parents cannot message learners or other parents
+    if (isParent) {
+      const blocked = selected.find((u) => u.role === 'learner' || u.role === 'parent')
+      if (blocked) {
+        setError('You can only message educators and administrators.')
+        return
+      }
+    }
+
     setCreating(true)
     setError(null)
 
@@ -126,7 +140,9 @@ export default function NewConversationModal({ open, schoolId, currentUserId, on
         <div className="mb-4">
           <h3 className="text-lg font-semibold text-text-primary">New Conversation</h3>
           <p className="mt-1 text-sm text-text-secondary">
-            Search for people in your school to message.
+            {isParent
+              ? 'Search for educators and administrators to message.'
+              : 'Search for people in your school to message.'}
           </p>
         </div>
 
