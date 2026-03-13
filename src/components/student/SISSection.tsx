@@ -15,9 +15,13 @@ import {
   Copy,
   RefreshCw,
   Check,
+  Loader2,
+  UserPlus,
 } from 'lucide-react'
 import { useStudentContacts } from '../../lib/sis-data'
 import { regenerateFamilyCode, useLinkedParents } from '../../lib/family-data'
+import { inviteUser } from '../../lib/invite-user'
+import { supabase } from '../../lib/supabase'
 import StudentDocuments from './StudentDocuments'
 import type { Student, StudentContact } from '../../types/database'
 import type { LinkedParent } from '../../lib/family-data'
@@ -275,6 +279,11 @@ export default function SISSection({ student, onEdit, role, onRefetch }: Props) 
                 </div>
               )}
 
+              {/* ── Linked Learner Account ──────────── */}
+              {showFamilyCode && (
+                <LinkedLearnerAccount student={student} />
+              )}
+
               {/* ── Documents ────────────────────────── */}
               <StudentDocuments studentId={student.id} schoolId={student.school_id} />
             </>
@@ -447,6 +456,167 @@ function LinkedParentCard({ parent }: { parent: LinkedParent }) {
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+// ============================================================
+// Linked Learner Account section
+// ============================================================
+
+function LinkedLearnerAccount({ student }: { student: Student }) {
+  const [linkedProfile, setLinkedProfile] = useState<{ id: string; full_name: string; email: string } | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [showInviteForm, setShowInviteForm] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteFullName, setInviteFullName] = useState(`${student.first_name} ${student.last_name}`)
+  const [inviting, setInviting] = useState(false)
+  const [inviteError, setInviteError] = useState<string | null>(null)
+  const [inviteSuccess, setInviteSuccess] = useState(false)
+
+  // Check if this student already has a linked learner account
+  useEffect(() => {
+    setLoading(true)
+    supabase
+      .from('profiles')
+      .select('id, full_name, email')
+      .eq('student_id', student.id)
+      .eq('role', 'learner')
+      .maybeSingle()
+      .then(({ data }) => {
+        setLinkedProfile(data ?? null)
+        setLoading(false)
+      })
+  }, [student.id])
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!inviteEmail.trim() || !inviteFullName.trim()) return
+
+    setInviting(true)
+    setInviteError(null)
+
+    const { error } = await inviteUser({
+      email: inviteEmail.trim(),
+      fullName: inviteFullName.trim(),
+      schoolId: student.school_id,
+      role: 'learner',
+      studentId: student.id,
+    })
+
+    if (error) {
+      setInviteError(error)
+    } else {
+      setInviteSuccess(true)
+      setShowInviteForm(false)
+      // Refetch linked profile
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .eq('student_id', student.id)
+        .eq('role', 'learner')
+        .maybeSingle()
+      setLinkedProfile(data ?? null)
+    }
+    setInviting(false)
+  }
+
+  return (
+    <div>
+      <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-text-muted">
+        <UserPlus className="h-3.5 w-3.5" /> Linked Learner Account
+      </h3>
+
+      {loading ? (
+        <p className="text-xs text-text-light">Loading...</p>
+      ) : linkedProfile ? (
+        <div className="rounded-lg border border-bg-muted bg-bg p-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-success-50 text-xs font-bold text-success-700">
+              {linkedProfile.full_name.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <p className="truncate text-sm font-medium text-text">{linkedProfile.full_name}</p>
+                <span className="rounded-full bg-success-50 px-2 py-0.5 text-[10px] font-medium text-success-700">
+                  Linked
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-text-muted">
+                <Mail className="h-3 w-3 shrink-0" />
+                <span className="truncate">{linkedProfile.email}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div>
+          {inviteSuccess ? (
+            <div className="rounded-lg border border-success-200 bg-success-50 p-3">
+              <p className="text-xs font-medium text-success-700">
+                Invitation sent! The learner will receive an email to set up their account.
+              </p>
+            </div>
+          ) : showInviteForm ? (
+            <form onSubmit={handleInvite} className="rounded-lg border border-bg-muted bg-bg p-3 space-y-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-text-muted">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={inviteFullName}
+                  onChange={e => setInviteFullName(e.target.value)}
+                  className="w-full rounded-lg border border-bg-muted bg-bg-card px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-300"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-text-muted">Email</label>
+                <input
+                  type="email"
+                  required
+                  value={inviteEmail}
+                  onChange={e => setInviteEmail(e.target.value)}
+                  placeholder="learner@email.com"
+                  className="w-full rounded-lg border border-bg-muted bg-bg-card px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-300"
+                />
+              </div>
+              {inviteError && (
+                <p className="text-xs text-alert-600">{inviteError}</p>
+              )}
+              <div className="flex items-center gap-2">
+                <button
+                  type="submit"
+                  disabled={inviting}
+                  className="flex items-center gap-1.5 rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-600 disabled:opacity-50"
+                >
+                  {inviting ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserPlus className="h-3 w-3" />}
+                  Send Invite
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowInviteForm(false); setInviteError(null) }}
+                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-text-muted hover:bg-bg-muted"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="flex items-center gap-3 rounded-lg border border-dashed border-bg-muted bg-bg p-3">
+              <p className="flex-1 text-xs text-text-light">
+                No learner account linked. Invite someone to create an account that can access this learner's profile.
+              </p>
+              <button
+                onClick={() => setShowInviteForm(true)}
+                className="flex shrink-0 items-center gap-1.5 rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-600"
+              >
+                <UserPlus className="h-3 w-3" />
+                Invite Learner
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

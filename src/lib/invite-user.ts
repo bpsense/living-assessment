@@ -11,6 +11,8 @@ interface InviteUserParams {
   role: UserRole
   departmentId?: string // only for educator → dept admin
   isSystemAdmin?: boolean // only for system admin invites from All Schools view
+  studentId?: string // link learner to existing student record
+  classroomId?: string // auto-create student in this classroom for learner
 }
 
 export async function inviteUser(
@@ -27,6 +29,8 @@ export async function inviteUser(
           role: params.role,
           department_id: params.departmentId,
           is_system_admin: params.isSystemAdmin,
+          student_id: params.studentId,
+          classroom_id: params.classroomId,
         },
       }
     )
