@@ -13,6 +13,7 @@ import {
   Sparkles,
   Tag,
   Plus,
+  Library,
 } from 'lucide-react'
 import { useToast } from '../Toast'
 import { useAuth } from '../../lib/auth'
@@ -29,12 +30,16 @@ import {
   createSkill,
   type SkillWithCompetencies,
 } from '../../lib/skills-data'
+import { createTemplate } from '../../lib/assignment-template-data'
 import type {
   Classroom,
   Student,
   AssignmentType,
   AssignmentTemplate,
+  AssignmentTemplateInsert,
 } from '../../types/database'
+
+type ModalMode = 'class' | 'individual' | 'template'
 
 // ============================================================
 // Props
@@ -411,9 +416,11 @@ export default function CreateAssignmentModal({
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [dueDate, setDueDate] = useState('')
-  const [assignmentType, setAssignmentType] = useState<AssignmentType>(
+  const [mode, setMode] = useState<ModalMode>(
     defaultStudentId ? 'individual' : 'class'
   )
+  const assignmentType: AssignmentType = mode === 'individual' ? 'individual' : 'class'
+  const showTemplateOption = !defaultClassroomId && !template
   const [classroomId, setClassroomId] = useState(defaultClassroomId || '')
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(
     defaultStudentId ? new Set([defaultStudentId]) : new Set()
@@ -440,7 +447,7 @@ export default function CreateAssignmentModal({
       setTitle(template?.title ?? '')
       setDescription(template?.description ?? '')
       setDueDate('')
-      setAssignmentType(
+      setMode(
         defaultStudentId
           ? 'individual'
           : template?.assignment_type ?? 'class'
@@ -599,43 +606,61 @@ export default function CreateAssignmentModal({
   }, [profile?.school_id, profile?.id, toast])
 
   const studentIds = useMemo(() => {
-    if (assignmentType === 'class') {
-      return students.map((s) => s.id)
-    }
+    if (mode === 'template') return []
+    if (mode === 'class') return students.map((s) => s.id)
     return Array.from(selectedStudents)
-  }, [assignmentType, students, selectedStudents])
+  }, [mode, students, selectedStudents])
 
-  const canSubmit =
-    title.trim() &&
-    studentIds.length > 0 &&
-    classroomId &&
-    !submitting
+  const canSubmit = mode === 'template'
+    ? !!(title.trim()) && !submitting
+    : !!(title.trim()) && studentIds.length > 0 && !!classroomId && !submitting
 
   async function handleSubmit() {
     if (!canSubmit || !profile) return
 
     setSubmitting(true)
     try {
-      await createAssignment(
-        {
+      if (mode === 'template') {
+        // Save as template to the Assignment Library
+        const templateData: AssignmentTemplateInsert = {
           school_id: profile.school_id,
-          classroom_id: classroomId,
-          teacher_id: profile.id,
+          created_by: profile.id,
           title: title.trim(),
           description: description.trim() || null,
-          due_date: dueDate || null,
           assignment_type: assignmentType,
-          status: 'active',
-        },
-        Array.from(selectedCompetencies),
-        studentIds,
-        selectedSkills.size > 0 ? Array.from(selectedSkills) : undefined
-      )
-      toast('Assignment created', 'success')
+          competency_ids: Array.from(selectedCompetencies),
+          skill_ids: Array.from(selectedSkills),
+          is_shared: true,
+          template_data: {},
+        }
+        await createTemplate(templateData)
+        toast('Saved to Assignment Library', 'success')
+      } else {
+        // Create live assignment
+        await createAssignment(
+          {
+            school_id: profile.school_id,
+            classroom_id: classroomId,
+            teacher_id: profile.id,
+            title: title.trim(),
+            description: description.trim() || null,
+            due_date: dueDate || null,
+            assignment_type: assignmentType,
+            status: 'active',
+          },
+          Array.from(selectedCompetencies),
+          studentIds,
+          selectedSkills.size > 0 ? Array.from(selectedSkills) : undefined
+        )
+        toast('Assignment created', 'success')
+      }
       onCreated()
       onClose()
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Failed to create assignment', 'error')
+      toast(
+        err instanceof Error ? err.message : `Failed to ${mode === 'template' ? 'save template' : 'create assignment'}`,
+        'error'
+      )
     } finally {
       setSubmitting(false)
     }
@@ -653,7 +678,9 @@ export default function CreateAssignmentModal({
       <div className="relative z-10 flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-2xl bg-bg-card shadow-2xl sm:max-w-2xl sm:rounded-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-bg-muted px-5 py-4">
-          <h2 className="text-base font-bold text-text">Create Assignment</h2>
+          <h2 className="text-base font-bold text-text">
+            {mode === 'template' ? 'Save to Library' : 'Create Assignment'}
+          </h2>
           <button
             onClick={onClose}
             disabled={submitting}
@@ -697,29 +724,31 @@ export default function CreateAssignmentModal({
                 />
               </div>
 
-              {/* Due date + Assignment type row */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-text-light">
-                    Due Date <span className="font-normal text-text-light">(optional)</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
-                  />
-                </div>
+              {/* Due date + Assignment mode row */}
+              <div className={clsx('grid gap-4', mode === 'template' ? 'grid-cols-1' : 'grid-cols-2')}>
+                {mode !== 'template' && (
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-text-light">
+                      Due Date <span className="font-normal text-text-light">(optional)</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={dueDate}
+                      onChange={(e) => setDueDate(e.target.value)}
+                      className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+                    />
+                  </div>
+                )}
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold text-text-light">
                     Assign To
                   </label>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => setAssignmentType('class')}
+                      onClick={() => setMode('class')}
                       className={clsx(
                         'flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors',
-                        assignmentType === 'class'
+                        mode === 'class'
                           ? 'border-primary-400 bg-primary-50 text-primary-700'
                           : 'border-bg-muted text-text-muted hover:bg-bg'
                       )}
@@ -728,10 +757,10 @@ export default function CreateAssignmentModal({
                       Class
                     </button>
                     <button
-                      onClick={() => setAssignmentType('individual')}
+                      onClick={() => setMode('individual')}
                       className={clsx(
                         'flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors',
-                        assignmentType === 'individual'
+                        mode === 'individual'
                           ? 'border-primary-400 bg-primary-50 text-primary-700'
                           : 'border-bg-muted text-text-muted hover:bg-bg'
                       )}
@@ -739,84 +768,113 @@ export default function CreateAssignmentModal({
                       <User className="h-3.5 w-3.5" />
                       Individual
                     </button>
+                    {showTemplateOption && (
+                      <button
+                        onClick={() => setMode('template')}
+                        className={clsx(
+                          'flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors',
+                          mode === 'template'
+                            ? 'border-primary-400 bg-primary-50 text-primary-700'
+                            : 'border-bg-muted text-text-muted hover:bg-bg'
+                        )}
+                      >
+                        <Library className="h-3.5 w-3.5" />
+                        Library
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Classroom selector */}
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-text-light">
-                  Classroom
-                </label>
-                <select
-                  value={classroomId}
-                  onChange={(e) => {
-                    setClassroomId(e.target.value)
-                    setSelectedStudents(new Set())
-                  }}
-                  className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
-                >
-                  <option value="">Select a classroom...</option>
-                  {classrooms.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                      {c.grade_level ? ` (${c.grade_level})` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Student selector (individual mode) */}
-              {assignmentType === 'individual' && classroomId && students.length > 0 && (
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-text-light">
-                    Select Students ({selectedStudents.size} selected)
-                  </label>
-                  <div className="max-h-36 overflow-y-auto rounded-lg border border-bg-muted bg-bg p-2 space-y-0.5">
-                    {students.map((s) => {
-                      const isSelected = selectedStudents.has(s.id)
-                      return (
-                        <button
-                          key={s.id}
-                          onClick={() => toggleStudent(s.id)}
-                          className={clsx(
-                            'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors',
-                            isSelected ? 'bg-primary-50' : 'hover:bg-bg-muted'
-                          )}
-                        >
-                          <div
-                            className={clsx(
-                              'flex h-4 w-4 shrink-0 items-center justify-center rounded border',
-                              isSelected
-                                ? 'border-primary-500 bg-primary-500'
-                                : 'border-bg-muted'
-                            )}
-                          >
-                            {isSelected && <Check className="h-3 w-3 text-white" />}
-                          </div>
-                          <span className="text-xs text-text">
-                            {s.first_name} {s.last_name}
-                          </span>
-                          {s.grade_level && (
-                            <span className="text-[10px] text-text-light">
-                              Grade {s.grade_level}
-                            </span>
-                          )}
-                        </button>
-                      )
-                    })}
-                  </div>
+              {/* Template mode info banner */}
+              {mode === 'template' && (
+                <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2">
+                  <Library className="h-4 w-4 text-amber-600" />
+                  <span className="text-xs text-amber-700">
+                    This will be saved to the Assignment Library as a reusable template.
+                  </span>
                 </div>
               )}
 
-              {/* Class assignment info */}
-              {assignmentType === 'class' && classroomId && students.length > 0 && (
-                <div className="flex items-center gap-2 rounded-lg bg-primary-50 px-3 py-2">
-                  <Users className="h-4 w-4 text-primary-600" />
-                  <span className="text-xs text-primary-700">
-                    Will be assigned to all {students.length} active students in this classroom
-                  </span>
-                </div>
+              {/* Classroom + student selection (hidden in template mode) */}
+              {mode !== 'template' && (
+                <>
+                  {/* Classroom selector */}
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-text-light">
+                      Classroom
+                    </label>
+                    <select
+                      value={classroomId}
+                      onChange={(e) => {
+                        setClassroomId(e.target.value)
+                        setSelectedStudents(new Set())
+                      }}
+                      className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+                    >
+                      <option value="">Select a classroom...</option>
+                      {classrooms.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                          {c.grade_level ? ` (${c.grade_level})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Student selector (individual mode) */}
+                  {mode === 'individual' && classroomId && students.length > 0 && (
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold text-text-light">
+                        Select Students ({selectedStudents.size} selected)
+                      </label>
+                      <div className="max-h-36 overflow-y-auto rounded-lg border border-bg-muted bg-bg p-2 space-y-0.5">
+                        {students.map((s) => {
+                          const isSelected = selectedStudents.has(s.id)
+                          return (
+                            <button
+                              key={s.id}
+                              onClick={() => toggleStudent(s.id)}
+                              className={clsx(
+                                'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors',
+                                isSelected ? 'bg-primary-50' : 'hover:bg-bg-muted'
+                              )}
+                            >
+                              <div
+                                className={clsx(
+                                  'flex h-4 w-4 shrink-0 items-center justify-center rounded border',
+                                  isSelected
+                                    ? 'border-primary-500 bg-primary-500'
+                                    : 'border-bg-muted'
+                                )}
+                              >
+                                {isSelected && <Check className="h-3 w-3 text-white" />}
+                              </div>
+                              <span className="text-xs text-text">
+                                {s.first_name} {s.last_name}
+                              </span>
+                              {s.grade_level && (
+                                <span className="text-[10px] text-text-light">
+                                  Grade {s.grade_level}
+                                </span>
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Class assignment info */}
+                  {mode === 'class' && classroomId && students.length > 0 && (
+                    <div className="flex items-center gap-2 rounded-lg bg-primary-50 px-3 py-2">
+                      <Users className="h-4 w-4 text-primary-600" />
+                      <span className="text-xs text-primary-700">
+                        Will be assigned to all {students.length} active students in this classroom
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* Competency picker */}
@@ -942,10 +1000,12 @@ export default function CreateAssignmentModal({
           >
             {submitting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
+            ) : mode === 'template' ? (
+              <Library className="h-4 w-4" />
             ) : (
               <BookOpen className="h-4 w-4" />
             )}
-            Create Assignment
+            {mode === 'template' ? 'Save to Library' : 'Create Assignment'}
           </button>
         </div>
       </div>
