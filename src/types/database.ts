@@ -119,6 +119,10 @@ export interface Observation {
   rating: ObservationRating
   notes: string | null
   observed_at: string
+  /** Optional link to an assignment this observation relates to */
+  assignment_id: string | null
+  /** Optional link to the specific student-assignment instance */
+  student_assignment_id: string | null
   created_at: string
   updated_at: string
 }
@@ -238,6 +242,8 @@ export type StudentInsert = Omit<Student, 'id' | 'created_at' | 'updated_at'> & 
 export type ObservationInsert = Omit<Observation, 'id' | 'created_at' | 'updated_at' | 'observed_at'> & {
   id?: string
   observed_at?: string
+  assignment_id?: string | null
+  student_assignment_id?: string | null
 }
 
 export type InterestSurveyInsert = Omit<InterestSurvey, 'id' | 'created_at' | 'updated_at' | 'submitted_at'> & {
@@ -613,6 +619,279 @@ export interface FamilySupportRow {
   prompt_version: string
   created_at: string
   updated_at: string
+}
+
+// ============================================================
+// Competency Frameworks
+// ============================================================
+
+export interface CompetencyFramework {
+  id: string
+  school_id: string
+  name: string
+  description: string | null
+  version: string | null
+  is_default: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type CompetencyFrameworkInsert = Omit<CompetencyFramework, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  description?: string | null
+  version?: string | null
+  is_default?: boolean
+}
+
+export interface CompetencyDomain {
+  id: string
+  framework_id: string
+  name: string
+  display_order: number
+  code_prefix: string | null
+  created_at: string
+}
+
+export type CompetencyDomainInsert = Omit<CompetencyDomain, 'id' | 'created_at'> & {
+  id?: string
+  display_order?: number
+  code_prefix?: string | null
+}
+
+export interface CompetencySubdomain {
+  id: string
+  domain_id: string
+  name: string
+  display_order: number
+  created_at: string
+}
+
+export type CompetencySubdomainInsert = Omit<CompetencySubdomain, 'id' | 'created_at'> & {
+  id?: string
+  display_order?: number
+}
+
+/** Step descriptor keys: E1-E6 (early years) and 1-10 (grade levels) */
+export type StepDescriptors = Record<string, string>
+
+export interface Competency {
+  id: string
+  subdomain_id: string
+  framework_id: string
+  code: string
+  name: string
+  objective: string | null
+  step_descriptors: StepDescriptors
+  created_at: string
+}
+
+export type CompetencyInsert = Omit<Competency, 'id' | 'created_at'> & {
+  id?: string
+  objective?: string | null
+}
+
+// ============================================================
+// Assignments & Grading
+// ============================================================
+
+export type AssignmentType = 'individual' | 'class'
+export type AssignmentStatus = 'draft' | 'active' | 'completed'
+export type StudentAssignmentStatus = 'assigned' | 'in_progress' | 'submitted' | 'graded'
+export type CompetencyScoreSource = 'teacher' | 'ai_inferred' | 'observation'
+
+export interface Assignment {
+  id: string
+  school_id: string
+  classroom_id: string | null
+  teacher_id: string
+  title: string
+  description: string | null
+  due_date: string | null
+  assignment_type: AssignmentType
+  status: AssignmentStatus
+  created_at: string
+  updated_at: string
+}
+
+export type AssignmentInsert = Omit<Assignment, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  classroom_id?: string | null
+  description?: string | null
+  due_date?: string | null
+  assignment_type?: AssignmentType
+  status?: AssignmentStatus
+}
+
+export type AssignmentUpdate = Partial<Omit<Assignment, 'id' | 'school_id' | 'teacher_id' | 'created_at' | 'updated_at'>>
+
+export interface AssignmentCompetency {
+  id: string
+  assignment_id: string
+  competency_id: string
+  created_at: string
+}
+
+export interface AiInferredScore {
+  competency_id: string
+  suggested_score: number
+  reasoning: string
+}
+
+export interface StudentAssignment {
+  id: string
+  assignment_id: string
+  student_id: string
+  status: StudentAssignmentStatus
+  assigned_at: string
+  submitted_at: string | null
+  graded_at: string | null
+  qualitative_feedback: string | null
+  ai_inferred_scores: AiInferredScore[] | null
+  graded_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type StudentAssignmentInsert = Omit<StudentAssignment, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  status?: StudentAssignmentStatus
+  assigned_at?: string
+  submitted_at?: string | null
+  graded_at?: string | null
+  qualitative_feedback?: string | null
+  ai_inferred_scores?: AiInferredScore[] | null
+  graded_by?: string | null
+}
+
+export type StudentAssignmentUpdate = Partial<Omit<StudentAssignment, 'id' | 'assignment_id' | 'student_id' | 'created_at' | 'updated_at'>>
+
+export interface CompetencyScoreRow {
+  id: string
+  student_assignment_id: string | null
+  competency_id: string
+  student_id: string
+  school_id: string
+  score: number
+  source: CompetencyScoreSource
+  notes: string | null
+  scored_at: string
+  created_at: string
+}
+
+export type CompetencyScoreInsert = Omit<CompetencyScoreRow, 'id' | 'created_at'> & {
+  id?: string
+  student_assignment_id?: string | null
+  source?: CompetencyScoreSource
+  notes?: string | null
+  scored_at?: string
+}
+
+// ============================================================
+// AI Competency → Dimension Mapping
+// ============================================================
+
+export interface CompetencyDimensionMapping {
+  id: string
+  school_id: string
+  competency_id: string
+  dimension_id: string
+  confidence: number
+  reasoning: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type CompetencyDimensionMappingInsert = Omit<CompetencyDimensionMapping, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  confidence?: number
+  reasoning?: string | null
+}
+
+// ============================================================
+// Skills Library
+// ============================================================
+
+export interface Skill {
+  id: string
+  school_id: string
+  name: string
+  description: string | null
+  category: string | null
+  min_grade: string | null
+  max_grade: string | null
+  is_default: boolean
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type SkillInsert = Omit<Skill, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  description?: string | null
+  category?: string | null
+  min_grade?: string | null
+  max_grade?: string | null
+  is_default?: boolean
+  created_by?: string | null
+}
+
+export type SkillUpdate = Partial<Omit<Skill, 'id' | 'school_id' | 'created_at' | 'updated_at'>>
+
+export interface SkillCompetency {
+  id: string
+  skill_id: string
+  competency_id: string
+  created_at: string
+}
+
+export interface AssignmentSkill {
+  id: string
+  assignment_id: string
+  skill_id: string
+  created_at: string
+}
+
+// ============================================================
+// Assignment Templates
+// ============================================================
+
+export interface AssignmentTemplate {
+  id: string
+  school_id: string
+  created_by: string | null
+  title: string
+  description: string | null
+  assignment_type: AssignmentType
+  competency_ids: string[]
+  skill_ids: string[]
+  is_shared: boolean
+  template_data: Record<string, unknown>
+  created_at: string
+  updated_at: string
+}
+
+export type AssignmentTemplateInsert = Omit<
+  AssignmentTemplate,
+  'id' | 'created_at' | 'updated_at'
+>
+
+export type AssignmentTemplateUpdate = Partial<
+  Omit<AssignmentTemplate, 'id' | 'school_id' | 'created_at' | 'updated_at'>
+>
+
+// ============================================================
+// Grade/Age Step Mapping Utility
+// ============================================================
+
+/** Maps grade_level strings to competency step keys */
+export const GRADE_TO_STEP: Record<string, string> = {
+  'Pre-K': 'E4',
+  'TK': 'E5',
+  'K': 'E6',
+  '1': '1', '2': '2', '3': '3', '4': '4', '5': '5',
+  '6': '6', '7': '7', '8': '8', '9': '9', '10': '10',
+  // Age-based fallbacks
+  '0': 'E1', '1y': 'E2', '2y': 'E3', '3y': 'E4', '4y': 'E5', '5y': 'E6',
 }
 
 // ============================================================

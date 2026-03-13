@@ -22,9 +22,12 @@ import {
   MapPin,
   ChevronDown,
   X,
+  ClipboardList,
 } from 'lucide-react'
 import type { UserRole } from '../types/database'
 import QuickObserveModal from './QuickObserveModal'
+import CreateAssignmentModal from './assignment/CreateAssignmentModal'
+import SpeedDial from './SpeedDial'
 import SchoolSwitcher from './SchoolSwitcher'
 import { useEducatorList } from '../lib/educator-data'
 import { useFamilyList } from '../lib/family-data'
@@ -55,6 +58,7 @@ function getNavItems(
     return [
       { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
       { to: '/classrooms', label: 'Classrooms', icon: <School className="h-5 w-5" /> },
+      { to: '/assignments', label: 'Assignments', icon: <ClipboardList className="h-5 w-5" /> },
       { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
       { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
       { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
@@ -71,6 +75,7 @@ function getNavItems(
       const items: NavItem[] = [
         { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
         { to: '/classrooms', label: 'My Classrooms', icon: <School className="h-5 w-5" /> },
+        { to: '/assignments', label: 'Assignments', icon: <ClipboardList className="h-5 w-5" /> },
         { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
         { to: '/observe', label: 'Quick Observe', icon: <PlusCircle className="h-5 w-5" /> },
       ]
@@ -93,6 +98,7 @@ function getNavItems(
       return [
         { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
         { to: '/classrooms', label: 'Classrooms', icon: <School className="h-5 w-5" /> },
+        { to: '/assignments', label: 'Assignments', icon: <ClipboardList className="h-5 w-5" /> },
         { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
         { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
         { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
@@ -147,6 +153,7 @@ export default function Layout() {
   const { isDepartmentAdmin } = useAccessControl()
   const navigate = useNavigate()
   const [quickObserveOpen, setQuickObserveOpen] = useState(false)
+  const [showCreateAssignment, setShowCreateAssignment] = useState(false)
   const [schoolName, setSchoolName] = useState<string>('')
   const [openDropdown, setOpenDropdown] = useState<UserRole | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -498,21 +505,37 @@ export default function Layout() {
         ))}
       </nav>
 
-      {/* ============ Floating Action Button ============ */}
+      {/* ============ Floating Action Button (SpeedDial) ============ */}
       {showFab && (
-        <button
-          onClick={() => setQuickObserveOpen(true)}
-          className="fixed bottom-24 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary-500 text-white shadow-lg transition-transform hover:scale-105 hover:bg-primary-600 active:scale-95 md:bottom-6 md:right-6"
-          title="Quick Observation"
-        >
-          <Plus className="h-6 w-6" />
-        </button>
+        <SpeedDial
+          actions={[
+            {
+              icon: <Eye className="h-4 w-4" />,
+              label: 'Quick Observation',
+              onClick: () => setQuickObserveOpen(true),
+              color: 'bg-accent-500 hover:bg-accent-600',
+            },
+            {
+              icon: <ClipboardList className="h-4 w-4" />,
+              label: 'New Assignment',
+              onClick: () => setShowCreateAssignment(true),
+              color: 'bg-primary-500 hover:bg-primary-600',
+            },
+          ]}
+        />
       )}
 
       {/* ============ Quick Observe Modal ============ */}
       <QuickObserveModal
         open={quickObserveOpen}
         onClose={() => setQuickObserveOpen(false)}
+      />
+
+      {/* ============ Create Assignment Modal (from FAB) ============ */}
+      <CreateAssignmentModal
+        open={showCreateAssignment}
+        onClose={() => setShowCreateAssignment(false)}
+        onCreated={() => setShowCreateAssignment(false)}
       />
     </div>
   )

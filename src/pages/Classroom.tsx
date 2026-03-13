@@ -37,6 +37,7 @@ import { DimensionIcon } from '../components/student/DimensionIcon'
 import MiniRadar from '../components/dashboard/MiniRadar'
 import AddStudentModal from '../components/classroom/AddStudentModal'
 import CsvImportModal from '../components/classroom/CsvImportModal'
+import CreateAssignmentModal from '../components/assignment/CreateAssignmentModal'
 import type { DimensionScore } from '../lib/student-data'
 import type { Student, Dimension, StudentContact } from '../types/database'
 
@@ -117,6 +118,7 @@ export default function ClassroomPage() {
   const [assigningEducator, setAssigningEducator] = useState(false)
   const [showAddStudentModal, setShowAddStudentModal] = useState(false)
   const [showCsvModal, setShowCsvModal] = useState(false)
+  const [showCreateAssignment, setShowCreateAssignment] = useState(false)
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card')
 
   // ------ Loading / Error ------
@@ -203,6 +205,13 @@ export default function ClassroomPage() {
                 >
                   <Upload className="h-3.5 w-3.5" />
                   Import CSV
+                </button>
+                <button
+                  onClick={() => setShowCreateAssignment(true)}
+                  className="flex items-center gap-1.5 rounded-lg border border-accent-300 bg-accent-50 px-3 py-2 text-xs font-medium text-accent-700 transition-colors hover:bg-accent-100"
+                >
+                  <ClipboardList className="h-3.5 w-3.5" />
+                  New Assignment
                 </button>
               </>
             )}
@@ -432,6 +441,17 @@ export default function ClassroomPage() {
           classroomId={classroom.id}
           schoolId={classroom.school_id}
           onImported={refetch}
+        />
+      )}
+
+      {showCreateAssignment && classroom && (
+        <CreateAssignmentModal
+          open={showCreateAssignment}
+          onClose={() => setShowCreateAssignment(false)}
+          onCreated={() => {
+            setShowCreateAssignment(false)
+          }}
+          classroomId={classroom.id}
         />
       )}
     </div>

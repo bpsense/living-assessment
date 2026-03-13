@@ -29,6 +29,9 @@ import NotFound from './pages/NotFound'
 import SchoolsPage from './pages/system/Schools'
 import UsersPage from './pages/admin/Users'
 import LearnerProfile from './pages/LearnerProfile'
+import CompetencyFrameworks from './pages/admin/CompetencyFrameworks'
+import Assignments from './pages/Assignments'
+import AssignmentGrading from './pages/AssignmentGrading'
 
 function PasswordRecoveryRedirect() {
   const { isPasswordRecovery } = useAuth()
@@ -65,6 +68,8 @@ function AppRoutes() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/department" element={<DepartmentDashboard />} />
         <Route path="/settings" element={<SchoolProfile />} />
+        <Route path="/assignments" element={<Assignments />} />
+        <Route path="/assignment/:id" element={<AssignmentGrading />} />
 
         {/* Learner routes */}
         <Route path="/learner/profile" element={<LearnerProfile />} />
@@ -136,6 +141,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute requiredRole="admin">
               <Standards />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/competency-frameworks"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <CompetencyFrameworks />
             </ProtectedRoute>
           }
         />

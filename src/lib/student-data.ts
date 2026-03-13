@@ -7,12 +7,12 @@ import type {
   Observation,
   InterestSurvey,
   Profile,
+  CompetencyScoreRow,
+  CompetencyDimensionMapping,
+  Competency,
 } from '../types/database'
-import {
-  computeCompetencyScores,
-  extractInterestScores,
-} from './scoring'
-import type { DimensionScore } from './scoring'
+import { buildDimensionScores } from './scoring'
+import type { DimensionScore, CompetencyBasedData } from './scoring'
 
 // Re-export scoring types so existing imports from student-data continue to work
 export type { DimensionScore, Zone, ZoneClassification } from './scoring'
@@ -72,6 +72,9 @@ function buildTimeline(
 // Main data hook
 // ============================================================
 
+// Re-export for consumers that need to pass competency data to buildSnapshots
+export type { CompetencyBasedData } from './scoring'
+
 export interface StudentProfileData {
   student: Student | null
   classroom: Classroom | null
@@ -81,6 +84,8 @@ export interface StudentProfileData {
   observations: Observation[]
   surveys: InterestSurvey[]
   observers: Map<string, string>
+  /** Competency-based scoring data (from assignments). null when no assignment data exists. */
+  competencyData: CompetencyBasedData | null
   loading: boolean
   error: string | null
   refetch: () => void
@@ -93,6 +98,7 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
   const [observations, setObservations] = useState<Observation[]>([])
   const [surveys, setSurveys] = useState<InterestSurvey[]>([])
   const [observers, setObservers] = useState<Map<string, string>>(new Map())
+  const [competencyData, setCompetencyData] = useState<CompetencyBasedData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [fetchCount, setFetchCount] = useState(0)
@@ -103,9 +109,6 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
     if (!studentId) return
 
     let cancelled = false
-    // Only show the full-page loading spinner on the initial fetch.
-    // Background refetches (from click-to-rate, etc.) silently update data
-    // without unmounting the page.
     const isInitialLoad = fetchCount === 0
     if (isInitialLoad) setLoading(true)
     setError(null)
@@ -123,36 +126,70 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
         if (cancelled) return
         setStudent(studentData as Student)
 
+        const stu = studentData as Student
+
         // 12-month lookback window for observations
         const twelveMonthsAgo = new Date()
         twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12)
 
-        // Fetch classroom, dimensions, observations, surveys in parallel
-        const [classroomRes, dimensionsRes, observationsRes, surveysRes] =
-          await Promise.all([
-            supabase
-              .from('classrooms')
-              .select('*')
-              .eq('id', (studentData as Student).classroom_id)
-              .single(),
-            supabase
-              .from('dimensions')
-              .select('*')
-              .eq('school_id', (studentData as Student).school_id)
-              .eq('is_active', true)
-              .order('display_order'),
-            supabase
-              .from('observations')
-              .select('*')
-              .eq('student_id', studentId)
-              .gte('observed_at', twelveMonthsAgo.toISOString())
-              .order('observed_at', { ascending: false }),
-            supabase
-              .from('interest_surveys')
-              .select('*')
-              .eq('student_id', studentId)
-              .order('submitted_at', { ascending: false }),
-          ])
+        // Fetch classroom, dimensions, observations, surveys, competency data in parallel
+        const [
+          classroomRes,
+          dimensionsRes,
+          observationsRes,
+          surveysRes,
+          compScoresRes,
+          mappingsRes,
+          competenciesRes,
+        ] = await Promise.all([
+          supabase
+            .from('classrooms')
+            .select('*')
+            .eq('id', stu.classroom_id)
+            .single(),
+          supabase
+            .from('dimensions')
+            .select('*')
+            .eq('school_id', stu.school_id)
+            .eq('is_active', true)
+            .order('display_order'),
+          supabase
+            .from('observations')
+            .select('*')
+            .eq('student_id', studentId)
+            .gte('observed_at', twelveMonthsAgo.toISOString())
+            .order('observed_at', { ascending: false }),
+          supabase
+            .from('interest_surveys')
+            .select('*')
+            .eq('student_id', studentId)
+            .order('submitted_at', { ascending: false }),
+          // Competency scores for this student
+          supabase
+            .from('competency_scores')
+            .select('*')
+            .eq('student_id', studentId)
+            .order('scored_at', { ascending: false }),
+          // Competency-dimension mappings for this school
+          supabase
+            .from('competency_dimension_mappings')
+            .select('*')
+            .eq('school_id', stu.school_id),
+          // Competencies for this school (for step_descriptors filtering)
+          supabase
+            .from('competencies')
+            .select('*')
+            .in(
+              'framework_id',
+              // Subquery: framework IDs for this school
+              (
+                await supabase
+                  .from('competency_frameworks')
+                  .select('id')
+                  .eq('school_id', stu.school_id)
+              ).data?.map((f) => f.id) || []
+            ),
+        ])
 
         if (cancelled) return
 
@@ -160,11 +197,26 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
         const dimensionsData = (dimensionsRes.data ?? []) as Dimension[]
         const observationsData = (observationsRes.data ?? []) as Observation[]
         const surveysData = (surveysRes.data ?? []) as InterestSurvey[]
+        const compScoresData = (compScoresRes.data ?? []) as CompetencyScoreRow[]
+        const mappingsData = (mappingsRes.data ?? []) as CompetencyDimensionMapping[]
+        const competenciesData = (competenciesRes.data ?? []) as Competency[]
 
         setClassroom(classroomData)
         setDimensions(dimensionsData)
         setObservations(observationsData)
         setSurveys(surveysData)
+
+        // Build competency-based data if we have scores and mappings
+        if (compScoresData.length > 0 && mappingsData.length > 0) {
+          setCompetencyData({
+            competencyScores: compScoresData,
+            mappings: mappingsData,
+            competencies: competenciesData,
+            gradeLevel: stu.grade_level,
+          })
+        } else {
+          setCompetencyData(null)
+        }
 
         // Fetch unique observer names
         const observerIds = [...new Set(observationsData.map((o) => o.observer_id))]
@@ -197,29 +249,13 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
     }
   }, [studentId, fetchCount])
 
-  // Derived data
-  const competencyMap = computeCompetencyScores(observations, dimensions)
-  const interestMap = extractInterestScores(surveys, dimensions)
-
-  const dimensionScores: DimensionScore[] = dimensions.map((dim) => {
-    const dimObs = observations
-      .filter((o) => o.dimension_id === dim.id)
-      .sort((a, b) => new Date(b.observed_at).getTime() - new Date(a.observed_at).getTime())
-
-    const comp = competencyMap.get(dim.id) ?? { competency: 0, currentMonthCount: 0 }
-
-    return {
-      dimension_id: dim.id,
-      dimension_name: dim.name,
-      icon: dim.icon,
-      display_order: dim.display_order,
-      competency: comp.competency,
-      interest: interestMap.get(dim.id) ?? 0,
-      observation_count: dimObs.length,
-      current_month_observation_count: comp.currentMonthCount,
-      latest_observation: dimObs[0] ?? null,
-    }
-  })
+  // Derived data: build dimension scores blending observations + competency scores
+  const dimensionScores = buildDimensionScores(
+    dimensions,
+    observations,
+    surveys,
+    competencyData ?? undefined
+  )
 
   const timeline = buildTimeline(observations, surveys, dimensions, observers)
 
@@ -232,6 +268,7 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
     observations,
     surveys,
     observers,
+    competencyData,
     loading,
     error,
     refetch,
