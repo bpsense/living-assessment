@@ -637,8 +637,7 @@ export default function CreateAssignmentModal({
         toast('Saved to Assignment Library', 'success')
       } else {
         // Create live assignment
-        await createAssignment(
-          {
+        const assignmentData: any = {
             school_id: profile.school_id,
             classroom_id: classroomId,
             teacher_id: profile.id,
@@ -646,8 +645,24 @@ export default function CreateAssignmentModal({
             description: description.trim() || null,
             due_date: dueDate || null,
             assignment_type: assignmentType,
-            status: 'active',
-          },
+            status: 'active' as const,
+        }
+
+        // Link back to source template and carry over PBL project data
+        if (template) {
+          assignmentData.template_id = template.id
+          assignmentData.project_data = {
+            driving_question: template.driving_question,
+            phases: template.phases,
+            choice_points: template.choice_points,
+            final_product: template.final_product,
+            authenticity_hook: template.authenticity_hook,
+            essential_understandings: template.essential_understandings,
+          }
+        }
+
+        await createAssignment(
+          assignmentData,
           Array.from(selectedCompetencies),
           studentIds,
           selectedSkills.size > 0 ? Array.from(selectedSkills) : undefined
