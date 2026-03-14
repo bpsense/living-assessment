@@ -165,7 +165,7 @@ function validateAuthenticity(
 
 function validateStudentVoice(
   choicePoints: AssignmentTemplate['choice_points'],
-  phases: AssignmentTemplate['phases'],
+  _phases: AssignmentTemplate['phases'],
   suggestions: string[]
 ): ValidationItem {
   if (!choicePoints || choicePoints.length === 0) {
