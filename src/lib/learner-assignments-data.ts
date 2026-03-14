@@ -16,6 +16,7 @@ import type {
 
 export interface LearnerAssignment extends StudentAssignment {
   assignment: Assignment & {
+    classroom: { name: string } | null
     assignment_competencies: (AssignmentCompetency & { competency: Competency })[]
     assignment_skills: (AssignmentSkill & { skill: Skill })[]
   }
@@ -55,6 +56,7 @@ export async function fetchLearnerAssignments(studentId: string): Promise<Learne
       *,
       assignment:assignments(
         *,
+        classroom:classrooms(name),
         assignment_competencies(*, competency:competencies(*)),
         assignment_skills(*, skill:skills(*))
       )
@@ -71,6 +73,7 @@ export async function fetchLearnerAssignments(studentId: string): Promise<Learne
     ...row,
     assignment: {
       ...row.assignment,
+      classroom: row.assignment?.classroom ?? null,
       assignment_competencies: row.assignment?.assignment_competencies || [],
       assignment_skills: row.assignment?.assignment_skills || [],
     },
