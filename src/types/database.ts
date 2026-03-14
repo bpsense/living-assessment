@@ -729,6 +729,8 @@ export interface Assignment {
   due_date: string | null
   assignment_type: AssignmentType
   status: AssignmentStatus
+  template_id: string | null
+  project_data: Record<string, unknown>
   created_at: string
   updated_at: string
 }
@@ -740,6 +742,8 @@ export type AssignmentInsert = Omit<Assignment, 'id' | 'created_at' | 'updated_a
   due_date?: string | null
   assignment_type?: AssignmentType
   status?: AssignmentStatus
+  template_id?: string | null
+  project_data?: Record<string, unknown>
 }
 
 export type AssignmentUpdate = Partial<Omit<Assignment, 'id' | 'school_id' | 'teacher_id' | 'created_at' | 'updated_at'>>
@@ -929,8 +933,71 @@ export interface AssignmentSkill {
 }
 
 // ============================================================
-// Assignment Templates
+// Assignment Templates (PBL Project Templates)
 // ============================================================
+
+export type GradeBand = 'early_elementary' | 'elementary' | 'upper_elementary' | 'middle_school' | 'mixed'
+export type TemplateStatus = 'draft' | 'published' | 'archived'
+export type DOKLevel = 1 | 2 | 3 | 4
+
+export interface ProjectPhase {
+  id: string
+  title: string
+  description: string
+  duration_days: number
+  dok_level: DOKLevel
+  activities: PhaseActivity[]
+  reflection_prompts: string[]
+  checkpoint: PhaseCheckpoint | null
+}
+
+export interface PhaseActivity {
+  id: string
+  title: string
+  description: string
+  activity_type: 'investigation' | 'creation' | 'collaboration' | 'reflection' | 'presentation' | 'skill_building' | 'field_work'
+  is_required: boolean
+  estimated_minutes: number
+  resources: string[]
+  educator_notes: string
+}
+
+export interface PhaseCheckpoint {
+  title: string
+  description: string
+  assessment_type: 'self_assessment' | 'peer_review' | 'educator_check' | 'portfolio_entry' | 'group_critique'
+  competency_ids: string[]
+  criteria: string[]
+}
+
+export interface FinalProduct {
+  description: string
+  format_options: string[]
+  audience: string
+  presentation_format: string
+  quality_criteria: string[]
+}
+
+export interface ChoicePoint {
+  phase_id: string
+  description: string
+  choice_type: 'topic_selection' | 'research_method' | 'product_format' | 'collaboration_structure' | 'presentation_style'
+  options: string[]
+}
+
+export interface DifferentiationGuide {
+  extending: string
+  supporting: string
+  ell_accommodations: string
+  accessibility_notes: string
+}
+
+export interface TemplateResource {
+  title: string
+  type: 'link' | 'book' | 'material' | 'tool' | 'printable' | 'video'
+  url: string | null
+  notes: string
+}
 
 export interface AssignmentTemplate {
   id: string
@@ -943,14 +1010,55 @@ export interface AssignmentTemplate {
   skill_ids: string[]
   is_shared: boolean
   template_data: Record<string, unknown>
+
+  // PBL-specific fields
+  grade_band: GradeBand
+  subject_area: string[]
+  estimated_duration_days: number | null
+  driving_question: string | null
+  essential_understandings: string[]
+  authenticity_hook: string | null
+  final_product: FinalProduct | null
+  dok_level: DOKLevel
+  phases: ProjectPhase[]
+  choice_points: ChoicePoint[]
+  critique_protocol: string | null
+  scaffolding_notes: string | null
+  differentiation: DifferentiationGuide | null
+  materials_and_resources: TemplateResource[]
+  tags: string[]
+  version: number
+  parent_template_id: string | null
+  status: TemplateStatus
+
   created_at: string
   updated_at: string
 }
 
-export type AssignmentTemplateInsert = Omit<
-  AssignmentTemplate,
-  'id' | 'created_at' | 'updated_at'
->
+/** Fields that have DB defaults or are nullable — optional on insert */
+type PBLOptionalFields =
+  | 'grade_band'
+  | 'subject_area'
+  | 'estimated_duration_days'
+  | 'driving_question'
+  | 'essential_understandings'
+  | 'authenticity_hook'
+  | 'final_product'
+  | 'dok_level'
+  | 'phases'
+  | 'choice_points'
+  | 'critique_protocol'
+  | 'scaffolding_notes'
+  | 'differentiation'
+  | 'materials_and_resources'
+  | 'tags'
+  | 'version'
+  | 'parent_template_id'
+  | 'status'
+
+export type AssignmentTemplateInsert =
+  Omit<AssignmentTemplate, 'id' | 'created_at' | 'updated_at' | PBLOptionalFields> &
+  Partial<Pick<AssignmentTemplate, PBLOptionalFields>>
 
 export type AssignmentTemplateUpdate = Partial<
   Omit<AssignmentTemplate, 'id' | 'school_id' | 'created_at' | 'updated_at'>
