@@ -181,13 +181,21 @@ export default function Students() {
 
       const roomIds = rooms.map((r) => r.id)
 
-      // 3. Fetch students, observations, AND learner profiles
+      // 3. Fetch students (via junction table), observations, AND learner profiles
+      const { data: scData } = await supabase
+        .from('student_classrooms')
+        .select('student_id')
+        .in('classroom_id', roomIds)
+      const enrolledStudentIds = [...new Set((scData ?? []).map((r) => r.student_id))]
+
       const [studentRes, obsRes, profileRes] = await Promise.all([
-        supabase
-          .from('students')
-          .select('*')
-          .in('classroom_id', roomIds)
-          .order('last_name'),
+        enrolledStudentIds.length > 0
+          ? supabase
+              .from('students')
+              .select('*')
+              .in('id', enrolledStudentIds)
+              .order('last_name')
+          : Promise.resolve({ data: [] }),
         supabase
           .from('observations')
           .select('id, student_id')

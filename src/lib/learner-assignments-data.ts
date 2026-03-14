@@ -111,6 +111,27 @@ export function getKanbanGroups(assignments: LearnerAssignment[]): KanbanGroup[]
 }
 
 // ============================================================
+// Classroom grouping (pure function)
+// ============================================================
+
+/**
+ * Groups assignments by classroom_id.
+ * Assignments without a classroom_id are grouped under 'unassigned'.
+ */
+export function groupAssignmentsByClassroom(
+  assignments: LearnerAssignment[]
+): Map<string, LearnerAssignment[]> {
+  const groups = new Map<string, LearnerAssignment[]>()
+  for (const a of assignments) {
+    const key = a.assignment?.classroom_id ?? 'unassigned'
+    const list = groups.get(key) ?? []
+    list.push(a)
+    groups.set(key, list)
+  }
+  return groups
+}
+
+// ============================================================
 // Mutations
 // ============================================================
 

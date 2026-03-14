@@ -78,20 +78,35 @@ function StudentSearch({
     if (!isAdmin && classroomIds?.length === 0) return
 
     async function loadRecent() {
-      let q = supabase
-        .from('students')
-        .select('*')
-        .eq('school_id', schoolId)
-        .order('last_name')
-        .limit(6)
-
-      // Scope to assigned classrooms for educators
       if (!isAdmin && classroomIds && classroomIds.length > 0) {
-        q = q.in('classroom_id', classroomIds)
+        // For educators: get students via junction table
+        const { data: scData } = await supabase
+          .from('student_classrooms')
+          .select('student_id')
+          .in('classroom_id', classroomIds)
+        const studentIds = [...new Set((scData ?? []).map((r) => r.student_id))]
+        if (studentIds.length === 0) {
+          setRecentStudents([])
+          return
+        }
+        const { data } = await supabase
+          .from('students')
+          .select('*')
+          .in('id', studentIds)
+          .eq('school_id', schoolId)
+          .order('last_name')
+          .limit(6)
+        setRecentStudents((data ?? []) as Student[])
+      } else {
+        // Admins see all students
+        const { data } = await supabase
+          .from('students')
+          .select('*')
+          .eq('school_id', schoolId)
+          .order('last_name')
+          .limit(6)
+        setRecentStudents((data ?? []) as Student[])
       }
-
-      const { data } = await q
-      setRecentStudents((data ?? []) as Student[])
     }
     loadRecent()
   }, [schoolId, classroomIds, isAdmin])
@@ -106,21 +121,38 @@ function StudentSearch({
       if (!isAdmin && classroomIds?.length === 0) return
 
       setLoading(true)
-      let query = supabase
-        .from('students')
-        .select('*')
-        .eq('school_id', schoolId)
-        .or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%`)
-        .order('last_name')
-        .limit(10)
 
-      // Scope to assigned classrooms for educators
       if (!isAdmin && classroomIds && classroomIds.length > 0) {
-        query = query.in('classroom_id', classroomIds)
+        // For educators: scope to students in their classrooms via junction table
+        const { data: scData } = await supabase
+          .from('student_classrooms')
+          .select('student_id')
+          .in('classroom_id', classroomIds)
+        const studentIds = [...new Set((scData ?? []).map((r) => r.student_id))]
+        if (studentIds.length === 0) {
+          setResults([])
+          setLoading(false)
+          return
+        }
+        const { data } = await supabase
+          .from('students')
+          .select('*')
+          .in('id', studentIds)
+          .eq('school_id', schoolId)
+          .or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%`)
+          .order('last_name')
+          .limit(10)
+        setResults((data ?? []) as Student[])
+      } else {
+        const { data } = await supabase
+          .from('students')
+          .select('*')
+          .eq('school_id', schoolId)
+          .or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%`)
+          .order('last_name')
+          .limit(10)
+        setResults((data ?? []) as Student[])
       }
-
-      const { data } = await query
-      setResults((data ?? []) as Student[])
       setLoading(false)
     },
     [schoolId, classroomIds, isAdmin]

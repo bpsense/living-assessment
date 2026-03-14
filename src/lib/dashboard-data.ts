@@ -125,15 +125,15 @@ export function useEducatorDashboard(
           return
         }
 
-        // 2. Parallel fetches
-        const [classroomRes, studentsRes, dimensionsRes] = await Promise.all([
+        // 2. Parallel fetches (students via junction table)
+        const [classroomRes, scRes, dimensionsRes] = await Promise.all([
           supabase
             .from('classrooms')
             .select('*')
             .in('id', classroomIds),
           supabase
-            .from('students')
-            .select('*')
+            .from('student_classrooms')
+            .select('student_id, classroom_id')
             .in('classroom_id', classroomIds),
           supabase
             .from('dimensions')
@@ -144,7 +144,25 @@ export function useEducatorDashboard(
         ])
 
         const classroomData = (classroomRes.data ?? []) as Classroom[]
-        const studentsData = (studentsRes.data ?? []) as Student[]
+        const scData = (scRes.data ?? []) as { student_id: string; classroom_id: string }[]
+        // Build classroom → student IDs map for card building
+        const classroomStudentMap = new Map<string, Set<string>>()
+        for (const sc of scData) {
+          const set = classroomStudentMap.get(sc.classroom_id) ?? new Set()
+          set.add(sc.student_id)
+          classroomStudentMap.set(sc.classroom_id, set)
+        }
+        const allStudentIds = [...new Set(scData.map((r) => r.student_id))]
+
+        // Fetch actual student records
+        let studentsData: Student[] = []
+        if (allStudentIds.length > 0) {
+          const { data: sData } = await supabase
+            .from('students')
+            .select('*')
+            .in('id', allStudentIds)
+          studentsData = (sData ?? []) as Student[]
+        }
         const dimensionsData = (dimensionsRes.data ?? []) as Dimension[]
         const studentIds = studentsData.map((s) => s.id)
 
@@ -199,12 +217,10 @@ export function useEducatorDashboard(
         )
         const dimMap = new Map(dimensionsData.map((d) => [d.id, d.name]))
 
-        // 4. Build classroom cards
+        // 4. Build classroom cards (using junction table map)
         const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
         const cards: ClassroomCard[] = classroomData.map((c) => {
-          const classStudentIds = studentsData
-            .filter((s) => s.classroom_id === c.id)
-            .map((s) => s.id)
+          const classStudentIds = [...(classroomStudentMap.get(c.id) ?? [])]
           const weekObs = allObs.filter(
             (o) =>
               classStudentIds.includes(o.student_id) &&
@@ -580,6 +596,21 @@ export function useAdminDashboard(profile: Profile | null): AdminDashboardData {
         const studentsData = (studentsRes.data ?? []) as Student[]
         const allObs = (obsRes.data ?? []) as Observation[]
 
+        // Fetch student-classroom enrollments for comparison
+        const { data: scData } = await supabase
+          .from('student_classrooms')
+          .select('student_id, classroom_id')
+          .eq('school_id', schoolId)
+        const scRows = (scData ?? []) as { student_id: string; classroom_id: string }[]
+        const adminClassroomStudentMap = new Map<string, Set<string>>()
+        for (const sc of scRows) {
+          const set = adminClassroomStudentMap.get(sc.classroom_id) ?? new Set()
+          set.add(sc.student_id)
+          adminClassroomStudentMap.set(sc.classroom_id, set)
+        }
+
+        if (cancelled) return
+
         // 2. Stats
         const schoolStats: SchoolStats = {
           totalStudents: studentCountRes.count ?? 0,
@@ -593,7 +624,8 @@ export function useAdminDashboard(profile: Profile | null): AdminDashboardData {
           classroomData,
           studentsData,
           allObs,
-          dimensionsData
+          dimensionsData,
+          adminClassroomStudentMap
         )
 
         // 4. Weekly volume (last 12 weeks)
@@ -640,14 +672,15 @@ function computeClassroomComparison(
   classrooms: Classroom[],
   students: Student[],
   observations: Observation[],
-  dimensions: Dimension[]
+  dimensions: Dimension[],
+  classroomStudentMap?: Map<string, Set<string>>
 ): ClassroomDimensionAvg[] {
   const result: ClassroomDimensionAvg[] = []
 
   for (const classroom of classrooms) {
-    const classStudentIds = students
-      .filter((s) => s.classroom_id === classroom.id)
-      .map((s) => s.id)
+    const classStudentIds = classroomStudentMap
+      ? [...(classroomStudentMap.get(classroom.id) ?? [])]
+      : students.filter((s) => s.classroom_id === classroom.id).map((s) => s.id)
 
     for (const dim of dimensions) {
       let total = 0

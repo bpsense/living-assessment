@@ -94,21 +94,31 @@ export default function AddStudentModal({
     if (!open || activeTab !== 'existing') return
 
     setLoadingExisting(true)
+
+    // First get student IDs already enrolled in this classroom
     supabase
-      .from('students')
-      .select('id, first_name, last_name, classroom:classrooms(name)')
-      .eq('school_id', schoolId)
-      .eq('student_status', 'active')
-      .neq('classroom_id', classroomId) // Not already in this classroom
-      .order('last_name')
-      .then(({ data }) => {
+      .from('student_classrooms')
+      .select('student_id')
+      .eq('classroom_id', classroomId)
+      .then(async ({ data: scData }) => {
+        const enrolledIds = new Set((scData ?? []).map((r) => r.student_id))
+
+        const { data } = await supabase
+          .from('students')
+          .select('id, first_name, last_name, classroom:classrooms(name)')
+          .eq('school_id', schoolId)
+          .eq('student_status', 'active')
+          .order('last_name')
+
         setExistingStudents(
-          (data ?? []).map(s => ({
-            id: s.id,
-            first_name: s.first_name,
-            last_name: s.last_name,
-            classroom_name: (s.classroom as any)?.name ?? null,
-          }))
+          (data ?? [])
+            .filter((s) => !enrolledIds.has(s.id)) // Exclude already enrolled
+            .map(s => ({
+              id: s.id,
+              first_name: s.first_name,
+              last_name: s.last_name,
+              classroom_name: (s.classroom as any)?.name ?? null,
+            }))
         )
         setLoadingExisting(false)
       })
@@ -192,15 +202,19 @@ export default function AddStudentModal({
     setError(null)
 
     try {
-      // Update each selected student's classroom_id
-      for (const studentId of selectedStudentIds) {
-        const { error: updateErr } = await supabase
-          .from('students')
-          .update({ classroom_id: classroomId })
-          .eq('id', studentId)
+      // Add students to this classroom via junction table (multi-classroom enrollment)
+      const enrollments = [...selectedStudentIds].map((studentId) => ({
+        student_id: studentId,
+        classroom_id: classroomId,
+        school_id: schoolId,
+        is_primary: false,
+      }))
 
-        if (updateErr) throw updateErr
-      }
+      const { error: insertErr } = await supabase
+        .from('student_classrooms')
+        .upsert(enrollments, { onConflict: 'student_id,classroom_id' })
+
+      if (insertErr) throw insertErr
 
       toast(`${selectedStudentIds.size} learner${selectedStudentIds.size > 1 ? 's' : ''} added to classroom!`, 'success')
       onSaved()

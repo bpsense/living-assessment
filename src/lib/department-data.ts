@@ -113,12 +113,30 @@ export function useDepartmentDashboard(
           return
         }
 
-        // 3. Fetch students, observations, parent links, and dimensions in parallel
+        // 3. Fetch students (via junction table), observations, parent links, and dimensions
+        const { data: scData } = await supabase
+          .from('student_classrooms')
+          .select('student_id, classroom_id')
+          .in('classroom_id', classroomIds)
+        const scRows = (scData ?? []) as { student_id: string; classroom_id: string }[]
+        const enrolledStudentIds = [...new Set(scRows.map((r) => r.student_id))]
+        // Build classroom→students map for department grouping
+        const deptClassroomStudentMap = new Map<string, Set<string>>()
+        for (const sc of scRows) {
+          const set = deptClassroomStudentMap.get(sc.classroom_id) ?? new Set()
+          set.add(sc.student_id)
+          deptClassroomStudentMap.set(sc.classroom_id, set)
+        }
+
+        if (cancelled) return
+
         const [studentsRes, obsRes, parentLinksRes, dimensionsRes] = await Promise.all([
-          supabase
-            .from('students')
-            .select('id, first_name, last_name, classroom_id')
-            .in('classroom_id', classroomIds),
+          enrolledStudentIds.length > 0
+            ? supabase
+                .from('students')
+                .select('id, first_name, last_name, classroom_id')
+                .in('id', enrolledStudentIds)
+            : Promise.resolve({ data: [] }),
           supabase
             .from('observations')
             .select('id, student_id, observed_at, dimension_id, rating')
@@ -168,7 +186,14 @@ export function useDepartmentDashboard(
         const deptSummaries: DepartmentSummary[] = depts.map((dept) => {
           const deptClassrooms = classrooms.filter((c) => c.department_id === dept.id)
           const deptClassroomIds = new Set(deptClassrooms.map((c) => c.id))
-          const deptStudents = students.filter((s) => deptClassroomIds.has(s.classroom_id))
+          // Find students enrolled in department classrooms via junction table
+          const deptStudentIdSet = new Set<string>()
+          for (const cid of deptClassroomIds) {
+            for (const sid of (deptClassroomStudentMap.get(cid) ?? [])) {
+              deptStudentIdSet.add(sid)
+            }
+          }
+          const deptStudents = students.filter((s) => deptStudentIdSet.has(s.id))
           const deptStudentIds = new Set(deptStudents.map((s) => s.id))
 
           // Count observations
@@ -187,7 +212,8 @@ export function useDepartmentDashboard(
           familyIdsByDept.set(dept.id, familyIds)
 
           const classroomSummaries: ClassroomSummary[] = deptClassrooms.map((room) => {
-            const roomStudents = deptStudents.filter((s) => s.classroom_id === room.id)
+            const roomStudentIds = deptClassroomStudentMap.get(room.id) ?? new Set()
+            const roomStudents = deptStudents.filter((s) => roomStudentIds.has(s.id))
             let roomObs = 0
             for (const s of roomStudents) {
               roomObs += obsPerStudent.get(s.id) ?? 0
@@ -212,9 +238,19 @@ export function useDepartmentDashboard(
         })
 
         // Build recent observations list (top 20)
+        // Build student→primary classroom map from junction data
+        const studentPrimaryClassroom = new Map<string, string>()
+        for (const sc of scRows) {
+          // Use last seen classroom_id (junction table may have multiple; use primary from students table as fallback)
+          if (!studentPrimaryClassroom.has(sc.student_id)) {
+            studentPrimaryClassroom.set(sc.student_id, sc.classroom_id)
+          }
+        }
+
         const recent = allObs.slice(0, 20).map((obs) => {
           const student = studentMap.get(obs.student_id)
-          const classroom = student ? classroomMap.get(student.classroom_id) : null
+          const classroomId = studentPrimaryClassroom.get(obs.student_id) ?? student?.classroom_id
+          const classroom = classroomId ? classroomMap.get(classroomId) : null
           return {
             id: obs.id,
             observed_at: obs.observed_at,

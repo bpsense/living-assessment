@@ -35,6 +35,8 @@ export interface ClassroomViewData {
   classInterestPulse: InterestPulseItem[]
   /** Emergency contacts keyed by student.id */
   studentContactsMap: Map<string, StudentContact[]>
+  /** Per-student enrollment status in this classroom (active/archived) */
+  studentEnrollmentStatusMap: Map<string, 'active' | 'archived'>
   loading: boolean
   error: string | null
   refetch: () => void
@@ -65,6 +67,9 @@ export function useClassroomView(
   const [studentContactsMap, setStudentContactsMap] = useState<
     Map<string, StudentContact[]>
   >(new Map())
+  const [studentEnrollmentStatusMap, setStudentEnrollmentStatusMap] = useState<
+    Map<string, 'active' | 'archived'>
+  >(new Map())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [fetchCount, setFetchCount] = useState(0)
@@ -91,17 +96,16 @@ export function useClassroomView(
         const classroomData = cData as Classroom
         setClassroom(classroomData)
 
-        // 2. Parallel fetches
-        const [ecRes, studentsRes, dimsRes, allEducatorsRes] = await Promise.all([
+        // 2. Parallel fetches (students via junction table)
+        const [ecRes, scRes, dimsRes, allEducatorsRes] = await Promise.all([
           supabase
             .from('educator_classrooms')
             .select('educator_id')
             .eq('classroom_id', classroomId),
           supabase
-            .from('students')
-            .select('*')
-            .eq('classroom_id', classroomId)
-            .order('last_name'),
+            .from('student_classrooms')
+            .select('student_id, is_primary, status')
+            .eq('classroom_id', classroomId),
           supabase
             .from('dimensions')
             .select('*')
@@ -122,12 +126,33 @@ export function useClassroomView(
         const educatorIds = (ecRes.data ?? []).map(
           (r) => (r as { educator_id: string }).educator_id
         )
-        const studentsData = (studentsRes.data ?? []) as Student[]
+        const scData = (scRes.data ?? []) as { student_id: string; is_primary: boolean; status: string }[]
+        const enrolledStudentIds = scData.map((r) => r.student_id)
+
+        // Build enrollment status map
+        const enrollmentStatusMap = new Map<string, 'active' | 'archived'>()
+        for (const r of scData) {
+          enrollmentStatusMap.set(r.student_id, (r.status as 'active' | 'archived') ?? 'active')
+        }
         const dimsData = (dimsRes.data ?? []) as Dimension[]
-        const studentIds = studentsData.map((s) => s.id)
         const allEducators = (allEducatorsRes.data ?? []) as Pick<Profile, 'id' | 'full_name'>[]
 
+        // Fetch the actual student records for enrolled students
+        let studentsData: Student[] = []
+        if (enrolledStudentIds.length > 0) {
+          const { data: sData } = await supabase
+            .from('students')
+            .select('*')
+            .in('id', enrolledStudentIds)
+            .order('last_name')
+          studentsData = (sData ?? []) as Student[]
+        }
+        if (cancelled) return
+
+        const studentIds = studentsData.map((s) => s.id)
+
         setStudents(studentsData)
+        setStudentEnrollmentStatusMap(enrollmentStatusMap)
         setDimensions(dimsData)
         setAllSchoolEducators(allEducators)
 
@@ -256,9 +281,28 @@ export function useClassroomView(
     studentScoresMap,
     classInterestPulse,
     studentContactsMap,
+    studentEnrollmentStatusMap,
     loading,
     error,
     refetch,
   }
+}
+
+// ============================================================
+// Enrollment status mutation
+// ============================================================
+
+export async function updateStudentClassroomStatus(
+  studentId: string,
+  classroomId: string,
+  status: 'active' | 'archived'
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from('student_classrooms')
+    .update({ status })
+    .eq('student_id', studentId)
+    .eq('classroom_id', classroomId)
+
+  return { error: error?.message ?? null }
 }
 

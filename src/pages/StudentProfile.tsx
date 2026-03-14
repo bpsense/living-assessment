@@ -20,6 +20,7 @@ import TeacherNotes from '../components/student/TeacherNotes'
 import ParentNotes from '../components/student/ParentNotes'
 import LearnerMessagesSection from '../components/student/LearnerMessagesSection'
 import StudentContextDoc from '../components/student/StudentContextDoc'
+import StudentClassroomsManager from '../components/student/StudentClassroomsManager'
 
 // ============================================================
 // Student avatar with fallback initials
@@ -66,6 +67,7 @@ export default function StudentProfile() {
   const {
     student,
     classroom,
+    classrooms,
     dimensions,
     dimensionScores,
     timeline,
@@ -258,7 +260,9 @@ export default function StudentProfile() {
                   {formatStudentName(student.first_name, student.last_name)}
                 </h1>
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-muted">
-                  {classroom && <span>{classroom.name}</span>}
+                  {classrooms.length > 0
+                    ? <span>{classrooms.map((c) => c.name).join(', ')}</span>
+                    : classroom && <span>{classroom.name}</span>}
                   {student.grade_level && <span>Grade {student.grade_level}</span>}
                   {age !== null && <span>Age {age}</span>}
                 </div>
@@ -360,6 +364,18 @@ export default function StudentProfile() {
           />
         </div>
       </section>
+
+      {/* ========== CLASSROOM ENROLLMENTS (educator/admin only) ========== */}
+      {!isFamilyView && (
+        <section className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+          <StudentClassroomsManager
+            studentId={student.id}
+            schoolId={student.school_id}
+            classrooms={classrooms}
+            onChanged={refetch}
+          />
+        </section>
+      )}
 
       {/* ========== SIS INFORMATION (educator/admin only) ========== */}
       {!isFamilyView && (
