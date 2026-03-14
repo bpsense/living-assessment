@@ -6,8 +6,6 @@ import {
   BookOpen,
   Search,
   Trash2,
-  Users,
-  User,
   Tag,
   FileText,
   Sparkles,
@@ -17,7 +15,6 @@ import {
   Clock,
   BarChart3,
   Filter,
-  ChevronDown,
   Eye,
   X,
 } from 'lucide-react'
@@ -31,8 +28,6 @@ import {
   type TemplateWithCreator,
   type TemplateFilters,
 } from '../../lib/assignment-template-data'
-import { fetchCompetencyTree, type CompetencyTreeNode } from '../../lib/assignment-data'
-import { fetchSkills, type SkillWithCompetencies } from '../../lib/skills-data'
 import type { AssignmentTemplate, GradeBand, DOKLevel, TemplateStatus } from '../../types/database'
 import CreateAssignmentModal from './CreateAssignmentModal'
 import TemplateBuilder from './TemplateBuilder'

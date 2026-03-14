@@ -9,16 +9,13 @@ import {
   Check,
   Plus,
   Trash2,
-  BookOpen,
   Tag,
   Users,
   User,
   Zap,
-  GripVertical,
   AlertCircle,
   CheckCircle2,
   CircleDot,
-  ClipboardList,
 } from 'lucide-react'
 import { useToast } from '../Toast'
 import { useAuth } from '../../lib/auth'
@@ -514,8 +511,6 @@ export default function TemplateBuilder({ open, onClose, onSaved, template }: Pr
                 <StepPhases
                   phases={phases} setPhases={setPhases}
                   onQuickStart={addQuickStartPhases}
-                  selectedCompetencies={selectedCompetencies}
-                  competencyTree={competencyTree}
                 />
               )}
               {step === 3 && (
@@ -859,13 +854,11 @@ function StepDesign({
 // ============================================================
 
 function StepPhases({
-  phases, setPhases, onQuickStart, selectedCompetencies, competencyTree,
+  phases, setPhases, onQuickStart,
 }: {
   phases: ProjectPhase[]
   setPhases: (v: ProjectPhase[]) => void
   onQuickStart: () => void
-  selectedCompetencies: Set<string>
-  competencyTree: CompetencyTreeNode[]
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
