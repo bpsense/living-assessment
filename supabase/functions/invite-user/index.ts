@@ -186,6 +186,20 @@ Deno.serve(async (req: Request) => {
         console.error('Auto-create student error:', studentErr)
       } else if (newStudent) {
         linkedStudentId = newStudent.id
+
+        // Also create junction table entry for multi-classroom support
+        const { error: scErr } = await serviceClient
+          .from('student_classrooms')
+          .upsert({
+            student_id: newStudent.id,
+            classroom_id,
+            school_id,
+            is_primary: true,
+          }, { onConflict: 'student_id,classroom_id' })
+
+        if (scErr) {
+          console.error('Student-classroom enrollment error:', scErr)
+        }
       }
     }
 

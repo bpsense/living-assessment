@@ -236,10 +236,21 @@ export async function fetchCompetencyTree(schoolId: string): Promise<CompetencyT
 // ============================================================
 
 export async function fetchClassroomStudents(classroomId: string): Promise<Student[]> {
+  // Fetch student IDs actively enrolled in this classroom via junction table
+  const { data: scData, error: scError } = await supabase
+    .from('student_classrooms')
+    .select('student_id')
+    .eq('classroom_id', classroomId)
+    .eq('status', 'active')
+
+  if (scError) throw scError
+  const studentIds = (scData ?? []).map((r) => r.student_id)
+  if (studentIds.length === 0) return []
+
   const { data, error } = await supabase
     .from('students')
     .select('*')
-    .eq('classroom_id', classroomId)
+    .in('id', studentIds)
     .eq('student_status', 'active')
     .order('last_name')
 

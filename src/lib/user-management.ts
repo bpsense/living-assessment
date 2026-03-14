@@ -81,11 +81,13 @@ export function useUserManagement(filters: UserFilters = {}) {
           (e: { educator_id: string }) => e.educator_id
         ))]
 
-        // 3. Get students in those classrooms
-        const { data: studentRows } = await supabase
-          .from('students')
-          .select('id')
+        // 3. Get students in those classrooms (via junction table)
+        const { data: scRows } = await supabase
+          .from('student_classrooms')
+          .select('student_id')
           .in('classroom_id', classroomIds)
+
+        const studentRows = (scRows ?? []).map((r) => ({ id: r.student_id }))
 
         const studentIds = (studentRows ?? []).map((s: { id: string }) => s.id)
 

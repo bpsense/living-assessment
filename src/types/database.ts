@@ -59,6 +59,24 @@ export interface EducatorClassroom {
   created_at: string
 }
 
+export type StudentClassroomStatus = 'active' | 'archived'
+
+export interface StudentClassroom {
+  id: string
+  student_id: string
+  classroom_id: string
+  school_id: string
+  is_primary: boolean
+  status: StudentClassroomStatus
+  created_at: string
+}
+
+export type StudentClassroomInsert = Omit<StudentClassroom, 'id' | 'created_at'> & {
+  id?: string
+  is_primary?: boolean
+  status?: StudentClassroomStatus
+}
+
 export type StudentStatus = 'active' | 'inactive' | 'withdrawn'
 
 export interface Student {

@@ -1,15 +1,18 @@
 /**
  * LearnerProfile.tsx — Read-only profile view for learner role.
- * Shows the learner's own student record, classroom, and observation progress.
+ * Shows the learner's own student record, classrooms (active + archived),
+ * per-classroom assignment kanban, and observation progress.
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { clsx } from 'clsx'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
-import { Loader2, User, School, BarChart3, BookOpen, ClipboardList } from 'lucide-react'
+import { Loader2, User, School, BarChart3, BookOpen, ClipboardList, Star, Archive } from 'lucide-react'
 import type { Student, Dimension, Observation } from '../types/database'
 import AssignmentKanban from '../components/learner/AssignmentKanban'
-import { fetchLearnerAssignments, type LearnerAssignment } from '../lib/learner-assignments-data'
+import { fetchLearnerAssignments, groupAssignmentsByClassroom, type LearnerAssignment } from '../lib/learner-assignments-data'
 
 interface DimensionProgress {
   dimension: Dimension
@@ -17,14 +20,43 @@ interface DimensionProgress {
   observationCount: number
 }
 
+interface ClassroomInfo {
+  id: string
+  name: string
+  grade_level: string | null
+  is_primary: boolean
+  status: 'active' | 'archived'
+}
+
 export default function LearnerProfile() {
   const { profile } = useAuth()
+  const navigate = useNavigate()
   const [student, setStudent] = useState<Student | null>(null)
-  const [classroom, setClassroom] = useState<{ name: string; grade_level: string | null } | null>(null)
+  const [allClassrooms, setAllClassrooms] = useState<ClassroomInfo[]>([])
   const [progress, setProgress] = useState<DimensionProgress[]>([])
   const [assignments, setAssignments] = useState<LearnerAssignment[]>([])
   const [loading, setLoading] = useState(true)
   const [schoolName, setSchoolName] = useState('')
+  const [selectedClassroomId, setSelectedClassroomId] = useState<string>('all')
+
+  const activeClassrooms = useMemo(
+    () => allClassrooms.filter((c) => c.status === 'active'),
+    [allClassrooms]
+  )
+  const archivedClassrooms = useMemo(
+    () => allClassrooms.filter((c) => c.status === 'archived'),
+    [allClassrooms]
+  )
+
+  const assignmentsByClassroom = useMemo(
+    () => groupAssignmentsByClassroom(assignments),
+    [assignments]
+  )
+
+  const filteredAssignments = useMemo(() => {
+    if (selectedClassroomId === 'all') return assignments
+    return assignmentsByClassroom.get(selectedClassroomId) ?? []
+  }, [assignments, assignmentsByClassroom, selectedClassroomId])
 
   useEffect(() => {
     if (!profile?.student_id) {
@@ -49,14 +81,32 @@ export default function LearnerProfile() {
 
       setStudent(studentData as Student)
 
-      // Fetch classroom
-      if (studentData.classroom_id) {
-        const { data: classroomData } = await supabase
+      // Fetch all classroom enrollments via junction table
+      const { data: scData } = await supabase
+        .from('student_classrooms')
+        .select('classroom_id, is_primary, status')
+        .eq('student_id', studentData.id)
+      const scRows = (scData ?? []) as { classroom_id: string; is_primary: boolean; status: string }[]
+      const classroomIds = scRows.map((r) => r.classroom_id)
+
+      if (classroomIds.length > 0) {
+        const { data: classroomsData } = await supabase
           .from('classrooms')
-          .select('name, grade_level')
-          .eq('id', studentData.classroom_id)
-          .single()
-        if (classroomData) setClassroom(classroomData)
+          .select('id, name, grade_level')
+          .in('id', classroomIds)
+
+        if (classroomsData) {
+          const primaryMap = new Map(scRows.map((r) => [r.classroom_id, r.is_primary]))
+          const statusMap = new Map(scRows.map((r) => [r.classroom_id, r.status]))
+          const allRooms: ClassroomInfo[] = classroomsData.map((c) => ({
+            id: c.id,
+            name: c.name,
+            grade_level: c.grade_level,
+            is_primary: primaryMap.get(c.id) ?? false,
+            status: (statusMap.get(c.id) as 'active' | 'archived') ?? 'active',
+          }))
+          setAllClassrooms(allRooms)
+        }
       }
 
       // Fetch school name
@@ -67,7 +117,7 @@ export default function LearnerProfile() {
         .single()
       if (schoolData) setSchoolName(schoolData.name)
 
-      // Fetch dimensions (active + visible_to_family)
+      // Fetch dimensions (active)
       const { data: dimensions } = await supabase
         .from('dimensions')
         .select('*')
@@ -140,6 +190,7 @@ export default function LearnerProfile() {
   }
 
   const displayName = student.preferred_name ?? student.first_name
+  const primaryClassroom = activeClassrooms.find((c) => c.is_primary) ?? activeClassrooms[0]
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -157,16 +208,11 @@ export default function LearnerProfile() {
       </div>
 
       {/* Info cards */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <InfoCard
-          icon={<School className="h-5 w-5 text-primary-600" />}
-          label="Classroom"
-          value={classroom?.name ?? 'Not assigned'}
-        />
+      <div className="grid gap-4 sm:grid-cols-2">
         <InfoCard
           icon={<BookOpen className="h-5 w-5 text-accent-600" />}
           label="Grade Level"
-          value={student.grade_level ?? classroom?.grade_level ?? '—'}
+          value={student.grade_level ?? primaryClassroom?.grade_level ?? '—'}
         />
         <InfoCard
           icon={<BarChart3 className="h-5 w-5 text-success-600" />}
@@ -175,18 +221,102 @@ export default function LearnerProfile() {
         />
       </div>
 
-      {/* My Assignments — kanban board */}
+      {/* My Classrooms */}
+      <section className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+        <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-text">
+          <School className="h-5 w-5 text-primary-600" />
+          My Classrooms
+        </h2>
+        {activeClassrooms.length === 0 ? (
+          <p className="text-sm text-text-muted">Not assigned to any classrooms</p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {activeClassrooms.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => navigate(`/classroom/${c.id}`)}
+                className="rounded-lg border border-bg-muted p-3 text-left transition hover:border-primary-200 hover:shadow-sm"
+              >
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-text">{c.name}</p>
+                  {c.is_primary && <Star className="h-3 w-3 fill-amber-400 text-amber-400" />}
+                </div>
+                {c.grade_level && <p className="mt-0.5 text-xs text-text-muted">Grade {c.grade_level}</p>}
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Past Classrooms */}
+      {archivedClassrooms.length > 0 && (
+        <section className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-text-muted">
+            <Archive className="h-4 w-4" />
+            Past Classrooms
+          </h2>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {archivedClassrooms.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => navigate(`/classroom/${c.id}`)}
+                className="rounded-lg border border-bg-muted p-3 text-left opacity-70 transition hover:opacity-100 hover:shadow-sm"
+              >
+                <p className="text-sm font-medium text-text">{c.name}</p>
+                <span className="text-xs text-text-light">Archived</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* My Assignments — per-classroom kanban */}
       <section className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
         <div className="mb-4 flex items-center gap-2">
           <ClipboardList className="h-5 w-5 text-primary-600" />
           <h2 className="text-base font-bold text-text">My Assignments</h2>
           {assignments.length > 0 && (
             <span className="rounded-full bg-bg-muted px-2 py-0.5 text-xs font-medium text-text-muted">
-              {assignments.length}
+              {filteredAssignments.length}
             </span>
           )}
         </div>
-        <AssignmentKanban assignments={assignments} onUpdate={refetchAssignments} />
+
+        {/* Classroom tabs (only when enrolled in >1 classroom) */}
+        {activeClassrooms.length > 1 && assignments.length > 0 && (
+          <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+            <button
+              onClick={() => setSelectedClassroomId('all')}
+              className={clsx(
+                'shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition',
+                selectedClassroomId === 'all'
+                  ? 'bg-primary-500 text-white'
+                  : 'text-text-muted hover:bg-bg-muted'
+              )}
+            >
+              All ({assignments.length})
+            </button>
+            {activeClassrooms.map((c) => {
+              const count = assignmentsByClassroom.get(c.id)?.length ?? 0
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => setSelectedClassroomId(c.id)}
+                  className={clsx(
+                    'shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition',
+                    selectedClassroomId === c.id
+                      ? 'bg-primary-500 text-white'
+                      : 'text-text-muted hover:bg-bg-muted'
+                  )}
+                >
+                  {c.name} ({count})
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        <AssignmentKanban assignments={filteredAssignments} onUpdate={refetchAssignments} />
       </section>
 
       {/* Dimension progress */}

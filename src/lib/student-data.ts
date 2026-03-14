@@ -77,7 +77,10 @@ export type { CompetencyBasedData } from './scoring'
 
 export interface StudentProfileData {
   student: Student | null
+  /** Primary classroom (backward compat) */
   classroom: Classroom | null
+  /** All classrooms the student is enrolled in */
+  classrooms: (Classroom & { is_primary: boolean; status: 'active' | 'archived' })[]
   dimensions: Dimension[]
   dimensionScores: DimensionScore[]
   timeline: TimelineEntry[]
@@ -94,6 +97,7 @@ export interface StudentProfileData {
 export function useStudentProfile(studentId: string | undefined): StudentProfileData {
   const [student, setStudent] = useState<Student | null>(null)
   const [classroom, setClassroom] = useState<Classroom | null>(null)
+  const [classrooms, setClassrooms] = useState<(Classroom & { is_primary: boolean; status: 'active' | 'archived' })[]>([])
   const [dimensions, setDimensions] = useState<Dimension[]>([])
   const [observations, setObservations] = useState<Observation[]>([])
   const [surveys, setSurveys] = useState<InterestSurvey[]>([])
@@ -132,9 +136,21 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
         const twelveMonthsAgo = new Date()
         twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12)
 
-        // Fetch classroom, dimensions, observations, surveys, competency data in parallel
+        // Fetch all classroom enrollments via junction table
+        const { data: scData } = await supabase
+          .from('student_classrooms')
+          .select('classroom_id, is_primary, status')
+          .eq('student_id', studentId)
+        const scRows = (scData ?? []) as { classroom_id: string; is_primary: boolean; status: string }[]
+        const classroomIds = scRows.map((r) => r.classroom_id)
+        const primaryMap = new Map(scRows.map((r) => [r.classroom_id, r.is_primary]))
+        const statusMap = new Map(scRows.map((r) => [r.classroom_id, (r.status as 'active' | 'archived') ?? 'active']))
+
+        if (cancelled) return
+
+        // Fetch classrooms, dimensions, observations, surveys, competency data in parallel
         const [
-          classroomRes,
+          classroomsRes,
           dimensionsRes,
           observationsRes,
           surveysRes,
@@ -142,11 +158,9 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
           mappingsRes,
           competenciesRes,
         ] = await Promise.all([
-          supabase
-            .from('classrooms')
-            .select('*')
-            .eq('id', stu.classroom_id)
-            .single(),
+          classroomIds.length > 0
+            ? supabase.from('classrooms').select('*').in('id', classroomIds)
+            : Promise.resolve({ data: [] }),
           supabase
             .from('dimensions')
             .select('*')
@@ -193,7 +207,13 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
 
         if (cancelled) return
 
-        const classroomData = classroomRes.data as Classroom | null
+        const classroomsList = ((classroomsRes.data ?? []) as Classroom[]).map((c) => ({
+          ...c,
+          is_primary: primaryMap.get(c.id) ?? false,
+          status: statusMap.get(c.id) ?? 'active' as const,
+        }))
+        // Primary classroom for backward compat
+        const classroomData = classroomsList.find((c) => c.is_primary) ?? classroomsList[0] ?? null
         const dimensionsData = (dimensionsRes.data ?? []) as Dimension[]
         const observationsData = (observationsRes.data ?? []) as Observation[]
         const surveysData = (surveysRes.data ?? []) as InterestSurvey[]
@@ -201,7 +221,8 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
         const mappingsData = (mappingsRes.data ?? []) as CompetencyDimensionMapping[]
         const competenciesData = (competenciesRes.data ?? []) as Competency[]
 
-        setClassroom(classroomData)
+        setClassroom(classroomData ? { ...classroomData } : null)
+        setClassrooms(classroomsList)
         setDimensions(dimensionsData)
         setObservations(observationsData)
         setSurveys(surveysData)
@@ -262,6 +283,7 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
   return {
     student,
     classroom,
+    classrooms,
     dimensions,
     dimensionScores,
     timeline,

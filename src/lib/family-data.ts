@@ -140,16 +140,32 @@ export function useFamilyList(schoolId: string | undefined): FamilyListData {
         const links = (linksData ?? []) as { parent_id: string; student_id: string }[]
         const studentIds = [...new Set(links.map((l) => l.student_id))]
 
-        // 3. Student names + classroom IDs
+        // 3. Student names + classroom IDs (via junction table)
         let studentMap = new Map<string, { first_name: string; last_name: string; classroom_id: string }>()
         if (studentIds.length > 0) {
-          const { data: studentsData } = await supabase
-            .from('students')
-            .select('id, first_name, last_name, classroom_id')
-            .in('id', studentIds)
+          const [studentsDataRes, scDataRes] = await Promise.all([
+            supabase
+              .from('students')
+              .select('id, first_name, last_name, classroom_id')
+              .in('id', studentIds),
+            supabase
+              .from('student_classrooms')
+              .select('student_id, classroom_id')
+              .in('student_id', studentIds)
+              .eq('is_primary', true),
+          ])
 
-          for (const s of (studentsData ?? []) as { id: string; first_name: string; last_name: string; classroom_id: string }[]) {
-            studentMap.set(s.id, { first_name: s.first_name, last_name: s.last_name, classroom_id: s.classroom_id })
+          const primaryClassrooms = new Map(
+            ((scDataRes.data ?? []) as { student_id: string; classroom_id: string }[])
+              .map((sc) => [sc.student_id, sc.classroom_id])
+          )
+
+          for (const s of (studentsDataRes.data ?? []) as { id: string; first_name: string; last_name: string; classroom_id: string }[]) {
+            studentMap.set(s.id, {
+              first_name: s.first_name,
+              last_name: s.last_name,
+              classroom_id: primaryClassrooms.get(s.id) ?? s.classroom_id,
+            })
           }
         }
 
