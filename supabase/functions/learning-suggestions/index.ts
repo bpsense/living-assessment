@@ -290,6 +290,7 @@ Deno.serve(async (req) => {
     }
 
     // Create Supabase client with the caller's JWT so RLS applies
+    const token = authHeader.replace('Bearer ', '')
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     })
@@ -297,8 +298,9 @@ Deno.serve(async (req) => {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser()
+    } = await supabase.auth.getUser(token)
     if (authError || !user) {
+      console.error('getUser failed:', authError?.message)
       return jsonResponse({ error: 'Unauthorized' }, 401)
     }
 

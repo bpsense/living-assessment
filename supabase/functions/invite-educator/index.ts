@@ -4,38 +4,35 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-// ── Helpers ────────────────────────────────────────────────────
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-function jsonResponse(body: unknown, status = 200) {
+function jsonResponse(body: unknown) {
   return new Response(JSON.stringify(body), {
-    status,
+    status: 200,
     headers: { 'Content-Type': 'application/json', ...corsHeaders },
   })
 }
 
-// ── Handler ────────────────────────────────────────────────────
-
 Deno.serve(async (req: Request) => {
-  // CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   if (req.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405)
+    return jsonResponse({ error: 'Method not allowed' })
   }
 
   try {
     // 1. Verify the caller is an authenticated admin
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
-      return jsonResponse({ error: 'Missing authorization header' }, 401)
+      return jsonResponse({ error: 'Missing authorization header' })
     }
+
+    const token = authHeader.replace('Bearer ', '')
 
     const anonClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -43,9 +40,10 @@ Deno.serve(async (req: Request) => {
       { global: { headers: { Authorization: authHeader } } }
     )
 
-    const { data: { user }, error: authError } = await anonClient.auth.getUser()
+    const { data: { user }, error: authError } = await anonClient.auth.getUser(token)
     if (authError || !user) {
-      return jsonResponse({ error: 'Unauthorized' }, 401)
+      console.error('getUser failed:', authError?.message)
+      return jsonResponse({ error: 'Unauthorized' })
     }
 
     // Check caller's profile role
@@ -64,7 +62,7 @@ Deno.serve(async (req: Request) => {
     const isSystemAdmin = !!sysAdmin
 
     if (!callerProfile || (callerProfile.role !== 'admin' && !isSystemAdmin)) {
-      return jsonResponse({ error: 'Only admins can invite educators' }, 403)
+      return jsonResponse({ error: 'Only admins can invite educators' })
     }
 
     // 2. Parse request body
@@ -75,60 +73,75 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!email || !full_name || !school_id) {
-      return jsonResponse({ error: 'email, full_name, and school_id are required' }, 400)
+      return jsonResponse({ error: 'email, full_name, and school_id are required' })
     }
 
-    // Ensure the admin belongs to the same school (system admins can invite to any school)
+    // System admins can invite to any school
     if (!isSystemAdmin && callerProfile.school_id !== school_id) {
-      return jsonResponse({ error: 'Cannot invite educators to a different school' }, 403)
+      return jsonResponse({ error: 'Cannot invite educators to a different school' })
     }
 
-    // 3. Create the user server-side with the service role key
+    // 3. Service client for privileged operations
     const serviceClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    const { data: newUser, error: createError } = await serviceClient.auth.admin.createUser({
-      email,
-      email_confirm: true,
-      user_metadata: {
-        full_name,
-        role: 'educator',
-        school_id,
-      },
-    })
+    // Check if email already exists in profiles
+    const { data: existingProfile } = await serviceClient
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
+      .limit(1)
+      .maybeSingle()
 
-    if (createError) {
-      if (
-        createError.message.toLowerCase().includes('already') ||
-        createError.message.toLowerCase().includes('duplicate')
-      ) {
-        return jsonResponse({ error: 'An account with this email already exists.' }, 409)
+    if (existingProfile) {
+      return jsonResponse({ error: 'An account with this email already exists.' })
+    }
+
+    // 4. Invite user — creates the account AND sends the invite email
+    const { data: inviteData, error: inviteErr } = await serviceClient.auth.admin.inviteUserByEmail(
+      email,
+      {
+        data: {
+          full_name,
+          role: 'educator',
+          school_id,
+        },
       }
-      return jsonResponse({ error: createError.message }, 400)
+    )
+
+    if (inviteErr) {
+      const msg = inviteErr.message || ''
+      if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('duplicate')) {
+        return jsonResponse({ error: 'An account with this email already exists.' })
+      }
+      return jsonResponse({ error: msg || 'Failed to invite user' })
     }
 
-    // 4. Generate a password reset link so the educator can set their password
-    const { error: resetError } = await serviceClient.auth.admin.generateLink({
-      type: 'recovery',
-      email,
-    })
+    const newUserId = inviteData.user.id
 
-    if (resetError) {
-      // User was created but reset link generation failed — log but don't fail
-      console.warn('Password reset link generation failed:', resetError.message)
+    // 5. Ensure profile exists with correct role (don't rely solely on trigger)
+    const { error: upsertErr } = await serviceClient
+      .from('profiles')
+      .upsert({
+        id: newUserId,
+        school_id,
+        role: 'educator',
+        full_name,
+        email,
+        avatar_url: null,
+      }, { onConflict: 'id' })
+
+    if (upsertErr) {
+      console.error('Profile upsert error:', upsertErr)
     }
 
-    return jsonResponse({
-      success: true,
-      user_id: newUser.user.id,
-    })
+    return jsonResponse({ success: true, user_id: newUserId })
   } catch (err) {
     console.error('invite-educator error:', err)
     return jsonResponse(
-      { error: err instanceof Error ? err.message : 'Internal server error' },
-      500
+      { error: err instanceof Error ? err.message : 'Internal server error' }
     )
   }
 })

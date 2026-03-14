@@ -32,14 +32,17 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: 'Missing authorization header' })
     }
 
+    const token = authHeader.replace('Bearer ', '')
+
     const anonClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!,
       { global: { headers: { Authorization: authHeader } } }
     )
 
-    const { data: { user }, error: authError } = await anonClient.auth.getUser()
+    const { data: { user }, error: authError } = await anonClient.auth.getUser(token)
     if (authError || !user) {
+      console.error('getUser failed:', authError?.message)
       return jsonResponse({ error: 'Unauthorized' })
     }
 

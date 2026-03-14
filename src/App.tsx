@@ -27,6 +27,12 @@ import ResetPassword from './pages/ResetPassword'
 import ExportReport from './pages/Export'
 import NotFound from './pages/NotFound'
 import SchoolsPage from './pages/system/Schools'
+import UsersPage from './pages/admin/Users'
+import LearnerProfile from './pages/LearnerProfile'
+import CompetencyFrameworks from './pages/admin/CompetencyFrameworks'
+import Assignments from './pages/Assignments'
+import AssignmentGrading from './pages/AssignmentGrading'
+import Messages from './pages/Messages'
 
 function PasswordRecoveryRedirect() {
   const { isPasswordRecovery } = useAuth()
@@ -63,15 +69,31 @@ function AppRoutes() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/department" element={<DepartmentDashboard />} />
         <Route path="/settings" element={<SchoolProfile />} />
+        <Route path="/assignments" element={<Assignments />} />
+        <Route path="/assignment/:id" element={<AssignmentGrading />} />
+        <Route path="/messages" element={<Messages />} />
+
+        {/* Learner routes */}
+        <Route path="/learner/profile" element={<LearnerProfile />} />
 
         {/* System admin routes */}
         <Route path="/system/schools" element={<SchoolsPage />} />
+
+        {/* User management — dept admins (4) and up */}
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute minAccessLevel={4}>
+              <UsersPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Admin routes */}
         <Route
           path="/admin/educators"
           element={
-            <ProtectedRoute requiredRole="admin">
+            <ProtectedRoute requiredRole="admin" allowDepartmentAdmin>
               <Educators />
             </ProtectedRoute>
           }
@@ -121,6 +143,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute requiredRole="admin">
               <Standards />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/competency-frameworks"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <CompetencyFrameworks />
             </ProtectedRoute>
           }
         />

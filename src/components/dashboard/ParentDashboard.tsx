@@ -1,8 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ClipboardList, ArrowRight, Sparkles, Plus } from 'lucide-react'
+import { ClipboardList, ArrowRight, Sparkles, Plus, MessageCircle } from 'lucide-react'
+import { formatDistanceToNow } from 'date-fns'
 import MiniBlob from './MiniBlob'
 import LinkStudentModal from './LinkStudentModal'
+import { useAuth } from '../../lib/auth'
+import { fetchParentConversations, type ConversationWithDetails } from '../../lib/messaging-data'
 import type { ParentDashboardData } from '../../lib/dashboard-data'
 
 interface Props {
@@ -14,8 +17,28 @@ interface Props {
 
 export default function ParentDashboard({ data, userName, hideAddLearner }: Props) {
   const navigate = useNavigate()
+  const { profile } = useAuth()
   const firstName = userName.split(' ')[0]
   const [showLinkModal, setShowLinkModal] = useState(false)
+  const [recentMessages, setRecentMessages] = useState<ConversationWithDetails[]>([])
+
+  useEffect(() => {
+    if (!profile?.id) return
+    fetchParentConversations(profile.id)
+      .then((convs) => {
+        // Sort by last message time and take top 5
+        const withMessages = convs
+          .filter((c) => c.lastMessage)
+          .sort(
+            (a, b) =>
+              new Date(b.lastMessage!.created_at).getTime() -
+              new Date(a.lastMessage!.created_at).getTime()
+          )
+          .slice(0, 5)
+        setRecentMessages(withMessages)
+      })
+      .catch((err) => console.error('[ParentDashboard] Messages fetch failed:', err))
+  }, [profile?.id])
 
   const currentPeriod = new Date().toLocaleDateString('en-US', {
     month: 'long',
@@ -74,6 +97,84 @@ export default function ParentDashboard({ data, userName, hideAddLearner }: Prop
           ))}
         </section>
       )}
+
+      {/* ---- Recent Messages ---- */}
+      <section className="rounded-xl border border-bg-muted bg-bg-card shadow-sm">
+        <div className="flex items-center justify-between border-b border-bg-muted px-5 py-4">
+          <div className="flex items-center gap-2">
+            <MessageCircle className="h-5 w-5 text-primary-600" />
+            <h2 className="text-sm font-bold text-text">Recent Messages</h2>
+          </div>
+          <button
+            onClick={() => navigate('/messages')}
+            className="flex items-center gap-1 text-xs font-medium text-primary-600 transition-colors hover:text-primary-700"
+          >
+            View All Messages <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
+        {recentMessages.length === 0 ? (
+          <div className="px-5 py-6 text-center">
+            <MessageCircle className="mx-auto mb-2 h-8 w-8 text-text-light" />
+            <p className="text-sm text-text-muted">No messages yet</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-bg-muted">
+            {recentMessages.map((conv) => {
+              const otherParticipants = conv.participants.filter(
+                (p) => p.user_id !== profile?.id
+              )
+              const label =
+                conv.conversation_type === 'class'
+                  ? conv.title || 'Class Chat'
+                  : conv.conversation_type === 'group'
+                    ? conv.title || 'Group Chat'
+                    : otherParticipants[0]?.profile?.full_name || 'Conversation'
+              const senderName =
+                conv.lastMessage?.sender_id === profile?.id
+                  ? 'You'
+                  : conv.participants.find((p) => p.user_id === conv.lastMessage?.sender_id)
+                      ?.profile?.full_name?.split(' ')[0] || 'Someone'
+              const preview =
+                conv.lastMessage?.content && conv.lastMessage.content.length > 60
+                  ? conv.lastMessage.content.slice(0, 60) + '…'
+                  : conv.lastMessage?.content || ''
+
+              return (
+                <button
+                  key={conv.id}
+                  onClick={() => navigate('/messages')}
+                  className="flex w-full items-start gap-3 px-5 py-3 text-left transition-colors hover:bg-bg"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-100">
+                    <MessageCircle className="h-4 w-4 text-primary-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-sm font-medium text-text">{label}</span>
+                      {conv.lastMessage && (
+                        <span className="shrink-0 text-[10px] text-text-light">
+                          {formatDistanceToNow(new Date(conv.lastMessage.created_at), {
+                            addSuffix: true,
+                          })}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-0.5 truncate text-xs text-text-muted">
+                      {senderName}: {preview}
+                    </p>
+                  </div>
+                  {conv.unreadCount > 0 && (
+                    <span className="mt-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary-500 px-1.5 text-[10px] font-bold text-white">
+                      {conv.unreadCount}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </section>
 
       {/* ---- Child Cards ---- */}
       {data.children.length === 0 ? (

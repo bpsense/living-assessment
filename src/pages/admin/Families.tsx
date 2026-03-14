@@ -1,15 +1,36 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, UsersRound, Plus, Mail, Send, Eye, UserPlus } from 'lucide-react'
+import { Loader2, UsersRound, Plus, Mail, Send, Eye, UserPlus, UserX, MoreVertical } from 'lucide-react'
 import { useAuth } from '../../lib/auth'
+import { useAccessControl } from '../../lib/access-control'
 import { useToast } from '../../components/Toast'
 import { useFamilyList, inviteFamily } from '../../lib/family-data'
+import { supabase } from '../../lib/supabase'
 
 export default function Families() {
   const { profile } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const { canDeactivateUsers } = useAccessControl()
   const { families, loading, error, refetch } = useFamilyList(profile?.school_id)
+  const [actionMenu, setActionMenu] = useState<string | null>(null)
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
+
+  const handleDeactivate = useCallback(async (userId: string, name: string) => {
+    setActionLoading(userId)
+    const { error: err } = await supabase
+      .from('profiles')
+      .update({ is_active: false })
+      .eq('id', userId)
+    if (err) {
+      toast(err.message, 'error')
+    } else {
+      toast(`${name} has been deactivated`, 'success')
+      refetch()
+    }
+    setActionLoading(null)
+    setActionMenu(null)
+  }, [toast, refetch])
 
   // Invite form state
   const [showInvite, setShowInvite] = useState(false)
@@ -171,8 +192,37 @@ export default function Families() {
             return (
               <div
                 key={family.id}
-                className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm"
+                className="relative rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm"
               >
+                {/* Action menu */}
+                {canDeactivateUsers && (
+                  <div className="absolute right-3 top-3">
+                    <button
+                      onClick={() => setActionMenu(actionMenu === family.id ? null : family.id)}
+                      className="rounded p-1 text-text-light hover:bg-bg-muted hover:text-text"
+                    >
+                      {actionLoading === family.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <MoreVertical className="h-4 w-4" />
+                      )}
+                    </button>
+                    {actionMenu === family.id && (
+                      <div className="absolute right-0 top-full z-10 mt-1 w-40 rounded-lg border border-bg-muted bg-bg-card py-1 shadow-lg">
+                        <button
+                          onClick={() => {
+                            handleDeactivate(family.id, family.full_name)
+                          }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-xs text-alert-600 hover:bg-alert-50"
+                        >
+                          <UserX className="h-3 w-3" />
+                          Deactivate
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Avatar + Name */}
                 <div className="flex items-center gap-3">
                   {family.avatar_url ? (

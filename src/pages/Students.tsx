@@ -8,11 +8,17 @@ import {
   ClipboardPen,
   Pencil,
   X,
+  UserPlus,
+  Link2,
+  AlertCircle,
+  CheckCircle2,
+  Mail,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { useAccessControl } from '../lib/access-control'
 import { useToast } from '../components/Toast'
+import InviteLearnerModal from '../components/student/InviteLearnerModal'
 import type { Student, Classroom } from '../types/database'
 
 // ============================================================
@@ -22,6 +28,14 @@ import type { Student, Classroom } from '../types/database'
 interface StudentRow extends Student {
   classroom_name: string
   observation_count: number
+  accountStatus: 'linked' | 'none'
+  linkedEmail: string | null
+}
+
+interface UnlinkedLearner {
+  id: string
+  full_name: string
+  email: string
 }
 
 // ============================================================
@@ -30,7 +44,7 @@ interface StudentRow extends Student {
 
 export default function Students() {
   const { profile } = useAuth()
-  const { role, canEditStudents, canViewAllStudents, isDepartmentAdmin, departmentAdminIds, isReadOnly, formatStudentName } = useAccessControl()
+  const { role, canEditStudents, canViewAllStudents, canInviteUsers, isDepartmentAdmin, departmentAdminIds, isReadOnly, formatStudentName, accessLevel } = useAccessControl()
   const navigate = useNavigate()
   const { toast } = useToast()
   const [students, setStudents] = useState<StudentRow[]>([])
@@ -40,6 +54,13 @@ export default function Students() {
   const [showForm, setShowForm] = useState(false)
   const [editStudent, setEditStudent] = useState<Student | null>(null)
   const [saving, setSaving] = useState(false)
+
+  // Account linking state
+  const [unlinkedLearners, setUnlinkedLearners] = useState<UnlinkedLearner[]>([])
+  const [inviteStudent, setInviteStudent] = useState<Student | null>(null)
+  const [linkingLearnerId, setLinkingLearnerId] = useState<string | null>(null)
+  const [linkStudentSearch, setLinkStudentSearch] = useState('')
+  const [linkingInProgress, setLinkingInProgress] = useState(false)
 
   // Form state
   const [firstName, setFirstName] = useState('')
@@ -73,6 +94,7 @@ export default function Students() {
         if (linkedStudentIds.length === 0) {
           setStudents([])
           setClassrooms([])
+          setUnlinkedLearners([])
           setLoading(false)
           return
         }
@@ -101,15 +123,17 @@ export default function Students() {
           studs.map((s) => ({
             ...s,
             classroom_name: classroomMap.get(s.classroom_id) ?? 'Unknown',
-            observation_count: 0, // Parents don't need obs counts in the list
+            observation_count: 0,
+            accountStatus: 'none' as const,
+            linkedEmail: null,
           }))
         )
+        setUnlinkedLearners([])
         setLoading(false)
         return
       }
 
       if (role === 'educator' && !canViewAllStudents) {
-        // Educators see only students in their assigned classrooms
         const { data: ecData } = await supabase
           .from('educator_classrooms')
           .select('classroom_id')
@@ -117,7 +141,6 @@ export default function Students() {
 
         accessibleClassroomIds = (ecData ?? []).map((r) => (r as { classroom_id: string }).classroom_id)
       } else if (isDepartmentAdmin && !canViewAllStudents) {
-        // Department admins see students in their department classrooms
         const { data: deptClassrooms } = await supabase
           .from('classrooms')
           .select('id')
@@ -138,6 +161,7 @@ export default function Students() {
         if (accessibleClassroomIds.length === 0) {
           setStudents([])
           setClassrooms([])
+          setUnlinkedLearners([])
           setLoading(false)
           return
         }
@@ -150,40 +174,75 @@ export default function Students() {
 
       if (rooms.length === 0) {
         setStudents([])
+        setUnlinkedLearners([])
         setLoading(false)
         return
       }
 
       const roomIds = rooms.map((r) => r.id)
 
-      // 3. Fetch students and observations
-      const [studentRes, obsRes] = await Promise.all([
-        supabase
-          .from('students')
-          .select('*')
-          .in('classroom_id', roomIds)
-          .order('last_name'),
+      // 3. Fetch students (via junction table), observations, AND learner profiles
+      const { data: scData } = await supabase
+        .from('student_classrooms')
+        .select('student_id')
+        .in('classroom_id', roomIds)
+      const enrolledStudentIds = [...new Set((scData ?? []).map((r) => r.student_id))]
+
+      const [studentRes, obsRes, profileRes] = await Promise.all([
+        enrolledStudentIds.length > 0
+          ? supabase
+              .from('students')
+              .select('*')
+              .in('id', enrolledStudentIds)
+              .order('last_name')
+          : Promise.resolve({ data: [] }),
         supabase
           .from('observations')
           .select('id, student_id')
           .eq('school_id', profile.school_id),
+        supabase
+          .from('profiles')
+          .select('id, full_name, email, student_id')
+          .eq('school_id', profile.school_id)
+          .eq('role', 'learner'),
       ])
 
       const studs = (studentRes.data ?? []) as Student[]
       const obs = (obsRes.data ?? []) as { id: string; student_id: string }[]
+      const learnerProfiles = (profileRes.data ?? []) as { id: string; full_name: string; email: string; student_id: string | null }[]
 
+      // Build lookup maps
       const classroomMap = new Map(rooms.map((c) => [c.id, c.name]))
       const obsCounts = new Map<string, number>()
       for (const o of obs) {
         obsCounts.set(o.student_id, (obsCounts.get(o.student_id) ?? 0) + 1)
       }
 
+      // Profile map: studentId → { id, email }
+      const profileMap = new Map<string, { profileId: string; email: string }>()
+      const orphanedProfiles: UnlinkedLearner[] = []
+
+      for (const p of learnerProfiles) {
+        if (p.student_id) {
+          profileMap.set(p.student_id, { profileId: p.id, email: p.email })
+        } else {
+          orphanedProfiles.push({ id: p.id, full_name: p.full_name, email: p.email })
+        }
+      }
+
+      setUnlinkedLearners(orphanedProfiles)
+
       setStudents(
-        studs.map((s) => ({
-          ...s,
-          classroom_name: classroomMap.get(s.classroom_id) ?? 'Unknown',
-          observation_count: obsCounts.get(s.id) ?? 0,
-        }))
+        studs.map((s) => {
+          const linked = profileMap.get(s.id)
+          return {
+            ...s,
+            classroom_name: classroomMap.get(s.classroom_id) ?? 'Unknown',
+            observation_count: obsCounts.get(s.id) ?? 0,
+            accountStatus: linked ? 'linked' as const : 'none' as const,
+            linkedEmail: linked?.email ?? null,
+          }
+        })
       )
     } catch {
       toast('Failed to load learners', 'error')
@@ -216,7 +275,6 @@ export default function Students() {
     setSaving(true)
 
     if (editStudent) {
-      // Update
       const { error } = await supabase
         .from('students')
         .update({
@@ -233,7 +291,6 @@ export default function Students() {
         toast('Learner updated!', 'success')
       }
     } else {
-      // Create
       const { error } = await supabase.from('students').insert({
         school_id: profile.school_id,
         first_name: firstName.trim(),
@@ -254,6 +311,24 @@ export default function Students() {
     fetchAll()
   }
 
+  async function handleLinkProfile(learnerId: string, studentId: string) {
+    setLinkingInProgress(true)
+    const { error } = await supabase
+      .from('profiles')
+      .update({ student_id: studentId })
+      .eq('id', learnerId)
+
+    if (error) {
+      toast('Failed to link profile to student', 'error')
+    } else {
+      toast('Learner account linked!', 'success')
+      setLinkingLearnerId(null)
+      setLinkStudentSearch('')
+      fetchAll()
+    }
+    setLinkingInProgress(false)
+  }
+
   // ---------- Loading ----------
   if (loading) {
     return (
@@ -262,6 +337,14 @@ export default function Students() {
       </div>
     )
   }
+
+  // ---------- Computed stats ----------
+  const linkedCount = students.filter((s) => s.accountStatus === 'linked').length
+  const unlinkedCount = students.filter((s) => s.accountStatus === 'none').length
+  const showAccountColumn = role !== 'parent'
+
+  // Students without linked accounts (for the link picker)
+  const unlinkedStudents = students.filter((s) => s.accountStatus === 'none')
 
   // ---------- Filter ----------
   const filtered = search
@@ -275,7 +358,7 @@ export default function Students() {
     : students
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div>
@@ -285,6 +368,11 @@ export default function Students() {
           <p className="mt-1 text-sm text-text-muted">
             {students.length} learner{students.length !== 1 ? 's' : ''} across{' '}
             {classrooms.length} classroom{classrooms.length !== 1 ? 's' : ''}
+            {showAccountColumn && students.length > 0 && (
+              <span className="ml-1">
+                &middot; {linkedCount} with accounts &middot; {unlinkedCount} without
+              </span>
+            )}
           </p>
         </div>
         {canEditStudents && !isReadOnly && (
@@ -297,6 +385,95 @@ export default function Students() {
           </button>
         )}
       </div>
+
+      {/* Unlinked learner profiles banner */}
+      {unlinkedLearners.length > 0 && accessLevel >= 5 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4 shadow-sm">
+          <div className="mb-3 flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <h3 className="text-sm font-semibold text-amber-800">
+              {unlinkedLearners.length} Learner Account{unlinkedLearners.length !== 1 ? 's' : ''} Not Linked to a Student
+            </h3>
+          </div>
+          <p className="mb-3 text-xs text-amber-700">
+            These users have learner accounts but aren't connected to a student on any class roster. Link them to an existing student to connect their profile.
+          </p>
+          <div className="space-y-2">
+            {unlinkedLearners.map((learner) => (
+              <div
+                key={learner.id}
+                className="flex items-center gap-3 rounded-lg border border-amber-200 bg-white px-3 py-2"
+              >
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-700">
+                  {learner.full_name.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-text truncate">{learner.full_name}</p>
+                  <div className="flex items-center gap-1 text-xs text-text-muted">
+                    <Mail className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{learner.email}</span>
+                  </div>
+                </div>
+
+                {linkingLearnerId === learner.id ? (
+                  <div className="flex items-center gap-2">
+                    {unlinkedStudents.length === 0 ? (
+                      <span className="text-xs text-text-muted italic">All students already linked</span>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="text"
+                          placeholder="Search student..."
+                          value={linkStudentSearch}
+                          onChange={(e) => setLinkStudentSearch(e.target.value)}
+                          className="w-32 rounded border border-bg-muted bg-bg-card px-2 py-1 text-xs focus:border-primary-300 focus:outline-none"
+                        />
+                        <div className="relative">
+                          <select
+                            onChange={(e) => {
+                              if (e.target.value) handleLinkProfile(learner.id, e.target.value)
+                            }}
+                            disabled={linkingInProgress}
+                            className="appearance-none rounded border border-bg-muted bg-bg-card px-2 py-1 pr-6 text-xs focus:border-primary-300 focus:outline-none"
+                          >
+                            <option value="">Select student...</option>
+                            {unlinkedStudents
+                              .filter((s) => {
+                                if (!linkStudentSearch) return true
+                                return `${s.first_name} ${s.last_name}`
+                                  .toLowerCase()
+                                  .includes(linkStudentSearch.toLowerCase())
+                              })
+                              .map((s) => (
+                                <option key={s.id} value={s.id}>
+                                  {s.first_name} {s.last_name} — {s.classroom_name}
+                                </option>
+                              ))}
+                          </select>
+                        </div>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => { setLinkingLearnerId(null); setLinkStudentSearch('') }}
+                      className="rounded p-1 text-text-muted hover:bg-bg-muted"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setLinkingLearnerId(learner.id)}
+                    className="flex shrink-0 items-center gap-1 rounded-lg bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 hover:bg-amber-200 transition-colors"
+                  >
+                    <Link2 className="h-3 w-3" />
+                    Link to Student
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Search */}
       <div className="relative">
@@ -418,6 +595,11 @@ export default function Students() {
                 <th className="hidden px-4 py-3 text-left font-medium text-text-muted sm:table-cell">
                   Grade
                 </th>
+                {showAccountColumn && (
+                  <th className="hidden px-4 py-3 text-left font-medium text-text-muted md:table-cell">
+                    Account
+                  </th>
+                )}
                 {role !== 'parent' && (
                   <th className="px-4 py-3 text-center font-medium text-text-muted">Obs</th>
                 )}
@@ -436,7 +618,11 @@ export default function Students() {
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700">
+                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                          student.accountStatus === 'linked'
+                            ? 'bg-success-50 text-success-700'
+                            : 'bg-primary-100 text-primary-700'
+                        }`}>
                           {initials}
                         </div>
                         <div>
@@ -458,6 +644,31 @@ export default function Students() {
                     <td className="hidden px-4 py-3 text-text-muted sm:table-cell">
                       {student.grade_level ?? '—'}
                     </td>
+                    {showAccountColumn && (
+                      <td className="hidden px-4 py-3 md:table-cell">
+                        {student.accountStatus === 'linked' ? (
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full bg-success-50 px-2 py-0.5 text-[10px] font-medium text-success-700"
+                            title={student.linkedEmail ?? undefined}
+                          >
+                            <CheckCircle2 className="h-3 w-3" />
+                            Linked
+                          </span>
+                        ) : canInviteUsers ? (
+                          <button
+                            onClick={() => setInviteStudent(student)}
+                            className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-text-muted hover:bg-primary-50 hover:text-primary-700 transition-colors"
+                          >
+                            <UserPlus className="h-3 w-3" />
+                            Invite
+                          </button>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-text-muted">
+                            No Account
+                          </span>
+                        )}
+                      </td>
+                    )}
                     {role !== 'parent' && (
                       <td className="px-4 py-3 text-center text-text-muted">
                         {student.observation_count}
@@ -483,6 +694,16 @@ export default function Students() {
                             </button>
                           </>
                         )}
+                        {/* Quick invite for mobile (no Account column) */}
+                        {showAccountColumn && student.accountStatus === 'none' && canInviteUsers && (
+                          <button
+                            onClick={() => setInviteStudent(student)}
+                            title="Invite learner account"
+                            className="rounded-lg p-1.5 text-text-light transition-colors hover:bg-primary-50 hover:text-primary-600 md:hidden"
+                          >
+                            <UserPlus className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -491,6 +712,19 @@ export default function Students() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Invite modal */}
+      {inviteStudent && (
+        <InviteLearnerModal
+          student={inviteStudent}
+          open={!!inviteStudent}
+          onClose={() => setInviteStudent(null)}
+          onSuccess={() => {
+            setInviteStudent(null)
+            fetchAll()
+          }}
+        />
       )}
     </div>
   )
