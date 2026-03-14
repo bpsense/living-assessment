@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
 import { useActiveSchoolId } from './school-context'
 
@@ -6,6 +6,13 @@ export interface DepartmentLabel {
   singular: string
   plural: string
   loading: boolean
+}
+
+const DEPT_LABEL_CHANGED = 'department-label-changed'
+
+/** Notify all useDepartmentLabel() hooks to re-fetch. */
+export function notifyDepartmentLabelChanged() {
+  window.dispatchEvent(new Event(DEPT_LABEL_CHANGED))
 }
 
 /**
@@ -16,8 +23,9 @@ export function useDepartmentLabel(): DepartmentLabel {
   const schoolId = useActiveSchoolId()
   const [label, setLabel] = useState<'Department' | 'Location'>('Department')
   const [loading, setLoading] = useState(true)
+  const [revision, setRevision] = useState(0)
 
-  useEffect(() => {
+  const fetchLabel = useCallback(() => {
     if (!schoolId) {
       setLoading(false)
       return
@@ -39,7 +47,16 @@ export function useDepartmentLabel(): DepartmentLabel {
       })
 
     return () => { cancelled = true }
-  }, [schoolId])
+  }, [schoolId, revision])
+
+  useEffect(() => fetchLabel(), [fetchLabel])
+
+  // Re-fetch when another component changes the label
+  useEffect(() => {
+    const handler = () => setRevision((r) => r + 1)
+    window.addEventListener(DEPT_LABEL_CHANGED, handler)
+    return () => window.removeEventListener(DEPT_LABEL_CHANGED, handler)
+  }, [])
 
   return {
     singular: label,
