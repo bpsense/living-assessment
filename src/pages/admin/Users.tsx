@@ -31,6 +31,7 @@ import { useAuth } from '../../lib/auth'
 import { useAccessControl } from '../../lib/access-control'
 import { useUserManagement, type ManagedUser } from '../../lib/user-management'
 import { useActiveSchoolId } from '../../lib/school-context'
+import { useDepartmentLabel } from '../../lib/department-label'
 import { inviteUser } from '../../lib/invite-user'
 import { adminResetPassword } from '../../lib/reset-password'
 import { supabase } from '../../lib/supabase'
@@ -43,11 +44,12 @@ const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
   { value: 'learner', label: 'Learner' },
 ]
 
-const ACCESS_LEVEL_LABELS: Record<number, string> = {
+// Dynamic labels — level 4 label is set in the component via useDepartmentLabel()
+const BASE_ACCESS_LEVEL_LABELS: Record<number, string> = {
   1: 'Learner',
   2: 'Family',
   3: 'Educator',
-  4: 'Dept Admin',
+  4: 'Dept Admin', // overridden dynamically
   5: 'School Admin',
   6: 'System Admin',
 }
@@ -70,6 +72,8 @@ export default function UsersPage() {
   const { isSystemAdmin, allSchools, departmentAdminIds, accessLevel: authAccessLevel } = useAuth()
   const { accessLevel, canInviteUsers, canChangeRoles, canDeactivateUsers, canManageUser } = useAccessControl()
   const activeSchoolId = useActiveSchoolId() ?? null
+  const { singular: deptSingular } = useDepartmentLabel()
+  const ACCESS_LEVEL_LABELS: Record<number, string> = { ...BASE_ACCESS_LEVEL_LABELS, 4: `${deptSingular} Admin` }
 
   // ── Filters ──────────────────────────────────────────────
   const [search, setSearch] = useState('')
@@ -428,7 +432,7 @@ export default function UsersPage() {
             {!isAllSchoolsInvite && inviteRole === 'educator' && departments.length > 0 && (
               <div>
                 <label className="mb-1 block text-xs font-medium text-text-muted">
-                  Department <span className="font-normal text-text-light">(optional — makes them Dept Admin)</span>
+                  {deptSingular} <span className="font-normal text-text-light">(optional — makes them {deptSingular} Admin)</span>
                 </label>
                 <div className="relative">
                   <select
@@ -436,7 +440,7 @@ export default function UsersPage() {
                     onChange={e => setInviteDeptId(e.target.value)}
                     className="w-full appearance-none rounded-lg border border-bg-muted bg-bg-card px-3 py-2 pr-8 text-sm text-text focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-300"
                   >
-                    <option value="">No department</option>
+                    <option value="">No {deptSingular.toLowerCase()}</option>
                     {departments.map(d => (
                       <option key={d.id} value={d.id}>{d.name}</option>
                     ))}
@@ -658,7 +662,7 @@ export default function UsersPage() {
                 <th className="px-4 py-3 text-left font-medium text-text-muted">Email</th>
                 <th className="px-4 py-3 text-left font-medium text-text-muted">Role</th>
                 <th className="px-4 py-3 text-left font-medium text-text-muted">School</th>
-                <th className="px-4 py-3 text-left font-medium text-text-muted">Department</th>
+                <th className="px-4 py-3 text-left font-medium text-text-muted">{deptSingular}</th>
                 <th className="px-4 py-3 text-right font-medium text-text-muted">Actions</th>
               </tr>
             </thead>
@@ -755,7 +759,7 @@ export default function UsersPage() {
                               <button
                                 onClick={() => setDeptDropdownUser(showDeptDropdown ? null : user.id)}
                                 className="inline-flex items-center gap-0.5 rounded-full bg-purple-50 px-1.5 py-0.5 text-[10px] font-medium text-purple-500 hover:bg-purple-100"
-                                title="Add department"
+                                title={`Add ${deptSingular.toLowerCase()}`}
                               >
                                 <Plus className="h-2.5 w-2.5" />
                               </button>
@@ -780,7 +784,7 @@ export default function UsersPage() {
                           <button
                             onClick={() => setDeptDropdownUser(showDeptDropdown ? null : user.id)}
                             className="inline-flex items-center gap-1 text-[10px] text-purple-500 hover:text-purple-700"
-                            title="Assign to department"
+                            title={`Assign to ${deptSingular.toLowerCase()}`}
                           >
                             <Plus className="h-3 w-3" />
                             Add
