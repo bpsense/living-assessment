@@ -333,6 +333,7 @@ export interface SchoolContext {
   assessment_philosophy?: string
   curriculum_framework?: string
   standards_notes?: string
+  department_label?: 'Department' | 'Location'
 }
 
 export interface SchoolDocument {

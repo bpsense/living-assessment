@@ -1,15 +1,19 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import { useDepartmentLabel } from '../lib/department-label'
 import { Loader2, ShieldX } from 'lucide-react'
 import type { UserRole, AccessLevel } from '../types/database'
 
-const ACCESS_LEVEL_LABELS: Record<number, string> = {
-  1: 'Learner',
-  2: 'Family',
-  3: 'Educator',
-  4: 'Department Admin',
-  5: 'School Admin',
-  6: 'System Admin',
+function useAccessLevelLabels(): Record<number, string> {
+  const { singular } = useDepartmentLabel()
+  return {
+    1: 'Learner',
+    2: 'Family',
+    3: 'Educator',
+    4: `${singular} Admin`,
+    5: 'School Admin',
+    6: 'System Admin',
+  }
 }
 
 interface Props {
@@ -32,6 +36,7 @@ export default function ProtectedRoute({
   allowParent,
 }: Props) {
   const { user, profile, actualRole, loading, isSystemAdmin, isDepartmentAdmin, accessLevel } = useAuth()
+  const ACCESS_LEVEL_LABELS = useAccessLevelLabels()
 
   if (loading) {
     return (

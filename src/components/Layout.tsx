@@ -31,6 +31,7 @@ import SpeedDial from './SpeedDial'
 import SchoolSwitcher from './SchoolSwitcher'
 import { useEducatorList } from '../lib/educator-data'
 import { useFamilyList } from '../lib/family-data'
+import { useDepartmentLabel } from '../lib/department-label'
 
 interface NavItem {
   to: string
@@ -42,7 +43,8 @@ function getNavItems(
   role: UserRole,
   isSystemAdmin: boolean,
   isAllSchoolsView: boolean,
-  isDepartmentAdmin: boolean
+  isDepartmentAdmin: boolean,
+  deptLabel: { singular: string; plural: string }
 ): NavItem[] {
   // System admin viewing "All Schools" gets the system nav
   if (isSystemAdmin && isAllSchoolsView) {
@@ -63,7 +65,7 @@ function getNavItems(
       { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
       { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
       { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
-      { to: '/admin/departments', label: 'Departments', icon: <MapPin className="h-5 w-5" /> },
+      { to: '/admin/departments', label: deptLabel.plural, icon: <MapPin className="h-5 w-5" /> },
       { to: '/admin/dimensions', label: 'Dimensions', icon: <Layers className="h-5 w-5" /> },
       { to: '/standards', label: 'Standards', icon: <BookOpen className="h-5 w-5" /> },
       { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
@@ -84,7 +86,7 @@ function getNavItems(
       // Department admins get extra nav items
       if (isDepartmentAdmin) {
         items.push(
-          { to: '/department', label: 'Department', icon: <MapPin className="h-5 w-5" /> },
+          { to: '/department', label: deptLabel.singular, icon: <MapPin className="h-5 w-5" /> },
           { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
           { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
           { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
@@ -105,7 +107,7 @@ function getNavItems(
         { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
         { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
         { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
-        { to: '/admin/departments', label: 'Departments', icon: <MapPin className="h-5 w-5" /> },
+        { to: '/admin/departments', label: deptLabel.plural, icon: <MapPin className="h-5 w-5" /> },
         { to: '/admin/dimensions', label: 'Dimensions', icon: <Layers className="h-5 w-5" /> },
         { to: '/standards', label: 'Standards', icon: <BookOpen className="h-5 w-5" /> },
         { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
@@ -198,8 +200,9 @@ export default function Layout() {
       })
   }, [profile?.school_id, isSystemAdmin, activeSchoolId])
 
+  const deptLabel = useDepartmentLabel()
   const role = profile?.role ?? 'educator'
-  const navItems = getNavItems(role, isSystemAdmin, isAllSchoolsView, isDepartmentAdmin)
+  const navItems = getNavItems(role, isSystemAdmin, isAllSchoolsView, isDepartmentAdmin, deptLabel)
   // Hide FAB when impersonating (read-only context) or in All Schools view
   const showFab = (role === 'educator' || role === 'admin' || isSystemAdmin) && !isAllSchoolsView && !viewAsUserId
   // System admins can switch roles when viewing a specific school, but not in the "All Schools" view
