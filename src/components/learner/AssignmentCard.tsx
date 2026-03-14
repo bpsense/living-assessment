@@ -10,8 +10,7 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
-  Users,
-  User,
+  BookOpen,
 } from 'lucide-react'
 import type { LearnerAssignment, KanbanColumn } from '../../lib/learner-assignments-data'
 
@@ -81,21 +80,13 @@ export default function AssignmentCard({ assignment, column, onSubmit }: Props) 
 
           {/* Type badge + due date */}
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            {/* Assignment type */}
-            <span
-              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                a?.assignment_type === 'class'
-                  ? 'bg-blue-50 text-blue-700'
-                  : 'bg-purple-50 text-purple-700'
-              }`}
-            >
-              {a?.assignment_type === 'class' ? (
-                <Users className="h-3 w-3" />
-              ) : (
-                <User className="h-3 w-3" />
-              )}
-              {a?.assignment_type === 'class' ? 'Class' : 'Individual'}
-            </span>
+            {/* Classroom name */}
+            {a?.classroom?.name && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700">
+                <BookOpen className="h-3 w-3" />
+                {a.classroom.name}
+              </span>
+            )}
 
             {/* Due date */}
             {a?.due_date && (
