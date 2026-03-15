@@ -27,6 +27,7 @@ import {
   deleteTemplate,
   duplicateTemplate,
   archiveTemplate,
+  getAttributionText,
   type TemplateWithCreator,
   type TemplateFilters,
 } from '../../lib/assignment-template-data'
@@ -189,7 +190,7 @@ function TemplateDetailView({
 
           {/* Meta */}
           <div className="flex items-center gap-3 text-xs text-text-muted pt-2 border-t border-bg-muted">
-            <span>by {template.creator_name}</span>
+            <span>{getAttributionText(template)}</span>
             <span>v{template.version}</span>
             <span>{template.competency_ids.length} competencies</span>
             <span>{template.skill_ids.length} skills</span>
@@ -498,7 +499,7 @@ export default function AssignmentLibrarySection() {
                         {t.skill_ids.length} skill{t.skill_ids.length !== 1 ? 's' : ''}
                       </span>
                     )}
-                    <span>by {t.creator_name}</span>
+                    <span>{getAttributionText(t)}</span>
                   </div>
                 </div>
 

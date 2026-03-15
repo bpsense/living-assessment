@@ -32,6 +32,7 @@ import {
 import {
   createTemplate,
   updateTemplate,
+  fetchTemplateById,
 } from '../../lib/assignment-template-data'
 import { validateTemplate, type PBLValidationResult } from '../../lib/pbl-validator'
 import type {
@@ -176,13 +177,17 @@ interface Props {
   onSaved: () => void
   /** If provided, edit mode */
   template?: AssignmentTemplate | null
+  /** When true, show save-destination (personal vs school) in review step */
+  showSaveDestination?: boolean
+  /** Called after save with the full template — use for "Build New → Assign" flow */
+  onSavedWithTemplate?: (template: AssignmentTemplate) => void
 }
 
 // ============================================================
 // Main Component
 // ============================================================
 
-export default function TemplateBuilder({ open, onClose, onSaved, template }: Props) {
+export default function TemplateBuilder({ open, onClose, onSaved, template, showSaveDestination, onSavedWithTemplate }: Props) {
   const { profile, isSystemAdmin } = useAuth()
   const isAllSchoolsView = useIsAllSchoolsView()
   const { toast } = useToast()
@@ -240,6 +245,7 @@ export default function TemplateBuilder({ open, onClose, onSaved, template }: Pr
 
   // --- Step 6: Review ---
   const [status, setStatus] = useState<TemplateStatus>('draft')
+  const [saveDestination, setSaveDestination] = useState<'personal' | 'school'>('school')
 
   // Load data
   useEffect(() => {
@@ -320,7 +326,7 @@ export default function TemplateBuilder({ open, onClose, onSaved, template }: Pr
     assignment_type: assignmentType,
     competency_ids: Array.from(selectedCompetencies),
     skill_ids: Array.from(selectedSkills),
-    is_shared: true,
+    is_shared: showSaveDestination ? saveDestination === 'school' : true,
     is_global: isAllSchoolsView && isSystemAdmin ? true : (template?.is_global ?? false),
     template_data: {},
     grade_band: gradeBand,
@@ -344,7 +350,7 @@ export default function TemplateBuilder({ open, onClose, onSaved, template }: Pr
     gradeBand, subjectArea, estimatedDays, drivingQuestion, essentialUnderstandings,
     authenticityHook, finalProduct, dokLevel, phases, choicePoints, critiqueProtocol,
     scaffoldingNotes, differentiation, resources, tags, status,
-    isAllSchoolsView, isSystemAdmin, template,
+    isAllSchoolsView, isSystemAdmin, template, showSaveDestination, saveDestination,
   ])
 
   // Validation result for review step
@@ -367,12 +373,22 @@ export default function TemplateBuilder({ open, onClose, onSaved, template }: Pr
         const { school_id, created_by, ...updateData } = payload as any
         await updateTemplate(template.id, updateData)
         toast('Template updated', 'success')
+        onSaved()
+        onClose()
       } else {
-        await createTemplate(payload)
+        const templateId = await createTemplate(payload)
         toast('Template created', 'success')
+
+        // If the unified flow wants the saved template back, fetch and return it
+        if (onSavedWithTemplate) {
+          const saved = await fetchTemplateById(templateId)
+          onSavedWithTemplate(saved)
+          onClose()
+        } else {
+          onSaved()
+          onClose()
+        }
       }
-      onSaved()
-      onClose()
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Failed to save', 'error')
     } finally {
@@ -550,6 +566,9 @@ export default function TemplateBuilder({ open, onClose, onSaved, template }: Pr
                   phases={phases}
                   competencyCount={selectedCompetencies.size}
                   skillCount={selectedSkills.size}
+                  showSaveDestination={showSaveDestination && !template}
+                  saveDestination={saveDestination}
+                  setSaveDestination={setSaveDestination}
                 />
               )}
             </>
@@ -1322,6 +1341,7 @@ function StepProduct({
 
 function StepReview({
   validation, status, setStatus, title, drivingQuestion, phases, competencyCount, skillCount,
+  showSaveDestination, saveDestination, setSaveDestination,
 }: {
   validation: PBLValidationResult | null
   status: TemplateStatus; setStatus: (v: TemplateStatus) => void
@@ -1330,6 +1350,9 @@ function StepReview({
   phases: ProjectPhase[]
   competencyCount: number
   skillCount: number
+  showSaveDestination?: boolean
+  saveDestination?: 'personal' | 'school'
+  setSaveDestination?: (v: 'personal' | 'school') => void
 }) {
   if (!validation) return null
 
@@ -1419,6 +1442,41 @@ function StepReview({
               <li key={i} className="text-xs text-amber-700">• {s}</li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {/* Save Destination (when called from unified "Build New" flow) */}
+      {showSaveDestination && setSaveDestination && (
+        <div>
+          <label className={labelCls}>Save to</label>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setSaveDestination('personal')}
+              className={clsx(
+                'flex-1 rounded-lg border px-3 py-3 text-left transition-all',
+                saveDestination === 'personal'
+                  ? 'border-primary-400 bg-primary-50 ring-1 ring-primary-400'
+                  : 'border-bg-muted bg-bg hover:border-primary-200'
+              )}
+            >
+              <p className="text-xs font-semibold text-text">My Library</p>
+              <p className="mt-0.5 text-[11px] text-text-muted">Only visible to you</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSaveDestination('school')}
+              className={clsx(
+                'flex-1 rounded-lg border px-3 py-3 text-left transition-all',
+                saveDestination === 'school'
+                  ? 'border-primary-400 bg-primary-50 ring-1 ring-primary-400'
+                  : 'border-bg-muted bg-bg hover:border-primary-200'
+              )}
+            >
+              <p className="text-xs font-semibold text-text">School Library</p>
+              <p className="mt-0.5 text-[11px] text-text-muted">Any educator in your school can copy &amp; adapt</p>
+            </button>
+          </div>
         </div>
       )}
 

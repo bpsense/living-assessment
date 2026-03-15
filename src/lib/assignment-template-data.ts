@@ -14,6 +14,7 @@ import type {
 
 export interface TemplateWithCreator extends AssignmentTemplate {
   creator_name: string
+  original_creator_name: string | null
 }
 
 export interface TemplateFilters {
@@ -28,6 +29,28 @@ export interface TemplateFilters {
 // ============================================================
 // Helpers
 // ============================================================
+
+/** Build the attribution text for a template */
+export function getAttributionText(t: {
+  creator_name: string
+  original_creator_name?: string | null
+}): string {
+  if (
+    t.original_creator_name &&
+    t.original_creator_name !== t.creator_name
+  ) {
+    return `Original project by ${t.original_creator_name}, adapted by ${t.creator_name}`
+  }
+  return `Built by ${t.creator_name}`
+}
+
+const TEMPLATE_SELECT = `
+  *,
+  creator:profiles!assignment_templates_created_by_fkey(full_name),
+  original_template:assignment_templates!original_template_id(
+    original_creator:profiles!assignment_templates_created_by_fkey(full_name)
+  )
+`
 
 function mapRow(t: any): TemplateWithCreator {
   return {
@@ -58,8 +81,10 @@ function mapRow(t: any): TemplateWithCreator {
     critique_protocol: t.critique_protocol ?? null,
     scaffolding_notes: t.scaffolding_notes ?? null,
     parent_template_id: t.parent_template_id ?? null,
+    original_template_id: t.original_template_id ?? null,
     is_global: t.is_global ?? false,
     creator_name: t.creator?.full_name ?? 'Unknown',
+    original_creator_name: t.original_template?.original_creator?.full_name ?? null,
   }
 }
 
@@ -73,7 +98,7 @@ export async function fetchTemplates(
 ): Promise<TemplateWithCreator[]> {
   let query = supabase
     .from('assignment_templates')
-    .select('*, creator:profiles!assignment_templates_created_by_fkey(full_name)')
+    .select(TEMPLATE_SELECT)
     .or(`is_global.eq.true,school_id.eq.${schoolId}`)
     .order('updated_at', { ascending: false })
 
@@ -121,6 +146,19 @@ export async function fetchTemplatesByTag(
   tag: string
 ): Promise<TemplateWithCreator[]> {
   return fetchTemplates(schoolId, { tags: [tag] })
+}
+
+export async function fetchTemplateById(
+  templateId: string
+): Promise<TemplateWithCreator> {
+  const { data, error } = await supabase
+    .from('assignment_templates')
+    .select(TEMPLATE_SELECT)
+    .eq('id', templateId)
+    .single()
+
+  if (error) throw new Error(`Failed to load template: ${error.message}`)
+  return mapRow(data)
 }
 
 // ============================================================
@@ -218,6 +256,8 @@ export async function duplicateTemplate(
     created_by: createdBy,
     title: `${original.title} (Copy)`,
     parent_template_id: templateId,
+    // Track the root original for attribution
+    original_template_id: original.original_template_id ?? templateId,
     version: (original.version ?? 1) + 1,
     status: 'draft' as const,
     is_global: false,
