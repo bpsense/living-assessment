@@ -30,8 +30,10 @@ import SchoolsPage from './pages/system/Schools'
 import UsersPage from './pages/admin/Users'
 import LearnerProfile from './pages/LearnerProfile'
 import CompetencyFrameworks from './pages/admin/CompetencyFrameworks'
+import SkillLibrary from './pages/admin/SkillLibrary'
 import Assignments from './pages/Assignments'
 import AssignmentGrading from './pages/AssignmentGrading'
+import SkillGrading from './components/skills/SkillGrading'
 import Messages from './pages/Messages'
 import TemplatePreview from './pages/TemplatePreview'
 
@@ -74,6 +76,7 @@ function AppRoutes() {
         <Route path="/settings" element={<SchoolProfile />} />
         <Route path="/assignments" element={<Assignments />} />
         <Route path="/assignment/:id" element={<AssignmentGrading />} />
+        <Route path="/skill-assignment/:id" element={<SkillGrading />} />
         <Route path="/messages" element={<Messages />} />
 
         {/* Learner routes */}
@@ -154,6 +157,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute requiredRole="admin">
               <CompetencyFrameworks />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/skill-library"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <SkillLibrary />
             </ProtectedRoute>
           }
         />
