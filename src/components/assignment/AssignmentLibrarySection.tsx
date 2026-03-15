@@ -17,8 +17,10 @@ import {
   Filter,
   Eye,
   X,
+  Globe,
 } from 'lucide-react'
 import { useAuth } from '../../lib/auth'
+import { useIsAllSchoolsView } from '../../lib/school-context'
 import { useToast } from '../Toast'
 import {
   fetchTemplates,
@@ -90,6 +92,12 @@ function TemplateDetailView({
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           {/* Badges */}
           <div className="flex flex-wrap gap-2">
+            {template.is_global && (
+              <span className="flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-medium text-blue-700">
+                <Globe className="h-3 w-3" />
+                System Template
+              </span>
+            )}
             <span className={clsx('rounded-full px-2.5 py-0.5 text-[10px] font-medium', STATUS_STYLES[template.status])}>
               {template.status}
             </span>
@@ -197,7 +205,8 @@ function TemplateDetailView({
 // ============================================================
 
 export default function AssignmentLibrarySection() {
-  const { profile } = useAuth()
+  const { profile, isSystemAdmin } = useAuth()
+  const isAllSchoolsView = useIsAllSchoolsView()
   const { toast } = useToast()
 
   const [templates, setTemplates] = useState<TemplateWithCreator[]>([])
@@ -230,13 +239,14 @@ export default function AssignmentLibrarySection() {
       if (filterStatus) filters.status = filterStatus
 
       const tmpl = await fetchTemplates(profile.school_id, filters)
-      setTemplates(tmpl)
+      // System admin "All Schools" view: show only global templates
+      setTemplates(isAllSchoolsView ? tmpl.filter(t => t.is_global) : tmpl)
     } catch {
       toast('Failed to load library', 'error')
     } finally {
       setLoading(false)
     }
-  }, [profile?.school_id, search, filterGrade, filterSubject, filterDok, filterStatus, toast])
+  }, [profile?.school_id, isAllSchoolsView, search, filterGrade, filterSubject, filterDok, filterStatus, toast])
 
   useEffect(() => {
     loadData()
@@ -312,13 +322,13 @@ export default function AssignmentLibrarySection() {
               </span>
             )}
           </button>
-          {isStaff && (
+          {(isStaff || isSystemAdmin) && (
             <button
               onClick={() => { setEditTemplate(null); setShowBuilder(true) }}
               className="flex items-center gap-2 rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-600"
             >
               <Plus className="h-4 w-4" />
-              New Template
+              {isAllSchoolsView ? 'New Global Template' : 'New Template'}
             </button>
           )}
         </div>
@@ -434,6 +444,12 @@ export default function AssignmentLibrarySection() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-semibold text-text truncate">{t.title}</p>
+                    {t.is_global && (
+                      <span className="shrink-0 flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700">
+                        <Globe className="h-3 w-3" />
+                        System
+                      </span>
+                    )}
                     <span className={clsx('shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium capitalize', STATUS_STYLES[t.status])}>
                       {t.status}
                     </span>
@@ -495,15 +511,17 @@ export default function AssignmentLibrarySection() {
                   >
                     <Eye className="h-4 w-4" />
                   </button>
-                  {isStaff && (
+                  {(isStaff || isSystemAdmin) && (
                     <>
-                      <button
-                        onClick={() => { setEditTemplate(t); setShowBuilder(true) }}
-                        title="Edit"
-                        className="rounded-lg p-2 text-text-light transition-colors hover:bg-bg-muted hover:text-text"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
+                      {(!t.is_global || isSystemAdmin) && (
+                        <button
+                          onClick={() => { setEditTemplate(t); setShowBuilder(true) }}
+                          title="Edit"
+                          className="rounded-lg p-2 text-text-light transition-colors hover:bg-bg-muted hover:text-text"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      )}
                       <button
                         onClick={() => handleDuplicate(t)}
                         title="Duplicate"
@@ -511,7 +529,7 @@ export default function AssignmentLibrarySection() {
                       >
                         <Copy className="h-4 w-4" />
                       </button>
-                      {t.status !== 'archived' && (
+                      {(!t.is_global || isSystemAdmin) && t.status !== 'archived' && (
                         <button
                           onClick={() => handleArchive(t)}
                           title="Archive"
@@ -529,7 +547,7 @@ export default function AssignmentLibrarySection() {
                     <Sparkles className="h-3.5 w-3.5" />
                     Use
                   </button>
-                  {(t.created_by === profile?.id || profile?.role === 'admin') && (
+                  {(t.created_by === profile?.id || profile?.role === 'admin' || isSystemAdmin) && (!t.is_global || isSystemAdmin) && (
                     <button
                       onClick={() => handleDelete(t)}
                       disabled={deleting === t.id}
