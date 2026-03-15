@@ -21,6 +21,7 @@ import ParentNotes from '../components/student/ParentNotes'
 import LearnerMessagesSection from '../components/student/LearnerMessagesSection'
 import StudentContextDoc from '../components/student/StudentContextDoc'
 import StudentClassroomsManager from '../components/student/StudentClassroomsManager'
+import StudentSkillsSection from '../components/skills/StudentSkillsSection'
 
 // ============================================================
 // Student avatar with fallback initials
@@ -380,6 +381,16 @@ export default function StudentProfile() {
       {/* ========== SIS INFORMATION (educator/admin only) ========== */}
       {!isFamilyView && (
         <SISSection student={student} onEdit={() => setShowSISEdit(true)} role={role} onRefetch={refetch} />
+      )}
+
+      {/* ========== SKILLS (educator/admin only) ========== */}
+      {!isFamilyView && (
+        <section>
+          <StudentSkillsSection
+            studentId={student.id}
+            studentGrade={student.grade_level}
+          />
+        </section>
       )}
 
       {/* ========== TEACHER NOTES (educator/admin only) ========== */}
