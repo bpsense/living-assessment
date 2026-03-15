@@ -125,6 +125,7 @@ const MOCK_TEMPLATE: AssignmentTemplate = {
   tags: ['water', 'community', 'science'],
   version: 1,
   parent_template_id: null,
+  original_template_id: null,
   status: 'published',
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),

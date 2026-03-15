@@ -1044,6 +1044,7 @@ export interface AssignmentTemplate {
   tags: string[]
   version: number
   parent_template_id: string | null
+  original_template_id: string | null
   status: TemplateStatus
 
   created_at: string
@@ -1069,6 +1070,7 @@ type PBLOptionalFields =
   | 'tags'
   | 'version'
   | 'parent_template_id'
+  | 'original_template_id'
   | 'status'
   | 'is_global'
 
