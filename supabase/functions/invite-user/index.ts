@@ -219,9 +219,9 @@ Deno.serve(async (req: Request) => {
       console.error('Profile upsert error:', upsertErr)
     }
 
-    // 8. If department_id provided and role is educator, assign as department admin
+    // 8. If department_id provided and role is admin, assign as department admin
     let departmentAssigned = false
-    if (department_id && role === 'educator') {
+    if (department_id && role === 'admin') {
       const { error: deptErr } = await serviceClient
         .from('department_admins')
         .upsert({
