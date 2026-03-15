@@ -265,7 +265,7 @@ export default function UsersPage() {
       fullName: inviteName.trim(),
       schoolId: effectiveSchoolId,
       role: isAllSchoolsInvite ? 'admin' : inviteRole,
-      departmentId: !isAllSchoolsInvite && inviteRole === 'educator' && inviteDeptId ? inviteDeptId : undefined,
+      departmentId: !isAllSchoolsInvite && inviteRole === 'admin' && inviteDeptId ? inviteDeptId : undefined,
       isSystemAdmin: isAllSchoolsInvite || undefined,
       studentId: !isAllSchoolsInvite && inviteRole === 'learner' && learnerLinkMode === 'existing' && inviteStudentId ? inviteStudentId : undefined,
       classroomId: !isAllSchoolsInvite && inviteRole === 'learner' && learnerLinkMode === 'new' && inviteClassroomId ? inviteClassroomId : undefined,
@@ -429,7 +429,7 @@ export default function UsersPage() {
             )}
 
             {/* Department picker (only for educators in school-scoped invite) */}
-            {!isAllSchoolsInvite && inviteRole === 'educator' && departments.length > 0 && (
+            {!isAllSchoolsInvite && inviteRole === 'admin' && departments.length > 0 && (
               <div>
                 <label className="mb-1 block text-xs font-medium text-text-muted">
                   {deptSingular} <span className="font-normal text-text-light">(optional — makes them {deptSingular} Admin)</span>
@@ -671,7 +671,7 @@ export default function UsersPage() {
                 const isEditing = editingUser === user.id
                 const canManage = canManageUser(user.computed_access_level)
                 const isLoading = actionLoading === user.id
-                const isEducator = user.role === 'educator'
+                const isSchoolAdmin = user.role === 'admin'
                 const showDeptDropdown = deptDropdownUser === user.id
                 const unassignedDepts = departments.filter(d => !user.department_ids.includes(d.id))
 
@@ -696,7 +696,7 @@ export default function UsersPage() {
                               {user.full_name}
                             </p>
                             {/* Classroom names for regular educators (not dept admins) */}
-                            {isEducator && user.classroom_names.length > 0 && user.department_names.length === 0 && (
+                            {(user.role === 'educator') && user.classroom_names.length > 0 && user.department_names.length === 0 && (
                               <p className="text-xs text-text-light">
                                 {user.classroom_names.join(', ')}
                               </p>
@@ -737,7 +737,7 @@ export default function UsersPage() {
 
                     {/* Department */}
                     <td className="px-4 py-3">
-                      {isEducator && user.department_names.length > 0 ? (
+                      {isSchoolAdmin && user.department_names.length > 0 ? (
                         <div className="flex flex-wrap items-center gap-1">
                           {user.department_ids.map((deptId, i) => (
                             <span key={deptId} className="inline-flex items-center gap-0.5 rounded-full bg-purple-50 px-1.5 py-0.5 text-[10px] font-medium text-purple-700">
@@ -779,7 +779,7 @@ export default function UsersPage() {
                             </div>
                           )}
                         </div>
-                      ) : isEducator && canChangeRoles && canManage && departments.length > 0 ? (
+                      ) : isSchoolAdmin && canChangeRoles && canManage && departments.length > 0 ? (
                         <div className="relative">
                           <button
                             onClick={() => setDeptDropdownUser(showDeptDropdown ? null : user.id)}

@@ -274,8 +274,8 @@ export function useAuthProvider(): AuthState {
 
   const accessLevel: AccessLevel = useMemo(() => {
     if (isSystemAdmin) return 6
-    if (actualRole === 'admin') return 5
-    if (actualRole === 'educator') return isDepartmentAdmin ? 4 : 3
+    if (actualRole === 'admin') return isDepartmentAdmin ? 4 : 5
+    if (actualRole === 'educator') return 3
     if (actualRole === 'parent') return 2
     if (actualRole === 'learner') return 1
     return 1 as AccessLevel
