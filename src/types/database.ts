@@ -717,7 +717,7 @@ export type AssignmentType = 'individual' | 'class'
 export type AssignmentStatus = 'draft' | 'active' | 'completed'
 export type StudentAssignmentStatus = 'assigned' | 'in_progress' | 'submitted' | 'graded'
 export type LearnerColumn = 'on_deck' | 'researching' | 'actively_exploring' | 'blocked'
-export type CompetencyScoreSource = 'teacher' | 'ai_inferred' | 'observation'
+export type CompetencyScoreSource = 'teacher' | 'ai_inferred' | 'observation' | 'skill_assessment'
 
 export interface Assignment {
   id: string
@@ -849,21 +849,25 @@ export type MessageInsert = Pick<Message, 'conversation_id' | 'sender_id' | 'con
 export interface CompetencyScoreRow {
   id: string
   student_assignment_id: string | null
+  student_skill_assignment_id: string | null
   competency_id: string
   student_id: string
   school_id: string
   score: number
   source: CompetencyScoreSource
   notes: string | null
+  is_above_grade: boolean
   scored_at: string
   created_at: string
 }
 
-export type CompetencyScoreInsert = Omit<CompetencyScoreRow, 'id' | 'created_at'> & {
+export type CompetencyScoreInsert = Omit<CompetencyScoreRow, 'id' | 'created_at' | 'student_skill_assignment_id' | 'is_above_grade'> & {
   id?: string
   student_assignment_id?: string | null
+  student_skill_assignment_id?: string | null
   source?: CompetencyScoreSource
   notes?: string | null
+  is_above_grade?: boolean
   scored_at?: string
 }
 
@@ -902,6 +906,11 @@ export interface Skill {
   max_grade: string | null
   is_default: boolean
   created_by: string | null
+  is_assessable: boolean
+  source_framework: string
+  source_standard_code: string | null
+  progression_domain: string | null
+  progression_strand: string | null
   created_at: string
   updated_at: string
 }
@@ -914,6 +923,11 @@ export type SkillInsert = Pick<Skill, 'school_id' | 'name'> & {
   max_grade?: string | null
   is_default?: boolean
   created_by?: string | null
+  is_assessable?: boolean
+  source_framework?: string
+  source_standard_code?: string | null
+  progression_domain?: string | null
+  progression_strand?: string | null
 }
 
 export type SkillUpdate = Partial<Omit<Skill, 'id' | 'school_id' | 'created_at' | 'updated_at'>>
@@ -1103,3 +1117,90 @@ export const DEFAULT_PROFILE_VISIBILITY: SchoolProfileVisibility = {
   standards_frameworks: true,
   supporting_documents: true,
 }
+
+// ============================================================
+// Skill Progressions
+// ============================================================
+
+export interface SkillProgressionStep {
+  id: string
+  skill_id: string
+  school_id: string
+  grade_level: string
+  expectation_description: string
+  example_tasks: string | null
+  prerequisite_step_id: string | null
+  competency_ids: string[]
+  created_at: string
+  updated_at: string
+}
+
+export type SkillProgressionStepInsert = Omit<SkillProgressionStep, 'id' | 'created_at' | 'updated_at'>
+export type SkillProgressionStepUpdate = Partial<Omit<SkillProgressionStep, 'id' | 'school_id' | 'created_at' | 'updated_at'>>
+
+export interface SkillWithProgression extends Skill {
+  steps: SkillProgressionStep[]
+}
+
+// ============================================================
+// Skill Assignments
+// ============================================================
+
+export type SkillAssignmentStatus = 'draft' | 'active' | 'completed' | 'archived'
+
+export interface SkillAssignment {
+  id: string
+  school_id: string
+  classroom_id: string | null
+  skill_id: string
+  assigned_step_id: string
+  assigned_by: string
+  assignment_type: AssignmentType
+  title: string | null
+  instructions: string | null
+  due_date: string | null
+  status: SkillAssignmentStatus
+  created_at: string
+  updated_at: string
+}
+
+export type SkillAssignmentInsert = Omit<SkillAssignment, 'id' | 'created_at' | 'updated_at'>
+export type SkillAssignmentUpdate = Partial<Omit<SkillAssignment, 'id' | 'school_id' | 'created_at' | 'updated_at'>>
+
+export type StudentSkillAssignmentStatus = 'assigned' | 'in_progress' | 'submitted' | 'graded'
+
+export interface StudentSkillAssignment {
+  id: string
+  skill_assignment_id: string
+  student_id: string
+  student_step_id: string
+  status: StudentSkillAssignmentStatus
+  score: number | null
+  scored_by: string | null
+  scored_at: string | null
+  notes: string | null
+  is_above_grade: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type StudentSkillAssignmentInsert = Omit<StudentSkillAssignment, 'id' | 'created_at' | 'updated_at'>
+
+// ============================================================
+// Extended types for Skill UI
+// ============================================================
+
+export interface SkillAssignmentWithDetails extends SkillAssignment {
+  skill: Skill
+  assigned_step: SkillProgressionStep
+  student_assignments: StudentSkillAssignmentWithStudent[]
+  assignor_name: string
+}
+
+export interface StudentSkillAssignmentWithStudent extends StudentSkillAssignment {
+  student: Pick<Student, 'id' | 'first_name' | 'last_name' | 'grade_level'>
+  step: SkillProgressionStep
+}
+
+// Grade zone indicator for UI
+export type GradeZone = 'remediation' | 'current' | 'extension'
