@@ -58,6 +58,7 @@ function mapRow(t: any): TemplateWithCreator {
     critique_protocol: t.critique_protocol ?? null,
     scaffolding_notes: t.scaffolding_notes ?? null,
     parent_template_id: t.parent_template_id ?? null,
+    is_global: t.is_global ?? false,
     creator_name: t.creator?.full_name ?? 'Unknown',
   }
 }
@@ -73,7 +74,7 @@ export async function fetchTemplates(
   let query = supabase
     .from('assignment_templates')
     .select('*, creator:profiles!assignment_templates_created_by_fkey(full_name)')
-    .eq('school_id', schoolId)
+    .or(`is_global.eq.true,school_id.eq.${schoolId}`)
     .order('updated_at', { ascending: false })
 
   if (filters?.search) {
@@ -219,6 +220,7 @@ export async function duplicateTemplate(
     parent_template_id: templateId,
     version: (original.version ?? 1) + 1,
     status: 'draft' as const,
+    is_global: false,
   }
 
   return createTemplate(duplicate)

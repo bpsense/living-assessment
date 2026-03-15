@@ -52,6 +52,7 @@ const MOCK_TEMPLATE: AssignmentTemplate = {
   competency_ids: ['c1', 'c2', 'c3'],
   skill_ids: ['s1', 's2'],
   is_shared: true,
+  is_global: true,
   template_data: {},
   grade_band: 'elementary',
   subject_area: ['Science', 'ELA'],

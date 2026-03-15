@@ -16,9 +16,11 @@ import {
   AlertCircle,
   CheckCircle2,
   CircleDot,
+  Globe,
 } from 'lucide-react'
 import { useToast } from '../Toast'
 import { useAuth } from '../../lib/auth'
+import { useIsAllSchoolsView } from '../../lib/school-context'
 import {
   fetchCompetencyTree,
   type CompetencyTreeNode,
@@ -181,7 +183,8 @@ interface Props {
 // ============================================================
 
 export default function TemplateBuilder({ open, onClose, onSaved, template }: Props) {
-  const { profile } = useAuth()
+  const { profile, isSystemAdmin } = useAuth()
+  const isAllSchoolsView = useIsAllSchoolsView()
   const { toast } = useToast()
 
   // Step navigation
@@ -318,6 +321,7 @@ export default function TemplateBuilder({ open, onClose, onSaved, template }: Pr
     competency_ids: Array.from(selectedCompetencies),
     skill_ids: Array.from(selectedSkills),
     is_shared: true,
+    is_global: isAllSchoolsView && isSystemAdmin ? true : (template?.is_global ?? false),
     template_data: {},
     grade_band: gradeBand,
     subject_area: subjectArea,
@@ -340,6 +344,7 @@ export default function TemplateBuilder({ open, onClose, onSaved, template }: Pr
     gradeBand, subjectArea, estimatedDays, drivingQuestion, essentialUnderstandings,
     authenticityHook, finalProduct, dokLevel, phases, choicePoints, critiqueProtocol,
     scaffoldingNotes, differentiation, resources, tags, status,
+    isAllSchoolsView, isSystemAdmin, template,
   ])
 
   // Validation result for review step
@@ -447,9 +452,17 @@ export default function TemplateBuilder({ open, onClose, onSaved, template }: Pr
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-bg-muted px-5 py-4">
-          <h3 className="text-base font-bold text-text">
-            {template ? 'Edit Template' : 'New PBL Template'}
-          </h3>
+          <div>
+            <h3 className="text-base font-bold text-text">
+              {template ? 'Edit Template' : 'New PBL Template'}
+            </h3>
+            {isAllSchoolsView && isSystemAdmin && (
+              <div className="mt-1 flex items-center gap-1.5 text-xs text-blue-700">
+                <Globe className="h-3.5 w-3.5" />
+                <span className="font-medium">This template will be visible to all schools</span>
+              </div>
+            )}
+          </div>
           <button
             onClick={onClose}
             className="rounded-lg p-1 text-text-light hover:bg-bg-muted hover:text-text"

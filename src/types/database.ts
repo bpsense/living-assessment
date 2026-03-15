@@ -1009,6 +1009,7 @@ export interface AssignmentTemplate {
   competency_ids: string[]
   skill_ids: string[]
   is_shared: boolean
+  is_global: boolean
   template_data: Record<string, unknown>
 
   // PBL-specific fields
@@ -1055,6 +1056,7 @@ type PBLOptionalFields =
   | 'version'
   | 'parent_template_id'
   | 'status'
+  | 'is_global'
 
 export type AssignmentTemplateInsert =
   Omit<AssignmentTemplate, 'id' | 'created_at' | 'updated_at' | PBLOptionalFields> &

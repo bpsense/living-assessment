@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { useToast } from '../Toast'
 import { useAuth } from '../../lib/auth'
+import { useIsAllSchoolsView } from '../../lib/school-context'
 import { supabase } from '../../lib/supabase'
 import {
   createAssignment,
@@ -410,7 +411,8 @@ export default function CreateAssignmentModal({
   template,
 }: Props) {
   const { toast } = useToast()
-  const { profile } = useAuth()
+  const { profile, isSystemAdmin } = useAuth()
+  const isAllSchoolsView = useIsAllSchoolsView()
 
   // Form state
   const [title, setTitle] = useState('')
@@ -631,6 +633,7 @@ export default function CreateAssignmentModal({
           competency_ids: Array.from(selectedCompetencies),
           skill_ids: Array.from(selectedSkills),
           is_shared: true,
+          is_global: isAllSchoolsView && isSystemAdmin,
           template_data: {},
         }
         await createTemplate(templateData)
