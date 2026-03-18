@@ -8,8 +8,16 @@ import {
   type AssignmentWithDetails,
 } from '../lib/assignment-data'
 import { createTemplateFromAssignment } from '../lib/assignment-template-data'
+import { fetchSkillAssignments } from '../lib/skill-assignment-data'
+import type { SkillAssignmentWithDetails, Skill, SkillProgressionStep, AssignmentTemplate } from '../types/database'
 import CreateAssignmentModal from '../components/assignment/CreateAssignmentModal'
 import AssignmentLibrarySection from '../components/assignment/AssignmentLibrarySection'
+import NewAssignmentChooser, { type AssignmentChoice } from '../components/assignment/NewAssignmentChooser'
+import ProjectLibraryPicker from '../components/assignment/ProjectLibraryPicker'
+import TemplateBuilder from '../components/assignment/TemplateBuilder'
+import SkillBrowser from '../components/skills/SkillBrowser'
+import SkillAssignmentFlow from '../components/skills/SkillAssignmentFlow'
+import InlineSkillCreator from '../components/skills/InlineSkillCreator'
 import {
   Plus,
   Loader2,
@@ -24,6 +32,7 @@ import {
   Tag,
   Library,
   Save,
+  Target,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { format } from 'date-fns'
@@ -34,7 +43,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   completed: { label: 'Completed', color: 'bg-success-50 text-success-700' },
 }
 
-type Tab = 'active' | 'library'
+type Tab = 'active' | 'skills' | 'library'
 
 export default function Assignments() {
   const { profile } = useAuth()
@@ -43,11 +52,36 @@ export default function Assignments() {
   const [activeTab, setActiveTab] = useState<Tab>('active')
   const [assignments, setAssignments] = useState<AssignmentWithDetails[]>([])
   const [loading, setLoading] = useState(true)
-  const [showCreate, setShowCreate] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [savingToLibrary, setSavingToLibrary] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('')
+
+  // ── Unified "New Assignment" flow state ──────────────────
+  const [showChooser, setShowChooser] = useState(false)
+
+  // Skill flow
+  const [showSkillBrowser, setShowSkillBrowser] = useState(false)
+  const [showSkillCreator, setShowSkillCreator] = useState(false)
+  const [skillAssignFlow, setSkillAssignFlow] = useState<{
+    skill: Skill
+    step: SkillProgressionStep
+  } | null>(null)
+
+  // Project flow
+  const [showProjectLibrary, setShowProjectLibrary] = useState(false)
+  const [showTemplateBuilder, setShowTemplateBuilder] = useState(false)
+  const [showCreate, setShowCreate] = useState(false)
+  const [selectedTemplate, setSelectedTemplate] = useState<AssignmentTemplate | null>(null)
+
+  // Post-save "Assign Now?" prompt
+  const [postSaveTemplate, setPostSaveTemplate] = useState<AssignmentTemplate | null>(null)
+
+  // Skills tab data
+  const [skillAssignments, setSkillAssignments] = useState<SkillAssignmentWithDetails[]>([])
+  const [skillsLoading, setSkillsLoading] = useState(false)
+
+  // ── Data loading ─────────────────────────────────────────
 
   const loadAssignments = useCallback(async () => {
     if (!profile?.school_id) return
@@ -68,6 +102,47 @@ export default function Assignments() {
   useEffect(() => {
     loadAssignments()
   }, [loadAssignments])
+
+  const loadSkillAssignments = useCallback(async () => {
+    if (!profile?.school_id) return
+    setSkillsLoading(true)
+    try {
+      const { data: ecData } = await (await import('../lib/supabase')).supabase
+        .from('educator_classrooms')
+        .select('classroom_id')
+        .eq('educator_id', profile.id)
+
+      const classroomIds = (ecData ?? []).map((r: { classroom_id: string }) => r.classroom_id)
+      const allSkillAssignments: SkillAssignmentWithDetails[] = []
+
+      for (const cid of classroomIds) {
+        const data = await fetchSkillAssignments(profile.school_id, cid)
+        allSkillAssignments.push(...data)
+      }
+
+      const seen = new Set<string>()
+      const unique = allSkillAssignments.filter((a) => {
+        if (seen.has(a.id)) return false
+        seen.add(a.id)
+        return true
+      })
+      unique.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+      setSkillAssignments(unique)
+    } catch {
+      toast('Failed to load skill assignments', 'error')
+    } finally {
+      setSkillsLoading(false)
+    }
+  }, [profile?.school_id, profile?.id, toast])
+
+  useEffect(() => {
+    if (activeTab === 'skills') {
+      loadSkillAssignments()
+    }
+  }, [activeTab, loadSkillAssignments])
+
+  // ── Handlers ─────────────────────────────────────────────
 
   async function handleDelete(a: AssignmentWithDetails) {
     if (!confirm(`Delete "${a.title}"? This cannot be undone.`)) return
@@ -96,6 +171,58 @@ export default function Assignments() {
     }
   }
 
+  // ── Unified flow: chooser callbacks ──────────────────────
+
+  function handleAssignmentChoice(choice: AssignmentChoice) {
+    switch (choice) {
+      case 'skill-library':
+        setShowSkillBrowser(true)
+        break
+      case 'skill-new':
+        setShowSkillCreator(true)
+        break
+      case 'project-library':
+        setShowProjectLibrary(true)
+        break
+      case 'project-new':
+        setShowTemplateBuilder(true)
+        break
+    }
+  }
+
+  // Skill Browser → assign
+  function handleSkillAssign(skill: Skill, step: SkillProgressionStep) {
+    setShowSkillBrowser(false)
+    setSkillAssignFlow({ skill, step })
+  }
+
+  // Inline skill creator → assign
+  function handleSkillCreated(skill: Skill, step: SkillProgressionStep) {
+    setShowSkillCreator(false)
+    setSkillAssignFlow({ skill, step })
+  }
+
+  // Project library → use template
+  function handleProjectLibrarySelect(template: AssignmentTemplate) {
+    setShowProjectLibrary(false)
+    setSelectedTemplate(template)
+    setShowCreate(true)
+  }
+
+  // Template builder saved → "Assign Now?" prompt
+  function handleTemplateSaved(template: AssignmentTemplate) {
+    setShowTemplateBuilder(false)
+    setPostSaveTemplate(template)
+  }
+
+  // "Assign Now" from post-save
+  function handleAssignNow() {
+    if (!postSaveTemplate) return
+    setSelectedTemplate(postSaveTemplate)
+    setPostSaveTemplate(null)
+    setShowCreate(true)
+  }
+
   const isStaff = profile?.role === 'educator' || profile?.role === 'admin'
 
   const filtered = assignments.filter(
@@ -107,7 +234,7 @@ export default function Assignments() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
-      {/* Header */}
+      {/* Header — single unified button on all tabs */}
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-text">Assignments</h1>
@@ -115,15 +242,13 @@ export default function Assignments() {
             Create, manage, and reuse competency-linked assignments.
           </p>
         </div>
-        {activeTab === 'active' && (
-          <button
-            onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-600"
-          >
-            <Plus className="h-4 w-4" />
-            New Assignment
-          </button>
-        )}
+        <button
+          onClick={() => setShowChooser(true)}
+          className="flex items-center gap-2 rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-600"
+        >
+          <Plus className="h-4 w-4" />
+          New Assignment
+        </button>
       </div>
 
       {/* Tab bar */}
@@ -138,7 +263,19 @@ export default function Assignments() {
           )}
         >
           <ClipboardList className="h-4 w-4" />
-          Active Assignments
+          Projects
+        </button>
+        <button
+          onClick={() => setActiveTab('skills')}
+          className={clsx(
+            'flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors',
+            activeTab === 'skills'
+              ? 'bg-bg-card text-text shadow-sm'
+              : 'text-text-muted hover:text-text'
+          )}
+        >
+          <Target className="h-4 w-4" />
+          Skills
         </button>
         <button
           onClick={() => setActiveTab('library')}
@@ -150,11 +287,11 @@ export default function Assignments() {
           )}
         >
           <Library className="h-4 w-4" />
-          Assignment Library
+          Library
         </button>
       </div>
 
-      {/* Tab content */}
+      {/* ─── Tab: Projects ─────────────────────────────────── */}
       {activeTab === 'active' && (
         <>
           {/* Filters */}
@@ -181,14 +318,12 @@ export default function Assignments() {
             </select>
           </div>
 
-          {/* Loading */}
           {loading && (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="h-6 w-6 animate-spin text-primary-400" />
             </div>
           )}
 
-          {/* Empty state */}
           {!loading && filtered.length === 0 && (
             <div className="flex flex-col items-center gap-4 rounded-2xl border border-bg-muted bg-bg-card px-6 py-16 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-50">
@@ -206,7 +341,7 @@ export default function Assignments() {
               </div>
               {!search && (
                 <button
-                  onClick={() => setShowCreate(true)}
+                  onClick={() => setShowChooser(true)}
                   className="flex items-center gap-2 rounded-xl bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-600"
                 >
                   <Plus className="h-4 w-4" />
@@ -216,7 +351,6 @@ export default function Assignments() {
             </div>
           )}
 
-          {/* Assignment list */}
           {!loading && filtered.length > 0 && (
             <div className="space-y-3">
               {filtered.map((a) => {
@@ -287,7 +421,6 @@ export default function Assignments() {
                     </div>
 
                     <div className="flex items-center gap-1">
-                      {/* Save to Library */}
                       {isStaff && (
                         <button
                           onClick={() => handleSaveToLibrary(a)}
@@ -323,16 +456,215 @@ export default function Assignments() {
               })}
             </div>
           )}
-
-          <CreateAssignmentModal
-            open={showCreate}
-            onClose={() => setShowCreate(false)}
-            onCreated={loadAssignments}
-          />
         </>
       )}
 
+      {/* ─── Tab: Skills ───────────────────────────────────── */}
+      {activeTab === 'skills' && (
+        <>
+          {showSkillBrowser ? (
+            <div>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-text">Browse Skills to Assign</h2>
+                <button
+                  onClick={() => setShowSkillBrowser(false)}
+                  className="text-sm font-medium text-text-muted hover:text-text"
+                >
+                  Back to list
+                </button>
+              </div>
+              <SkillBrowser
+                onAssign={handleSkillAssign}
+                showCreateButton={false}
+              />
+            </div>
+          ) : (
+            <>
+              {skillsLoading && (
+                <div className="flex items-center justify-center py-20">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary-400" />
+                </div>
+              )}
+
+              {!skillsLoading && skillAssignments.length === 0 && (
+                <div className="flex flex-col items-center gap-4 rounded-2xl border border-bg-muted bg-bg-card px-6 py-16 text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50">
+                    <Target className="h-7 w-7 text-emerald-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-text">No skill assignments yet</p>
+                    <p className="mt-1 text-sm text-text-muted">
+                      Assign discrete skills to track grade-level mastery alongside project-based work.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowChooser(true)}
+                    className="flex items-center gap-2 rounded-xl bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-600"
+                  >
+                    <Plus className="h-4 w-4" />
+                    New Assignment
+                  </button>
+                </div>
+              )}
+
+              {!skillsLoading && skillAssignments.length > 0 && (
+                <div className="space-y-3">
+                  {skillAssignments.map((sa) => {
+                    const gradedCount = sa.student_assignments.filter(
+                      (ssa) => ssa.status === 'graded'
+                    ).length
+                    const totalStudents = sa.student_assignments.length
+                    const statusConfig = STATUS_LABELS[sa.status] || STATUS_LABELS.active
+
+                    return (
+                      <Link
+                        key={sa.id}
+                        to={`/skill-assignment/${sa.id}`}
+                        className="flex items-center gap-4 rounded-xl border border-bg-muted bg-bg-card px-4 py-4 transition-colors hover:border-emerald-200"
+                      >
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-emerald-50">
+                          <Target className="h-5 w-5 text-emerald-500" />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-text truncate">
+                              {sa.title ?? sa.skill?.name ?? 'Skill Assignment'}
+                            </p>
+                            <span
+                              className={clsx(
+                                'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium',
+                                statusConfig.color
+                              )}
+                            >
+                              {statusConfig.label}
+                            </span>
+                          </div>
+                          <div className="mt-1 flex items-center gap-3 text-xs text-text-muted">
+                            <span className="flex items-center gap-1">
+                              <Target className="h-3 w-3" />
+                              {sa.skill?.name ?? 'Unknown skill'}
+                            </span>
+                            {sa.assigned_step && (
+                              <span>Grade {sa.assigned_step.grade_level}</span>
+                            )}
+                            <span>
+                              {gradedCount}/{totalStudents} graded
+                            </span>
+                            {sa.due_date && (
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {format(new Date(sa.due_date), 'MMM d, yyyy')}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <ChevronRight className="h-4 w-4 text-text-light" />
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
+            </>
+          )}
+        </>
+      )}
+
+      {/* ─── Tab: Library ──────────────────────────────────── */}
       {activeTab === 'library' && <AssignmentLibrarySection />}
+
+      {/* ─── Global Modals (accessible from any tab) ───────── */}
+
+      {/* 1. Unified chooser */}
+      <NewAssignmentChooser
+        open={showChooser}
+        onClose={() => setShowChooser(false)}
+        onChoice={handleAssignmentChoice}
+      />
+
+      {/* 2. Inline skill creator */}
+      <InlineSkillCreator
+        open={showSkillCreator}
+        onClose={() => setShowSkillCreator(false)}
+        onCreated={handleSkillCreated}
+      />
+
+      {/* 3. Skill assignment flow */}
+      <SkillAssignmentFlow
+        open={!!skillAssignFlow}
+        onClose={() => setSkillAssignFlow(null)}
+        onCreated={() => {
+          loadSkillAssignments()
+          loadAssignments()
+        }}
+        initialSkill={skillAssignFlow?.skill ?? null}
+        initialStep={skillAssignFlow?.step ?? null}
+      />
+
+      {/* 4. Project library picker */}
+      <ProjectLibraryPicker
+        open={showProjectLibrary}
+        onClose={() => setShowProjectLibrary(false)}
+        onSelect={handleProjectLibrarySelect}
+      />
+
+      {/* 5. Template builder (Build New Project) */}
+      <TemplateBuilder
+        open={showTemplateBuilder}
+        onClose={() => setShowTemplateBuilder(false)}
+        onSaved={() => { /* no-op — using onSavedWithTemplate instead */ }}
+        showSaveDestination
+        onSavedWithTemplate={handleTemplateSaved}
+      />
+
+      {/* 6. Create assignment modal (project assignment) */}
+      <CreateAssignmentModal
+        open={showCreate}
+        onClose={() => {
+          setShowCreate(false)
+          setSelectedTemplate(null)
+        }}
+        onCreated={() => {
+          loadAssignments()
+          setSelectedTemplate(null)
+        }}
+        template={selectedTemplate ?? undefined}
+      />
+
+      {/* 7. Post-save "Assign Now?" prompt */}
+      {postSaveTemplate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-text/40 backdrop-blur-sm"
+            onClick={() => setPostSaveTemplate(null)}
+          />
+          <div className="relative z-10 w-full max-w-sm rounded-2xl bg-bg-card p-6 shadow-2xl text-center">
+            <div className="mb-4 flex h-14 w-14 mx-auto items-center justify-center rounded-full bg-emerald-50">
+              <BookOpen className="h-7 w-7 text-emerald-500" />
+            </div>
+            <h3 className="text-base font-semibold text-text">Project Saved!</h3>
+            <p className="mt-1.5 text-sm text-text-muted">
+              &ldquo;{postSaveTemplate.title}&rdquo; has been saved to your library.
+              Would you like to assign it now?
+            </p>
+            <div className="mt-5 flex gap-3 justify-center">
+              <button
+                onClick={() => setPostSaveTemplate(null)}
+                className="rounded-xl px-5 py-2.5 text-sm font-medium text-text-muted transition-colors hover:bg-bg-muted"
+              >
+                Done
+              </button>
+              <button
+                onClick={handleAssignNow}
+                className="rounded-xl bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-600"
+              >
+                Assign Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

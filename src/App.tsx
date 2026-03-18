@@ -30,9 +30,14 @@ import SchoolsPage from './pages/system/Schools'
 import UsersPage from './pages/admin/Users'
 import LearnerProfile from './pages/LearnerProfile'
 import CompetencyFrameworks from './pages/admin/CompetencyFrameworks'
+import SkillLibrary from './pages/admin/SkillLibrary'
 import Assignments from './pages/Assignments'
 import AssignmentGrading from './pages/AssignmentGrading'
+import SkillGrading from './components/skills/SkillGrading'
 import Messages from './pages/Messages'
+import TemplatePreview from './pages/TemplatePreview'
+import IncidentReportPage from './pages/IncidentReport'
+import IncidentsPage from './pages/admin/IncidentsPage'
 
 function PasswordRecoveryRedirect() {
   const { isPasswordRecovery } = useAuth()
@@ -50,6 +55,8 @@ function AppRoutes() {
       <Route path="/reset-password" element={<ResetPassword />} />
       {/* Student-facing survey — token-based, no auth required */}
       <Route path="/survey/:token" element={<InterestSurvey />} />
+      {/* Template system preview — no auth, remove after review */}
+      <Route path="/template-preview" element={<TemplatePreview />} />
 
       <Route
         element={
@@ -68,9 +75,11 @@ function AppRoutes() {
         <Route path="/export/:id" element={<ExportReport />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/department" element={<DepartmentDashboard />} />
+        <Route path="/incident/:id" element={<IncidentReportPage />} />
         <Route path="/settings" element={<SchoolProfile />} />
         <Route path="/assignments" element={<Assignments />} />
         <Route path="/assignment/:id" element={<AssignmentGrading />} />
+        <Route path="/skill-assignment/:id" element={<SkillGrading />} />
         <Route path="/messages" element={<Messages />} />
 
         {/* Learner routes */}
@@ -123,6 +132,14 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/admin/incidents"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <IncidentsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin/departments"
           element={
             <ProtectedRoute requiredRole="admin">
@@ -151,6 +168,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute requiredRole="admin">
               <CompetencyFrameworks />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/skill-library"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <SkillLibrary />
             </ProtectedRoute>
           }
         />

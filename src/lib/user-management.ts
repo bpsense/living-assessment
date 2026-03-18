@@ -26,8 +26,8 @@ function computeAccessLevel(
   isDeptAdmin: boolean
 ): AccessLevel {
   if (isSysAdmin) return 6
-  if (role === 'admin') return 5
-  if (role === 'educator') return isDeptAdmin ? 4 : 3
+  if (role === 'admin') return isDeptAdmin ? 4 : 5
+  if (role === 'educator') return 3
   if (role === 'parent') return 2
   if (role === 'learner') return 1
   return 1
@@ -307,15 +307,21 @@ export function useUserManagement(filters: UserFilters = {}) {
     return { error: error?.message ?? null }
   }, [fetchUsers])
 
-  /** Assign a user as department admin */
+  /** Assign a user as department admin (user must have admin role) */
   const assignToDepartment = useCallback(async (userId: string, departmentId: string, schoolId: string) => {
+    // Validate that the target user has admin role
+    const target = users.find(u => u.id === userId)
+    if (target && target.role !== 'admin') {
+      return { error: 'Only school admins can be assigned as department admins' }
+    }
+
     const { error } = await supabase
       .from('department_admins')
       .upsert({ user_id: userId, department_id: departmentId, school_id: schoolId }, { onConflict: 'user_id,department_id' })
 
     if (!error) await fetchUsers()
     return { error: error?.message ?? null }
-  }, [fetchUsers])
+  }, [users, fetchUsers])
 
   /** Remove department admin assignment */
   const removeFromDepartment = useCallback(async (userId: string, departmentId: string) => {

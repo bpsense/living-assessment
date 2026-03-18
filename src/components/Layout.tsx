@@ -23,12 +23,17 @@ import {
   X,
   ClipboardList,
   MessageCircle,
+  Target,
+  AlertTriangle,
+  ShieldAlert,
 } from 'lucide-react'
 import type { UserRole } from '../types/database'
 import QuickObserveModal from './QuickObserveModal'
 import CreateAssignmentModal from './assignment/CreateAssignmentModal'
+import IncidentReportModal from './incident/IncidentReportModal'
 import SpeedDial from './SpeedDial'
 import SchoolSwitcher from './SchoolSwitcher'
+import NotificationBell from './incident/NotificationBell'
 import { useEducatorList } from '../lib/educator-data'
 import { useFamilyList } from '../lib/family-data'
 import { useDepartmentLabel } from '../lib/department-label'
@@ -65,9 +70,11 @@ function getNavItems(
       { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
       { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
       { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
+      { to: '/admin/incidents', label: 'Incidents', icon: <ShieldAlert className="h-5 w-5" /> },
       { to: '/admin/departments', label: deptLabel.plural, icon: <MapPin className="h-5 w-5" /> },
       { to: '/admin/dimensions', label: 'Dimensions', icon: <Layers className="h-5 w-5" /> },
       { to: '/standards', label: 'Standards', icon: <BookOpen className="h-5 w-5" /> },
+      { to: '/admin/skill-library', label: 'Skill Library', icon: <Target className="h-5 w-5" /> },
       { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
       { to: '/settings', label: 'School Profile', icon: <Building2 className="h-5 w-5" /> },
     ]
@@ -107,9 +114,11 @@ function getNavItems(
         { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
         { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
         { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
+        { to: '/admin/incidents', label: 'Incidents', icon: <ShieldAlert className="h-5 w-5" /> },
         { to: '/admin/departments', label: deptLabel.plural, icon: <MapPin className="h-5 w-5" /> },
         { to: '/admin/dimensions', label: 'Dimensions', icon: <Layers className="h-5 w-5" /> },
         { to: '/standards', label: 'Standards', icon: <BookOpen className="h-5 w-5" /> },
+        { to: '/admin/skill-library', label: 'Skill Library', icon: <Target className="h-5 w-5" /> },
         { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
         { to: '/settings', label: 'School Profile', icon: <Building2 className="h-5 w-5" /> },
       ]
@@ -157,10 +166,11 @@ function getSwitchableRoles(actualRole: UserRole): UserRole[] {
 
 export default function Layout() {
   const { profile, actualRole, signOut, viewAsRole, setViewAs, viewAsUserId, viewAsUserName, isSystemAdmin, activeSchoolId } = useAuth()
-  const { isDepartmentAdmin } = useAccessControl()
+  const { isDepartmentAdmin, accessLevel } = useAccessControl()
   const navigate = useNavigate()
   const [quickObserveOpen, setQuickObserveOpen] = useState(false)
   const [showCreateAssignment, setShowCreateAssignment] = useState(false)
+  const [incidentReportOpen, setIncidentReportOpen] = useState(false)
   const [schoolName, setSchoolName] = useState<string>('')
   const [openDropdown, setOpenDropdown] = useState<UserRole | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -307,6 +317,9 @@ export default function Layout() {
             <span className="rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700">
               {roleLabel}
             </span>
+            {profile && accessLevel >= 3 && (
+              <NotificationBell profileId={profile.id} />
+            )}
             <button
               onClick={handleSignOut}
               className="rounded-lg p-1.5 text-text-light transition-colors hover:bg-bg-muted hover:text-text"
@@ -316,14 +329,19 @@ export default function Layout() {
             </button>
           </div>
 
-          {/* Mobile: sign out only */}
-          <button
-            onClick={handleSignOut}
-            className="rounded-lg p-1.5 text-text-light transition-colors hover:bg-bg-muted hover:text-text md:hidden"
-            title="Sign out"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
+          {/* Mobile: notifications + sign out */}
+          <div className="flex items-center gap-1 md:hidden">
+            {profile && accessLevel >= 3 && (
+              <NotificationBell profileId={profile.id} />
+            )}
+            <button
+              onClick={handleSignOut}
+              className="rounded-lg p-1.5 text-text-light transition-colors hover:bg-bg-muted hover:text-text"
+              title="Sign out"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
         </header>
 
         {/* View-as role switcher with user impersonation dropdowns */}
@@ -529,6 +547,12 @@ export default function Layout() {
               onClick: () => setShowCreateAssignment(true),
               color: 'bg-primary-500 hover:bg-primary-600',
             },
+            {
+              icon: <AlertTriangle className="h-4 w-4" />,
+              label: 'Incident Report',
+              onClick: () => setIncidentReportOpen(true),
+              color: 'bg-alert-500 hover:bg-alert-600',
+            },
           ]}
         />
       )}
@@ -544,6 +568,12 @@ export default function Layout() {
         open={showCreateAssignment}
         onClose={() => setShowCreateAssignment(false)}
         onCreated={() => setShowCreateAssignment(false)}
+      />
+
+      {/* ============ Incident Report Modal ============ */}
+      <IncidentReportModal
+        open={incidentReportOpen}
+        onClose={() => setIncidentReportOpen(false)}
       />
     </div>
   )

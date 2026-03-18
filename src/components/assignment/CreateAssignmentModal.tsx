@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { useToast } from '../Toast'
 import { useAuth } from '../../lib/auth'
+import { useIsAllSchoolsView } from '../../lib/school-context'
 import { supabase } from '../../lib/supabase'
 import {
   createAssignment,
@@ -410,7 +411,8 @@ export default function CreateAssignmentModal({
   template,
 }: Props) {
   const { toast } = useToast()
-  const { profile } = useAuth()
+  const { profile, isSystemAdmin } = useAuth()
+  const isAllSchoolsView = useIsAllSchoolsView()
 
   // Form state
   const [title, setTitle] = useState('')
@@ -631,14 +633,14 @@ export default function CreateAssignmentModal({
           competency_ids: Array.from(selectedCompetencies),
           skill_ids: Array.from(selectedSkills),
           is_shared: true,
+          is_global: isAllSchoolsView && isSystemAdmin,
           template_data: {},
         }
         await createTemplate(templateData)
         toast('Saved to Assignment Library', 'success')
       } else {
         // Create live assignment
-        await createAssignment(
-          {
+        const assignmentData: any = {
             school_id: profile.school_id,
             classroom_id: classroomId,
             teacher_id: profile.id,
@@ -646,8 +648,24 @@ export default function CreateAssignmentModal({
             description: description.trim() || null,
             due_date: dueDate || null,
             assignment_type: assignmentType,
-            status: 'active',
-          },
+            status: 'active' as const,
+        }
+
+        // Link back to source template and carry over PBL project data
+        if (template) {
+          assignmentData.template_id = template.id
+          assignmentData.project_data = {
+            driving_question: template.driving_question,
+            phases: template.phases,
+            choice_points: template.choice_points,
+            final_product: template.final_product,
+            authenticity_hook: template.authenticity_hook,
+            essential_understandings: template.essential_understandings,
+          }
+        }
+
+        await createAssignment(
+          assignmentData,
           Array.from(selectedCompetencies),
           studentIds,
           selectedSkills.size > 0 ? Array.from(selectedSkills) : undefined

@@ -717,7 +717,7 @@ export type AssignmentType = 'individual' | 'class'
 export type AssignmentStatus = 'draft' | 'active' | 'completed'
 export type StudentAssignmentStatus = 'assigned' | 'in_progress' | 'submitted' | 'graded'
 export type LearnerColumn = 'on_deck' | 'researching' | 'actively_exploring' | 'blocked'
-export type CompetencyScoreSource = 'teacher' | 'ai_inferred' | 'observation'
+export type CompetencyScoreSource = 'teacher' | 'ai_inferred' | 'observation' | 'skill_assessment'
 
 export interface Assignment {
   id: string
@@ -729,6 +729,8 @@ export interface Assignment {
   due_date: string | null
   assignment_type: AssignmentType
   status: AssignmentStatus
+  template_id: string | null
+  project_data: Record<string, unknown>
   created_at: string
   updated_at: string
 }
@@ -740,6 +742,8 @@ export type AssignmentInsert = Omit<Assignment, 'id' | 'created_at' | 'updated_a
   due_date?: string | null
   assignment_type?: AssignmentType
   status?: AssignmentStatus
+  template_id?: string | null
+  project_data?: Record<string, unknown>
 }
 
 export type AssignmentUpdate = Partial<Omit<Assignment, 'id' | 'school_id' | 'teacher_id' | 'created_at' | 'updated_at'>>
@@ -845,21 +849,25 @@ export type MessageInsert = Pick<Message, 'conversation_id' | 'sender_id' | 'con
 export interface CompetencyScoreRow {
   id: string
   student_assignment_id: string | null
+  student_skill_assignment_id: string | null
   competency_id: string
   student_id: string
   school_id: string
   score: number
   source: CompetencyScoreSource
   notes: string | null
+  is_above_grade: boolean
   scored_at: string
   created_at: string
 }
 
-export type CompetencyScoreInsert = Omit<CompetencyScoreRow, 'id' | 'created_at'> & {
+export type CompetencyScoreInsert = Omit<CompetencyScoreRow, 'id' | 'created_at' | 'student_skill_assignment_id' | 'is_above_grade'> & {
   id?: string
   student_assignment_id?: string | null
+  student_skill_assignment_id?: string | null
   source?: CompetencyScoreSource
   notes?: string | null
+  is_above_grade?: boolean
   scored_at?: string
 }
 
@@ -898,6 +906,11 @@ export interface Skill {
   max_grade: string | null
   is_default: boolean
   created_by: string | null
+  is_assessable: boolean
+  source_framework: string
+  source_standard_code: string | null
+  progression_domain: string | null
+  progression_strand: string | null
   created_at: string
   updated_at: string
 }
@@ -910,6 +923,11 @@ export type SkillInsert = Pick<Skill, 'school_id' | 'name'> & {
   max_grade?: string | null
   is_default?: boolean
   created_by?: string | null
+  is_assessable?: boolean
+  source_framework?: string
+  source_standard_code?: string | null
+  progression_domain?: string | null
+  progression_strand?: string | null
 }
 
 export type SkillUpdate = Partial<Omit<Skill, 'id' | 'school_id' | 'created_at' | 'updated_at'>>
@@ -929,8 +947,71 @@ export interface AssignmentSkill {
 }
 
 // ============================================================
-// Assignment Templates
+// Assignment Templates (PBL Project Templates)
 // ============================================================
+
+export type GradeBand = 'early_elementary' | 'elementary' | 'upper_elementary' | 'middle_school' | 'mixed'
+export type TemplateStatus = 'draft' | 'published' | 'archived'
+export type DOKLevel = 1 | 2 | 3 | 4
+
+export interface ProjectPhase {
+  id: string
+  title: string
+  description: string
+  duration_days: number
+  dok_level: DOKLevel
+  activities: PhaseActivity[]
+  reflection_prompts: string[]
+  checkpoint: PhaseCheckpoint | null
+}
+
+export interface PhaseActivity {
+  id: string
+  title: string
+  description: string
+  activity_type: 'investigation' | 'creation' | 'collaboration' | 'reflection' | 'presentation' | 'skill_building' | 'field_work'
+  is_required: boolean
+  estimated_minutes: number
+  resources: string[]
+  educator_notes: string
+}
+
+export interface PhaseCheckpoint {
+  title: string
+  description: string
+  assessment_type: 'self_assessment' | 'peer_review' | 'educator_check' | 'portfolio_entry' | 'group_critique'
+  competency_ids: string[]
+  criteria: string[]
+}
+
+export interface FinalProduct {
+  description: string
+  format_options: string[]
+  audience: string
+  presentation_format: string
+  quality_criteria: string[]
+}
+
+export interface ChoicePoint {
+  phase_id: string
+  description: string
+  choice_type: 'topic_selection' | 'research_method' | 'product_format' | 'collaboration_structure' | 'presentation_style'
+  options: string[]
+}
+
+export interface DifferentiationGuide {
+  extending: string
+  supporting: string
+  ell_accommodations: string
+  accessibility_notes: string
+}
+
+export interface TemplateResource {
+  title: string
+  type: 'link' | 'book' | 'material' | 'tool' | 'printable' | 'video'
+  url: string | null
+  notes: string
+}
 
 export interface AssignmentTemplate {
   id: string
@@ -942,15 +1023,60 @@ export interface AssignmentTemplate {
   competency_ids: string[]
   skill_ids: string[]
   is_shared: boolean
+  is_global: boolean
   template_data: Record<string, unknown>
+
+  // PBL-specific fields
+  grade_band: GradeBand
+  subject_area: string[]
+  estimated_duration_days: number | null
+  driving_question: string | null
+  essential_understandings: string[]
+  authenticity_hook: string | null
+  final_product: FinalProduct | null
+  dok_level: DOKLevel
+  phases: ProjectPhase[]
+  choice_points: ChoicePoint[]
+  critique_protocol: string | null
+  scaffolding_notes: string | null
+  differentiation: DifferentiationGuide | null
+  materials_and_resources: TemplateResource[]
+  tags: string[]
+  version: number
+  parent_template_id: string | null
+  original_template_id: string | null
+  status: TemplateStatus
+
   created_at: string
   updated_at: string
 }
 
-export type AssignmentTemplateInsert = Omit<
-  AssignmentTemplate,
-  'id' | 'created_at' | 'updated_at'
->
+/** Fields that have DB defaults or are nullable — optional on insert */
+type PBLOptionalFields =
+  | 'grade_band'
+  | 'subject_area'
+  | 'estimated_duration_days'
+  | 'driving_question'
+  | 'essential_understandings'
+  | 'authenticity_hook'
+  | 'final_product'
+  | 'dok_level'
+  | 'phases'
+  | 'choice_points'
+  | 'critique_protocol'
+  | 'scaffolding_notes'
+  | 'differentiation'
+  | 'materials_and_resources'
+  | 'tags'
+  | 'version'
+  | 'parent_template_id'
+  | 'original_template_id'
+  | 'status'
+  | 'is_global'
+
+export type AssignmentTemplateInsert =
+  Omit<AssignmentTemplate, 'id' | 'created_at' | 'updated_at' | PBLOptionalFields> &
+  Partial<Pick<AssignmentTemplate, PBLOptionalFields>>
 
 export type AssignmentTemplateUpdate = Partial<
   Omit<AssignmentTemplate, 'id' | 'school_id' | 'created_at' | 'updated_at'>
@@ -992,4 +1118,205 @@ export const DEFAULT_PROFILE_VISIBILITY: SchoolProfileVisibility = {
   dimensions_overview: true,
   standards_frameworks: true,
   supporting_documents: true,
+}
+
+// ============================================================
+// Skill Progressions
+// ============================================================
+
+export interface SkillProgressionStep {
+  id: string
+  skill_id: string
+  school_id: string
+  grade_level: string
+  expectation_description: string
+  example_tasks: string | null
+  prerequisite_step_id: string | null
+  competency_ids: string[]
+  created_at: string
+  updated_at: string
+}
+
+export type SkillProgressionStepInsert = Omit<SkillProgressionStep, 'id' | 'created_at' | 'updated_at'>
+export type SkillProgressionStepUpdate = Partial<Omit<SkillProgressionStep, 'id' | 'school_id' | 'created_at' | 'updated_at'>>
+
+export interface SkillWithProgression extends Skill {
+  steps: SkillProgressionStep[]
+}
+
+// ============================================================
+// Skill Assignments
+// ============================================================
+
+export type SkillAssignmentStatus = 'draft' | 'active' | 'completed' | 'archived'
+
+export interface SkillAssignment {
+  id: string
+  school_id: string
+  classroom_id: string | null
+  skill_id: string
+  assigned_step_id: string
+  assigned_by: string
+  assignment_type: AssignmentType
+  title: string | null
+  instructions: string | null
+  due_date: string | null
+  status: SkillAssignmentStatus
+  created_at: string
+  updated_at: string
+}
+
+export type SkillAssignmentInsert = Omit<SkillAssignment, 'id' | 'created_at' | 'updated_at'>
+export type SkillAssignmentUpdate = Partial<Omit<SkillAssignment, 'id' | 'school_id' | 'created_at' | 'updated_at'>>
+
+export type StudentSkillAssignmentStatus = 'assigned' | 'in_progress' | 'submitted' | 'graded'
+
+export interface StudentSkillAssignment {
+  id: string
+  skill_assignment_id: string
+  student_id: string
+  student_step_id: string
+  status: StudentSkillAssignmentStatus
+  score: number | null
+  scored_by: string | null
+  scored_at: string | null
+  notes: string | null
+  is_above_grade: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type StudentSkillAssignmentInsert = Omit<StudentSkillAssignment, 'id' | 'created_at' | 'updated_at'>
+
+// ============================================================
+// Extended types for Skill UI
+// ============================================================
+
+export interface SkillAssignmentWithDetails extends SkillAssignment {
+  skill: Skill
+  assigned_step: SkillProgressionStep
+  student_assignments: StudentSkillAssignmentWithStudent[]
+  assignor_name: string
+}
+
+export interface StudentSkillAssignmentWithStudent extends StudentSkillAssignment {
+  student: Pick<Student, 'id' | 'first_name' | 'last_name' | 'grade_level'>
+  step: SkillProgressionStep
+}
+
+// Grade zone indicator for UI
+export type GradeZone = 'remediation' | 'current' | 'extension'
+
+// ============================================================
+// Incident Reports
+// ============================================================
+
+export type IncidentType = 'behavioral' | 'medical_injury' | 'safety' | 'bullying' | 'property_damage' | 'emotional_welfare' | 'other'
+export type IncidentSeverity = 'low' | 'medium' | 'high' | 'critical'
+export type IncidentStatus = 'open' | 'in_progress' | 'resolved' | 'closed'
+export type IncidentStudentRole = 'involved' | 'victim' | 'aggressor' | 'witness' | 'bystander'
+export type IncidentNotificationType = 'new_incident' | 'assigned' | 'follow_up' | 'status_change'
+
+export interface IncidentReport {
+  id: string
+  school_id: string
+  reported_by: string
+  incident_date: string
+  incident_time: string | null
+  location: string
+  incident_type: IncidentType
+  severity: IncidentSeverity
+  description: string
+  immediate_actions_taken: string | null
+  witnesses: string | null
+  parent_notified: boolean
+  parent_notification_method: string | null
+  shared_with_family: boolean
+  status: IncidentStatus
+  assigned_to: string | null
+  resolution_notes: string | null
+  resolved_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type IncidentReportInsert = Omit<IncidentReport, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  incident_time?: string | null
+  immediate_actions_taken?: string | null
+  witnesses?: string | null
+  parent_notified?: boolean
+  parent_notification_method?: string | null
+  shared_with_family?: boolean
+  status?: IncidentStatus
+  assigned_to?: string | null
+  resolution_notes?: string | null
+  resolved_at?: string | null
+}
+
+export type IncidentReportUpdate = Partial<Omit<IncidentReport, 'id' | 'school_id' | 'reported_by' | 'created_at' | 'updated_at'>>
+
+export interface IncidentReportStudent {
+  id: string
+  incident_report_id: string
+  student_id: string
+  role: IncidentStudentRole
+  notes: string | null
+}
+
+export type IncidentReportStudentInsert = Omit<IncidentReportStudent, 'id'> & {
+  id?: string
+  role?: IncidentStudentRole
+  notes?: string | null
+}
+
+export interface IncidentReportClassroom {
+  id: string
+  incident_report_id: string
+  classroom_id: string
+}
+
+export interface IncidentReportAttachment {
+  id: string
+  incident_report_id: string
+  file_name: string
+  file_path: string
+  file_type: string | null
+  file_size: number | null
+  uploaded_by: string | null
+  created_at: string
+}
+
+export interface IncidentReportFollowUp {
+  id: string
+  incident_report_id: string
+  author_id: string
+  notes: string
+  status_change: string | null
+  created_at: string
+}
+
+export interface IncidentReportNotification {
+  id: string
+  incident_report_id: string
+  recipient_id: string
+  notification_type: IncidentNotificationType
+  read: boolean
+  created_at: string
+}
+
+// Composite types for UI
+export interface IncidentReportWithDetails extends IncidentReport {
+  reporter?: Profile
+  assigned_person?: Profile
+  students?: (IncidentReportStudent & { student?: Student })[]
+  classrooms?: (IncidentReportClassroom & { classroom?: Classroom })[]
+  attachments?: IncidentReportAttachment[]
+  follow_ups?: (IncidentReportFollowUp & { author?: Profile })[]
+}
+
+export interface IncidentReportListItem extends IncidentReport {
+  reporter_name?: string
+  student_names?: string[]
+  student_count?: number
 }

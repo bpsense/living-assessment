@@ -19,6 +19,7 @@ export interface CompetencyBreakdown {
   competency_name: string
   score: number
   source: CompetencyScoreSource
+  is_above_grade?: boolean
 }
 
 export interface DimensionScore {
@@ -151,10 +152,10 @@ export function computeCompetencyBasedScores(
     dimMappings.get(m.dimension_id)!.push(m)
   }
 
-  // Best score per competency: prefer teacher > ai_inferred > observation, then latest
+  // Best score per competency: prefer teacher > skill_assessment > ai_inferred > observation, then latest
   const bestScoreByComp = new Map<string, CompetencyScoreRow>()
   const sorted = [...competencyScores].sort((a, b) => {
-    const priority: Record<string, number> = { teacher: 3, ai_inferred: 2, observation: 1 }
+    const priority: Record<string, number> = { teacher: 4, skill_assessment: 3, ai_inferred: 2, observation: 1 }
     const sp = (priority[b.source] || 0) - (priority[a.source] || 0)
     if (sp !== 0) return sp
     return new Date(b.scored_at).getTime() - new Date(a.scored_at).getTime()
@@ -180,12 +181,21 @@ export function computeCompetencyBasedScores(
       const scoreRow = bestScoreByComp.get(mapping.competency_id)
       if (!scoreRow) continue
 
+      // Above-grade exclusion rule:
+      // If this score came from an above-grade skill assignment and the score
+      // is below 3, exclude it from the dimension average. This prevents
+      // penalizing learners for attempting harder work.
+      if (scoreRow.is_above_grade && Number(scoreRow.score) < 3) {
+        continue
+      }
+
       breakdown.push({
         competency_id: comp.id,
         competency_code: comp.code,
         competency_name: comp.name,
         score: Number(scoreRow.score),
         source: scoreRow.source,
+        is_above_grade: scoreRow.is_above_grade || undefined,
       })
     }
 

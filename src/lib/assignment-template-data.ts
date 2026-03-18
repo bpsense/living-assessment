@@ -3,6 +3,9 @@ import type {
   AssignmentTemplate,
   AssignmentTemplateInsert,
   AssignmentTemplateUpdate,
+  GradeBand,
+  TemplateStatus,
+  DOKLevel,
 } from '../types/database'
 
 // ============================================================
@@ -11,6 +14,78 @@ import type {
 
 export interface TemplateWithCreator extends AssignmentTemplate {
   creator_name: string
+  original_creator_name: string | null
+}
+
+export interface TemplateFilters {
+  search?: string
+  gradeBand?: GradeBand
+  subjectArea?: string
+  dokLevel?: DOKLevel
+  tags?: string[]
+  status?: TemplateStatus
+}
+
+// ============================================================
+// Helpers
+// ============================================================
+
+/** Build the attribution text for a template */
+export function getAttributionText(t: {
+  creator_name: string
+  original_creator_name?: string | null
+}): string {
+  if (
+    t.original_creator_name &&
+    t.original_creator_name !== t.creator_name
+  ) {
+    return `Original project by ${t.original_creator_name}, adapted by ${t.creator_name}`
+  }
+  return `Built by ${t.creator_name}`
+}
+
+const TEMPLATE_SELECT = `
+  *,
+  creator:profiles!assignment_templates_created_by_fkey(full_name),
+  original_template:assignment_templates!original_template_id(
+    original_creator:profiles!assignment_templates_created_by_fkey(full_name)
+  )
+`
+
+function mapRow(t: any): TemplateWithCreator {
+  return {
+    ...t,
+    competency_ids: t.competency_ids ?? [],
+    skill_ids: t.skill_ids ?? [],
+    template_data: t.template_data ?? {},
+    // PBL fields with safe defaults
+    phases: t.phases ?? [],
+    choice_points: t.choice_points ?? [],
+    materials_and_resources: t.materials_and_resources ?? [],
+    essential_understandings: t.essential_understandings ?? [],
+    tags: t.tags ?? [],
+    subject_area: t.subject_area ?? [],
+    final_product: t.final_product && Object.keys(t.final_product).length > 0
+      ? t.final_product
+      : null,
+    differentiation: t.differentiation && Object.keys(t.differentiation).length > 0
+      ? t.differentiation
+      : null,
+    grade_band: t.grade_band ?? 'elementary',
+    dok_level: t.dok_level ?? 3,
+    version: t.version ?? 1,
+    status: t.status ?? 'draft',
+    estimated_duration_days: t.estimated_duration_days ?? null,
+    driving_question: t.driving_question ?? null,
+    authenticity_hook: t.authenticity_hook ?? null,
+    critique_protocol: t.critique_protocol ?? null,
+    scaffolding_notes: t.scaffolding_notes ?? null,
+    parent_template_id: t.parent_template_id ?? null,
+    original_template_id: t.original_template_id ?? null,
+    is_global: t.is_global ?? false,
+    creator_name: t.creator?.full_name ?? 'Unknown',
+    original_creator_name: t.original_template?.original_creator?.full_name ?? null,
+  }
 }
 
 // ============================================================
@@ -19,12 +94,12 @@ export interface TemplateWithCreator extends AssignmentTemplate {
 
 export async function fetchTemplates(
   schoolId: string,
-  filters?: { search?: string }
+  filters?: TemplateFilters
 ): Promise<TemplateWithCreator[]> {
   let query = supabase
     .from('assignment_templates')
-    .select('*, creator:profiles!assignment_templates_created_by_fkey(full_name)')
-    .eq('school_id', schoolId)
+    .select(TEMPLATE_SELECT)
+    .or(`is_global.eq.true,school_id.eq.${schoolId}`)
     .order('updated_at', { ascending: false })
 
   if (filters?.search) {
@@ -33,17 +108,57 @@ export async function fetchTemplates(
     )
   }
 
+  if (filters?.gradeBand) {
+    query = query.eq('grade_band', filters.gradeBand)
+  }
+
+  if (filters?.subjectArea) {
+    query = query.contains('subject_area', [filters.subjectArea])
+  }
+
+  if (filters?.dokLevel) {
+    query = query.eq('dok_level', filters.dokLevel)
+  }
+
+  if (filters?.tags && filters.tags.length > 0) {
+    query = query.overlaps('tags', filters.tags)
+  }
+
+  if (filters?.status) {
+    query = query.eq('status', filters.status)
+  }
+
   const { data, error } = await query
 
   if (error) throw new Error(`Failed to load templates: ${error.message}`)
 
-  return (data ?? []).map((t: any) => ({
-    ...t,
-    competency_ids: t.competency_ids ?? [],
-    skill_ids: t.skill_ids ?? [],
-    template_data: t.template_data ?? {},
-    creator_name: t.creator?.full_name ?? 'Unknown',
-  }))
+  return (data ?? []).map(mapRow)
+}
+
+export async function fetchPublishedTemplates(
+  schoolId: string
+): Promise<TemplateWithCreator[]> {
+  return fetchTemplates(schoolId, { status: 'published' })
+}
+
+export async function fetchTemplatesByTag(
+  schoolId: string,
+  tag: string
+): Promise<TemplateWithCreator[]> {
+  return fetchTemplates(schoolId, { tags: [tag] })
+}
+
+export async function fetchTemplateById(
+  templateId: string
+): Promise<TemplateWithCreator> {
+  const { data, error } = await supabase
+    .from('assignment_templates')
+    .select(TEMPLATE_SELECT)
+    .eq('id', templateId)
+    .single()
+
+  if (error) throw new Error(`Failed to load template: ${error.message}`)
+  return mapRow(data)
 }
 
 // ============================================================
@@ -103,9 +218,64 @@ export async function createTemplateFromAssignment(
     skill_ids: (skills ?? []).map((s) => s.skill_id),
     is_shared: true,
     template_data: {},
+    status: 'draft',
   }
 
   return createTemplate(templateData)
+}
+
+// ============================================================
+// Duplicate
+// ============================================================
+
+export async function duplicateTemplate(
+  templateId: string,
+  schoolId: string,
+  createdBy: string
+): Promise<string> {
+  const { data: original, error: fetchErr } = await supabase
+    .from('assignment_templates')
+    .select('*')
+    .eq('id', templateId)
+    .single()
+
+  if (fetchErr || !original) {
+    throw new Error('Template not found')
+  }
+
+  const {
+    id: _id,
+    created_at: _createdAt,
+    updated_at: _updatedAt,
+    ...rest
+  } = original
+
+  const duplicate: AssignmentTemplateInsert = {
+    ...rest,
+    school_id: schoolId,
+    created_by: createdBy,
+    title: `${original.title} (Copy)`,
+    parent_template_id: templateId,
+    // Track the root original for attribution
+    original_template_id: original.original_template_id ?? templateId,
+    version: (original.version ?? 1) + 1,
+    status: 'draft' as const,
+    is_global: false,
+  }
+
+  return createTemplate(duplicate)
+}
+
+// ============================================================
+// Status transitions
+// ============================================================
+
+export async function publishTemplate(templateId: string): Promise<void> {
+  return updateTemplate(templateId, { status: 'published' })
+}
+
+export async function archiveTemplate(templateId: string): Promise<void> {
+  return updateTemplate(templateId, { status: 'archived' })
 }
 
 // ============================================================

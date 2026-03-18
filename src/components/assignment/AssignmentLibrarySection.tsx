@@ -6,114 +6,82 @@ import {
   BookOpen,
   Search,
   Trash2,
-  Users,
-  User,
   Tag,
   FileText,
   Sparkles,
+  Copy,
+  Pencil,
+  Archive,
+  Clock,
+  BarChart3,
+  Filter,
+  Eye,
   X,
+  Globe,
 } from 'lucide-react'
 import { useAuth } from '../../lib/auth'
+import { useIsAllSchoolsView } from '../../lib/school-context'
 import { useToast } from '../Toast'
 import {
   fetchTemplates,
-  createTemplate,
   deleteTemplate,
+  duplicateTemplate,
+  archiveTemplate,
+  getAttributionText,
   type TemplateWithCreator,
+  type TemplateFilters,
 } from '../../lib/assignment-template-data'
-import { fetchCompetencyTree, type CompetencyTreeNode } from '../../lib/assignment-data'
-import { fetchSkills, type SkillWithCompetencies } from '../../lib/skills-data'
-import type { AssignmentTemplate, AssignmentTemplateInsert, AssignmentType } from '../../types/database'
+import type { AssignmentTemplate, GradeBand, DOKLevel, TemplateStatus } from '../../types/database'
 import CreateAssignmentModal from './CreateAssignmentModal'
+import TemplateBuilder from './TemplateBuilder'
 
 // ============================================================
-// Template Edit Modal
+// Constants
 // ============================================================
 
-function TemplateEditModal({
-  open,
+const GRADE_BAND_LABELS: Record<GradeBand, string> = {
+  early_elementary: 'Early Elem',
+  elementary: 'Elementary',
+  upper_elementary: 'Upper Elem',
+  middle_school: 'Middle School',
+  mixed: 'Mixed',
+}
+
+const STATUS_STYLES: Record<TemplateStatus, string> = {
+  draft: 'bg-bg-muted text-text-muted',
+  published: 'bg-emerald-100 text-emerald-700',
+  archived: 'bg-amber-100 text-amber-700',
+}
+
+const DOK_COLORS: Record<number, string> = {
+  1: 'bg-sky-100 text-sky-700',
+  2: 'bg-indigo-100 text-indigo-700',
+  3: 'bg-violet-100 text-violet-700',
+  4: 'bg-fuchsia-100 text-fuchsia-700',
+}
+
+// ============================================================
+// Template Detail View
+// ============================================================
+
+function TemplateDetailView({
+  template,
   onClose,
-  onSaved,
-  schoolId,
-  createdBy,
-  competencyTree,
-  allSkills,
 }: {
-  open: boolean
+  template: TemplateWithCreator
   onClose: () => void
-  onSaved: () => void
-  schoolId: string
-  createdBy: string
-  competencyTree: CompetencyTreeNode[]
-  allSkills: SkillWithCompetencies[]
 }) {
-  const { toast } = useToast()
-
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [assignmentType, setAssignmentType] = useState<AssignmentType>('class')
-  const [selectedCompetencies, setSelectedCompetencies] = useState<Set<string>>(new Set())
-  const [selectedSkills, setSelectedSkills] = useState<Set<string>>(new Set())
-  const [saving, setSaving] = useState(false)
-
-  // Reset on open
-  useEffect(() => {
-    if (open) {
-      setTitle('')
-      setDescription('')
-      setAssignmentType('class')
-      setSelectedCompetencies(new Set())
-      setSelectedSkills(new Set())
-    }
-  }, [open])
-
-  async function handleSave() {
-    if (!title.trim()) {
-      toast('Title is required', 'error')
-      return
-    }
-    if (selectedCompetencies.size === 0) {
-      toast('Select at least one competency', 'error')
-      return
-    }
-
-    setSaving(true)
-    try {
-      const data: AssignmentTemplateInsert = {
-        school_id: schoolId,
-        created_by: createdBy,
-        title: title.trim(),
-        description: description.trim() || null,
-        assignment_type: assignmentType,
-        competency_ids: Array.from(selectedCompetencies),
-        skill_ids: Array.from(selectedSkills),
-        is_shared: true,
-        template_data: {},
-      }
-      await createTemplate(data)
-      toast('Template saved to library', 'success')
-      onSaved()
-      onClose()
-    } catch (err) {
-      toast(err instanceof Error ? err.message : 'Failed to save', 'error')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  if (!open) return null
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-2xl bg-bg-card shadow-xl"
+        className="flex h-[85vh] w-full max-w-2xl flex-col rounded-2xl bg-bg-card shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-bg-muted px-5 py-4">
-          <h3 className="text-base font-bold text-text">Add to Library</h3>
+          <h3 className="text-base font-bold text-text">{template.title}</h3>
           <button
             onClick={onClose}
             className="rounded-lg p-1 text-text-light hover:bg-bg-muted hover:text-text"
@@ -122,150 +90,111 @@ function TemplateEditModal({
           </button>
         </div>
 
-        <div className="max-h-[60vh] overflow-y-auto px-5 py-4 space-y-4">
-          {/* Title */}
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-text-light">
-              Title *
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Fraction Operations Practice"
-              className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
-            />
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          {/* Badges */}
+          <div className="flex flex-wrap gap-2">
+            {template.is_global && (
+              <span className="flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-medium text-blue-700">
+                <Globe className="h-3 w-3" />
+                System Template
+              </span>
+            )}
+            <span className={clsx('rounded-full px-2.5 py-0.5 text-[10px] font-medium', STATUS_STYLES[template.status])}>
+              {template.status}
+            </span>
+            <span className="rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-medium text-primary-700">
+              {GRADE_BAND_LABELS[template.grade_band]}
+            </span>
+            <span className={clsx('rounded-full px-2.5 py-0.5 text-[10px] font-medium', DOK_COLORS[template.dok_level])}>
+              DOK {template.dok_level}
+            </span>
+            {template.subject_area.map((s) => (
+              <span key={s} className="rounded-full bg-bg-muted px-2.5 py-0.5 text-[10px] font-medium text-text-muted">{s}</span>
+            ))}
           </div>
 
-          {/* Description */}
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-text-light">
-              Description
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={2}
-              placeholder="Brief description of this assignment template..."
-              className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
-            />
-          </div>
+          {template.description && (
+            <p className="text-sm text-text-muted">{template.description}</p>
+          )}
 
-          {/* Type */}
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-text-light">
-              Assignment Type
-            </label>
-            <div className="flex gap-2">
-              {(['class', 'individual'] as AssignmentType[]).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setAssignmentType(t)}
-                  className={clsx(
-                    'flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors',
-                    assignmentType === t
-                      ? 'border-primary-400 bg-primary-50 text-primary-700'
-                      : 'border-bg-muted bg-bg text-text-muted hover:border-primary-200'
-                  )}
-                >
-                  {t === 'class' ? <Users className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />}
-                  {t === 'class' ? 'Class' : 'Individual'}
-                </button>
-              ))}
+          {template.driving_question && (
+            <div className="rounded-lg bg-primary-50 p-3">
+              <p className="text-xs font-semibold text-primary-700 mb-1">Driving Question</p>
+              <p className="text-sm text-primary-800 italic">"{template.driving_question}"</p>
             </div>
-          </div>
+          )}
 
-          {/* Competency picker */}
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-text-light">
-              Competencies *
-            </label>
-            <div className="max-h-40 overflow-y-auto rounded-lg border border-bg-muted bg-bg p-2 space-y-1">
-              {competencyTree.length === 0 ? (
-                <p className="py-2 text-center text-xs text-text-light">No competencies found</p>
-              ) : (
-                competencyTree.map((node) => (
-                  <div key={node.domain.id}>
-                    <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide px-1 pt-1">
-                      {node.domain.name}
-                    </p>
-                    {node.subdomains.flatMap((sd) => sd.competencies).map((comp) => (
-                      <label
-                        key={comp.id}
-                        className="flex items-center gap-2 rounded px-1.5 py-1 text-xs cursor-pointer hover:bg-primary-50"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedCompetencies.has(comp.id)}
-                          onChange={() => {
-                            setSelectedCompetencies((prev) => {
-                              const next = new Set(prev)
-                              if (next.has(comp.id)) next.delete(comp.id)
-                              else next.add(comp.id)
-                              return next
-                            })
-                          }}
-                          className="rounded border-bg-muted text-primary-500 focus:ring-primary-400"
-                        />
-                        <span className="font-medium text-primary-700">{comp.code}</span>
-                        <span className="text-text">{comp.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Skills picker */}
-          {allSkills.length > 0 && (
+          {template.authenticity_hook && (
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-text-light">
-                Skills (optional)
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {allSkills.map((skill) => (
-                  <button
-                    key={skill.id}
-                    onClick={() => {
-                      setSelectedSkills((prev) => {
-                        const next = new Set(prev)
-                        if (next.has(skill.id)) next.delete(skill.id)
-                        else next.add(skill.id)
-                        return next
-                      })
-                    }}
-                    className={clsx(
-                      'flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors',
-                      selectedSkills.has(skill.id)
-                        ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-300'
-                        : 'bg-bg-muted text-text-muted hover:bg-emerald-50 hover:text-emerald-600'
+              <p className="text-xs font-semibold text-text-light mb-1">Authenticity Hook</p>
+              <p className="text-sm text-text-muted">{template.authenticity_hook}</p>
+            </div>
+          )}
+
+          {template.essential_understandings.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-text-light mb-1">Essential Understandings</p>
+              <ul className="space-y-1">
+                {template.essential_understandings.map((u, i) => (
+                  <li key={i} className="text-sm text-text-muted">• {u}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Phases */}
+          {template.phases.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-text-light mb-2">Project Phases</p>
+              <div className="space-y-2">
+                {template.phases.map((phase, i) => (
+                  <div key={phase.id} className="rounded-lg border border-bg-muted bg-bg p-3">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-100 text-[10px] font-bold text-primary-700">{i + 1}</span>
+                      <p className="text-sm font-semibold text-text">{phase.title}</p>
+                      <span className="text-xs text-text-muted">{phase.duration_days}d · DOK {phase.dok_level}</span>
+                    </div>
+                    {phase.description && <p className="mt-1 text-xs text-text-muted">{phase.description}</p>}
+                    {phase.activities.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {phase.activities.map((a) => (
+                          <span key={a.id} className="rounded bg-bg-muted px-1.5 py-0.5 text-[10px] text-text-muted">{a.title}</span>
+                        ))}
+                      </div>
                     )}
-                  >
-                    <Tag className="h-2.5 w-2.5" />
-                    {skill.name}
-                  </button>
+                  </div>
                 ))}
               </div>
             </div>
           )}
-        </div>
 
-        <div className="border-t border-bg-muted px-5 py-3 flex gap-2">
-          <button
-            onClick={onClose}
-            className="flex-1 rounded-lg bg-bg-muted px-4 py-2.5 text-sm font-medium text-text-muted transition-colors hover:bg-bg-muted/80"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving || !title.trim() || selectedCompetencies.size === 0}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-            Save Template
-          </button>
+          {/* Final Product */}
+          {template.final_product?.description && (
+            <div>
+              <p className="text-xs font-semibold text-text-light mb-1">Final Product</p>
+              <p className="text-sm text-text-muted">{template.final_product.description}</p>
+              {template.final_product.audience && (
+                <p className="mt-1 text-xs text-text-muted">Audience: {template.final_product.audience}</p>
+              )}
+            </div>
+          )}
+
+          {/* Differentiation */}
+          {template.differentiation && (template.differentiation.extending || template.differentiation.supporting) && (
+            <div>
+              <p className="text-xs font-semibold text-text-light mb-1">Differentiation</p>
+              {template.differentiation.extending && <p className="text-xs text-text-muted"><strong>Extending:</strong> {template.differentiation.extending}</p>}
+              {template.differentiation.supporting && <p className="text-xs text-text-muted"><strong>Supporting:</strong> {template.differentiation.supporting}</p>}
+            </div>
+          )}
+
+          {/* Meta */}
+          <div className="flex items-center gap-3 text-xs text-text-muted pt-2 border-t border-bg-muted">
+            <span>{getAttributionText(template)}</span>
+            <span>v{template.version}</span>
+            <span>{template.competency_ids.length} competencies</span>
+            <span>{template.skill_ids.length} skills</span>
+          </div>
         </div>
       </div>
     </div>
@@ -277,16 +206,24 @@ function TemplateEditModal({
 // ============================================================
 
 export default function AssignmentLibrarySection() {
-  const { profile } = useAuth()
+  const { profile, isSystemAdmin } = useAuth()
+  const isAllSchoolsView = useIsAllSchoolsView()
   const { toast } = useToast()
 
   const [templates, setTemplates] = useState<TemplateWithCreator[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [deleting, setDeleting] = useState<string | null>(null)
-  const [showCreate, setShowCreate] = useState(false)
-  const [competencyTree, setCompetencyTree] = useState<CompetencyTreeNode[]>([])
-  const [allSkills, setAllSkills] = useState<SkillWithCompetencies[]>([])
+  const [showBuilder, setShowBuilder] = useState(false)
+  const [editTemplate, setEditTemplate] = useState<AssignmentTemplate | null>(null)
+  const [viewTemplate, setViewTemplate] = useState<TemplateWithCreator | null>(null)
+
+  // Filters
+  const [showFilters, setShowFilters] = useState(false)
+  const [filterGrade, setFilterGrade] = useState<GradeBand | ''>('')
+  const [filterSubject, setFilterSubject] = useState('')
+  const [filterDok, setFilterDok] = useState<DOKLevel | ''>('')
+  const [filterStatus, setFilterStatus] = useState<TemplateStatus | ''>('')
 
   // Template to use for creating an assignment
   const [useTemplate, setUseTemplate] = useState<AssignmentTemplate | null>(null)
@@ -295,20 +232,22 @@ export default function AssignmentLibrarySection() {
     if (!profile?.school_id) return
     setLoading(true)
     try {
-      const [tmpl, tree, skills] = await Promise.all([
-        fetchTemplates(profile.school_id, search ? { search } : undefined),
-        fetchCompetencyTree(profile.school_id),
-        fetchSkills(profile.school_id),
-      ])
-      setTemplates(tmpl)
-      setCompetencyTree(tree)
-      setAllSkills(skills)
+      const filters: TemplateFilters = {}
+      if (search) filters.search = search
+      if (filterGrade) filters.gradeBand = filterGrade
+      if (filterSubject) filters.subjectArea = filterSubject
+      if (filterDok) filters.dokLevel = filterDok
+      if (filterStatus) filters.status = filterStatus
+
+      const tmpl = await fetchTemplates(profile.school_id, filters)
+      // System admin "All Schools" view: show only global templates
+      setTemplates(isAllSchoolsView ? tmpl.filter(t => t.is_global) : tmpl)
     } catch {
       toast('Failed to load library', 'error')
     } finally {
       setLoading(false)
     }
-  }, [profile?.school_id, search, toast])
+  }, [profile?.school_id, isAllSchoolsView, search, filterGrade, filterSubject, filterDok, filterStatus, toast])
 
   useEffect(() => {
     loadData()
@@ -328,30 +267,130 @@ export default function AssignmentLibrarySection() {
     }
   }
 
+  async function handleDuplicate(t: TemplateWithCreator) {
+    if (!profile) return
+    try {
+      await duplicateTemplate(t.id, profile.school_id, profile.id)
+      toast('Template duplicated', 'success')
+      loadData()
+    } catch {
+      toast('Failed to duplicate', 'error')
+    }
+  }
+
+  async function handleArchive(t: TemplateWithCreator) {
+    try {
+      await archiveTemplate(t.id)
+      toast('Template archived', 'success')
+      loadData()
+    } catch {
+      toast('Failed to archive', 'error')
+    }
+  }
+
   const isStaff = profile?.role === 'educator' || profile?.role === 'admin'
+  const hasActiveFilters = filterGrade || filterSubject || filterDok || filterStatus
 
   return (
     <>
-      {/* Search + Add button */}
-      <div className="mb-4 flex items-center gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search templates..."
-            className="w-full rounded-lg border border-bg-muted bg-bg py-2 pl-9 pr-3 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
-          />
-        </div>
-        {isStaff && (
+      {/* Search + Filter + Add */}
+      <div className="mb-4 space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search templates..."
+              className="w-full rounded-lg border border-bg-muted bg-bg py-2 pl-9 pr-3 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+            />
+          </div>
           <button
-            onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-600"
+            onClick={() => setShowFilters(!showFilters)}
+            className={clsx(
+              'flex items-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors',
+              hasActiveFilters
+                ? 'border-primary-400 bg-primary-50 text-primary-700'
+                : 'border-bg-muted bg-bg text-text-muted hover:bg-bg-muted'
+            )}
           >
-            <Plus className="h-4 w-4" />
-            Add to Library
+            <Filter className="h-4 w-4" />
+            Filters
+            {hasActiveFilters && (
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary-500 text-[10px] text-white">
+                {[filterGrade, filterSubject, filterDok, filterStatus].filter(Boolean).length}
+              </span>
+            )}
           </button>
+          {(isStaff || isSystemAdmin) && (
+            <button
+              onClick={() => { setEditTemplate(null); setShowBuilder(true) }}
+              className="flex items-center gap-2 rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-600"
+            >
+              <Plus className="h-4 w-4" />
+              {isAllSchoolsView ? 'New Global Template' : 'New Template'}
+            </button>
+          )}
+        </div>
+
+        {/* Filter bar */}
+        {showFilters && (
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-bg-muted bg-bg p-3">
+            <select
+              value={filterGrade}
+              onChange={(e) => setFilterGrade(e.target.value as GradeBand | '')}
+              className="rounded-lg border border-bg-muted bg-bg-card px-2.5 py-1.5 text-xs text-text"
+            >
+              <option value="">All grades</option>
+              {Object.entries(GRADE_BAND_LABELS).map(([k, v]) => (
+                <option key={k} value={k}>{v}</option>
+              ))}
+            </select>
+
+            <select
+              value={filterSubject}
+              onChange={(e) => setFilterSubject(e.target.value)}
+              className="rounded-lg border border-bg-muted bg-bg-card px-2.5 py-1.5 text-xs text-text"
+            >
+              <option value="">All subjects</option>
+              {['Math', 'Science', 'ELA', 'Social Studies', 'Art', 'Music', 'PE', 'Technology', 'Interdisciplinary'].map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+
+            <select
+              value={filterDok}
+              onChange={(e) => setFilterDok(e.target.value ? Number(e.target.value) as DOKLevel : '')}
+              className="rounded-lg border border-bg-muted bg-bg-card px-2.5 py-1.5 text-xs text-text"
+            >
+              <option value="">All DOK</option>
+              <option value="1">DOK 1</option>
+              <option value="2">DOK 2</option>
+              <option value="3">DOK 3</option>
+              <option value="4">DOK 4</option>
+            </select>
+
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value as TemplateStatus | '')}
+              className="rounded-lg border border-bg-muted bg-bg-card px-2.5 py-1.5 text-xs text-text"
+            >
+              <option value="">All statuses</option>
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+              <option value="archived">Archived</option>
+            </select>
+
+            {hasActiveFilters && (
+              <button
+                onClick={() => { setFilterGrade(''); setFilterSubject(''); setFilterDok(''); setFilterStatus('') }}
+                className="text-xs text-primary-600 hover:text-primary-700"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -370,105 +409,176 @@ export default function AssignmentLibrarySection() {
           </div>
           <div>
             <p className="text-sm font-semibold text-text">
-              {search ? 'No matching templates' : 'No templates in the library yet'}
+              {search || hasActiveFilters ? 'No matching templates' : 'No templates in the library yet'}
             </p>
             <p className="mt-1 text-sm text-text-muted">
-              {search
-                ? 'Try a different search term.'
-                : 'Save assignment templates here so you and your team can reuse them.'}
+              {search || hasActiveFilters
+                ? 'Try adjusting your filters or search term.'
+                : 'Create a PBL project template to get started.'}
             </p>
           </div>
-          {!search && isStaff && (
+          {!search && !hasActiveFilters && isStaff && (
             <button
-              onClick={() => setShowCreate(true)}
+              onClick={() => { setEditTemplate(null); setShowBuilder(true) }}
               className="flex items-center gap-2 rounded-xl bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-600"
             >
               <Plus className="h-4 w-4" />
-              Add to Library
+              New Template
             </button>
           )}
         </div>
       )}
 
-      {/* Template list */}
+      {/* Template cards */}
       {!loading && templates.length > 0 && (
         <div className="space-y-3">
           {templates.map((t) => (
             <div
               key={t.id}
-              className="flex items-center gap-4 rounded-xl border border-bg-muted bg-bg-card px-4 py-4 transition-colors hover:border-primary-200"
+              className="rounded-xl border border-bg-muted bg-bg-card px-4 py-4 transition-colors hover:border-primary-200"
             >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary-50">
-                <FileText className="h-5 w-5 text-primary-500" />
-              </div>
+              <div className="flex items-start gap-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary-50">
+                  <FileText className="h-5 w-5 text-primary-500" />
+                </div>
 
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold text-text truncate">{t.title}</p>
-                  <span
-                    className={clsx(
-                      'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium',
-                      t.assignment_type === 'class'
-                        ? 'bg-primary-50 text-primary-700'
-                        : 'bg-accent-50 text-accent-700'
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-semibold text-text truncate">{t.title}</p>
+                    {t.is_global && (
+                      <span className="shrink-0 flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700">
+                        <Globe className="h-3 w-3" />
+                        System
+                      </span>
                     )}
-                  >
-                    {t.assignment_type === 'class' ? 'Class' : 'Individual'}
-                  </span>
-                </div>
-                {t.description && (
-                  <p className="mt-0.5 text-xs text-text-muted line-clamp-1">{t.description}</p>
-                )}
-                <div className="mt-1 flex items-center gap-3 text-xs text-text-muted">
-                  <span className="flex items-center gap-1">
-                    <BookOpen className="h-3 w-3" />
-                    {t.competency_ids.length} competenc{t.competency_ids.length !== 1 ? 'ies' : 'y'}
-                  </span>
-                  {t.skill_ids.length > 0 && (
-                    <span className="flex items-center gap-1">
-                      <Tag className="h-3 w-3" />
-                      {t.skill_ids.length} skill{t.skill_ids.length !== 1 ? 's' : ''}
+                    <span className={clsx('shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium capitalize', STATUS_STYLES[t.status])}>
+                      {t.status}
                     </span>
-                  )}
-                  <span>by {t.creator_name}</span>
-                </div>
-              </div>
+                    <span className="shrink-0 rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-medium text-primary-700">
+                      {GRADE_BAND_LABELS[t.grade_band]}
+                    </span>
+                    <span className={clsx('shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium', DOK_COLORS[t.dok_level])}>
+                      DOK {t.dok_level}
+                    </span>
+                  </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setUseTemplate(t)}
-                  className="flex items-center gap-1.5 rounded-lg bg-primary-500 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-primary-600"
-                >
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Use
-                </button>
-                {(t.created_by === profile?.id || profile?.role === 'admin') && (
+                  {/* Subject chips */}
+                  {t.subject_area.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {t.subject_area.map((s) => (
+                        <span key={s} className="rounded bg-bg-muted px-1.5 py-0.5 text-[10px] text-text-muted">{s}</span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Driving question */}
+                  {t.driving_question && (
+                    <p className="mt-1 text-xs text-text-muted italic line-clamp-1">"{t.driving_question}"</p>
+                  )}
+
+                  <div className="mt-1.5 flex items-center gap-3 text-xs text-text-muted">
+                    {t.phases.length > 0 && (
+                      <span className="flex items-center gap-1">
+                        <BarChart3 className="h-3 w-3" />
+                        {t.phases.length} phase{t.phases.length !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {t.estimated_duration_days && (
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {t.estimated_duration_days}d
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1">
+                      <BookOpen className="h-3 w-3" />
+                      {t.competency_ids.length} competenc{t.competency_ids.length !== 1 ? 'ies' : 'y'}
+                    </span>
+                    {t.skill_ids.length > 0 && (
+                      <span className="flex items-center gap-1">
+                        <Tag className="h-3 w-3" />
+                        {t.skill_ids.length} skill{t.skill_ids.length !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    <span>{getAttributionText(t)}</span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex shrink-0 items-center gap-1.5">
                   <button
-                    onClick={() => handleDelete(t)}
-                    disabled={deleting === t.id}
-                    className="rounded-lg p-2 text-text-light transition-colors hover:bg-alert-50 hover:text-alert-600 disabled:opacity-50"
+                    onClick={() => setViewTemplate(t)}
+                    title="View"
+                    className="rounded-lg p-2 text-text-light transition-colors hover:bg-bg-muted hover:text-text"
                   >
-                    {deleting === t.id
-                      ? <Loader2 className="h-4 w-4 animate-spin" />
-                      : <Trash2 className="h-4 w-4" />}
+                    <Eye className="h-4 w-4" />
                   </button>
-                )}
+                  {(isStaff || isSystemAdmin) && (
+                    <>
+                      {(!t.is_global || isSystemAdmin) && (
+                        <button
+                          onClick={() => { setEditTemplate(t); setShowBuilder(true) }}
+                          title="Edit"
+                          className="rounded-lg p-2 text-text-light transition-colors hover:bg-bg-muted hover:text-text"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDuplicate(t)}
+                        title="Duplicate"
+                        className="rounded-lg p-2 text-text-light transition-colors hover:bg-bg-muted hover:text-text"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </button>
+                      {(!t.is_global || isSystemAdmin) && t.status !== 'archived' && (
+                        <button
+                          onClick={() => handleArchive(t)}
+                          title="Archive"
+                          className="rounded-lg p-2 text-text-light transition-colors hover:bg-amber-50 hover:text-amber-600"
+                        >
+                          <Archive className="h-4 w-4" />
+                        </button>
+                      )}
+                    </>
+                  )}
+                  <button
+                    onClick={() => setUseTemplate(t)}
+                    className="flex items-center gap-1.5 rounded-lg bg-primary-500 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-primary-600"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Use
+                  </button>
+                  {(t.created_by === profile?.id || profile?.role === 'admin' || isSystemAdmin) && (!t.is_global || isSystemAdmin) && (
+                    <button
+                      onClick={() => handleDelete(t)}
+                      disabled={deleting === t.id}
+                      className="rounded-lg p-2 text-text-light transition-colors hover:bg-alert-50 hover:text-alert-600 disabled:opacity-50"
+                    >
+                      {deleting === t.id
+                        ? <Loader2 className="h-4 w-4 animate-spin" />
+                        : <Trash2 className="h-4 w-4" />}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Create template modal */}
-      {profile && (
-        <TemplateEditModal
-          open={showCreate}
-          onClose={() => setShowCreate(false)}
-          onSaved={loadData}
-          schoolId={profile.school_id}
-          createdBy={profile.id}
-          competencyTree={competencyTree}
-          allSkills={allSkills}
+      {/* Template Builder */}
+      <TemplateBuilder
+        open={showBuilder}
+        onClose={() => { setShowBuilder(false); setEditTemplate(null) }}
+        onSaved={loadData}
+        template={editTemplate}
+      />
+
+      {/* Template detail view */}
+      {viewTemplate && (
+        <TemplateDetailView
+          template={viewTemplate}
+          onClose={() => setViewTemplate(null)}
         />
       )}
 
