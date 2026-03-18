@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
+import { notifyDepartmentLabelChanged } from '../lib/department-label'
 import { Link } from 'react-router-dom'
 import { clsx } from 'clsx'
 import {
@@ -373,6 +374,7 @@ export default function SchoolProfile() {
       assessment_philosophy: settings.assessment_philosophy ?? '',
       curriculum_framework: settings.curriculum_framework ?? '',
       standards_notes: settings.standards_notes ?? '',
+      department_label: settings.department_label,
     })
     setFormInitialized(true)
   }
@@ -506,6 +508,36 @@ export default function SchoolProfile() {
           </div>
         </div>
       </div>
+
+      {/* Organizational terminology */}
+      {canEditSchoolProfile && (
+        <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+          <h3 className="mb-1 text-sm font-semibold text-text">Organizational Terminology</h3>
+          <p className="mb-3 text-xs text-text-muted">
+            Choose how classrooms are grouped in your school. This label appears throughout the interface.
+          </p>
+          <div className="flex gap-3">
+            {(['Department', 'Location'] as const).map((option) => (
+              <button
+                key={option}
+                onClick={() => {
+                  handleFieldChange('department_label', option)
+                  updateSchoolContext({ ...formState, department_label: option })
+                  notifyDepartmentLabelChanged()
+                }}
+                className={clsx(
+                  'rounded-lg border px-4 py-2 text-sm font-medium transition-colors',
+                  (formState.department_label ?? 'Department') === option
+                    ? 'border-primary-500 bg-primary-50 text-primary-700'
+                    : 'border-bg-muted text-text-muted hover:border-primary-200 hover:bg-bg-muted'
+                )}
+              >
+                {option}s
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Section 1: School Identity */}
       {isSectionVisible('school_identity') && (

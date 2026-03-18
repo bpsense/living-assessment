@@ -18,8 +18,11 @@ import SISSection from '../components/student/SISSection'
 import SISEditModal from '../components/student/SISEditModal'
 import TeacherNotes from '../components/student/TeacherNotes'
 import ParentNotes from '../components/student/ParentNotes'
-import StudentContextDoc from '../components/student/StudentContextDoc'
 import StudentIncidents from '../components/student/StudentIncidents'
+import LearnerMessagesSection from '../components/student/LearnerMessagesSection'
+import StudentContextDoc from '../components/student/StudentContextDoc'
+import StudentClassroomsManager from '../components/student/StudentClassroomsManager'
+import StudentSkillsSection from '../components/skills/StudentSkillsSection'
 
 // ============================================================
 // Student avatar with fallback initials
@@ -56,7 +59,7 @@ function StudentAvatar({
 export default function StudentProfile() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  useAuth()
+  const { profile } = useAuth()
   const { role, formatStudentName } = useAccessControl()
   const { toast } = useToast()
   const [launchingSurvey, setLaunchingSurvey] = useState(false)
@@ -66,12 +69,14 @@ export default function StudentProfile() {
   const {
     student,
     classroom,
+    classrooms,
     dimensions,
     dimensionScores,
     timeline,
     observations,
     surveys,
     observers,
+    competencyData,
     loading,
     error,
     refetch,
@@ -99,8 +104,8 @@ export default function StudentProfile() {
   // gradually toward each change rather than jumping in a single step.
   // (Experiment — remove smoothSnapshots() wrapper to revert to raw steps)
   const snapshots = useMemo(
-    () => smoothSnapshots(buildSnapshots(observations, surveys, visibleDimensions)),
-    [observations, surveys, visibleDimensions]
+    () => smoothSnapshots(buildSnapshots(observations, surveys, visibleDimensions, competencyData)),
+    [observations, surveys, visibleDimensions, competencyData]
   )
 
   // Initialize snapshotIdx to latest when snapshots become available
@@ -257,7 +262,9 @@ export default function StudentProfile() {
                   {formatStudentName(student.first_name, student.last_name)}
                 </h1>
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-muted">
-                  {classroom && <span>{classroom.name}</span>}
+                  {classrooms.length > 0
+                    ? <span>{classrooms.map((c) => c.name).join(', ')}</span>
+                    : classroom && <span>{classroom.name}</span>}
                   {student.grade_level && <span>Grade {student.grade_level}</span>}
                   {age !== null && <span>Age {age}</span>}
                 </div>
@@ -360,9 +367,31 @@ export default function StudentProfile() {
         </div>
       </section>
 
+      {/* ========== CLASSROOM ENROLLMENTS (educator/admin only) ========== */}
+      {!isFamilyView && (
+        <section className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+          <StudentClassroomsManager
+            studentId={student.id}
+            schoolId={student.school_id}
+            classrooms={classrooms}
+            onChanged={refetch}
+          />
+        </section>
+      )}
+
       {/* ========== SIS INFORMATION (educator/admin only) ========== */}
       {!isFamilyView && (
         <SISSection student={student} onEdit={() => setShowSISEdit(true)} role={role} onRefetch={refetch} />
+      )}
+
+      {/* ========== SKILLS (educator/admin only) ========== */}
+      {!isFamilyView && (
+        <section>
+          <StudentSkillsSection
+            studentId={student.id}
+            studentGrade={student.grade_level}
+          />
+        </section>
       )}
 
       {/* ========== TEACHER NOTES (educator/admin only) ========== */}
@@ -398,6 +427,15 @@ export default function StudentProfile() {
             mode="family"
           />
         </section>
+      )}
+
+      {/* ========== LEARNER MESSAGES (family view) ========== */}
+      {isFamilyView && student && profile && (
+        <LearnerMessagesSection
+          studentId={student.id}
+          parentId={profile.id}
+          childName={student.first_name}
+        />
       )}
 
       {/* SIS Edit Modal */}

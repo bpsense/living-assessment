@@ -317,15 +317,25 @@ export function useEducatorProfile(educatorId: string | undefined): EducatorProf
         let studentMap = new Map<string, { name: string; classroom_id: string }>()
 
         if (studentIds.length > 0) {
-          const { data: studentsData } = await supabase
-            .from('students')
-            .select('id, first_name, last_name, classroom_id')
-            .in('id', studentIds)
+          const [studentsDataRes, scDataRes] = await Promise.all([
+            supabase
+              .from('students')
+              .select('id, first_name, last_name, classroom_id')
+              .in('id', studentIds),
+            supabase
+              .from('student_classrooms')
+              .select('student_id, classroom_id')
+              .in('student_id', studentIds)
+              .eq('is_primary', true),
+          ])
 
-          for (const s of (studentsData ?? []) as Pick<Student, 'id' | 'first_name' | 'last_name' | 'classroom_id'>[]) {
+          for (const s of ((studentsDataRes.data ?? []) as Pick<Student, 'id' | 'first_name' | 'last_name' | 'classroom_id'>[])) {
+            // Use primary classroom from junction table if available, fall back to students.classroom_id
+            const primarySc = ((scDataRes.data ?? []) as { student_id: string; classroom_id: string }[])
+              .find((sc) => sc.student_id === s.id)
             studentMap.set(s.id, {
               name: `${s.first_name} ${s.last_name}`,
-              classroom_id: s.classroom_id,
+              classroom_id: primarySc?.classroom_id ?? s.classroom_id,
             })
           }
         }

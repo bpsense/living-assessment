@@ -17,23 +17,26 @@ import {
   User,
   LogOut,
   GraduationCap,
-  Plus,
   Eye,
   MapPin,
   ChevronDown,
   X,
+  ClipboardList,
+  MessageCircle,
+  Target,
   AlertTriangle,
   ShieldAlert,
-  ClipboardList,
 } from 'lucide-react'
 import type { UserRole } from '../types/database'
 import QuickObserveModal from './QuickObserveModal'
+import CreateAssignmentModal from './assignment/CreateAssignmentModal'
 import IncidentReportModal from './incident/IncidentReportModal'
 import SpeedDial from './SpeedDial'
 import SchoolSwitcher from './SchoolSwitcher'
+import NotificationBell from './incident/NotificationBell'
 import { useEducatorList } from '../lib/educator-data'
 import { useFamilyList } from '../lib/family-data'
-import NotificationBell from './incident/NotificationBell'
+import { useDepartmentLabel } from '../lib/department-label'
 
 interface NavItem {
   to: string
@@ -45,28 +48,34 @@ function getNavItems(
   role: UserRole,
   isSystemAdmin: boolean,
   isAllSchoolsView: boolean,
-  isDepartmentAdmin: boolean
+  isDepartmentAdmin: boolean,
+  deptLabel: { singular: string; plural: string }
 ): NavItem[] {
   // System admin viewing "All Schools" gets the system nav
   if (isSystemAdmin && isAllSchoolsView) {
     return [
       { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
       { to: '/system/schools', label: 'Schools', icon: <Building2 className="h-5 w-5" /> },
+      { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
     ]
   }
 
-  // System admin viewing a specific school gets school admin nav + system nav
+  // System admin viewing a specific school gets school admin nav + Users
   if (isSystemAdmin) {
     return [
       { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
       { to: '/classrooms', label: 'Classrooms', icon: <School className="h-5 w-5" /> },
+      { to: '/assignments', label: 'Assignments', icon: <ClipboardList className="h-5 w-5" /> },
+      { to: '/messages', label: 'Messages', icon: <MessageCircle className="h-5 w-5" /> },
       { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
       { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
       { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
       { to: '/admin/incidents', label: 'Incidents', icon: <ShieldAlert className="h-5 w-5" /> },
-      { to: '/admin/departments', label: 'Departments', icon: <MapPin className="h-5 w-5" /> },
+      { to: '/admin/departments', label: deptLabel.plural, icon: <MapPin className="h-5 w-5" /> },
       { to: '/admin/dimensions', label: 'Dimensions', icon: <Layers className="h-5 w-5" /> },
       { to: '/standards', label: 'Standards', icon: <BookOpen className="h-5 w-5" /> },
+      { to: '/admin/skill-library', label: 'Skill Library', icon: <Target className="h-5 w-5" /> },
+      { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
       { to: '/settings', label: 'School Profile', icon: <Building2 className="h-5 w-5" /> },
     ]
   }
@@ -76,14 +85,18 @@ function getNavItems(
       const items: NavItem[] = [
         { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
         { to: '/classrooms', label: 'My Classrooms', icon: <School className="h-5 w-5" /> },
+        { to: '/assignments', label: 'Assignments', icon: <ClipboardList className="h-5 w-5" /> },
+        { to: '/messages', label: 'Messages', icon: <MessageCircle className="h-5 w-5" /> },
         { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
         { to: '/observe', label: 'Quick Observe', icon: <PlusCircle className="h-5 w-5" /> },
       ]
       // Department admins get extra nav items
       if (isDepartmentAdmin) {
         items.push(
-          { to: '/department', label: 'Department', icon: <MapPin className="h-5 w-5" /> },
+          { to: '/department', label: deptLabel.singular, icon: <MapPin className="h-5 w-5" /> },
+          { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
           { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
+          { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
         )
       }
       items.push(
@@ -96,22 +109,33 @@ function getNavItems(
       return [
         { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
         { to: '/classrooms', label: 'Classrooms', icon: <School className="h-5 w-5" /> },
+        { to: '/assignments', label: 'Assignments', icon: <ClipboardList className="h-5 w-5" /> },
+        { to: '/messages', label: 'Messages', icon: <MessageCircle className="h-5 w-5" /> },
         { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
         { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
         { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
         { to: '/admin/incidents', label: 'Incidents', icon: <ShieldAlert className="h-5 w-5" /> },
-        { to: '/admin/departments', label: 'Departments', icon: <MapPin className="h-5 w-5" /> },
+        { to: '/admin/departments', label: deptLabel.plural, icon: <MapPin className="h-5 w-5" /> },
         { to: '/admin/dimensions', label: 'Dimensions', icon: <Layers className="h-5 w-5" /> },
         { to: '/standards', label: 'Standards', icon: <BookOpen className="h-5 w-5" /> },
+        { to: '/admin/skill-library', label: 'Skill Library', icon: <Target className="h-5 w-5" /> },
+        { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
         { to: '/settings', label: 'School Profile', icon: <Building2 className="h-5 w-5" /> },
       ]
     case 'parent':
       return [
         { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+        { to: '/messages', label: 'Messages', icon: <MessageCircle className="h-5 w-5" /> },
         { to: '/students', label: 'My Children', icon: <Users className="h-5 w-5" /> },
         { to: '/classrooms', label: 'Classrooms', icon: <School className="h-5 w-5" /> },
         { to: '/settings', label: 'School Info', icon: <Building2 className="h-5 w-5" /> },
         { to: '/profile', label: 'Profile', icon: <User className="h-5 w-5" /> },
+      ]
+    case 'learner':
+      return [
+        { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+        { to: '/messages', label: 'Messages', icon: <MessageCircle className="h-5 w-5" /> },
+        { to: '/learner/profile', label: 'My Profile', icon: <User className="h-5 w-5" /> },
       ]
     default:
       return [
@@ -124,6 +148,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
   admin: 'Admin',
   educator: 'Educator',
   parent: 'Family',
+  learner: 'Learner',
 }
 
 /** Which roles can the current user's actual role switch to? */
@@ -141,9 +166,10 @@ function getSwitchableRoles(actualRole: UserRole): UserRole[] {
 
 export default function Layout() {
   const { profile, actualRole, signOut, viewAsRole, setViewAs, viewAsUserId, viewAsUserName, isSystemAdmin, activeSchoolId } = useAuth()
-  const { isDepartmentAdmin } = useAccessControl()
+  const { isDepartmentAdmin, accessLevel } = useAccessControl()
   const navigate = useNavigate()
   const [quickObserveOpen, setQuickObserveOpen] = useState(false)
+  const [showCreateAssignment, setShowCreateAssignment] = useState(false)
   const [incidentReportOpen, setIncidentReportOpen] = useState(false)
   const [schoolName, setSchoolName] = useState<string>('')
   const [openDropdown, setOpenDropdown] = useState<UserRole | null>(null)
@@ -184,8 +210,9 @@ export default function Layout() {
       })
   }, [profile?.school_id, isSystemAdmin, activeSchoolId])
 
+  const deptLabel = useDepartmentLabel()
   const role = profile?.role ?? 'educator'
-  const navItems = getNavItems(role, isSystemAdmin, isAllSchoolsView, isDepartmentAdmin)
+  const navItems = getNavItems(role, isSystemAdmin, isAllSchoolsView, isDepartmentAdmin, deptLabel)
   // Hide FAB when impersonating (read-only context) or in All Schools view
   const showFab = (role === 'educator' || role === 'admin' || isSystemAdmin) && !isAllSchoolsView && !viewAsUserId
   // System admins can switch roles when viewing a specific school, but not in the "All Schools" view
@@ -196,7 +223,11 @@ export default function Layout() {
     navigate('/login')
   }
 
-  const roleLabel = isSystemAdmin ? 'System Admin' : ROLE_LABELS[role]
+  const roleLabel = isSystemAdmin
+    ? 'System Admin'
+    : isDepartmentAdmin
+      ? 'Dept Admin'
+      : ROLE_LABELS[role]
 
   return (
     <div className="flex min-h-screen bg-bg">
@@ -286,7 +317,7 @@ export default function Layout() {
             <span className="rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700">
               {roleLabel}
             </span>
-            {profile && (role === 'educator' || role === 'admin' || isSystemAdmin) && (
+            {profile && accessLevel >= 3 && (
               <NotificationBell profileId={profile.id} />
             )}
             <button
@@ -300,7 +331,7 @@ export default function Layout() {
 
           {/* Mobile: notifications + sign out */}
           <div className="flex items-center gap-1 md:hidden">
-            {profile && (role === 'educator' || role === 'admin' || isSystemAdmin) && (
+            {profile && accessLevel >= 3 && (
               <NotificationBell profileId={profile.id} />
             )}
             <button
@@ -500,7 +531,7 @@ export default function Layout() {
         ))}
       </nav>
 
-      {/* ============ Speed Dial FAB ============ */}
+      {/* ============ Floating Action Button (SpeedDial) ============ */}
       {showFab && (
         <SpeedDial
           actions={[
@@ -509,6 +540,12 @@ export default function Layout() {
               label: 'Quick Observation',
               onClick: () => setQuickObserveOpen(true),
               color: 'bg-accent-500 hover:bg-accent-600',
+            },
+            {
+              icon: <ClipboardList className="h-4 w-4" />,
+              label: 'New Assignment',
+              onClick: () => setShowCreateAssignment(true),
+              color: 'bg-primary-500 hover:bg-primary-600',
             },
             {
               icon: <AlertTriangle className="h-4 w-4" />,
@@ -524,6 +561,13 @@ export default function Layout() {
       <QuickObserveModal
         open={quickObserveOpen}
         onClose={() => setQuickObserveOpen(false)}
+      />
+
+      {/* ============ Create Assignment Modal (from FAB) ============ */}
+      <CreateAssignmentModal
+        open={showCreateAssignment}
+        onClose={() => setShowCreateAssignment(false)}
+        onCreated={() => setShowCreateAssignment(false)}
       />
 
       {/* ============ Incident Report Modal ============ */}

@@ -1,11 +1,17 @@
 /**
  * standards-data.ts
  * Data hook for admin standards management — view, upload, delete frameworks.
+ * Supports both school-specific and global ("All Schools") mode.
  */
 
 import { useState, useCallback, useEffect } from 'react'
 import { supabase } from './supabase'
-import type { StandardsFramework, Standard } from '../types/database'
+import type {
+  StandardsFramework,
+  Standard,
+  GlobalStandardsFramework,
+  GlobalStandard,
+} from '../types/database'
 import type { StandardsFrameworkWithStandards } from './school-data'
 
 // ============================================================
@@ -101,7 +107,7 @@ export function countStandards(nodes: StandardUploadNode[]): number {
   )
 }
 
-/** Flatten nested tree into flat rows for DB insert */
+/** Flatten nested tree into flat rows for school-level DB insert */
 function flattenStandards(
   nodes: StandardUploadNode[],
   frameworkId: string,
@@ -150,12 +156,58 @@ function flattenStandards(
   return result
 }
 
+/** Flatten nested tree into flat rows for global DB insert (no school_id) */
+function flattenGlobalStandards(
+  nodes: StandardUploadNode[],
+  frameworkId: string,
+  parentId: string | null
+): {
+  id: string
+  framework_id: string
+  code: string
+  description: string
+  grade_level: string | null
+  parent_id: string | null
+  display_order: number
+}[] {
+  const result: ReturnType<typeof flattenGlobalStandards> = []
+
+  for (const node of nodes) {
+    const id = crypto.randomUUID()
+    result.push({
+      id,
+      framework_id: frameworkId,
+      code: node.code,
+      description: node.description,
+      grade_level: node.grade_level ?? null,
+      parent_id: parentId,
+      display_order: node.display_order ?? 0,
+    })
+    if (node.children && node.children.length > 0) {
+      result.push(
+        ...flattenGlobalStandards(node.children, frameworkId, id)
+      )
+    }
+  }
+
+  return result
+}
+
+// ============================================================
+// Global framework type with standards (mirrors school-level)
+// ============================================================
+
+export interface GlobalFrameworkWithStandards extends GlobalStandardsFramework {
+  standards: GlobalStandard[]
+}
+
 // ============================================================
 // Hook state
 // ============================================================
 
 interface StandardsManagerState {
   frameworks: StandardsFrameworkWithStandards[]
+  globalFrameworks: GlobalFrameworkWithStandards[]
   loading: boolean
   error: string | null
 }
@@ -163,10 +215,14 @@ interface StandardsManagerState {
 export interface UseStandardsManagerReturn extends StandardsManagerState {
   /** Reload frameworks + standards from the database */
   reload: () => Promise<void>
-  /** Upload a new framework from a JSON payload */
+  /** Upload a new framework from a JSON payload (school-specific) */
   uploadFramework: (payload: StandardsUploadPayload) => Promise<string>
   /** Delete a framework by id (cascade deletes standards + dimension_standards) */
   deleteFramework: (frameworkId: string) => Promise<void>
+  /** Upload a global framework and distribute to all schools */
+  uploadGlobalFramework: (payload: StandardsUploadPayload) => Promise<string>
+  /** Delete a global framework template (does NOT remove school copies) */
+  deleteGlobalFramework: (globalFrameworkId: string) => Promise<void>
 }
 
 // ============================================================
@@ -178,6 +234,7 @@ export function useStandardsManager(
 ): UseStandardsManagerReturn {
   const [state, setState] = useState<StandardsManagerState>({
     frameworks: [],
+    globalFrameworks: [],
     loading: true,
     error: null,
   })
@@ -190,7 +247,8 @@ export function useStandardsManager(
     setState((prev) => ({ ...prev, loading: true, error: null }))
 
     try {
-      const [fwRes, stdRes] = await Promise.all([
+      const [fwRes, stdRes, gfwRes, gstdRes] = await Promise.all([
+        // School-specific frameworks
         supabase
           .from('standards_frameworks')
           .select('*')
@@ -200,6 +258,15 @@ export function useStandardsManager(
           .from('standards')
           .select('*')
           .eq('school_id', schoolId)
+          .order('display_order'),
+        // Global frameworks
+        supabase
+          .from('global_standards_frameworks')
+          .select('*')
+          .order('name'),
+        supabase
+          .from('global_standards')
+          .select('*')
           .order('display_order'),
       ])
 
@@ -214,7 +281,16 @@ export function useStandardsManager(
         })
       )
 
-      setState({ frameworks, loading: false, error: null })
+      const allGlobalStandards = (gstdRes.data as GlobalStandard[]) ?? []
+      const rawGlobalFrameworks = (gfwRes.data as GlobalStandardsFramework[]) ?? []
+      const globalFrameworks: GlobalFrameworkWithStandards[] = rawGlobalFrameworks.map(
+        (gfw) => ({
+          ...gfw,
+          standards: allGlobalStandards.filter((s) => s.framework_id === gfw.id),
+        })
+      )
+
+      setState({ frameworks, globalFrameworks, loading: false, error: null })
     } catch (err) {
       setState((prev) => ({
         ...prev,
@@ -229,7 +305,7 @@ export function useStandardsManager(
     load()
   }, [load])
 
-  // ── Upload ──────────────────────────────────────────────
+  // ── Upload (school-specific) ─────────────────────────────
 
   const uploadFramework = useCallback(
     async (payload: StandardsUploadPayload): Promise<string> => {
@@ -280,7 +356,7 @@ export function useStandardsManager(
     [schoolId, load]
   )
 
-  // ── Delete ──────────────────────────────────────────────
+  // ── Delete (school-specific) ─────────────────────────────
 
   const deleteFramework = useCallback(
     async (frameworkId: string) => {
@@ -295,10 +371,86 @@ export function useStandardsManager(
     [load]
   )
 
+  // ── Upload (global — all schools) ────────────────────────
+
+  const uploadGlobalFramework = useCallback(
+    async (payload: StandardsUploadPayload): Promise<string> => {
+      // 1. Insert into global_standards_frameworks
+      const { data: gfw, error: gfwErr } = await supabase
+        .from('global_standards_frameworks')
+        .insert({
+          name: payload.framework.name.trim(),
+          description: payload.framework.description?.trim() || null,
+          version: payload.framework.version?.trim() || null,
+          created_by: (await supabase.auth.getUser()).data.user?.id ?? null,
+        })
+        .select('id')
+        .single()
+
+      if (gfwErr) throw new Error(gfwErr.message)
+      const globalFrameworkId = gfw.id as string
+
+      // 2. Flatten and insert into global_standards
+      if (payload.standards.length > 0) {
+        const inserts = flattenGlobalStandards(
+          payload.standards,
+          globalFrameworkId,
+          null
+        )
+
+        const { error: stdErr } = await supabase
+          .from('global_standards')
+          .insert(inserts)
+
+        if (stdErr) {
+          // Roll back global framework on failure
+          await supabase
+            .from('global_standards_frameworks')
+            .delete()
+            .eq('id', globalFrameworkId)
+          throw new Error(stdErr.message)
+        }
+      }
+
+      // 3. Distribute to all schools via SECURITY DEFINER function
+      const { error: distErr } = await supabase.rpc(
+        'distribute_global_framework',
+        { p_global_framework_id: globalFrameworkId }
+      )
+
+      if (distErr) {
+        console.error('Distribution failed (template saved):', distErr.message)
+        // Don't throw — the global template was saved; school copies may partially exist
+      }
+
+      // 4. Refresh
+      await load()
+      return globalFrameworkId
+    },
+    [load]
+  )
+
+  // ── Delete (global — template only, school copies unaffected) ──
+
+  const deleteGlobalFramework = useCallback(
+    async (globalFrameworkId: string) => {
+      const { error } = await supabase
+        .from('global_standards_frameworks')
+        .delete()
+        .eq('id', globalFrameworkId)
+
+      if (error) throw new Error(error.message)
+      await load()
+    },
+    [load]
+  )
+
   return {
     ...state,
     reload: load,
     uploadFramework,
     deleteFramework,
+    uploadGlobalFramework,
+    deleteGlobalFramework,
   }
 }

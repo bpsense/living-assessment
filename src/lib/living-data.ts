@@ -5,7 +5,8 @@
  */
 
 import type { Observation, InterestSurvey, Dimension } from '../types/database'
-import type { DimensionScore } from './student-data'
+import type { DimensionScore, CompetencyBasedData } from './student-data'
+import { computeCompetencyBasedScores } from './scoring'
 
 // ============================================================
 // Types
@@ -36,9 +37,15 @@ export interface Snapshot {
 export function buildSnapshots(
   observations: Observation[],
   surveys: InterestSurvey[],
-  dimensions: Dimension[]
+  dimensions: Dimension[],
+  competencyData?: CompetencyBasedData | null
 ): Snapshot[] {
   if (dimensions.length === 0) return []
+
+  const hasCompData =
+    competencyData &&
+    competencyData.competencyScores.length > 0 &&
+    competencyData.mappings.length > 0
 
   // Sort chronologically (oldest first)
   const sortedObs = [...observations].sort(
@@ -48,8 +55,15 @@ export function buildSnapshots(
     (a, b) => new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime()
   )
 
+  // Sort competency scores chronologically for time-based filtering
+  const sortedCompScores = hasCompData
+    ? [...competencyData.competencyScores].sort(
+        (a, b) => new Date(a.scored_at).getTime() - new Date(b.scored_at).getTime()
+      )
+    : []
+
   // Determine the start date: the earlier of 12 months ago or the first
-  // observation/survey. This ensures we always have a full year of months
+  // observation/survey/score. This ensures we always have a full year of months
   // to scrub through.
   const now = new Date()
   const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1)
@@ -57,6 +71,7 @@ export function buildSnapshots(
   const allDates = [
     ...sortedObs.map((o) => new Date(o.observed_at).getTime()),
     ...sortedSurveys.map((s) => new Date(s.submitted_at).getTime()),
+    ...sortedCompScores.map((s) => new Date(s.scored_at).getTime()),
   ]
   const earliestData = allDates.length > 0 ? Math.min(...allDates) : now.getTime()
   const startTime = Math.min(twelveMonthsAgo.getTime(), earliestData)
@@ -98,6 +113,29 @@ export function buildSnapshots(
     const obsUpToDate = sortedObs.filter(
       (o) => new Date(o.observed_at).getTime() <= cutoff
     )
+    // Only unlinked observations when we have competency data
+    const unlinkedObs = hasCompData
+      ? obsUpToDate.filter((o) => !o.assignment_id)
+      : obsUpToDate
+
+    // Competency scores up to this date
+    const compScoresUpToDate = hasCompData
+      ? sortedCompScores.filter(
+          (s) => new Date(s.scored_at).getTime() <= cutoff
+        )
+      : []
+
+    // Compute competency-based dimension scores for this snapshot
+    const compBasedMap =
+      hasCompData && compScoresUpToDate.length > 0
+        ? computeCompetencyBasedScores(
+            compScoresUpToDate,
+            competencyData.mappings,
+            competencyData.competencies,
+            dimensions,
+            competencyData.gradeLevel
+          )
+        : null
 
     // Latest survey up to this date
     const surveysUpToDate = sortedSurveys.filter(
@@ -118,35 +156,53 @@ export function buildSnapshots(
 
     // Compute scores per dimension
     const dimensionScores: DimensionScore[] = dimensions.map((dim) => {
-      // All observations for this dimension up to cutoff, newest first
-      const dimObs = obsUpToDate
+      // All observations for this dimension up to cutoff (for counts/latest), newest first
+      const allDimObs = obsUpToDate
         .filter((o) => o.dimension_id === dim.id)
         .sort(
           (a, b) =>
             new Date(b.observed_at).getTime() - new Date(a.observed_at).getTime()
         )
 
-      let competency: number
+      // Unlinked observations for observation-based scoring
+      const dimObs = unlinkedObs
+        .filter((o) => o.dimension_id === dim.id)
+        .sort(
+          (a, b) =>
+            new Date(b.observed_at).getTime() - new Date(a.observed_at).getTime()
+        )
+
+      let obsCompetency: number
       let currentMonthCount = 0
 
       if (isCurrentMonth) {
-        // Current month: average all observations IN this month
         const thisMonthObs = dimObs.filter(
           (o) => new Date(o.observed_at).getTime() >= monthStart
         )
         currentMonthCount = thisMonthObs.length
 
         if (thisMonthObs.length > 0) {
-          competency =
+          obsCompetency =
             thisMonthObs.reduce((sum, o) => sum + Number(o.rating), 0) /
             thisMonthObs.length
         } else {
-          // No observations this month — carry forward latest overall
-          competency = dimObs.length > 0 ? Number(dimObs[0].rating) : 0
+          obsCompetency = dimObs.length > 0 ? Number(dimObs[0].rating) : 0
         }
       } else {
-        // Past months: latest observation up to cutoff (unchanged)
-        competency = dimObs.length > 0 ? Number(dimObs[0].rating) : 0
+        obsCompetency = dimObs.length > 0 ? Number(dimObs[0].rating) : 0
+      }
+
+      // Blend observation + competency-based scores
+      const compBased = compBasedMap?.get(dim.id)
+      const hasCompScores = compBased && compBased.breakdown.length > 0
+
+      let competency: number
+      if (hasCompScores && obsCompetency > 0) {
+        competency = (compBased.score + obsCompetency) / 2
+      } else if (hasCompScores) {
+        competency = compBased.score
+      } else {
+        competency = obsCompetency
       }
 
       // Interest from latest survey
@@ -163,9 +219,10 @@ export function buildSnapshots(
         display_order: dim.display_order,
         competency,
         interest,
-        observation_count: dimObs.length,
+        observation_count: allDimObs.length,
         current_month_observation_count: currentMonthCount,
-        latest_observation: dimObs[0] ?? null,
+        latest_observation: allDimObs[0] ?? null,
+        competency_breakdown: hasCompScores ? compBased.breakdown : undefined,
       }
     })
 

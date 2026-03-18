@@ -11,7 +11,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { useAccessControl } from '../lib/access-control'
 import { useToast } from '../components/Toast'
-import type { Classroom, Student } from '../types/database'
+import type { Classroom } from '../types/database'
 
 // ============================================================
 // Types
@@ -66,12 +66,13 @@ export default function Classrooms() {
           return
         }
 
-        const { data: studentsData } = await supabase
-          .from('students')
+        // Get classrooms via junction table for parent's children
+        const { data: scData } = await supabase
+          .from('student_classrooms')
           .select('classroom_id')
-          .in('id', linkedStudentIds)
+          .in('student_id', linkedStudentIds)
 
-        const classIds = [...new Set((studentsData ?? []).map((s) => (s as { classroom_id: string }).classroom_id))]
+        const classIds = [...new Set((scData ?? []).map((s) => (s as { classroom_id: string }).classroom_id))]
 
         if (classIds.length === 0) {
           setClassrooms([])
@@ -135,12 +136,12 @@ export default function Classrooms() {
         return
       }
 
-      // Student counts + observation counts
+      // Student counts (via junction table) + observation counts
       const roomIds = rooms.map((r) => r.id)
-      const [studentsRes, obsRes] = await Promise.all([
+      const [scRes, obsRes] = await Promise.all([
         supabase
-          .from('students')
-          .select('id, classroom_id')
+          .from('student_classrooms')
+          .select('student_id, classroom_id')
           .in('classroom_id', roomIds),
         supabase
           .from('observations')
@@ -148,12 +149,12 @@ export default function Classrooms() {
           .eq('school_id', profile.school_id),
       ])
 
-      const students = (studentsRes.data ?? []) as Pick<Student, 'id' | 'classroom_id'>[]
+      const scRows = (scRes.data ?? []) as { student_id: string; classroom_id: string }[]
       const studentsByRoom = new Map<string, string[]>()
-      for (const s of students) {
-        const arr = studentsByRoom.get(s.classroom_id) ?? []
-        arr.push(s.id)
-        studentsByRoom.set(s.classroom_id, arr)
+      for (const sc of scRows) {
+        const arr = studentsByRoom.get(sc.classroom_id) ?? []
+        arr.push(sc.student_id)
+        studentsByRoom.set(sc.classroom_id, arr)
       }
 
       const observations = (obsRes.data ?? []) as { id: string; student_id: string }[]

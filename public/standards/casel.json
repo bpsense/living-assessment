@@ -1,0 +1,584 @@
+{
+  "framework": {
+    "name": "CASEL SEL Framework",
+    "version": "2020",
+    "source": "casel.org",
+    "developmental_applicability": "PreK through adulthood",
+    "competencies": [
+      "Self_Awareness",
+      "Self_Management",
+      "Social_Awareness",
+      "Relationship_Skills",
+      "Responsible_Decision_Making"
+    ],
+    "key_settings": [
+      "Classrooms",
+      "Schools",
+      "Families_and_Caregivers",
+      "Communities"
+    ],
+    "description": "Social and emotional learning (SEL) is the process through which all young people and adults acquire and apply the knowledge, skills, and attitudes to develop healthy identities, manage emotions and achieve personal and collective goals, feel and show empathy for others, establish and maintain supportive relationships, and make responsible and caring decisions."
+  },
+  "standards": [
+    {
+      "id": "CASEL.Self_Awareness.1",
+      "competency": "Self Awareness",
+      "competency_definition": "The abilities to understand one's own emotions, thoughts, and values and how they influence behavior across contexts. Includes recognizing strengths and limitations with a grounded sense of confidence and purpose.",
+      "description": "Integrating personal and social identities",
+      "grade_band_progressions": {
+        "PreK_K": "Identify basic emotions; recognize own name and simple preferences",
+        "K_2": "Name and describe emotions; identify personal strengths",
+        "3_5": "Understand how emotions affect behavior; recognize personal values",
+        "6_8": "Analyze complex emotions; reflect on identity and values",
+        "9_12": "Integrate identity; understand bias; develop purpose and agency"
+      },
+      "code": "CASEL.Self_Awareness.1"
+    },
+    {
+      "id": "CASEL.Self_Awareness.2",
+      "competency": "Self Awareness",
+      "competency_definition": "The abilities to understand one's own emotions, thoughts, and values and how they influence behavior across contexts. Includes recognizing strengths and limitations with a grounded sense of confidence and purpose.",
+      "description": "Identifying personal, cultural, and linguistic assets",
+      "grade_band_progressions": {
+        "PreK_K": "Identify basic emotions; recognize own name and simple preferences",
+        "K_2": "Name and describe emotions; identify personal strengths",
+        "3_5": "Understand how emotions affect behavior; recognize personal values",
+        "6_8": "Analyze complex emotions; reflect on identity and values",
+        "9_12": "Integrate identity; understand bias; develop purpose and agency"
+      },
+      "code": "CASEL.Self_Awareness.2"
+    },
+    {
+      "id": "CASEL.Self_Awareness.3",
+      "competency": "Self Awareness",
+      "competency_definition": "The abilities to understand one's own emotions, thoughts, and values and how they influence behavior across contexts. Includes recognizing strengths and limitations with a grounded sense of confidence and purpose.",
+      "description": "Identifying one's emotions",
+      "grade_band_progressions": {
+        "PreK_K": "Identify basic emotions; recognize own name and simple preferences",
+        "K_2": "Name and describe emotions; identify personal strengths",
+        "3_5": "Understand how emotions affect behavior; recognize personal values",
+        "6_8": "Analyze complex emotions; reflect on identity and values",
+        "9_12": "Integrate identity; understand bias; develop purpose and agency"
+      },
+      "code": "CASEL.Self_Awareness.3"
+    },
+    {
+      "id": "CASEL.Self_Awareness.4",
+      "competency": "Self Awareness",
+      "competency_definition": "The abilities to understand one's own emotions, thoughts, and values and how they influence behavior across contexts. Includes recognizing strengths and limitations with a grounded sense of confidence and purpose.",
+      "description": "Demonstrating honesty and integrity",
+      "grade_band_progressions": {
+        "PreK_K": "Identify basic emotions; recognize own name and simple preferences",
+        "K_2": "Name and describe emotions; identify personal strengths",
+        "3_5": "Understand how emotions affect behavior; recognize personal values",
+        "6_8": "Analyze complex emotions; reflect on identity and values",
+        "9_12": "Integrate identity; understand bias; develop purpose and agency"
+      },
+      "code": "CASEL.Self_Awareness.4"
+    },
+    {
+      "id": "CASEL.Self_Awareness.5",
+      "competency": "Self Awareness",
+      "competency_definition": "The abilities to understand one's own emotions, thoughts, and values and how they influence behavior across contexts. Includes recognizing strengths and limitations with a grounded sense of confidence and purpose.",
+      "description": "Linking feelings, values, and thoughts",
+      "grade_band_progressions": {
+        "PreK_K": "Identify basic emotions; recognize own name and simple preferences",
+        "K_2": "Name and describe emotions; identify personal strengths",
+        "3_5": "Understand how emotions affect behavior; recognize personal values",
+        "6_8": "Analyze complex emotions; reflect on identity and values",
+        "9_12": "Integrate identity; understand bias; develop purpose and agency"
+      },
+      "code": "CASEL.Self_Awareness.5"
+    },
+    {
+      "id": "CASEL.Self_Awareness.6",
+      "competency": "Self Awareness",
+      "competency_definition": "The abilities to understand one's own emotions, thoughts, and values and how they influence behavior across contexts. Includes recognizing strengths and limitations with a grounded sense of confidence and purpose.",
+      "description": "Examining prejudices and biases",
+      "grade_band_progressions": {
+        "PreK_K": "Identify basic emotions; recognize own name and simple preferences",
+        "K_2": "Name and describe emotions; identify personal strengths",
+        "3_5": "Understand how emotions affect behavior; recognize personal values",
+        "6_8": "Analyze complex emotions; reflect on identity and values",
+        "9_12": "Integrate identity; understand bias; develop purpose and agency"
+      },
+      "code": "CASEL.Self_Awareness.6"
+    },
+    {
+      "id": "CASEL.Self_Awareness.7",
+      "competency": "Self Awareness",
+      "competency_definition": "The abilities to understand one's own emotions, thoughts, and values and how they influence behavior across contexts. Includes recognizing strengths and limitations with a grounded sense of confidence and purpose.",
+      "description": "Experiencing self-efficacy",
+      "grade_band_progressions": {
+        "PreK_K": "Identify basic emotions; recognize own name and simple preferences",
+        "K_2": "Name and describe emotions; identify personal strengths",
+        "3_5": "Understand how emotions affect behavior; recognize personal values",
+        "6_8": "Analyze complex emotions; reflect on identity and values",
+        "9_12": "Integrate identity; understand bias; develop purpose and agency"
+      },
+      "code": "CASEL.Self_Awareness.7"
+    },
+    {
+      "id": "CASEL.Self_Awareness.8",
+      "competency": "Self Awareness",
+      "competency_definition": "The abilities to understand one's own emotions, thoughts, and values and how they influence behavior across contexts. Includes recognizing strengths and limitations with a grounded sense of confidence and purpose.",
+      "description": "Having a growth mindset",
+      "grade_band_progressions": {
+        "PreK_K": "Identify basic emotions; recognize own name and simple preferences",
+        "K_2": "Name and describe emotions; identify personal strengths",
+        "3_5": "Understand how emotions affect behavior; recognize personal values",
+        "6_8": "Analyze complex emotions; reflect on identity and values",
+        "9_12": "Integrate identity; understand bias; develop purpose and agency"
+      },
+      "code": "CASEL.Self_Awareness.8"
+    },
+    {
+      "id": "CASEL.Self_Awareness.9",
+      "competency": "Self Awareness",
+      "competency_definition": "The abilities to understand one's own emotions, thoughts, and values and how they influence behavior across contexts. Includes recognizing strengths and limitations with a grounded sense of confidence and purpose.",
+      "description": "Developing interests and a sense of purpose",
+      "grade_band_progressions": {
+        "PreK_K": "Identify basic emotions; recognize own name and simple preferences",
+        "K_2": "Name and describe emotions; identify personal strengths",
+        "3_5": "Understand how emotions affect behavior; recognize personal values",
+        "6_8": "Analyze complex emotions; reflect on identity and values",
+        "9_12": "Integrate identity; understand bias; develop purpose and agency"
+      },
+      "code": "CASEL.Self_Awareness.9"
+    },
+    {
+      "id": "CASEL.Self_Management.1",
+      "competency": "Self Management",
+      "competency_definition": "The abilities to manage one's emotions, thoughts, and behaviors effectively in different situations and to achieve goals and aspirations. Includes capacities to delay gratification, manage stress, and feel motivation and agency.",
+      "description": "Managing one's emotions",
+      "grade_band_progressions": {
+        "PreK_K": "Follow simple routines; manage transitions with support",
+        "K_2": "Use simple calming strategies; follow classroom rules",
+        "3_5": "Set short-term goals; manage frustration; persist through challenges",
+        "6_8": "Set long-term goals; manage stress; demonstrate resilience",
+        "9_12": "Demonstrate independence; manage complex emotions; pursue goals"
+      },
+      "code": "CASEL.Self_Management.1"
+    },
+    {
+      "id": "CASEL.Self_Management.2",
+      "competency": "Self Management",
+      "competency_definition": "The abilities to manage one's emotions, thoughts, and behaviors effectively in different situations and to achieve goals and aspirations. Includes capacities to delay gratification, manage stress, and feel motivation and agency.",
+      "description": "Identifying and using stress-management strategies",
+      "grade_band_progressions": {
+        "PreK_K": "Follow simple routines; manage transitions with support",
+        "K_2": "Use simple calming strategies; follow classroom rules",
+        "3_5": "Set short-term goals; manage frustration; persist through challenges",
+        "6_8": "Set long-term goals; manage stress; demonstrate resilience",
+        "9_12": "Demonstrate independence; manage complex emotions; pursue goals"
+      },
+      "code": "CASEL.Self_Management.2"
+    },
+    {
+      "id": "CASEL.Self_Management.3",
+      "competency": "Self Management",
+      "competency_definition": "The abilities to manage one's emotions, thoughts, and behaviors effectively in different situations and to achieve goals and aspirations. Includes capacities to delay gratification, manage stress, and feel motivation and agency.",
+      "description": "Exhibiting self-discipline and self-motivation",
+      "grade_band_progressions": {
+        "PreK_K": "Follow simple routines; manage transitions with support",
+        "K_2": "Use simple calming strategies; follow classroom rules",
+        "3_5": "Set short-term goals; manage frustration; persist through challenges",
+        "6_8": "Set long-term goals; manage stress; demonstrate resilience",
+        "9_12": "Demonstrate independence; manage complex emotions; pursue goals"
+      },
+      "code": "CASEL.Self_Management.3"
+    },
+    {
+      "id": "CASEL.Self_Management.4",
+      "competency": "Self Management",
+      "competency_definition": "The abilities to manage one's emotions, thoughts, and behaviors effectively in different situations and to achieve goals and aspirations. Includes capacities to delay gratification, manage stress, and feel motivation and agency.",
+      "description": "Setting personal and collective goals",
+      "grade_band_progressions": {
+        "PreK_K": "Follow simple routines; manage transitions with support",
+        "K_2": "Use simple calming strategies; follow classroom rules",
+        "3_5": "Set short-term goals; manage frustration; persist through challenges",
+        "6_8": "Set long-term goals; manage stress; demonstrate resilience",
+        "9_12": "Demonstrate independence; manage complex emotions; pursue goals"
+      },
+      "code": "CASEL.Self_Management.4"
+    },
+    {
+      "id": "CASEL.Self_Management.5",
+      "competency": "Self Management",
+      "competency_definition": "The abilities to manage one's emotions, thoughts, and behaviors effectively in different situations and to achieve goals and aspirations. Includes capacities to delay gratification, manage stress, and feel motivation and agency.",
+      "description": "Using planning and organizational skills",
+      "grade_band_progressions": {
+        "PreK_K": "Follow simple routines; manage transitions with support",
+        "K_2": "Use simple calming strategies; follow classroom rules",
+        "3_5": "Set short-term goals; manage frustration; persist through challenges",
+        "6_8": "Set long-term goals; manage stress; demonstrate resilience",
+        "9_12": "Demonstrate independence; manage complex emotions; pursue goals"
+      },
+      "code": "CASEL.Self_Management.5"
+    },
+    {
+      "id": "CASEL.Self_Management.6",
+      "competency": "Self Management",
+      "competency_definition": "The abilities to manage one's emotions, thoughts, and behaviors effectively in different situations and to achieve goals and aspirations. Includes capacities to delay gratification, manage stress, and feel motivation and agency.",
+      "description": "Showing the courage to take initiative",
+      "grade_band_progressions": {
+        "PreK_K": "Follow simple routines; manage transitions with support",
+        "K_2": "Use simple calming strategies; follow classroom rules",
+        "3_5": "Set short-term goals; manage frustration; persist through challenges",
+        "6_8": "Set long-term goals; manage stress; demonstrate resilience",
+        "9_12": "Demonstrate independence; manage complex emotions; pursue goals"
+      },
+      "code": "CASEL.Self_Management.6"
+    },
+    {
+      "id": "CASEL.Self_Management.7",
+      "competency": "Self Management",
+      "competency_definition": "The abilities to manage one's emotions, thoughts, and behaviors effectively in different situations and to achieve goals and aspirations. Includes capacities to delay gratification, manage stress, and feel motivation and agency.",
+      "description": "Demonstrating personal and collective agency",
+      "grade_band_progressions": {
+        "PreK_K": "Follow simple routines; manage transitions with support",
+        "K_2": "Use simple calming strategies; follow classroom rules",
+        "3_5": "Set short-term goals; manage frustration; persist through challenges",
+        "6_8": "Set long-term goals; manage stress; demonstrate resilience",
+        "9_12": "Demonstrate independence; manage complex emotions; pursue goals"
+      },
+      "code": "CASEL.Self_Management.7"
+    },
+    {
+      "id": "CASEL.Social_Awareness.1",
+      "competency": "Social Awareness",
+      "competency_definition": "The abilities to understand the perspectives of and empathize with others, including those from diverse backgrounds, cultures, and contexts. Includes capacities to feel compassion and understand broader social norms.",
+      "description": "Taking others' perspectives",
+      "grade_band_progressions": {
+        "PreK_K": "Notice feelings of others; show basic empathy",
+        "K_2": "Recognize emotions in others; understand different perspectives",
+        "3_5": "Understand others' perspectives; appreciate diversity",
+        "6_8": "Understand systemic inequities; show compassion across difference",
+        "9_12": "Analyze societal systems; advocate for equity"
+      },
+      "code": "CASEL.Social_Awareness.1"
+    },
+    {
+      "id": "CASEL.Social_Awareness.2",
+      "competency": "Social Awareness",
+      "competency_definition": "The abilities to understand the perspectives of and empathize with others, including those from diverse backgrounds, cultures, and contexts. Includes capacities to feel compassion and understand broader social norms.",
+      "description": "Recognizing strengths in others",
+      "grade_band_progressions": {
+        "PreK_K": "Notice feelings of others; show basic empathy",
+        "K_2": "Recognize emotions in others; understand different perspectives",
+        "3_5": "Understand others' perspectives; appreciate diversity",
+        "6_8": "Understand systemic inequities; show compassion across difference",
+        "9_12": "Analyze societal systems; advocate for equity"
+      },
+      "code": "CASEL.Social_Awareness.2"
+    },
+    {
+      "id": "CASEL.Social_Awareness.3",
+      "competency": "Social Awareness",
+      "competency_definition": "The abilities to understand the perspectives of and empathize with others, including those from diverse backgrounds, cultures, and contexts. Includes capacities to feel compassion and understand broader social norms.",
+      "description": "Demonstrating empathy and compassion",
+      "grade_band_progressions": {
+        "PreK_K": "Notice feelings of others; show basic empathy",
+        "K_2": "Recognize emotions in others; understand different perspectives",
+        "3_5": "Understand others' perspectives; appreciate diversity",
+        "6_8": "Understand systemic inequities; show compassion across difference",
+        "9_12": "Analyze societal systems; advocate for equity"
+      },
+      "code": "CASEL.Social_Awareness.3"
+    },
+    {
+      "id": "CASEL.Social_Awareness.4",
+      "competency": "Social Awareness",
+      "competency_definition": "The abilities to understand the perspectives of and empathize with others, including those from diverse backgrounds, cultures, and contexts. Includes capacities to feel compassion and understand broader social norms.",
+      "description": "Showing concern for the feelings of others",
+      "grade_band_progressions": {
+        "PreK_K": "Notice feelings of others; show basic empathy",
+        "K_2": "Recognize emotions in others; understand different perspectives",
+        "3_5": "Understand others' perspectives; appreciate diversity",
+        "6_8": "Understand systemic inequities; show compassion across difference",
+        "9_12": "Analyze societal systems; advocate for equity"
+      },
+      "code": "CASEL.Social_Awareness.4"
+    },
+    {
+      "id": "CASEL.Social_Awareness.5",
+      "competency": "Social Awareness",
+      "competency_definition": "The abilities to understand the perspectives of and empathize with others, including those from diverse backgrounds, cultures, and contexts. Includes capacities to feel compassion and understand broader social norms.",
+      "description": "Understanding and expressing gratitude",
+      "grade_band_progressions": {
+        "PreK_K": "Notice feelings of others; show basic empathy",
+        "K_2": "Recognize emotions in others; understand different perspectives",
+        "3_5": "Understand others' perspectives; appreciate diversity",
+        "6_8": "Understand systemic inequities; show compassion across difference",
+        "9_12": "Analyze societal systems; advocate for equity"
+      },
+      "code": "CASEL.Social_Awareness.5"
+    },
+    {
+      "id": "CASEL.Social_Awareness.6",
+      "competency": "Social Awareness",
+      "competency_definition": "The abilities to understand the perspectives of and empathize with others, including those from diverse backgrounds, cultures, and contexts. Includes capacities to feel compassion and understand broader social norms.",
+      "description": "Identifying diverse social norms, including unjust ones",
+      "grade_band_progressions": {
+        "PreK_K": "Notice feelings of others; show basic empathy",
+        "K_2": "Recognize emotions in others; understand different perspectives",
+        "3_5": "Understand others' perspectives; appreciate diversity",
+        "6_8": "Understand systemic inequities; show compassion across difference",
+        "9_12": "Analyze societal systems; advocate for equity"
+      },
+      "code": "CASEL.Social_Awareness.6"
+    },
+    {
+      "id": "CASEL.Social_Awareness.7",
+      "competency": "Social Awareness",
+      "competency_definition": "The abilities to understand the perspectives of and empathize with others, including those from diverse backgrounds, cultures, and contexts. Includes capacities to feel compassion and understand broader social norms.",
+      "description": "Recognizing situational demands and opportunities",
+      "grade_band_progressions": {
+        "PreK_K": "Notice feelings of others; show basic empathy",
+        "K_2": "Recognize emotions in others; understand different perspectives",
+        "3_5": "Understand others' perspectives; appreciate diversity",
+        "6_8": "Understand systemic inequities; show compassion across difference",
+        "9_12": "Analyze societal systems; advocate for equity"
+      },
+      "code": "CASEL.Social_Awareness.7"
+    },
+    {
+      "id": "CASEL.Social_Awareness.8",
+      "competency": "Social Awareness",
+      "competency_definition": "The abilities to understand the perspectives of and empathize with others, including those from diverse backgrounds, cultures, and contexts. Includes capacities to feel compassion and understand broader social norms.",
+      "description": "Understanding the influences of organizations/systems on behavior",
+      "grade_band_progressions": {
+        "PreK_K": "Notice feelings of others; show basic empathy",
+        "K_2": "Recognize emotions in others; understand different perspectives",
+        "3_5": "Understand others' perspectives; appreciate diversity",
+        "6_8": "Understand systemic inequities; show compassion across difference",
+        "9_12": "Analyze societal systems; advocate for equity"
+      },
+      "code": "CASEL.Social_Awareness.8"
+    },
+    {
+      "id": "CASEL.Relationship_Skills.1",
+      "competency": "Relationship Skills",
+      "competency_definition": "The abilities to establish and maintain healthy and supportive relationships and to effectively navigate settings with diverse individuals and groups. Includes communicating clearly, cooperating, and problem solving.",
+      "description": "Communicating effectively",
+      "grade_band_progressions": {
+        "PreK_K": "Take turns; share; play alongside peers",
+        "K_2": "Use kind words; ask for help; work cooperatively",
+        "3_5": "Resolve conflicts; demonstrate active listening; lead and follow",
+        "6_8": "Navigate complex social dynamics; mentor peers; advocate",
+        "9_12": "Build professional relationships; resolve complex conflicts"
+      },
+      "code": "CASEL.Relationship_Skills.1"
+    },
+    {
+      "id": "CASEL.Relationship_Skills.2",
+      "competency": "Relationship Skills",
+      "competency_definition": "The abilities to establish and maintain healthy and supportive relationships and to effectively navigate settings with diverse individuals and groups. Includes communicating clearly, cooperating, and problem solving.",
+      "description": "Developing positive relationships",
+      "grade_band_progressions": {
+        "PreK_K": "Take turns; share; play alongside peers",
+        "K_2": "Use kind words; ask for help; work cooperatively",
+        "3_5": "Resolve conflicts; demonstrate active listening; lead and follow",
+        "6_8": "Navigate complex social dynamics; mentor peers; advocate",
+        "9_12": "Build professional relationships; resolve complex conflicts"
+      },
+      "code": "CASEL.Relationship_Skills.2"
+    },
+    {
+      "id": "CASEL.Relationship_Skills.3",
+      "competency": "Relationship Skills",
+      "competency_definition": "The abilities to establish and maintain healthy and supportive relationships and to effectively navigate settings with diverse individuals and groups. Includes communicating clearly, cooperating, and problem solving.",
+      "description": "Demonstrating cultural competency",
+      "grade_band_progressions": {
+        "PreK_K": "Take turns; share; play alongside peers",
+        "K_2": "Use kind words; ask for help; work cooperatively",
+        "3_5": "Resolve conflicts; demonstrate active listening; lead and follow",
+        "6_8": "Navigate complex social dynamics; mentor peers; advocate",
+        "9_12": "Build professional relationships; resolve complex conflicts"
+      },
+      "code": "CASEL.Relationship_Skills.3"
+    },
+    {
+      "id": "CASEL.Relationship_Skills.4",
+      "competency": "Relationship Skills",
+      "competency_definition": "The abilities to establish and maintain healthy and supportive relationships and to effectively navigate settings with diverse individuals and groups. Includes communicating clearly, cooperating, and problem solving.",
+      "description": "Practicing teamwork and collaborative problem-solving",
+      "grade_band_progressions": {
+        "PreK_K": "Take turns; share; play alongside peers",
+        "K_2": "Use kind words; ask for help; work cooperatively",
+        "3_5": "Resolve conflicts; demonstrate active listening; lead and follow",
+        "6_8": "Navigate complex social dynamics; mentor peers; advocate",
+        "9_12": "Build professional relationships; resolve complex conflicts"
+      },
+      "code": "CASEL.Relationship_Skills.4"
+    },
+    {
+      "id": "CASEL.Relationship_Skills.5",
+      "competency": "Relationship Skills",
+      "competency_definition": "The abilities to establish and maintain healthy and supportive relationships and to effectively navigate settings with diverse individuals and groups. Includes communicating clearly, cooperating, and problem solving.",
+      "description": "Resolving conflicts constructively",
+      "grade_band_progressions": {
+        "PreK_K": "Take turns; share; play alongside peers",
+        "K_2": "Use kind words; ask for help; work cooperatively",
+        "3_5": "Resolve conflicts; demonstrate active listening; lead and follow",
+        "6_8": "Navigate complex social dynamics; mentor peers; advocate",
+        "9_12": "Build professional relationships; resolve complex conflicts"
+      },
+      "code": "CASEL.Relationship_Skills.5"
+    },
+    {
+      "id": "CASEL.Relationship_Skills.6",
+      "competency": "Relationship Skills",
+      "competency_definition": "The abilities to establish and maintain healthy and supportive relationships and to effectively navigate settings with diverse individuals and groups. Includes communicating clearly, cooperating, and problem solving.",
+      "description": "Resisting negative social pressure",
+      "grade_band_progressions": {
+        "PreK_K": "Take turns; share; play alongside peers",
+        "K_2": "Use kind words; ask for help; work cooperatively",
+        "3_5": "Resolve conflicts; demonstrate active listening; lead and follow",
+        "6_8": "Navigate complex social dynamics; mentor peers; advocate",
+        "9_12": "Build professional relationships; resolve complex conflicts"
+      },
+      "code": "CASEL.Relationship_Skills.6"
+    },
+    {
+      "id": "CASEL.Relationship_Skills.7",
+      "competency": "Relationship Skills",
+      "competency_definition": "The abilities to establish and maintain healthy and supportive relationships and to effectively navigate settings with diverse individuals and groups. Includes communicating clearly, cooperating, and problem solving.",
+      "description": "Showing leadership in groups",
+      "grade_band_progressions": {
+        "PreK_K": "Take turns; share; play alongside peers",
+        "K_2": "Use kind words; ask for help; work cooperatively",
+        "3_5": "Resolve conflicts; demonstrate active listening; lead and follow",
+        "6_8": "Navigate complex social dynamics; mentor peers; advocate",
+        "9_12": "Build professional relationships; resolve complex conflicts"
+      },
+      "code": "CASEL.Relationship_Skills.7"
+    },
+    {
+      "id": "CASEL.Relationship_Skills.8",
+      "competency": "Relationship Skills",
+      "competency_definition": "The abilities to establish and maintain healthy and supportive relationships and to effectively navigate settings with diverse individuals and groups. Includes communicating clearly, cooperating, and problem solving.",
+      "description": "Seeking or offering support and help when needed",
+      "grade_band_progressions": {
+        "PreK_K": "Take turns; share; play alongside peers",
+        "K_2": "Use kind words; ask for help; work cooperatively",
+        "3_5": "Resolve conflicts; demonstrate active listening; lead and follow",
+        "6_8": "Navigate complex social dynamics; mentor peers; advocate",
+        "9_12": "Build professional relationships; resolve complex conflicts"
+      },
+      "code": "CASEL.Relationship_Skills.8"
+    },
+    {
+      "id": "CASEL.Relationship_Skills.9",
+      "competency": "Relationship Skills",
+      "competency_definition": "The abilities to establish and maintain healthy and supportive relationships and to effectively navigate settings with diverse individuals and groups. Includes communicating clearly, cooperating, and problem solving.",
+      "description": "Standing up for the rights of others",
+      "grade_band_progressions": {
+        "PreK_K": "Take turns; share; play alongside peers",
+        "K_2": "Use kind words; ask for help; work cooperatively",
+        "3_5": "Resolve conflicts; demonstrate active listening; lead and follow",
+        "6_8": "Navigate complex social dynamics; mentor peers; advocate",
+        "9_12": "Build professional relationships; resolve complex conflicts"
+      },
+      "code": "CASEL.Relationship_Skills.9"
+    },
+    {
+      "id": "CASEL.Responsible_Decision_Making.1",
+      "competency": "Responsible Decision Making",
+      "competency_definition": "The abilities to make caring and constructive choices about personal behavior and social interactions across diverse situations. Includes considering ethical standards, safety concerns, and consequences.",
+      "description": "Demonstrating curiosity and open-mindedness",
+      "grade_band_progressions": {
+        "PreK_K": "Identify safe vs. unsafe behaviors with guidance",
+        "K_2": "Identify consequences; make simple responsible choices",
+        "3_5": "Analyze situations; evaluate choices; reflect on outcomes",
+        "6_8": "Evaluate ethical dilemmas; consider community impact",
+        "9_12": "Make autonomous ethical decisions; consider long-term impact"
+      },
+      "code": "CASEL.Responsible_Decision_Making.1"
+    },
+    {
+      "id": "CASEL.Responsible_Decision_Making.2",
+      "competency": "Responsible Decision Making",
+      "competency_definition": "The abilities to make caring and constructive choices about personal behavior and social interactions across diverse situations. Includes considering ethical standards, safety concerns, and consequences.",
+      "description": "Identifying solutions for personal and social problems",
+      "grade_band_progressions": {
+        "PreK_K": "Identify safe vs. unsafe behaviors with guidance",
+        "K_2": "Identify consequences; make simple responsible choices",
+        "3_5": "Analyze situations; evaluate choices; reflect on outcomes",
+        "6_8": "Evaluate ethical dilemmas; consider community impact",
+        "9_12": "Make autonomous ethical decisions; consider long-term impact"
+      },
+      "code": "CASEL.Responsible_Decision_Making.2"
+    },
+    {
+      "id": "CASEL.Responsible_Decision_Making.3",
+      "competency": "Responsible Decision Making",
+      "competency_definition": "The abilities to make caring and constructive choices about personal behavior and social interactions across diverse situations. Includes considering ethical standards, safety concerns, and consequences.",
+      "description": "Learning to make a reasoned judgment after analyzing information",
+      "grade_band_progressions": {
+        "PreK_K": "Identify safe vs. unsafe behaviors with guidance",
+        "K_2": "Identify consequences; make simple responsible choices",
+        "3_5": "Analyze situations; evaluate choices; reflect on outcomes",
+        "6_8": "Evaluate ethical dilemmas; consider community impact",
+        "9_12": "Make autonomous ethical decisions; consider long-term impact"
+      },
+      "code": "CASEL.Responsible_Decision_Making.3"
+    },
+    {
+      "id": "CASEL.Responsible_Decision_Making.4",
+      "competency": "Responsible Decision Making",
+      "competency_definition": "The abilities to make caring and constructive choices about personal behavior and social interactions across diverse situations. Includes considering ethical standards, safety concerns, and consequences.",
+      "description": "Anticipating and evaluating the consequences of one's actions",
+      "grade_band_progressions": {
+        "PreK_K": "Identify safe vs. unsafe behaviors with guidance",
+        "K_2": "Identify consequences; make simple responsible choices",
+        "3_5": "Analyze situations; evaluate choices; reflect on outcomes",
+        "6_8": "Evaluate ethical dilemmas; consider community impact",
+        "9_12": "Make autonomous ethical decisions; consider long-term impact"
+      },
+      "code": "CASEL.Responsible_Decision_Making.4"
+    },
+    {
+      "id": "CASEL.Responsible_Decision_Making.5",
+      "competency": "Responsible Decision Making",
+      "competency_definition": "The abilities to make caring and constructive choices about personal behavior and social interactions across diverse situations. Includes considering ethical standards, safety concerns, and consequences.",
+      "description": "Recognizing how critical thinking skills are useful inside and outside school",
+      "grade_band_progressions": {
+        "PreK_K": "Identify safe vs. unsafe behaviors with guidance",
+        "K_2": "Identify consequences; make simple responsible choices",
+        "3_5": "Analyze situations; evaluate choices; reflect on outcomes",
+        "6_8": "Evaluate ethical dilemmas; consider community impact",
+        "9_12": "Make autonomous ethical decisions; consider long-term impact"
+      },
+      "code": "CASEL.Responsible_Decision_Making.5"
+    },
+    {
+      "id": "CASEL.Responsible_Decision_Making.6",
+      "competency": "Responsible Decision Making",
+      "competency_definition": "The abilities to make caring and constructive choices about personal behavior and social interactions across diverse situations. Includes considering ethical standards, safety concerns, and consequences.",
+      "description": "Reflecting on one's role to promote personal, family, and community well-being",
+      "grade_band_progressions": {
+        "PreK_K": "Identify safe vs. unsafe behaviors with guidance",
+        "K_2": "Identify consequences; make simple responsible choices",
+        "3_5": "Analyze situations; evaluate choices; reflect on outcomes",
+        "6_8": "Evaluate ethical dilemmas; consider community impact",
+        "9_12": "Make autonomous ethical decisions; consider long-term impact"
+      },
+      "code": "CASEL.Responsible_Decision_Making.6"
+    },
+    {
+      "id": "CASEL.Responsible_Decision_Making.7",
+      "competency": "Responsible Decision Making",
+      "competency_definition": "The abilities to make caring and constructive choices about personal behavior and social interactions across diverse situations. Includes considering ethical standards, safety concerns, and consequences.",
+      "description": "Evaluating personal, interpersonal, community, and institutional impacts",
+      "grade_band_progressions": {
+        "PreK_K": "Identify safe vs. unsafe behaviors with guidance",
+        "K_2": "Identify consequences; make simple responsible choices",
+        "3_5": "Analyze situations; evaluate choices; reflect on outcomes",
+        "6_8": "Evaluate ethical dilemmas; consider community impact",
+        "9_12": "Make autonomous ethical decisions; consider long-term impact"
+      },
+      "code": "CASEL.Responsible_Decision_Making.7"
+    }
+  ]
+}

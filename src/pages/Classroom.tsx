@@ -27,8 +27,11 @@ import {
   LayoutGrid,
   List,
   Phone,
+  MessageCircle,
+  Archive,
+  RotateCcw,
 } from 'lucide-react'
-import { useClassroomView } from '../lib/classroom-data'
+import { useClassroomView, updateStudentClassroomStatus } from '../lib/classroom-data'
 import { useAuth } from '../lib/auth'
 import { useToast } from '../components/Toast'
 import { supabase } from '../lib/supabase'
@@ -37,6 +40,8 @@ import { DimensionIcon } from '../components/student/DimensionIcon'
 import MiniRadar from '../components/dashboard/MiniRadar'
 import AddStudentModal from '../components/classroom/AddStudentModal'
 import CsvImportModal from '../components/classroom/CsvImportModal'
+import CreateAssignmentModal from '../components/assignment/CreateAssignmentModal'
+import { createClassConversation } from '../lib/messaging-data'
 import type { DimensionScore } from '../lib/student-data'
 import type { Student, Dimension, StudentContact } from '../types/database'
 
@@ -92,7 +97,7 @@ const LEVEL_LABEL: Record<number, string> = {
 export default function ClassroomPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { actualRole } = useAuth()
+  const { actualRole, profile } = useAuth()
   const { toast } = useToast()
   const {
     classroom,
@@ -103,6 +108,7 @@ export default function ClassroomPage() {
     studentScoresMap,
     classInterestPulse,
     studentContactsMap,
+    studentEnrollmentStatusMap,
     loading,
     error,
     refetch,
@@ -117,7 +123,10 @@ export default function ClassroomPage() {
   const [assigningEducator, setAssigningEducator] = useState(false)
   const [showAddStudentModal, setShowAddStudentModal] = useState(false)
   const [showCsvModal, setShowCsvModal] = useState(false)
+  const [showCreateAssignment, setShowCreateAssignment] = useState(false)
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card')
+  const [rosterFilter, setRosterFilter] = useState<'active' | 'archived'>('active')
+  const [creatingClassChat, setCreatingClassChat] = useState(false)
 
   // ------ Loading / Error ------
   if (loading) {
@@ -142,6 +151,15 @@ export default function ClassroomPage() {
       </div>
     )
   }
+
+  // Filter students by enrollment status
+  const activeStudents = students.filter(
+    (s) => (studentEnrollmentStatusMap.get(s.id) ?? 'active') === 'active'
+  )
+  const archivedStudents = students.filter(
+    (s) => studentEnrollmentStatusMap.get(s.id) === 'archived'
+  )
+  const displayedStudents = rosterFilter === 'active' ? activeStudents : archivedStudents
 
   const currentPeriod = new Date().toLocaleDateString('en-US', {
     month: 'long',
@@ -172,8 +190,11 @@ export default function ClassroomPage() {
                 </span>
               )}
               <span className="flex items-center gap-1">
-                <Users className="h-4 w-4" /> {students.length} learner
-                {students.length !== 1 ? 's' : ''}
+                <Users className="h-4 w-4" /> {activeStudents.length} learner
+                {activeStudents.length !== 1 ? 's' : ''}
+                {archivedStudents.length > 0 && (
+                  <span className="text-text-light">({archivedStudents.length} archived)</span>
+                )}
               </span>
               {educators.length > 0 && (
                 <span>
@@ -203,6 +224,37 @@ export default function ClassroomPage() {
                 >
                   <Upload className="h-3.5 w-3.5" />
                   Import CSV
+                </button>
+                <button
+                  onClick={() => setShowCreateAssignment(true)}
+                  className="flex items-center gap-1.5 rounded-lg border border-accent-300 bg-accent-50 px-3 py-2 text-xs font-medium text-accent-700 transition-colors hover:bg-accent-100"
+                >
+                  <ClipboardList className="h-3.5 w-3.5" />
+                  New Assignment
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!classroom || !profile || creatingClassChat) return
+                    setCreatingClassChat(true)
+                    try {
+                      await createClassConversation(
+                        classroom.id,
+                        classroom.name,
+                        profile.id,
+                        classroom.school_id
+                      )
+                      navigate('/messages')
+                    } catch (err: any) {
+                      toast(err.message || 'Failed to open class chat', 'error')
+                    } finally {
+                      setCreatingClassChat(false)
+                    }
+                  }}
+                  disabled={creatingClassChat}
+                  className="flex items-center gap-1.5 rounded-lg border border-primary-300 bg-primary-50 px-3 py-2 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100 disabled:opacity-50"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  Class Chat
                 </button>
               </>
             )}
@@ -318,60 +370,100 @@ export default function ClassroomPage() {
       <section>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-bold text-text">Learners</h2>
-          {students.length > 0 && (
-            <div className="flex items-center rounded-lg border border-bg-muted bg-bg-card p-0.5">
-              <button
-                onClick={() => setViewMode('card')}
-                className={clsx(
-                  'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                  viewMode === 'card'
-                    ? 'bg-primary-500 text-white shadow-sm'
-                    : 'text-text-muted hover:text-text'
-                )}
-              >
-                <LayoutGrid className="h-3.5 w-3.5" />
-                Cards
-              </button>
-              <button
-                onClick={() => setViewMode('table')}
-                className={clsx(
-                  'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                  viewMode === 'table'
-                    ? 'bg-primary-500 text-white shadow-sm'
-                    : 'text-text-muted hover:text-text'
-                )}
-              >
-                <List className="h-3.5 w-3.5" />
-                Table
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {/* Active / Archived filter */}
+            {archivedStudents.length > 0 && (
+              <div className="flex items-center rounded-lg border border-bg-muted bg-bg-card p-0.5">
+                <button
+                  onClick={() => setRosterFilter('active')}
+                  className={clsx(
+                    'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                    rosterFilter === 'active'
+                      ? 'bg-primary-500 text-white shadow-sm'
+                      : 'text-text-muted hover:text-text'
+                  )}
+                >
+                  Active ({activeStudents.length})
+                </button>
+                <button
+                  onClick={() => setRosterFilter('archived')}
+                  className={clsx(
+                    'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                    rosterFilter === 'archived'
+                      ? 'bg-primary-500 text-white shadow-sm'
+                      : 'text-text-muted hover:text-text'
+                  )}
+                >
+                  Archived ({archivedStudents.length})
+                </button>
+              </div>
+            )}
+            {/* Card / Table toggle */}
+            {students.length > 0 && (
+              <div className="flex items-center rounded-lg border border-bg-muted bg-bg-card p-0.5">
+                <button
+                  onClick={() => setViewMode('card')}
+                  className={clsx(
+                    'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                    viewMode === 'card'
+                      ? 'bg-primary-500 text-white shadow-sm'
+                      : 'text-text-muted hover:text-text'
+                  )}
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                  Cards
+                </button>
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={clsx(
+                    'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                    viewMode === 'table'
+                      ? 'bg-primary-500 text-white shadow-sm'
+                      : 'text-text-muted hover:text-text'
+                  )}
+                >
+                  <List className="h-3.5 w-3.5" />
+                  Table
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
-        {students.length === 0 ? (
+        {displayedStudents.length === 0 ? (
           <div className="rounded-xl border border-bg-muted bg-bg-card p-8 text-center shadow-sm">
             <Users className="mx-auto h-10 w-10 text-text-light" />
             <p className="mt-3 text-sm text-text-muted">
-              No learners in this classroom yet.
+              {rosterFilter === 'archived'
+                ? 'No archived learners in this classroom.'
+                : 'No learners in this classroom yet.'}
             </p>
           </div>
         ) : viewMode === 'card' ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {students.map((student) => (
+            {displayedStudents.map((student) => (
               <StudentCard
                 key={student.id}
                 student={student}
                 dimensions={dimensions}
                 scores={studentScoresMap.get(student.id) ?? []}
                 onClick={() => navigate(`/student/${student.id}`)}
+                isStaff={isStaff}
+                isArchived={studentEnrollmentStatusMap.get(student.id) === 'archived'}
+                classroomId={id!}
+                onStatusChange={refetch}
               />
             ))}
           </div>
         ) : (
           <StudentTable
-            students={students}
+            students={displayedStudents}
             studentContactsMap={studentContactsMap}
             onStudentClick={(sid) => navigate(`/student/${sid}`)}
+            isStaff={isStaff}
+            studentEnrollmentStatusMap={studentEnrollmentStatusMap}
+            classroomId={id!}
+            onStatusChange={refetch}
           />
         )}
       </section>
@@ -434,6 +526,17 @@ export default function ClassroomPage() {
           onImported={refetch}
         />
       )}
+
+      {showCreateAssignment && classroom && (
+        <CreateAssignmentModal
+          open={showCreateAssignment}
+          onClose={() => setShowCreateAssignment(false)}
+          onCreated={() => {
+            setShowCreateAssignment(false)
+          }}
+          classroomId={classroom.id}
+        />
+      )}
     </div>
   )
 }
@@ -447,21 +550,50 @@ function StudentCard({
   dimensions,
   scores,
   onClick,
+  isStaff,
+  isArchived,
+  classroomId,
+  onStatusChange,
 }: {
   student: Student
   dimensions: Dimension[]
   scores: DimensionScore[]
   onClick: () => void
+  isStaff?: boolean
+  isArchived?: boolean
+  classroomId?: string
+  onStatusChange?: () => void
 }) {
   const initials =
     `${student.first_name[0]}${student.last_name[0]}`.toUpperCase()
   const hasScores = scores.some((d) => d.competency > 0 || d.interest > 0)
 
   return (
-    <button
-      onClick={onClick}
-      className="group rounded-xl border border-bg-muted bg-bg-card p-4 text-left shadow-sm transition-all hover:border-primary-200 hover:shadow-md"
-    >
+    <div className={clsx(
+      'group relative rounded-xl border border-bg-muted bg-bg-card p-4 text-left shadow-sm transition-all hover:border-primary-200 hover:shadow-md',
+      isArchived && 'opacity-70'
+    )}>
+      {/* Archive/Restore button (staff only) */}
+      {isStaff && classroomId && onStatusChange && (
+        <button
+          onClick={async (e) => {
+            e.stopPropagation()
+            const { error } = await updateStudentClassroomStatus(
+              student.id,
+              classroomId,
+              isArchived ? 'active' : 'archived'
+            )
+            if (!error) onStatusChange()
+          }}
+          title={isArchived ? 'Restore to active' : 'Archive from classroom'}
+          className="absolute right-2 top-2 rounded-md p-1 text-text-light opacity-0 transition-opacity hover:bg-bg-muted hover:text-text group-hover:opacity-100"
+        >
+          {isArchived ? <RotateCcw className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
+        </button>
+      )}
+
+      {/* Clickable area */}
+      <button onClick={onClick} className="w-full text-left">
       {/* Avatar + Name */}
       <div className="mb-3 flex items-center gap-3">
         {student.avatar_url ? (
@@ -517,7 +649,8 @@ function StudentCard({
           )
         })}
       </div>
-    </button>
+      </button>
+    </div>
   )
 }
 
@@ -529,10 +662,18 @@ function StudentTable({
   students,
   studentContactsMap,
   onStudentClick,
+  isStaff,
+  studentEnrollmentStatusMap,
+  classroomId,
+  onStatusChange,
 }: {
   students: Student[]
   studentContactsMap: Map<string, StudentContact[]>
   onStudentClick: (id: string) => void
+  isStaff?: boolean
+  studentEnrollmentStatusMap?: Map<string, 'active' | 'archived'>
+  classroomId?: string
+  onStatusChange?: () => void
 }) {
   /** Compute age from date_of_birth */
   function computeAge(dob: string | null): string {
@@ -571,6 +712,11 @@ function StudentTable({
             <th className="px-4 py-3 text-left text-xs font-semibold text-text-muted">
               Status
             </th>
+            {isStaff && (
+              <th className="px-4 py-3 text-right text-xs font-semibold text-text-muted">
+                Actions
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -662,6 +808,42 @@ function StudentTable({
                     {st.student_status}
                   </span>
                 </td>
+
+                {/* Archive/Restore action */}
+                {isStaff && classroomId && onStatusChange && (
+                  <td className="px-4 py-3 text-right">
+                    {(() => {
+                      const enrollmentStatus = studentEnrollmentStatusMap?.get(st.id) ?? 'active'
+                      const isArchived = enrollmentStatus === 'archived'
+                      return (
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation()
+                            const { error } = await updateStudentClassroomStatus(
+                              st.id,
+                              classroomId,
+                              isArchived ? 'active' : 'archived'
+                            )
+                            if (!error) onStatusChange()
+                          }}
+                          className={clsx(
+                            'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors',
+                            isArchived
+                              ? 'text-primary-600 hover:bg-primary-50'
+                              : 'text-text-muted hover:bg-bg-muted hover:text-text'
+                          )}
+                          title={isArchived ? 'Restore to active' : 'Archive from classroom'}
+                        >
+                          {isArchived ? (
+                            <><RotateCcw className="h-3 w-3" /> Restore</>
+                          ) : (
+                            <><Archive className="h-3 w-3" /> Archive</>
+                          )}
+                        </button>
+                      )
+                    })()}
+                  </td>
+                )}
               </tr>
             )
           })}

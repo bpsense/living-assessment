@@ -3,6 +3,7 @@ import { Loader2, School, Users, ClipboardPen, UsersRound, MapPin } from 'lucide
 import { useAuth } from '../lib/auth'
 import { useAccessControl } from '../lib/access-control'
 import { useDepartmentDashboard } from '../lib/department-data'
+import { useDepartmentLabel } from '../lib/department-label'
 import type { DepartmentSummary } from '../lib/department-data'
 
 // ============================================================
@@ -64,7 +65,7 @@ function DepartmentCard({ dept }: { dept: DepartmentSummary }) {
 
         {/* Classroom list */}
         {dept.classrooms.length === 0 ? (
-          <p className="text-xs text-text-light">No classrooms assigned to this department.</p>
+          <p className="text-xs text-text-light">No classrooms assigned.</p>
         ) : (
           <div className="space-y-1.5">
             {dept.classrooms.map((room) => (
@@ -100,6 +101,7 @@ function DepartmentCard({ dept }: { dept: DepartmentSummary }) {
 export default function DepartmentDashboard() {
   const { profile } = useAuth()
   const { departmentAdminIds } = useAccessControl()
+  const { singular, plural } = useDepartmentLabel()
   const { departments, recentObservations, loading, error } = useDepartmentDashboard(
     departmentAdminIds,
     profile?.school_id
@@ -110,7 +112,7 @@ export default function DepartmentDashboard() {
       <div className="flex min-h-[50vh] items-center justify-center">
         <div className="text-center">
           <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary-500" />
-          <p className="mt-3 text-sm text-text-muted">Loading departments...</p>
+          <p className="mt-3 text-sm text-text-muted">Loading {plural.toLowerCase()}...</p>
         </div>
       </div>
     )
@@ -134,9 +136,9 @@ export default function DepartmentDashboard() {
     <div className="mx-auto max-w-4xl space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-text">Department Overview</h1>
+        <h1 className="text-2xl font-bold text-text">{singular} Overview</h1>
         <p className="mt-1 text-sm text-text-muted">
-          {departments.length} department{departments.length !== 1 ? 's' : ''} &middot;{' '}
+          {departments.length} {departments.length !== 1 ? plural.toLowerCase() : singular.toLowerCase()} &middot;{' '}
           {totalStudents} learner{totalStudents !== 1 ? 's' : ''} &middot;{' '}
           {totalObs} observation{totalObs !== 1 ? 's' : ''}
         </p>
@@ -147,7 +149,7 @@ export default function DepartmentDashboard() {
         <div className="rounded-xl border border-bg-muted bg-bg-card p-10 text-center shadow-sm">
           <MapPin className="mx-auto h-10 w-10 text-text-light" />
           <p className="mt-3 text-sm text-text-muted">
-            You are not assigned as an admin for any departments.
+            You are not assigned as an admin for any {plural.toLowerCase()}.
           </p>
         </div>
       ) : (
