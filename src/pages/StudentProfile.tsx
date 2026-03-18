@@ -262,9 +262,13 @@ export default function StudentProfile() {
                   {formatStudentName(student.first_name, student.last_name)}
                 </h1>
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-muted">
-                  {classrooms.length > 0
-                    ? <span>{classrooms.map((c) => c.name).join(', ')}</span>
-                    : classroom && <span>{classroom.name}</span>}
+                  {classrooms.length > 0 ? (
+                    <span>
+                      {classrooms.filter((c) => c.status === 'active').map((c) => c.name).join(', ') || classroom?.name}
+                    </span>
+                  ) : (
+                    classroom && <span>{classroom.name}</span>
+                  )}
                   {student.grade_level && <span>Grade {student.grade_level}</span>}
                   {age !== null && <span>Age {age}</span>}
                 </div>
