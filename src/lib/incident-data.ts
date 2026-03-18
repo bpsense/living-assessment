@@ -12,7 +12,6 @@ import type {
   IncidentReportWithDetails,
   IncidentReportListItem,
   IncidentReportStudentInsert,
-  IncidentReportFollowUp,
   IncidentReportAttachment,
   IncidentReportNotification,
   IncidentStudentRole,
@@ -112,7 +111,7 @@ export function useIncidentReports(
             .in('incident_report_id', incidentIds)
 
           if (students) {
-            for (const row of students as { incident_report_id: string; students: { first_name: string; last_name: string } | null }[]) {
+            for (const row of students as unknown as { incident_report_id: string; students: { first_name: string; last_name: string } | null }[]) {
               if (!studentMap[row.incident_report_id]) {
                 studentMap[row.incident_report_id] = []
                 studentCountMap[row.incident_report_id] = 0

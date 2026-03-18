@@ -9,8 +9,6 @@ import {
   FileImage,
   File as FileIcon,
   Trash2,
-  Plus,
-  ChevronDown,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'

@@ -18,7 +18,6 @@ import {
   MessageSquare,
   Download,
   Trash2,
-  ChevronDown,
   FileImage,
   File as FileIcon,
 } from 'lucide-react'
@@ -32,7 +31,7 @@ import {
   deleteIncidentAttachment,
   getAttachmentUrl,
 } from '../lib/incident-data'
-import type { IncidentStatus } from '../types/database'
+// IncidentStatus used by follow-up status change dropdown values
 
 // ============================================================
 // Constants
@@ -130,7 +129,7 @@ export default function IncidentReportPage() {
     }
   }, [incident, toast, refetch])
 
-  const handleDownloadAttachment = useCallback(async (filePath: string, fileName: string) => {
+  const handleDownloadAttachment = useCallback(async (filePath: string, _fileName: string) => {
     try {
       const url = await getAttachmentUrl(filePath)
       window.open(url, '_blank')

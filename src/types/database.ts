@@ -1240,7 +1240,7 @@ export interface IncidentReport {
   updated_at: string
 }
 
-export type IncidentReportInsert = Omit<IncidentReport, 'id' | 'created_at' | 'updated_at'> & {
+export type IncidentReportInsert = Omit<IncidentReport, 'id' | 'created_at' | 'updated_at' | 'incident_time' | 'immediate_actions_taken' | 'witnesses' | 'parent_notified' | 'parent_notification_method' | 'shared_with_family' | 'status' | 'assigned_to' | 'resolution_notes' | 'resolved_at'> & {
   id?: string
   incident_time?: string | null
   immediate_actions_taken?: string | null
