@@ -22,12 +22,18 @@ import {
   MapPin,
   ChevronDown,
   X,
+  AlertTriangle,
+  ShieldAlert,
+  ClipboardList,
 } from 'lucide-react'
 import type { UserRole } from '../types/database'
 import QuickObserveModal from './QuickObserveModal'
+import IncidentReportModal from './incident/IncidentReportModal'
+import SpeedDial from './SpeedDial'
 import SchoolSwitcher from './SchoolSwitcher'
 import { useEducatorList } from '../lib/educator-data'
 import { useFamilyList } from '../lib/family-data'
+import NotificationBell from './incident/NotificationBell'
 
 interface NavItem {
   to: string
@@ -57,6 +63,7 @@ function getNavItems(
       { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
       { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
       { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
+      { to: '/admin/incidents', label: 'Incidents', icon: <ShieldAlert className="h-5 w-5" /> },
       { to: '/admin/departments', label: 'Departments', icon: <MapPin className="h-5 w-5" /> },
       { to: '/admin/dimensions', label: 'Dimensions', icon: <Layers className="h-5 w-5" /> },
       { to: '/standards', label: 'Standards', icon: <BookOpen className="h-5 w-5" /> },
@@ -92,6 +99,7 @@ function getNavItems(
         { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
         { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
         { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
+        { to: '/admin/incidents', label: 'Incidents', icon: <ShieldAlert className="h-5 w-5" /> },
         { to: '/admin/departments', label: 'Departments', icon: <MapPin className="h-5 w-5" /> },
         { to: '/admin/dimensions', label: 'Dimensions', icon: <Layers className="h-5 w-5" /> },
         { to: '/standards', label: 'Standards', icon: <BookOpen className="h-5 w-5" /> },
@@ -136,6 +144,7 @@ export default function Layout() {
   const { isDepartmentAdmin } = useAccessControl()
   const navigate = useNavigate()
   const [quickObserveOpen, setQuickObserveOpen] = useState(false)
+  const [incidentReportOpen, setIncidentReportOpen] = useState(false)
   const [schoolName, setSchoolName] = useState<string>('')
   const [openDropdown, setOpenDropdown] = useState<UserRole | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -277,6 +286,9 @@ export default function Layout() {
             <span className="rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700">
               {roleLabel}
             </span>
+            {profile && (role === 'educator' || role === 'admin' || isSystemAdmin) && (
+              <NotificationBell profileId={profile.id} />
+            )}
             <button
               onClick={handleSignOut}
               className="rounded-lg p-1.5 text-text-light transition-colors hover:bg-bg-muted hover:text-text"
@@ -286,14 +298,19 @@ export default function Layout() {
             </button>
           </div>
 
-          {/* Mobile: sign out only */}
-          <button
-            onClick={handleSignOut}
-            className="rounded-lg p-1.5 text-text-light transition-colors hover:bg-bg-muted hover:text-text md:hidden"
-            title="Sign out"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
+          {/* Mobile: notifications + sign out */}
+          <div className="flex items-center gap-1 md:hidden">
+            {profile && (role === 'educator' || role === 'admin' || isSystemAdmin) && (
+              <NotificationBell profileId={profile.id} />
+            )}
+            <button
+              onClick={handleSignOut}
+              className="rounded-lg p-1.5 text-text-light transition-colors hover:bg-bg-muted hover:text-text"
+              title="Sign out"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
         </header>
 
         {/* View-as role switcher with user impersonation dropdowns */}
@@ -483,21 +500,36 @@ export default function Layout() {
         ))}
       </nav>
 
-      {/* ============ Floating Action Button ============ */}
+      {/* ============ Speed Dial FAB ============ */}
       {showFab && (
-        <button
-          onClick={() => setQuickObserveOpen(true)}
-          className="fixed bottom-24 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary-500 text-white shadow-lg transition-transform hover:scale-105 hover:bg-primary-600 active:scale-95 md:bottom-6 md:right-6"
-          title="Quick Observation"
-        >
-          <Plus className="h-6 w-6" />
-        </button>
+        <SpeedDial
+          actions={[
+            {
+              icon: <Eye className="h-4 w-4" />,
+              label: 'Quick Observation',
+              onClick: () => setQuickObserveOpen(true),
+              color: 'bg-accent-500 hover:bg-accent-600',
+            },
+            {
+              icon: <AlertTriangle className="h-4 w-4" />,
+              label: 'Incident Report',
+              onClick: () => setIncidentReportOpen(true),
+              color: 'bg-alert-500 hover:bg-alert-600',
+            },
+          ]}
+        />
       )}
 
       {/* ============ Quick Observe Modal ============ */}
       <QuickObserveModal
         open={quickObserveOpen}
         onClose={() => setQuickObserveOpen(false)}
+      />
+
+      {/* ============ Incident Report Modal ============ */}
+      <IncidentReportModal
+        open={incidentReportOpen}
+        onClose={() => setIncidentReportOpen(false)}
       />
     </div>
   )

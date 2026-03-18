@@ -27,6 +27,8 @@ import ResetPassword from './pages/ResetPassword'
 import ExportReport from './pages/Export'
 import NotFound from './pages/NotFound'
 import SchoolsPage from './pages/system/Schools'
+import IncidentReportPage from './pages/IncidentReport'
+import IncidentsPage from './pages/admin/IncidentsPage'
 
 function PasswordRecoveryRedirect() {
   const { isPasswordRecovery } = useAuth()
@@ -62,6 +64,7 @@ function AppRoutes() {
         <Route path="/export/:id" element={<ExportReport />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/department" element={<DepartmentDashboard />} />
+        <Route path="/incident/:id" element={<IncidentReportPage />} />
         <Route path="/settings" element={<SchoolProfile />} />
 
         {/* System admin routes */}
@@ -97,6 +100,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute requiredRole="admin" allowDepartmentAdmin>
               <FamilyView />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/incidents"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <IncidentsPage />
             </ProtectedRoute>
           }
         />

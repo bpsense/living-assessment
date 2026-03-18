@@ -603,3 +603,117 @@ export const DEFAULT_PROFILE_VISIBILITY: SchoolProfileVisibility = {
   standards_frameworks: true,
   supporting_documents: true,
 }
+
+// ============================================================
+// Incident Reports
+// ============================================================
+
+export type IncidentType = 'behavioral' | 'medical_injury' | 'safety' | 'bullying' | 'property_damage' | 'emotional_welfare' | 'other'
+export type IncidentSeverity = 'low' | 'medium' | 'high' | 'critical'
+export type IncidentStatus = 'open' | 'in_progress' | 'resolved' | 'closed'
+export type IncidentStudentRole = 'involved' | 'victim' | 'aggressor' | 'witness' | 'bystander'
+export type IncidentNotificationType = 'new_incident' | 'assigned' | 'follow_up' | 'status_change'
+
+export interface IncidentReport {
+  id: string
+  school_id: string
+  reported_by: string
+  incident_date: string
+  incident_time: string | null
+  location: string
+  incident_type: IncidentType
+  severity: IncidentSeverity
+  description: string
+  immediate_actions_taken: string | null
+  witnesses: string | null
+  parent_notified: boolean
+  parent_notification_method: string | null
+  shared_with_family: boolean
+  status: IncidentStatus
+  assigned_to: string | null
+  resolution_notes: string | null
+  resolved_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type IncidentReportInsert = Omit<IncidentReport, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  incident_time?: string | null
+  immediate_actions_taken?: string | null
+  witnesses?: string | null
+  parent_notified?: boolean
+  parent_notification_method?: string | null
+  shared_with_family?: boolean
+  status?: IncidentStatus
+  assigned_to?: string | null
+  resolution_notes?: string | null
+  resolved_at?: string | null
+}
+
+export type IncidentReportUpdate = Partial<Omit<IncidentReport, 'id' | 'school_id' | 'reported_by' | 'created_at' | 'updated_at'>>
+
+export interface IncidentReportStudent {
+  id: string
+  incident_report_id: string
+  student_id: string
+  role: IncidentStudentRole
+  notes: string | null
+}
+
+export type IncidentReportStudentInsert = Omit<IncidentReportStudent, 'id'> & {
+  id?: string
+  role?: IncidentStudentRole
+  notes?: string | null
+}
+
+export interface IncidentReportClassroom {
+  id: string
+  incident_report_id: string
+  classroom_id: string
+}
+
+export interface IncidentReportAttachment {
+  id: string
+  incident_report_id: string
+  file_name: string
+  file_path: string
+  file_type: string | null
+  file_size: number | null
+  uploaded_by: string | null
+  created_at: string
+}
+
+export interface IncidentReportFollowUp {
+  id: string
+  incident_report_id: string
+  author_id: string
+  notes: string
+  status_change: string | null
+  created_at: string
+}
+
+export interface IncidentReportNotification {
+  id: string
+  incident_report_id: string
+  recipient_id: string
+  notification_type: IncidentNotificationType
+  read: boolean
+  created_at: string
+}
+
+// Composite types for UI
+export interface IncidentReportWithDetails extends IncidentReport {
+  reporter?: Profile
+  assigned_person?: Profile
+  students?: (IncidentReportStudent & { student?: Student })[]
+  classrooms?: (IncidentReportClassroom & { classroom?: Classroom })[]
+  attachments?: IncidentReportAttachment[]
+  follow_ups?: (IncidentReportFollowUp & { author?: Profile })[]
+}
+
+export interface IncidentReportListItem extends IncidentReport {
+  reporter_name?: string
+  student_names?: string[]
+  student_count?: number
+}

@@ -19,6 +19,7 @@ import SISEditModal from '../components/student/SISEditModal'
 import TeacherNotes from '../components/student/TeacherNotes'
 import ParentNotes from '../components/student/ParentNotes'
 import StudentContextDoc from '../components/student/StudentContextDoc'
+import StudentIncidents from '../components/student/StudentIncidents'
 
 // ============================================================
 // Student avatar with fallback initials
@@ -367,6 +368,14 @@ export default function StudentProfile() {
       {/* ========== TEACHER NOTES (educator/admin only) ========== */}
       {!isFamilyView && (
         <TeacherNotes studentId={student.id} schoolId={student.school_id} />
+      )}
+
+      {/* ========== INCIDENT REPORTS ========== */}
+      {!isFamilyView && (
+        <StudentIncidents studentId={student.id} />
+      )}
+      {isFamilyView && (
+        <StudentIncidents studentId={student.id} isFamilyView />
       )}
 
       {/* ========== FAMILY INPUT — read-only for educators, editable for parents ========== */}
