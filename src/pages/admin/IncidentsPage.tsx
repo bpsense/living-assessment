@@ -8,7 +8,6 @@ import {
   AlertTriangle,
   Search,
   Filter,
-  ChevronDown,
   ShieldAlert,
 } from 'lucide-react'
 import { useAuth } from '../../lib/auth'

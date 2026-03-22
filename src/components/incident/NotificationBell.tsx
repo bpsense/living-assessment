@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
-import { clsx } from 'clsx'
 import { Bell } from 'lucide-react'
 import { useUnreadIncidentNotifications, markNotificationRead } from '../../lib/incident-data'
 

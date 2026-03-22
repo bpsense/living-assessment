@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
-import { Plus, X, Star } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { Plus, X, Star, Archive } from 'lucide-react'
+import { clsx } from 'clsx'
 import { supabase } from '../../lib/supabase'
 import type { Classroom } from '../../types/database'
 import { useToast } from '../Toast'
@@ -100,6 +101,17 @@ export default function StudentClassroomsManager({ studentId, schoolId, classroo
     onChanged()
   }
 
+  // Sort: active first, then archived; primary first within active
+  const sortedClassrooms = useMemo(() => {
+    const active = classrooms.filter((c) => c.status !== 'archived')
+    const archived = classrooms.filter((c) => c.status === 'archived')
+    active.sort((a, b) => (a.is_primary ? -1 : b.is_primary ? 1 : 0))
+    return [...active, ...archived]
+  }, [classrooms])
+
+  const activeCount = sortedClassrooms.filter((c) => c.status !== 'archived').length
+  const archivedCount = sortedClassrooms.filter((c) => c.status === 'archived').length
+
   if (classrooms.length <= 1 && !showAdd) {
     return (
       <button
@@ -115,7 +127,14 @@ export default function StudentClassroomsManager({ studentId, schoolId, classroo
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-text-muted">Classrooms</h4>
+        <h4 className="text-sm font-medium text-text-muted">
+          Classrooms
+          {archivedCount > 0 && (
+            <span className="ml-1.5 text-xs text-text-light">
+              ({activeCount} current, {archivedCount} past)
+            </span>
+          )}
+        </h4>
         {!showAdd && (
           <button
             onClick={() => setShowAdd(true)}
@@ -128,35 +147,49 @@ export default function StudentClassroomsManager({ studentId, schoolId, classroo
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {classrooms.map((c) => (
-          <div
-            key={c.id}
-            className="flex items-center gap-1.5 rounded-full bg-surface-secondary px-3 py-1 text-sm"
-          >
-            {c.is_primary && (
-              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-            )}
-            <span>{c.name}</span>
-            {!c.is_primary && classrooms.length > 1 && (
-              <>
-                <button
-                  onClick={() => handleSetPrimary(c.id)}
-                  title="Make primary"
-                  className="ml-1 text-text-light hover:text-amber-500"
-                >
-                  <Star className="h-3 w-3" />
-                </button>
-                <button
-                  onClick={() => handleRemove(c.id)}
-                  title="Remove from classroom"
-                  className="text-text-light hover:text-error-600"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </>
-            )}
-          </div>
-        ))}
+        {sortedClassrooms.map((c) => {
+          const isArchived = c.status === 'archived'
+          return (
+            <div
+              key={c.id}
+              className={clsx(
+                'flex items-center gap-1.5 rounded-full px-3 py-1 text-sm',
+                isArchived
+                  ? 'border border-bg-muted bg-bg text-text-light line-through decoration-text-light/40'
+                  : 'bg-primary-50 text-text'
+              )}
+            >
+              {isArchived && (
+                <Archive className="h-3 w-3 text-text-light" />
+              )}
+              {!isArchived && c.is_primary && (
+                <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+              )}
+              <span>{c.name}</span>
+              {isArchived && (
+                <span className="text-[10px] font-medium text-text-light">(past)</span>
+              )}
+              {!isArchived && !c.is_primary && classrooms.length > 1 && (
+                <>
+                  <button
+                    onClick={() => handleSetPrimary(c.id)}
+                    title="Make primary"
+                    className="ml-1 text-text-light hover:text-amber-500"
+                  >
+                    <Star className="h-3 w-3" />
+                  </button>
+                  <button
+                    onClick={() => handleRemove(c.id)}
+                    title="Remove from classroom"
+                    className="text-text-light hover:text-alert-500"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </>
+              )}
+            </div>
+          )
+        })}
       </div>
 
       {showAdd && (
