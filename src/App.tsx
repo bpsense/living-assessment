@@ -38,6 +38,7 @@ import Messages from './pages/Messages'
 import TemplatePreview from './pages/TemplatePreview'
 import IncidentReportPage from './pages/IncidentReport'
 import IncidentsPage from './pages/admin/IncidentsPage'
+import TranslatePage from './pages/Translate'
 
 function PasswordRecoveryRedirect() {
   const { isPasswordRecovery } = useAuth()
@@ -160,6 +161,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute requiredRole="admin">
               <Standards />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/translate"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <TranslatePage />
             </ProtectedRoute>
           }
         />

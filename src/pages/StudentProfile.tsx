@@ -23,6 +23,7 @@ import LearnerMessagesSection from '../components/student/LearnerMessagesSection
 import StudentContextDoc from '../components/student/StudentContextDoc'
 import StudentClassroomsManager from '../components/student/StudentClassroomsManager'
 import StudentSkillsSection from '../components/skills/StudentSkillsSection'
+import TranslationHistory from '../components/student/TranslationHistory'
 
 // ============================================================
 // Student avatar with fallback initials
@@ -396,6 +397,11 @@ export default function StudentProfile() {
             studentGrade={student.grade_level}
           />
         </section>
+      )}
+
+      {/* ========== TRANSLATION HISTORY (educator/admin only) ========== */}
+      {!isFamilyView && (
+        <TranslationHistory studentId={student.id} />
       )}
 
       {/* ========== TEACHER NOTES (educator/admin only) ========== */}

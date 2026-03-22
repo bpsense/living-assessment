@@ -1320,3 +1320,67 @@ export interface IncidentReportListItem extends IncidentReport {
   student_names?: string[]
   student_count?: number
 }
+
+// ============================================================
+// Translation Engine
+// ============================================================
+
+export interface TranslationRecord {
+  id: string
+  student_id: string
+  school_id: string
+  target_framework_id: string
+  translated_by: string
+  reviewed: boolean
+  reviewed_by: string | null
+  reviewed_at: string | null
+  created_at: string
+}
+
+export type TranslationRecordInsert = Omit<TranslationRecord, 'id' | 'created_at' | 'reviewed' | 'reviewed_by' | 'reviewed_at'> & {
+  id?: string
+  reviewed?: boolean
+  reviewed_by?: string | null
+  reviewed_at?: string | null
+}
+
+export type TranslationRecordUpdate = Partial<Omit<TranslationRecord, 'id' | 'student_id' | 'school_id' | 'created_at'>>
+
+export interface TranslationMapping {
+  id: string
+  translation_id: string
+  competency_score_id: string | null
+  student_skill_assignment_id: string | null
+  standard_id: string
+  confidence: number
+  level_in_standard: string | null
+  human_override: boolean
+  notes: string | null
+  created_at: string
+}
+
+export type TranslationMappingInsert = Omit<TranslationMapping, 'id' | 'created_at'> & {
+  id?: string
+  competency_score_id?: string | null
+  student_skill_assignment_id?: string | null
+  confidence?: number
+  level_in_standard?: string | null
+  human_override?: boolean
+  notes?: string | null
+}
+
+export type TranslationMappingUpdate = Partial<Omit<TranslationMapping, 'id' | 'translation_id' | 'created_at'>>
+
+/** Translation mapping with joined standard details for UI */
+export interface TranslationMappingWithDetails extends TranslationMapping {
+  standard?: Standard
+  competency_score?: CompetencyScoreRow
+}
+
+/** Translation record with joined details for UI */
+export interface TranslationRecordWithDetails extends TranslationRecord {
+  framework?: StandardsFramework
+  mappings?: TranslationMappingWithDetails[]
+  translator_name?: string
+  reviewer_name?: string
+}

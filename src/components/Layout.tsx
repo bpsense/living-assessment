@@ -26,6 +26,7 @@ import {
   Target,
   AlertTriangle,
   ShieldAlert,
+  Languages,
 } from 'lucide-react'
 import type { UserRole } from '../types/database'
 import QuickObserveModal from './QuickObserveModal'
@@ -74,6 +75,7 @@ function getNavItems(
       { to: '/admin/departments', label: deptLabel.plural, icon: <MapPin className="h-5 w-5" /> },
       { to: '/admin/dimensions', label: 'Dimensions', icon: <Layers className="h-5 w-5" /> },
       { to: '/standards', label: 'Standards', icon: <BookOpen className="h-5 w-5" /> },
+      { to: '/translate', label: 'Translate', icon: <Languages className="h-5 w-5" /> },
       { to: '/admin/skill-library', label: 'Skill Library', icon: <Target className="h-5 w-5" /> },
       { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
       { to: '/settings', label: 'School Profile', icon: <Building2 className="h-5 w-5" /> },
@@ -118,6 +120,7 @@ function getNavItems(
         { to: '/admin/departments', label: deptLabel.plural, icon: <MapPin className="h-5 w-5" /> },
         { to: '/admin/dimensions', label: 'Dimensions', icon: <Layers className="h-5 w-5" /> },
         { to: '/standards', label: 'Standards', icon: <BookOpen className="h-5 w-5" /> },
+        { to: '/translate', label: 'Translate', icon: <Languages className="h-5 w-5" /> },
         { to: '/admin/skill-library', label: 'Skill Library', icon: <Target className="h-5 w-5" /> },
         { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
         { to: '/settings', label: 'School Profile', icon: <Building2 className="h-5 w-5" /> },
