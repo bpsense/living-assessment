@@ -1,0 +1,2100 @@
+{
+  "framework": "Common Core State Standards",
+  "subject": "English Language Arts",
+  "version": "2010",
+  "source": "corestandards.org",
+  "strands": {
+    "Reading_Literature": "RL",
+    "Reading_Informational": "RI",
+    "Reading_Foundational": "RF",
+    "Writing": "W",
+    "Speaking_Listening": "SL",
+    "Language": "L"
+  },
+  "grade_bands": {
+    "K-5": {
+      "grades": [
+        "K",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "anchor_standards": {
+        "Reading": [
+          "Read closely to determine what the text says explicitly",
+          "Determine central ideas or themes; analyze their development",
+          "Analyze how and why individuals, events, and ideas develop",
+          "Interpret words and phrases as used in a text",
+          "Analyze the structure of texts",
+          "Assess how point of view or purpose shapes content and style",
+          "Integrate and evaluate content presented in diverse media",
+          "Delineate and evaluate the argument in a text",
+          "Analyze how two or more texts address similar themes",
+          "Read and comprehend complex literary and informational texts"
+        ],
+        "Writing": [
+          "Write arguments to support claims with clear reasons and evidence",
+          "Write informative/explanatory texts to examine and convey ideas",
+          "Write narratives to develop real or imagined experiences",
+          "Produce clear and coherent writing",
+          "Develop and strengthen writing through planning and revising",
+          "Use technology to produce and publish writing",
+          "Conduct short and sustained research projects",
+          "Gather relevant information from multiple sources",
+          "Draw evidence from literary or informational texts",
+          "Write routinely over extended and shorter time frames"
+        ]
+      }
+    },
+    "6-12": {
+      "grades": [
+        "6",
+        "7",
+        "8",
+        "9-10",
+        "11-12"
+      ],
+      "anchor_standards": {
+        "Reading": [
+          "Cite textual evidence to support analysis",
+          "Determine central ideas; provide objective summary",
+          "Analyze how text unfolds and ideas are introduced",
+          "Determine meaning of words and phrases including figurative language",
+          "Analyze how sentences, paragraphs, and sections fit together",
+          "Assess point of view and purpose; distinguish from what is claimed",
+          "Integrate and evaluate multiple sources of information",
+          "Delineate and evaluate the argument including false statements",
+          "Analyze how two or more texts address similar themes",
+          "Read and comprehend complex texts independently"
+        ]
+      }
+    }
+  },
+  "grades": {
+    "K": {
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "standards_by_strand": {
+        "Reading_Literature": [
+          {
+            "standard": "1",
+            "description": "With prompting and support, ask and answer 1"
+          },
+          {
+            "standard": "1",
+            "description": "Ask and answer such questions as who, what, questions about key details in a text"
+          },
+          {
+            "standard": "2",
+            "description": "With prompting and support, retell familiar 2"
+          },
+          {
+            "standard": "2",
+            "description": "Recount stories, including fables and folktales stories, including key details"
+          },
+          {
+            "standard": "3",
+            "description": "With prompting and support, identify characters, 3"
+          },
+          {
+            "standard": "3",
+            "description": "Describe how characters in a story respond to settings, and major events in a story"
+          },
+          {
+            "standard": "4",
+            "description": "Ask and answer questions about unknown words 4"
+          },
+          {
+            "standard": "4",
+            "description": "Describe how words and phrases (e"
+          },
+          {
+            "standard": "5",
+            "description": "Recognize common types of texts (e"
+          },
+          {
+            "standard": "5",
+            "description": "Explain major differences between books that tell 5"
+          },
+          {
+            "standard": "6",
+            "description": "With prompting and support, name the author 6"
+          },
+          {
+            "standard": "6",
+            "description": "Acknowledge differences in the points of view of and illustrator of a story and define the role of in a text"
+          },
+          {
+            "standard": "7",
+            "description": "With prompting and support, describe the 7"
+          },
+          {
+            "standard": "7",
+            "description": "Use information gained from the illustrations and relationship between illustrations and the story in its characters, setting, or events"
+          },
+          {
+            "standard": "9",
+            "description": "With prompting and support, compare and 9"
+          },
+          {
+            "standard": "9",
+            "description": "Compare and contrast two or more versions contrast the adventures and experiences of experiences of characters in stories"
+          },
+          {
+            "standard": "10",
+            "description": "Actively engage in group reading activities with 10"
+          },
+          {
+            "standard": "10",
+            "description": "By the end of the year, read and comprehend purpose and understanding"
+          }
+        ],
+        "Reading_Informational": [
+          {
+            "standard": "1",
+            "description": "With prompting and support, ask and answer 1"
+          },
+          {
+            "standard": "1",
+            "description": "Ask and answer such questions as who, what, questions about key details in a text"
+          },
+          {
+            "standard": "2",
+            "description": "With prompting and support, identify the main 2"
+          },
+          {
+            "standard": "2",
+            "description": "Identify the main topic of a multiparagraph text topic and retell key details of a text"
+          },
+          {
+            "standard": "3",
+            "description": "With prompting and support, describe the 3"
+          },
+          {
+            "standard": "3",
+            "description": "Describe the connection between a series of connection between two individuals, events, individuals, events, ideas, or pieces of information historical events, scientific ideas or concepts, or ideas, o"
+          },
+          {
+            "standard": "4",
+            "description": "With prompting and support, ask and answer 4"
+          },
+          {
+            "standard": "4",
+            "description": "Determine the meaning of words and phrases in a questions about unknown words in a text"
+          },
+          {
+            "standard": "5",
+            "description": "Identify the front cover, back cover, and title 5"
+          },
+          {
+            "standard": "5",
+            "description": "Know and use various text features (e"
+          },
+          {
+            "standard": "6",
+            "description": "Name the author and illustrator of a text and 6"
+          },
+          {
+            "standard": "6",
+            "description": "Identify the main purpose of a text, including define the role of each in presenting the ideas or pictures or other illustrations and information what the author wants to answer, explain, or informatio"
+          },
+          {
+            "standard": "7",
+            "description": "With prompting and support, describe the 7"
+          },
+          {
+            "standard": "7",
+            "description": "Explain how specific images (e"
+          },
+          {
+            "standard": "8",
+            "description": "With prompting and support, identify the 8"
+          },
+          {
+            "standard": "8",
+            "description": "Describe how reasons support specific points the reasons an author gives to support points in a points in a text"
+          },
+          {
+            "standard": "9",
+            "description": "With prompting and support, identify basic 9"
+          },
+          {
+            "standard": "9",
+            "description": "Compare and contrast the most important points similarities in and differences between two between two texts on the same topic (e"
+          },
+          {
+            "standard": "10",
+            "description": "Actively engage in group reading activities with 10"
+          },
+          {
+            "standard": "10",
+            "description": "By the end of year, read and comprehend purpose and understanding"
+          }
+        ],
+        "Writing": [
+          {
+            "standard": "1",
+            "description": "Use a combination of drawing, dictating, and 1"
+          },
+          {
+            "standard": "1",
+            "description": "Write opinion pieces in which they introduce the writing to compose opinion pieces in which they topic or name the book they are writing about, topic or book they are writing about, state an tell a rea"
+          },
+          {
+            "standard": "2",
+            "description": "Use a combination of drawing, dictating, and 2"
+          },
+          {
+            "standard": "2",
+            "description": "Write informative/explanatory texts in which writing to compose informative/explanatory name a topic, supply some facts about the topic, they introduce a topic, use facts and definitions texts in which"
+          },
+          {
+            "standard": "3",
+            "description": "Use a combination of drawing, dictating, and 3"
+          },
+          {
+            "standard": "3",
+            "description": "Write narratives in which they recount a well- writing to narrate a single event or several more appropriately sequenced events, include elaborated event or short sequence of events, loosely linked eve"
+          },
+          {
+            "standard": "5",
+            "description": "With guidance and support from adults, respond 5"
+          },
+          {
+            "standard": "5",
+            "description": "With guidance and support from adults and to questions and suggestions from peers and a topic, respond to questions and suggestions peers, focus on a topic and strengthen writing as add details to stre"
+          },
+          {
+            "standard": "6",
+            "description": "With guidance and support from adults, explore 6"
+          },
+          {
+            "standard": "6",
+            "description": "With guidance and support from adults, use a a variety of digital tools to produce and publish variety of digital tools to produce and publish variety of digital tools to produce and publish writing, i"
+          },
+          {
+            "standard": "7",
+            "description": "Participate in shared research and writing 7"
+          },
+          {
+            "standard": "7",
+            "description": "Participate in shared research and writing projects (e"
+          },
+          {
+            "standard": "8",
+            "description": "With guidance and support from adults, 8"
+          },
+          {
+            "standard": "8",
+            "description": "Recall information from experiences or gather recall information from experiences or gather recall information from experiences or gather information from provided sources to answer a information from"
+          }
+        ],
+        "Speaking_Listening": [
+          {
+            "standard": "1",
+            "description": "Participate in collaborative conversations with 1"
+          },
+          {
+            "standard": "1",
+            "description": "Participate in collaborative conversations with diverse partners about kindergarten topics and diverse partners about grade 1 topics and texts diverse partners about grade 2 topics and texts texts with"
+          },
+          {
+            "standard": "2",
+            "description": "Confirm understanding of a text read aloud or 2"
+          },
+          {
+            "standard": "2",
+            "description": "Recount or describe key ideas or details from a information presented orally or through other text read aloud or information presented orally or text read aloud or information presented orally or media"
+          },
+          {
+            "standard": "3",
+            "description": "Ask and answer questions in order to seek help, 3"
+          },
+          {
+            "standard": "3",
+            "description": "Ask and answer questions about what a speaker get information, or clarify something that is not says in order to gather additional information or says in order to clarify comprehension, gather understo"
+          },
+          {
+            "standard": "4",
+            "description": "Describe familiar people, places, things, and 4"
+          },
+          {
+            "standard": "4",
+            "description": "Tell a story or recount an experience with events and, with prompting and support, provide relevant details, expressing ideas and feelings appropriate facts and relevant, descriptive details, additiona"
+          },
+          {
+            "standard": "5",
+            "description": "Add drawings or other visual displays to 5"
+          },
+          {
+            "standard": "5",
+            "description": "Create audio recordings of stories or poems; descriptions as desired to provide additional descriptions when appropriate to clarify ideas, add drawings or other visual displays to stories detail"
+          },
+          {
+            "standard": "6",
+            "description": "Speak audibly and express thoughts, feelings, and 6"
+          },
+          {
+            "standard": "6",
+            "description": "Produce complete sentences when appropriate to ideas clearly"
+          }
+        ],
+        "Language": [
+          {
+            "standard": "1",
+            "description": "Demonstrate command of the conventions of 1"
+          },
+          {
+            "standard": "1",
+            "description": "Demonstrate command of the conventions of standard English grammar and usage when standard English grammar and usage when standard English grammar and usage when writing writing or speaking"
+          },
+          {
+            "standard": "2",
+            "description": "Demonstrate command of the conventions of 2"
+          },
+          {
+            "standard": "2",
+            "description": "Demonstrate command of the conventions of standard English capitalization, punctuation, and standard English capitalization, punctuation, and standard English capitalization, punctuation, and spelling"
+          },
+          {
+            "standard": "3",
+            "description": "Use knowledge of language and its conventions when writing, speaking, reading, or listening"
+          },
+          {
+            "standard": "4",
+            "description": "Determine or clarify the meaning of unknown and 4"
+          },
+          {
+            "standard": "4",
+            "description": "Determine or clarify the meaning of unknown and multiple-meaning words and phrases based on and multiple-meaning words and phrases based multiple-meaning words and phrases based on kindergarten reading"
+          },
+          {
+            "standard": "5",
+            "description": "With guidance and support from adults, explore 5"
+          },
+          {
+            "standard": "5",
+            "description": "Demonstrate understanding of word relationships word relationships and nuances in word meanings"
+          },
+          {
+            "standard": "6",
+            "description": "Use words and phrases acquired through 6"
+          },
+          {
+            "standard": "6",
+            "description": "Use words and phrases acquired through conversations, reading and being read to, and conversations, reading and being read to, and conversations, reading and being read to, and responding to texts"
+          }
+        ]
+      }
+    },
+    "1": {
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "standards_by_strand": {
+        "Reading_Literature": [
+          {
+            "standard": "1",
+            "description": "With prompting and support, ask and answer 1"
+          },
+          {
+            "standard": "1",
+            "description": "Ask and answer such questions as who, what, questions about key details in a text"
+          },
+          {
+            "standard": "2",
+            "description": "With prompting and support, retell familiar 2"
+          },
+          {
+            "standard": "2",
+            "description": "Recount stories, including fables and folktales stories, including key details"
+          },
+          {
+            "standard": "3",
+            "description": "With prompting and support, identify characters, 3"
+          },
+          {
+            "standard": "3",
+            "description": "Describe how characters in a story respond to settings, and major events in a story"
+          },
+          {
+            "standard": "4",
+            "description": "Ask and answer questions about unknown words 4"
+          },
+          {
+            "standard": "4",
+            "description": "Describe how words and phrases (e"
+          },
+          {
+            "standard": "5",
+            "description": "Recognize common types of texts (e"
+          },
+          {
+            "standard": "5",
+            "description": "Explain major differences between books that tell 5"
+          },
+          {
+            "standard": "6",
+            "description": "With prompting and support, name the author 6"
+          },
+          {
+            "standard": "6",
+            "description": "Acknowledge differences in the points of view of and illustrator of a story and define the role of in a text"
+          },
+          {
+            "standard": "7",
+            "description": "With prompting and support, describe the 7"
+          },
+          {
+            "standard": "7",
+            "description": "Use information gained from the illustrations and relationship between illustrations and the story in its characters, setting, or events"
+          },
+          {
+            "standard": "9",
+            "description": "With prompting and support, compare and 9"
+          },
+          {
+            "standard": "9",
+            "description": "Compare and contrast two or more versions contrast the adventures and experiences of experiences of characters in stories"
+          },
+          {
+            "standard": "10",
+            "description": "Actively engage in group reading activities with 10"
+          },
+          {
+            "standard": "10",
+            "description": "By the end of the year, read and comprehend purpose and understanding"
+          }
+        ],
+        "Reading_Informational": [
+          {
+            "standard": "1",
+            "description": "With prompting and support, ask and answer 1"
+          },
+          {
+            "standard": "1",
+            "description": "Ask and answer such questions as who, what, questions about key details in a text"
+          },
+          {
+            "standard": "2",
+            "description": "With prompting and support, identify the main 2"
+          },
+          {
+            "standard": "2",
+            "description": "Identify the main topic of a multiparagraph text topic and retell key details of a text"
+          },
+          {
+            "standard": "3",
+            "description": "With prompting and support, describe the 3"
+          },
+          {
+            "standard": "3",
+            "description": "Describe the connection between a series of connection between two individuals, events, individuals, events, ideas, or pieces of information historical events, scientific ideas or concepts, or ideas, o"
+          },
+          {
+            "standard": "4",
+            "description": "With prompting and support, ask and answer 4"
+          },
+          {
+            "standard": "4",
+            "description": "Determine the meaning of words and phrases in a questions about unknown words in a text"
+          },
+          {
+            "standard": "5",
+            "description": "Identify the front cover, back cover, and title 5"
+          },
+          {
+            "standard": "5",
+            "description": "Know and use various text features (e"
+          },
+          {
+            "standard": "6",
+            "description": "Name the author and illustrator of a text and 6"
+          },
+          {
+            "standard": "6",
+            "description": "Identify the main purpose of a text, including define the role of each in presenting the ideas or pictures or other illustrations and information what the author wants to answer, explain, or informatio"
+          },
+          {
+            "standard": "7",
+            "description": "With prompting and support, describe the 7"
+          },
+          {
+            "standard": "7",
+            "description": "Explain how specific images (e"
+          },
+          {
+            "standard": "8",
+            "description": "With prompting and support, identify the 8"
+          },
+          {
+            "standard": "8",
+            "description": "Describe how reasons support specific points the reasons an author gives to support points in a points in a text"
+          },
+          {
+            "standard": "9",
+            "description": "With prompting and support, identify basic 9"
+          },
+          {
+            "standard": "9",
+            "description": "Compare and contrast the most important points similarities in and differences between two between two texts on the same topic (e"
+          },
+          {
+            "standard": "10",
+            "description": "Actively engage in group reading activities with 10"
+          },
+          {
+            "standard": "10",
+            "description": "By the end of year, read and comprehend purpose and understanding"
+          }
+        ],
+        "Writing": [
+          {
+            "standard": "1",
+            "description": "Use a combination of drawing, dictating, and 1"
+          },
+          {
+            "standard": "1",
+            "description": "Write opinion pieces in which they introduce the writing to compose opinion pieces in which they topic or name the book they are writing about, topic or book they are writing about, state an tell a rea"
+          },
+          {
+            "standard": "2",
+            "description": "Use a combination of drawing, dictating, and 2"
+          },
+          {
+            "standard": "2",
+            "description": "Write informative/explanatory texts in which writing to compose informative/explanatory name a topic, supply some facts about the topic, they introduce a topic, use facts and definitions texts in which"
+          },
+          {
+            "standard": "3",
+            "description": "Use a combination of drawing, dictating, and 3"
+          },
+          {
+            "standard": "3",
+            "description": "Write narratives in which they recount a well- writing to narrate a single event or several more appropriately sequenced events, include elaborated event or short sequence of events, loosely linked eve"
+          },
+          {
+            "standard": "5",
+            "description": "With guidance and support from adults, respond 5"
+          },
+          {
+            "standard": "5",
+            "description": "With guidance and support from adults and to questions and suggestions from peers and a topic, respond to questions and suggestions peers, focus on a topic and strengthen writing as add details to stre"
+          },
+          {
+            "standard": "6",
+            "description": "With guidance and support from adults, explore 6"
+          },
+          {
+            "standard": "6",
+            "description": "With guidance and support from adults, use a a variety of digital tools to produce and publish variety of digital tools to produce and publish variety of digital tools to produce and publish writing, i"
+          },
+          {
+            "standard": "7",
+            "description": "Participate in shared research and writing 7"
+          },
+          {
+            "standard": "7",
+            "description": "Participate in shared research and writing projects (e"
+          },
+          {
+            "standard": "8",
+            "description": "With guidance and support from adults, 8"
+          },
+          {
+            "standard": "8",
+            "description": "Recall information from experiences or gather recall information from experiences or gather recall information from experiences or gather information from provided sources to answer a information from"
+          }
+        ],
+        "Speaking_Listening": [
+          {
+            "standard": "1",
+            "description": "Participate in collaborative conversations with 1"
+          },
+          {
+            "standard": "1",
+            "description": "Participate in collaborative conversations with diverse partners about kindergarten topics and diverse partners about grade 1 topics and texts diverse partners about grade 2 topics and texts texts with"
+          },
+          {
+            "standard": "2",
+            "description": "Confirm understanding of a text read aloud or 2"
+          },
+          {
+            "standard": "2",
+            "description": "Recount or describe key ideas or details from a information presented orally or through other text read aloud or information presented orally or text read aloud or information presented orally or media"
+          },
+          {
+            "standard": "3",
+            "description": "Ask and answer questions in order to seek help, 3"
+          },
+          {
+            "standard": "3",
+            "description": "Ask and answer questions about what a speaker get information, or clarify something that is not says in order to gather additional information or says in order to clarify comprehension, gather understo"
+          },
+          {
+            "standard": "4",
+            "description": "Describe familiar people, places, things, and 4"
+          },
+          {
+            "standard": "4",
+            "description": "Tell a story or recount an experience with events and, with prompting and support, provide relevant details, expressing ideas and feelings appropriate facts and relevant, descriptive details, additiona"
+          },
+          {
+            "standard": "5",
+            "description": "Add drawings or other visual displays to 5"
+          },
+          {
+            "standard": "5",
+            "description": "Create audio recordings of stories or poems; descriptions as desired to provide additional descriptions when appropriate to clarify ideas, add drawings or other visual displays to stories detail"
+          },
+          {
+            "standard": "6",
+            "description": "Speak audibly and express thoughts, feelings, and 6"
+          },
+          {
+            "standard": "6",
+            "description": "Produce complete sentences when appropriate to ideas clearly"
+          }
+        ],
+        "Language": [
+          {
+            "standard": "1",
+            "description": "Demonstrate command of the conventions of 1"
+          },
+          {
+            "standard": "1",
+            "description": "Demonstrate command of the conventions of standard English grammar and usage when standard English grammar and usage when standard English grammar and usage when writing writing or speaking"
+          },
+          {
+            "standard": "2",
+            "description": "Demonstrate command of the conventions of 2"
+          },
+          {
+            "standard": "2",
+            "description": "Demonstrate command of the conventions of standard English capitalization, punctuation, and standard English capitalization, punctuation, and standard English capitalization, punctuation, and spelling"
+          },
+          {
+            "standard": "3",
+            "description": "Use knowledge of language and its conventions when writing, speaking, reading, or listening"
+          },
+          {
+            "standard": "4",
+            "description": "Determine or clarify the meaning of unknown and 4"
+          },
+          {
+            "standard": "4",
+            "description": "Determine or clarify the meaning of unknown and multiple-meaning words and phrases based on and multiple-meaning words and phrases based multiple-meaning words and phrases based on kindergarten reading"
+          },
+          {
+            "standard": "5",
+            "description": "With guidance and support from adults, explore 5"
+          },
+          {
+            "standard": "5",
+            "description": "Demonstrate understanding of word relationships word relationships and nuances in word meanings"
+          },
+          {
+            "standard": "6",
+            "description": "Use words and phrases acquired through 6"
+          },
+          {
+            "standard": "6",
+            "description": "Use words and phrases acquired through conversations, reading and being read to, and conversations, reading and being read to, and conversations, reading and being read to, and responding to texts"
+          }
+        ]
+      }
+    },
+    "2": {
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "standards_by_strand": {
+        "Reading_Literature": [
+          {
+            "standard": "1",
+            "description": "With prompting and support, ask and answer 1"
+          },
+          {
+            "standard": "1",
+            "description": "Ask and answer such questions as who, what, questions about key details in a text"
+          },
+          {
+            "standard": "2",
+            "description": "With prompting and support, retell familiar 2"
+          },
+          {
+            "standard": "2",
+            "description": "Recount stories, including fables and folktales stories, including key details"
+          },
+          {
+            "standard": "3",
+            "description": "With prompting and support, identify characters, 3"
+          },
+          {
+            "standard": "3",
+            "description": "Describe how characters in a story respond to settings, and major events in a story"
+          },
+          {
+            "standard": "4",
+            "description": "Ask and answer questions about unknown words 4"
+          },
+          {
+            "standard": "4",
+            "description": "Describe how words and phrases (e"
+          },
+          {
+            "standard": "5",
+            "description": "Recognize common types of texts (e"
+          },
+          {
+            "standard": "5",
+            "description": "Explain major differences between books that tell 5"
+          },
+          {
+            "standard": "6",
+            "description": "With prompting and support, name the author 6"
+          },
+          {
+            "standard": "6",
+            "description": "Acknowledge differences in the points of view of and illustrator of a story and define the role of in a text"
+          },
+          {
+            "standard": "7",
+            "description": "With prompting and support, describe the 7"
+          },
+          {
+            "standard": "7",
+            "description": "Use information gained from the illustrations and relationship between illustrations and the story in its characters, setting, or events"
+          },
+          {
+            "standard": "9",
+            "description": "With prompting and support, compare and 9"
+          },
+          {
+            "standard": "9",
+            "description": "Compare and contrast two or more versions contrast the adventures and experiences of experiences of characters in stories"
+          },
+          {
+            "standard": "10",
+            "description": "Actively engage in group reading activities with 10"
+          },
+          {
+            "standard": "10",
+            "description": "By the end of the year, read and comprehend purpose and understanding"
+          }
+        ],
+        "Reading_Informational": [
+          {
+            "standard": "1",
+            "description": "With prompting and support, ask and answer 1"
+          },
+          {
+            "standard": "1",
+            "description": "Ask and answer such questions as who, what, questions about key details in a text"
+          },
+          {
+            "standard": "2",
+            "description": "With prompting and support, identify the main 2"
+          },
+          {
+            "standard": "2",
+            "description": "Identify the main topic of a multiparagraph text topic and retell key details of a text"
+          },
+          {
+            "standard": "3",
+            "description": "With prompting and support, describe the 3"
+          },
+          {
+            "standard": "3",
+            "description": "Describe the connection between a series of connection between two individuals, events, individuals, events, ideas, or pieces of information historical events, scientific ideas or concepts, or ideas, o"
+          },
+          {
+            "standard": "4",
+            "description": "With prompting and support, ask and answer 4"
+          },
+          {
+            "standard": "4",
+            "description": "Determine the meaning of words and phrases in a questions about unknown words in a text"
+          },
+          {
+            "standard": "5",
+            "description": "Identify the front cover, back cover, and title 5"
+          },
+          {
+            "standard": "5",
+            "description": "Know and use various text features (e"
+          },
+          {
+            "standard": "6",
+            "description": "Name the author and illustrator of a text and 6"
+          },
+          {
+            "standard": "6",
+            "description": "Identify the main purpose of a text, including define the role of each in presenting the ideas or pictures or other illustrations and information what the author wants to answer, explain, or informatio"
+          },
+          {
+            "standard": "7",
+            "description": "With prompting and support, describe the 7"
+          },
+          {
+            "standard": "7",
+            "description": "Explain how specific images (e"
+          },
+          {
+            "standard": "8",
+            "description": "With prompting and support, identify the 8"
+          },
+          {
+            "standard": "8",
+            "description": "Describe how reasons support specific points the reasons an author gives to support points in a points in a text"
+          },
+          {
+            "standard": "9",
+            "description": "With prompting and support, identify basic 9"
+          },
+          {
+            "standard": "9",
+            "description": "Compare and contrast the most important points similarities in and differences between two between two texts on the same topic (e"
+          },
+          {
+            "standard": "10",
+            "description": "Actively engage in group reading activities with 10"
+          },
+          {
+            "standard": "10",
+            "description": "By the end of year, read and comprehend purpose and understanding"
+          }
+        ],
+        "Writing": [
+          {
+            "standard": "1",
+            "description": "Use a combination of drawing, dictating, and 1"
+          },
+          {
+            "standard": "1",
+            "description": "Write opinion pieces in which they introduce the writing to compose opinion pieces in which they topic or name the book they are writing about, topic or book they are writing about, state an tell a rea"
+          },
+          {
+            "standard": "2",
+            "description": "Use a combination of drawing, dictating, and 2"
+          },
+          {
+            "standard": "2",
+            "description": "Write informative/explanatory texts in which writing to compose informative/explanatory name a topic, supply some facts about the topic, they introduce a topic, use facts and definitions texts in which"
+          },
+          {
+            "standard": "3",
+            "description": "Use a combination of drawing, dictating, and 3"
+          },
+          {
+            "standard": "3",
+            "description": "Write narratives in which they recount a well- writing to narrate a single event or several more appropriately sequenced events, include elaborated event or short sequence of events, loosely linked eve"
+          },
+          {
+            "standard": "5",
+            "description": "With guidance and support from adults, respond 5"
+          },
+          {
+            "standard": "5",
+            "description": "With guidance and support from adults and to questions and suggestions from peers and a topic, respond to questions and suggestions peers, focus on a topic and strengthen writing as add details to stre"
+          },
+          {
+            "standard": "6",
+            "description": "With guidance and support from adults, explore 6"
+          },
+          {
+            "standard": "6",
+            "description": "With guidance and support from adults, use a a variety of digital tools to produce and publish variety of digital tools to produce and publish variety of digital tools to produce and publish writing, i"
+          },
+          {
+            "standard": "7",
+            "description": "Participate in shared research and writing 7"
+          },
+          {
+            "standard": "7",
+            "description": "Participate in shared research and writing projects (e"
+          },
+          {
+            "standard": "8",
+            "description": "With guidance and support from adults, 8"
+          },
+          {
+            "standard": "8",
+            "description": "Recall information from experiences or gather recall information from experiences or gather recall information from experiences or gather information from provided sources to answer a information from"
+          }
+        ],
+        "Speaking_Listening": [
+          {
+            "standard": "1",
+            "description": "Participate in collaborative conversations with 1"
+          },
+          {
+            "standard": "1",
+            "description": "Participate in collaborative conversations with diverse partners about kindergarten topics and diverse partners about grade 1 topics and texts diverse partners about grade 2 topics and texts texts with"
+          },
+          {
+            "standard": "2",
+            "description": "Confirm understanding of a text read aloud or 2"
+          },
+          {
+            "standard": "2",
+            "description": "Recount or describe key ideas or details from a information presented orally or through other text read aloud or information presented orally or text read aloud or information presented orally or media"
+          },
+          {
+            "standard": "3",
+            "description": "Ask and answer questions in order to seek help, 3"
+          },
+          {
+            "standard": "3",
+            "description": "Ask and answer questions about what a speaker get information, or clarify something that is not says in order to gather additional information or says in order to clarify comprehension, gather understo"
+          },
+          {
+            "standard": "4",
+            "description": "Describe familiar people, places, things, and 4"
+          },
+          {
+            "standard": "4",
+            "description": "Tell a story or recount an experience with events and, with prompting and support, provide relevant details, expressing ideas and feelings appropriate facts and relevant, descriptive details, additiona"
+          },
+          {
+            "standard": "5",
+            "description": "Add drawings or other visual displays to 5"
+          },
+          {
+            "standard": "5",
+            "description": "Create audio recordings of stories or poems; descriptions as desired to provide additional descriptions when appropriate to clarify ideas, add drawings or other visual displays to stories detail"
+          },
+          {
+            "standard": "6",
+            "description": "Speak audibly and express thoughts, feelings, and 6"
+          },
+          {
+            "standard": "6",
+            "description": "Produce complete sentences when appropriate to ideas clearly"
+          }
+        ],
+        "Language": [
+          {
+            "standard": "1",
+            "description": "Demonstrate command of the conventions of 1"
+          },
+          {
+            "standard": "1",
+            "description": "Demonstrate command of the conventions of standard English grammar and usage when standard English grammar and usage when standard English grammar and usage when writing writing or speaking"
+          },
+          {
+            "standard": "2",
+            "description": "Demonstrate command of the conventions of 2"
+          },
+          {
+            "standard": "2",
+            "description": "Demonstrate command of the conventions of standard English capitalization, punctuation, and standard English capitalization, punctuation, and standard English capitalization, punctuation, and spelling"
+          },
+          {
+            "standard": "3",
+            "description": "Use knowledge of language and its conventions when writing, speaking, reading, or listening"
+          },
+          {
+            "standard": "4",
+            "description": "Determine or clarify the meaning of unknown and 4"
+          },
+          {
+            "standard": "4",
+            "description": "Determine or clarify the meaning of unknown and multiple-meaning words and phrases based on and multiple-meaning words and phrases based multiple-meaning words and phrases based on kindergarten reading"
+          },
+          {
+            "standard": "5",
+            "description": "With guidance and support from adults, explore 5"
+          },
+          {
+            "standard": "5",
+            "description": "Demonstrate understanding of word relationships word relationships and nuances in word meanings"
+          },
+          {
+            "standard": "6",
+            "description": "Use words and phrases acquired through 6"
+          },
+          {
+            "standard": "6",
+            "description": "Use words and phrases acquired through conversations, reading and being read to, and conversations, reading and being read to, and conversations, reading and being read to, and responding to texts"
+          }
+        ]
+      }
+    },
+    "3": {
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "standards_by_strand": {
+        "Reading_Literature": [
+          {
+            "standard": "1",
+            "description": "Ask and answer questions to demonstrate 1"
+          },
+          {
+            "standard": "1",
+            "description": "Quote accurately from a text when explaining understanding of a text, referring explicitly to the explaining what the text says explicitly and when what the text says explicitly and when drawing text a"
+          },
+          {
+            "standard": "2",
+            "description": "Recount stories, including fables, folktales, and 2"
+          },
+          {
+            "standard": "2",
+            "description": "Determine a theme of a story, drama, or poem myths from diverse cultures; determine the from details in the text; summarize the text"
+          },
+          {
+            "standard": "3",
+            "description": "Describe characters in a story (e"
+          },
+          {
+            "standard": "3",
+            "description": "Describe in depth a character, setting, or event 3"
+          },
+          {
+            "standard": "4",
+            "description": "Determine the meaning of words and phrases as 4"
+          },
+          {
+            "standard": "4",
+            "description": "Determine the meaning of words and phrases they are used in a text, distinguishing literal from as they are used in a text, including those as they are used in a text, including figurative nonliteral l"
+          },
+          {
+            "standard": "5",
+            "description": "Refer to parts of stories, dramas, and poems 5"
+          },
+          {
+            "standard": "5",
+            "description": "Explain how a series of chapters, scenes, or when writing or speaking about a text, using drama, and prose, and refer to the structural stanzas fits together to provide the overall terms such as chapte"
+          },
+          {
+            "standard": "6",
+            "description": "Distinguish their own point of view from that of 6"
+          },
+          {
+            "standard": "6",
+            "description": "Describe how a narrator\u2019s or speaker\u2019s point of the narrator or those of the characters"
+          },
+          {
+            "standard": "7",
+            "description": "Explain how specific aspects of a text\u2019s 7"
+          },
+          {
+            "standard": "7",
+            "description": "Analyze how visual and multimedia elements illustrations contribute to what is conveyed or drama and a visual or oral presentation of contribute to the meaning, tone, or beauty of a by the words in a s"
+          },
+          {
+            "standard": "9",
+            "description": "Compare and contrast the themes, settings, and 9"
+          },
+          {
+            "standard": "9",
+            "description": "Compare and contrast stories in the same genre plots of stories written by the same author about themes and topics (e"
+          },
+          {
+            "standard": "10",
+            "description": "By the end of the year, read and comprehend 10"
+          },
+          {
+            "standard": "10",
+            "description": "By the end of the year, read and comprehend literature, including stories, dramas, and poetry, literature, including stories, dramas, and poetry, in literature, including stories, dramas, and poetry, a"
+          }
+        ],
+        "Reading_Informational": [
+          {
+            "standard": "1",
+            "description": "Ask and answer questions to demonstrate 1"
+          },
+          {
+            "standard": "1",
+            "description": "Quote accurately from a text when explaining understanding of a text, referring explicitly to the explaining what the text says explicitly and when what the text says explicitly and when drawing text a"
+          },
+          {
+            "standard": "2",
+            "description": "Determine the main idea of a text; recount the 2"
+          },
+          {
+            "standard": "2",
+            "description": "Determine two or more main ideas of a text and key details and explain how they support the how it is supported by key details; summarize the explain how they are supported by key details; main idea"
+          },
+          {
+            "standard": "3",
+            "description": "Describe the relationship between a series of 3"
+          },
+          {
+            "standard": "3",
+            "description": "Explain the relationships or interactions between historical events, scientific ideas or concepts, a historical, scientific, or technical text, including two or more individuals, events, ideas, or or s"
+          },
+          {
+            "standard": "4",
+            "description": "Determine the meaning of general academic 4"
+          },
+          {
+            "standard": "4",
+            "description": "Determine the meaning of general academic and domain-specific words and phrases in a text and domain-specific words or phrases in a text and domain-specific words and phrases in a text relevant to a gr"
+          },
+          {
+            "standard": "5",
+            "description": "Use text features and search tools (e"
+          },
+          {
+            "standard": "5",
+            "description": "Describe the overall structure (e"
+          },
+          {
+            "standard": "5",
+            "description": "Compare and contrast the overall structure words, sidebars, hyperlinks) to locate information comparison, cause/effect, problem/solution) of (e"
+          },
+          {
+            "standard": "6",
+            "description": "Distinguish their own point of view from that of 6"
+          },
+          {
+            "standard": "6",
+            "description": "Analyze multiple accounts of the same event the author of a text"
+          },
+          {
+            "standard": "7",
+            "description": "Use information gained from illustrations (e"
+          },
+          {
+            "standard": "7",
+            "description": "Interpret information presented visually, orally, or 7"
+          },
+          {
+            "standard": "8",
+            "description": "Describe the logical connection between 8"
+          },
+          {
+            "standard": "8",
+            "description": "Explain how an author uses reasons and evidence particular sentences and paragraphs in a text to support particular points in a text"
+          },
+          {
+            "standard": "9",
+            "description": "Compare and contrast the most important points 9"
+          },
+          {
+            "standard": "9",
+            "description": "Integrate information from several texts on the and key details presented in two texts on the topic in order to write or speak about the subject same topic in order to write or speak about the same top"
+          },
+          {
+            "standard": "10",
+            "description": "By the end of the year, read and comprehend 10"
+          },
+          {
+            "standard": "10",
+            "description": "By the end of the year, read and comprehend informational texts, including history/social informational texts, including history/social studies, informational texts, including history/social studies, s"
+          }
+        ],
+        "Writing": [
+          {
+            "standard": "1",
+            "description": "Write opinion pieces on topics or texts, supporting 1"
+          },
+          {
+            "standard": "1",
+            "description": "Write opinion pieces on topics or texts, supporting a a point of view with reasons"
+          },
+          {
+            "standard": "2",
+            "description": "Write informative/explanatory texts to examine a 2"
+          },
+          {
+            "standard": "2",
+            "description": "Write informative/explanatory texts to examine a topic and convey ideas and information clearly"
+          },
+          {
+            "standard": "3",
+            "description": "Write narratives to develop real or imagined 3"
+          },
+          {
+            "standard": "3",
+            "description": "Write narratives to develop real or imagined experiences or events using effective technique, experiences or events using effective technique, experiences or events using effective technique, descripti"
+          },
+          {
+            "standard": "4",
+            "description": "With guidance and support from adults, 4"
+          },
+          {
+            "standard": "4",
+            "description": "Produce clear and coherent writing in which the produce writing in which the development development and organization are appropriate development and organization are appropriate and organization are a"
+          },
+          {
+            "standard": "5",
+            "description": "With guidance and support from peers and 5"
+          },
+          {
+            "standard": "5",
+            "description": "With guidance and support from peers and adults, adults, develop and strengthen writing as needed adults, develop and strengthen writing as needed develop and strengthen writing as needed by by plannin"
+          },
+          {
+            "standard": "6",
+            "description": "With guidance and support from adults, use 6"
+          },
+          {
+            "standard": "6",
+            "description": "With some guidance and support from adults, technology to produce and publish writing (using use technology, including the Internet, to use technology, including the Internet, to keyboarding skills) as"
+          },
+          {
+            "standard": "7",
+            "description": "Conduct short research projects that build 7"
+          },
+          {
+            "standard": "7",
+            "description": "Conduct short research projects that use several knowledge about a topic"
+          },
+          {
+            "standard": "8",
+            "description": "Recall information from experiences or gather 8"
+          },
+          {
+            "standard": "8",
+            "description": "Recall relevant information from experiences or information from print and digital sources; take gather relevant information from print and digital gather relevant information from print and digital br"
+          },
+          {
+            "standard": "9",
+            "description": "Draw evidence from literary or informational 9"
+          },
+          {
+            "standard": "10",
+            "description": "Write routinely over extended time frames (time 10"
+          },
+          {
+            "standard": "10",
+            "description": "Write routinely over extended time frames (time for research, reflection, and revision) and shorter for research, reflection, and revision) and shorter for research, reflection, and revision) and short"
+          }
+        ],
+        "Speaking_Listening": [
+          {
+            "standard": "1",
+            "description": "Engage effectively in a range of collaborative 1"
+          },
+          {
+            "standard": "1",
+            "description": "Engage effectively in a range of collaborative discussions (one-on-one, in groups, and teacher- discussions (one-on-one, in groups, and teacher- discussions (one-on-one, in groups, and teacher- led) wi"
+          },
+          {
+            "standard": "2",
+            "description": "Determine the main ideas and supporting details 2"
+          },
+          {
+            "standard": "2",
+            "description": "Summarize a written text read aloud or of a text read aloud or information presented in information presented in diverse media and information presented in diverse media and diverse media and formats,"
+          },
+          {
+            "standard": "3",
+            "description": "Ask and answer questions about information from 3"
+          },
+          {
+            "standard": "3",
+            "description": "Summarize the points a speaker makes and a speaker, offering appropriate elaboration and provides to support particular points"
+          },
+          {
+            "standard": "4",
+            "description": "Report on a topic or text, tell a story, or recount 4"
+          },
+          {
+            "standard": "4",
+            "description": "Report on a topic or text or present an opinion, an experience with appropriate facts and relevant, an experience in an organized manner, using sequencing ideas logically and using appropriate descript"
+          },
+          {
+            "standard": "5",
+            "description": "Create engaging audio recordings of stories 5"
+          },
+          {
+            "standard": "5",
+            "description": "Include multimedia components (e"
+          },
+          {
+            "standard": "6",
+            "description": "Speak in complete sentences when appropriate to 6"
+          },
+          {
+            "standard": "6",
+            "description": "Adapt speech to a variety of contexts and tasks, task and situation in order to provide requested English (e"
+          }
+        ],
+        "Language": [
+          {
+            "standard": "1",
+            "description": "Demonstrate command of the conventions of 1"
+          },
+          {
+            "standard": "1",
+            "description": "Demonstrate command of the conventions of standard English grammar and usage when standard English grammar and usage when standard English grammar and usage when writing writing or speaking"
+          },
+          {
+            "standard": "2",
+            "description": "Demonstrate command of the conventions of 2"
+          },
+          {
+            "standard": "2",
+            "description": "Demonstrate command of the conventions of standard English capitalization, punctuation, and standard English capitalization, punctuation, and standard English capitalization, punctuation, and spelling"
+          },
+          {
+            "standard": "3",
+            "description": "Use knowledge of language and its conventions 3"
+          },
+          {
+            "standard": "3",
+            "description": "Use knowledge of language and its conventions when writing, speaking, reading, or listening"
+          },
+          {
+            "standard": "4",
+            "description": "Determine or clarify the meaning of unknown 4"
+          },
+          {
+            "standard": "4",
+            "description": "Determine or clarify the meaning of unknown and and multiple-meaning word and phrases based multiple-meaning words and phrases based on multiple-meaning words and phrases based on on grade 3 reading an"
+          },
+          {
+            "standard": "5",
+            "description": "Demonstrate understanding of word relationships 5"
+          },
+          {
+            "standard": "5",
+            "description": "Demonstrate understanding of figurative language, and nuances in word meanings"
+          },
+          {
+            "standard": "6",
+            "description": "Acquire and use accurately grade-appropriate 6"
+          },
+          {
+            "standard": "6",
+            "description": "Acquire and use accurately grade-appropriate conversational, general academic, and domain- general academic and domain-specific words general academic and domain-specific words specific words and phras"
+          }
+        ]
+      }
+    },
+    "4": {
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "standards_by_strand": {
+        "Reading_Literature": [
+          {
+            "standard": "1",
+            "description": "Ask and answer questions to demonstrate 1"
+          },
+          {
+            "standard": "1",
+            "description": "Quote accurately from a text when explaining understanding of a text, referring explicitly to the explaining what the text says explicitly and when what the text says explicitly and when drawing text a"
+          },
+          {
+            "standard": "2",
+            "description": "Recount stories, including fables, folktales, and 2"
+          },
+          {
+            "standard": "2",
+            "description": "Determine a theme of a story, drama, or poem myths from diverse cultures; determine the from details in the text; summarize the text"
+          },
+          {
+            "standard": "3",
+            "description": "Describe characters in a story (e"
+          },
+          {
+            "standard": "3",
+            "description": "Describe in depth a character, setting, or event 3"
+          },
+          {
+            "standard": "4",
+            "description": "Determine the meaning of words and phrases as 4"
+          },
+          {
+            "standard": "4",
+            "description": "Determine the meaning of words and phrases they are used in a text, distinguishing literal from as they are used in a text, including those as they are used in a text, including figurative nonliteral l"
+          },
+          {
+            "standard": "5",
+            "description": "Refer to parts of stories, dramas, and poems 5"
+          },
+          {
+            "standard": "5",
+            "description": "Explain how a series of chapters, scenes, or when writing or speaking about a text, using drama, and prose, and refer to the structural stanzas fits together to provide the overall terms such as chapte"
+          },
+          {
+            "standard": "6",
+            "description": "Distinguish their own point of view from that of 6"
+          },
+          {
+            "standard": "6",
+            "description": "Describe how a narrator\u2019s or speaker\u2019s point of the narrator or those of the characters"
+          },
+          {
+            "standard": "7",
+            "description": "Explain how specific aspects of a text\u2019s 7"
+          },
+          {
+            "standard": "7",
+            "description": "Analyze how visual and multimedia elements illustrations contribute to what is conveyed or drama and a visual or oral presentation of contribute to the meaning, tone, or beauty of a by the words in a s"
+          },
+          {
+            "standard": "9",
+            "description": "Compare and contrast the themes, settings, and 9"
+          },
+          {
+            "standard": "9",
+            "description": "Compare and contrast stories in the same genre plots of stories written by the same author about themes and topics (e"
+          },
+          {
+            "standard": "10",
+            "description": "By the end of the year, read and comprehend 10"
+          },
+          {
+            "standard": "10",
+            "description": "By the end of the year, read and comprehend literature, including stories, dramas, and poetry, literature, including stories, dramas, and poetry, in literature, including stories, dramas, and poetry, a"
+          }
+        ],
+        "Reading_Informational": [
+          {
+            "standard": "1",
+            "description": "Ask and answer questions to demonstrate 1"
+          },
+          {
+            "standard": "1",
+            "description": "Quote accurately from a text when explaining understanding of a text, referring explicitly to the explaining what the text says explicitly and when what the text says explicitly and when drawing text a"
+          },
+          {
+            "standard": "2",
+            "description": "Determine the main idea of a text; recount the 2"
+          },
+          {
+            "standard": "2",
+            "description": "Determine two or more main ideas of a text and key details and explain how they support the how it is supported by key details; summarize the explain how they are supported by key details; main idea"
+          },
+          {
+            "standard": "3",
+            "description": "Describe the relationship between a series of 3"
+          },
+          {
+            "standard": "3",
+            "description": "Explain the relationships or interactions between historical events, scientific ideas or concepts, a historical, scientific, or technical text, including two or more individuals, events, ideas, or or s"
+          },
+          {
+            "standard": "4",
+            "description": "Determine the meaning of general academic 4"
+          },
+          {
+            "standard": "4",
+            "description": "Determine the meaning of general academic and domain-specific words and phrases in a text and domain-specific words or phrases in a text and domain-specific words and phrases in a text relevant to a gr"
+          },
+          {
+            "standard": "5",
+            "description": "Use text features and search tools (e"
+          },
+          {
+            "standard": "5",
+            "description": "Describe the overall structure (e"
+          },
+          {
+            "standard": "5",
+            "description": "Compare and contrast the overall structure words, sidebars, hyperlinks) to locate information comparison, cause/effect, problem/solution) of (e"
+          },
+          {
+            "standard": "6",
+            "description": "Distinguish their own point of view from that of 6"
+          },
+          {
+            "standard": "6",
+            "description": "Analyze multiple accounts of the same event the author of a text"
+          },
+          {
+            "standard": "7",
+            "description": "Use information gained from illustrations (e"
+          },
+          {
+            "standard": "7",
+            "description": "Interpret information presented visually, orally, or 7"
+          },
+          {
+            "standard": "8",
+            "description": "Describe the logical connection between 8"
+          },
+          {
+            "standard": "8",
+            "description": "Explain how an author uses reasons and evidence particular sentences and paragraphs in a text to support particular points in a text"
+          },
+          {
+            "standard": "9",
+            "description": "Compare and contrast the most important points 9"
+          },
+          {
+            "standard": "9",
+            "description": "Integrate information from several texts on the and key details presented in two texts on the topic in order to write or speak about the subject same topic in order to write or speak about the same top"
+          },
+          {
+            "standard": "10",
+            "description": "By the end of the year, read and comprehend 10"
+          },
+          {
+            "standard": "10",
+            "description": "By the end of the year, read and comprehend informational texts, including history/social informational texts, including history/social studies, informational texts, including history/social studies, s"
+          }
+        ],
+        "Writing": [
+          {
+            "standard": "1",
+            "description": "Write opinion pieces on topics or texts, supporting 1"
+          },
+          {
+            "standard": "1",
+            "description": "Write opinion pieces on topics or texts, supporting a a point of view with reasons"
+          },
+          {
+            "standard": "2",
+            "description": "Write informative/explanatory texts to examine a 2"
+          },
+          {
+            "standard": "2",
+            "description": "Write informative/explanatory texts to examine a topic and convey ideas and information clearly"
+          },
+          {
+            "standard": "3",
+            "description": "Write narratives to develop real or imagined 3"
+          },
+          {
+            "standard": "3",
+            "description": "Write narratives to develop real or imagined experiences or events using effective technique, experiences or events using effective technique, experiences or events using effective technique, descripti"
+          },
+          {
+            "standard": "4",
+            "description": "With guidance and support from adults, 4"
+          },
+          {
+            "standard": "4",
+            "description": "Produce clear and coherent writing in which the produce writing in which the development development and organization are appropriate development and organization are appropriate and organization are a"
+          },
+          {
+            "standard": "5",
+            "description": "With guidance and support from peers and 5"
+          },
+          {
+            "standard": "5",
+            "description": "With guidance and support from peers and adults, adults, develop and strengthen writing as needed adults, develop and strengthen writing as needed develop and strengthen writing as needed by by plannin"
+          },
+          {
+            "standard": "6",
+            "description": "With guidance and support from adults, use 6"
+          },
+          {
+            "standard": "6",
+            "description": "With some guidance and support from adults, technology to produce and publish writing (using use technology, including the Internet, to use technology, including the Internet, to keyboarding skills) as"
+          },
+          {
+            "standard": "7",
+            "description": "Conduct short research projects that build 7"
+          },
+          {
+            "standard": "7",
+            "description": "Conduct short research projects that use several knowledge about a topic"
+          },
+          {
+            "standard": "8",
+            "description": "Recall information from experiences or gather 8"
+          },
+          {
+            "standard": "8",
+            "description": "Recall relevant information from experiences or information from print and digital sources; take gather relevant information from print and digital gather relevant information from print and digital br"
+          },
+          {
+            "standard": "9",
+            "description": "Draw evidence from literary or informational 9"
+          },
+          {
+            "standard": "10",
+            "description": "Write routinely over extended time frames (time 10"
+          },
+          {
+            "standard": "10",
+            "description": "Write routinely over extended time frames (time for research, reflection, and revision) and shorter for research, reflection, and revision) and shorter for research, reflection, and revision) and short"
+          }
+        ],
+        "Speaking_Listening": [
+          {
+            "standard": "1",
+            "description": "Engage effectively in a range of collaborative 1"
+          },
+          {
+            "standard": "1",
+            "description": "Engage effectively in a range of collaborative discussions (one-on-one, in groups, and teacher- discussions (one-on-one, in groups, and teacher- discussions (one-on-one, in groups, and teacher- led) wi"
+          },
+          {
+            "standard": "2",
+            "description": "Determine the main ideas and supporting details 2"
+          },
+          {
+            "standard": "2",
+            "description": "Summarize a written text read aloud or of a text read aloud or information presented in information presented in diverse media and information presented in diverse media and diverse media and formats,"
+          },
+          {
+            "standard": "3",
+            "description": "Ask and answer questions about information from 3"
+          },
+          {
+            "standard": "3",
+            "description": "Summarize the points a speaker makes and a speaker, offering appropriate elaboration and provides to support particular points"
+          },
+          {
+            "standard": "4",
+            "description": "Report on a topic or text, tell a story, or recount 4"
+          },
+          {
+            "standard": "4",
+            "description": "Report on a topic or text or present an opinion, an experience with appropriate facts and relevant, an experience in an organized manner, using sequencing ideas logically and using appropriate descript"
+          },
+          {
+            "standard": "5",
+            "description": "Create engaging audio recordings of stories 5"
+          },
+          {
+            "standard": "5",
+            "description": "Include multimedia components (e"
+          },
+          {
+            "standard": "6",
+            "description": "Speak in complete sentences when appropriate to 6"
+          },
+          {
+            "standard": "6",
+            "description": "Adapt speech to a variety of contexts and tasks, task and situation in order to provide requested English (e"
+          }
+        ],
+        "Language": [
+          {
+            "standard": "1",
+            "description": "Demonstrate command of the conventions of 1"
+          },
+          {
+            "standard": "1",
+            "description": "Demonstrate command of the conventions of standard English grammar and usage when standard English grammar and usage when standard English grammar and usage when writing writing or speaking"
+          },
+          {
+            "standard": "2",
+            "description": "Demonstrate command of the conventions of 2"
+          },
+          {
+            "standard": "2",
+            "description": "Demonstrate command of the conventions of standard English capitalization, punctuation, and standard English capitalization, punctuation, and standard English capitalization, punctuation, and spelling"
+          },
+          {
+            "standard": "3",
+            "description": "Use knowledge of language and its conventions 3"
+          },
+          {
+            "standard": "3",
+            "description": "Use knowledge of language and its conventions when writing, speaking, reading, or listening"
+          },
+          {
+            "standard": "4",
+            "description": "Determine or clarify the meaning of unknown 4"
+          },
+          {
+            "standard": "4",
+            "description": "Determine or clarify the meaning of unknown and and multiple-meaning word and phrases based multiple-meaning words and phrases based on multiple-meaning words and phrases based on on grade 3 reading an"
+          },
+          {
+            "standard": "5",
+            "description": "Demonstrate understanding of word relationships 5"
+          },
+          {
+            "standard": "5",
+            "description": "Demonstrate understanding of figurative language, and nuances in word meanings"
+          },
+          {
+            "standard": "6",
+            "description": "Acquire and use accurately grade-appropriate 6"
+          },
+          {
+            "standard": "6",
+            "description": "Acquire and use accurately grade-appropriate conversational, general academic, and domain- general academic and domain-specific words general academic and domain-specific words specific words and phras"
+          }
+        ]
+      }
+    },
+    "5": {
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "standards_by_strand": {
+        "Reading_Literature": [
+          {
+            "standard": "1",
+            "description": "Ask and answer questions to demonstrate 1"
+          },
+          {
+            "standard": "1",
+            "description": "Quote accurately from a text when explaining understanding of a text, referring explicitly to the explaining what the text says explicitly and when what the text says explicitly and when drawing text a"
+          },
+          {
+            "standard": "2",
+            "description": "Recount stories, including fables, folktales, and 2"
+          },
+          {
+            "standard": "2",
+            "description": "Determine a theme of a story, drama, or poem myths from diverse cultures; determine the from details in the text; summarize the text"
+          },
+          {
+            "standard": "3",
+            "description": "Describe characters in a story (e"
+          },
+          {
+            "standard": "3",
+            "description": "Describe in depth a character, setting, or event 3"
+          },
+          {
+            "standard": "4",
+            "description": "Determine the meaning of words and phrases as 4"
+          },
+          {
+            "standard": "4",
+            "description": "Determine the meaning of words and phrases they are used in a text, distinguishing literal from as they are used in a text, including those as they are used in a text, including figurative nonliteral l"
+          },
+          {
+            "standard": "5",
+            "description": "Refer to parts of stories, dramas, and poems 5"
+          },
+          {
+            "standard": "5",
+            "description": "Explain how a series of chapters, scenes, or when writing or speaking about a text, using drama, and prose, and refer to the structural stanzas fits together to provide the overall terms such as chapte"
+          },
+          {
+            "standard": "6",
+            "description": "Distinguish their own point of view from that of 6"
+          },
+          {
+            "standard": "6",
+            "description": "Describe how a narrator\u2019s or speaker\u2019s point of the narrator or those of the characters"
+          },
+          {
+            "standard": "7",
+            "description": "Explain how specific aspects of a text\u2019s 7"
+          },
+          {
+            "standard": "7",
+            "description": "Analyze how visual and multimedia elements illustrations contribute to what is conveyed or drama and a visual or oral presentation of contribute to the meaning, tone, or beauty of a by the words in a s"
+          },
+          {
+            "standard": "9",
+            "description": "Compare and contrast the themes, settings, and 9"
+          },
+          {
+            "standard": "9",
+            "description": "Compare and contrast stories in the same genre plots of stories written by the same author about themes and topics (e"
+          },
+          {
+            "standard": "10",
+            "description": "By the end of the year, read and comprehend 10"
+          },
+          {
+            "standard": "10",
+            "description": "By the end of the year, read and comprehend literature, including stories, dramas, and poetry, literature, including stories, dramas, and poetry, in literature, including stories, dramas, and poetry, a"
+          }
+        ],
+        "Reading_Informational": [
+          {
+            "standard": "1",
+            "description": "Ask and answer questions to demonstrate 1"
+          },
+          {
+            "standard": "1",
+            "description": "Quote accurately from a text when explaining understanding of a text, referring explicitly to the explaining what the text says explicitly and when what the text says explicitly and when drawing text a"
+          },
+          {
+            "standard": "2",
+            "description": "Determine the main idea of a text; recount the 2"
+          },
+          {
+            "standard": "2",
+            "description": "Determine two or more main ideas of a text and key details and explain how they support the how it is supported by key details; summarize the explain how they are supported by key details; main idea"
+          },
+          {
+            "standard": "3",
+            "description": "Describe the relationship between a series of 3"
+          },
+          {
+            "standard": "3",
+            "description": "Explain the relationships or interactions between historical events, scientific ideas or concepts, a historical, scientific, or technical text, including two or more individuals, events, ideas, or or s"
+          },
+          {
+            "standard": "4",
+            "description": "Determine the meaning of general academic 4"
+          },
+          {
+            "standard": "4",
+            "description": "Determine the meaning of general academic and domain-specific words and phrases in a text and domain-specific words or phrases in a text and domain-specific words and phrases in a text relevant to a gr"
+          },
+          {
+            "standard": "5",
+            "description": "Use text features and search tools (e"
+          },
+          {
+            "standard": "5",
+            "description": "Describe the overall structure (e"
+          },
+          {
+            "standard": "5",
+            "description": "Compare and contrast the overall structure words, sidebars, hyperlinks) to locate information comparison, cause/effect, problem/solution) of (e"
+          },
+          {
+            "standard": "6",
+            "description": "Distinguish their own point of view from that of 6"
+          },
+          {
+            "standard": "6",
+            "description": "Analyze multiple accounts of the same event the author of a text"
+          },
+          {
+            "standard": "7",
+            "description": "Use information gained from illustrations (e"
+          },
+          {
+            "standard": "7",
+            "description": "Interpret information presented visually, orally, or 7"
+          },
+          {
+            "standard": "8",
+            "description": "Describe the logical connection between 8"
+          },
+          {
+            "standard": "8",
+            "description": "Explain how an author uses reasons and evidence particular sentences and paragraphs in a text to support particular points in a text"
+          },
+          {
+            "standard": "9",
+            "description": "Compare and contrast the most important points 9"
+          },
+          {
+            "standard": "9",
+            "description": "Integrate information from several texts on the and key details presented in two texts on the topic in order to write or speak about the subject same topic in order to write or speak about the same top"
+          },
+          {
+            "standard": "10",
+            "description": "By the end of the year, read and comprehend 10"
+          },
+          {
+            "standard": "10",
+            "description": "By the end of the year, read and comprehend informational texts, including history/social informational texts, including history/social studies, informational texts, including history/social studies, s"
+          }
+        ],
+        "Writing": [
+          {
+            "standard": "1",
+            "description": "Write opinion pieces on topics or texts, supporting 1"
+          },
+          {
+            "standard": "1",
+            "description": "Write opinion pieces on topics or texts, supporting a a point of view with reasons"
+          },
+          {
+            "standard": "2",
+            "description": "Write informative/explanatory texts to examine a 2"
+          },
+          {
+            "standard": "2",
+            "description": "Write informative/explanatory texts to examine a topic and convey ideas and information clearly"
+          },
+          {
+            "standard": "3",
+            "description": "Write narratives to develop real or imagined 3"
+          },
+          {
+            "standard": "3",
+            "description": "Write narratives to develop real or imagined experiences or events using effective technique, experiences or events using effective technique, experiences or events using effective technique, descripti"
+          },
+          {
+            "standard": "4",
+            "description": "With guidance and support from adults, 4"
+          },
+          {
+            "standard": "4",
+            "description": "Produce clear and coherent writing in which the produce writing in which the development development and organization are appropriate development and organization are appropriate and organization are a"
+          },
+          {
+            "standard": "5",
+            "description": "With guidance and support from peers and 5"
+          },
+          {
+            "standard": "5",
+            "description": "With guidance and support from peers and adults, adults, develop and strengthen writing as needed adults, develop and strengthen writing as needed develop and strengthen writing as needed by by plannin"
+          },
+          {
+            "standard": "6",
+            "description": "With guidance and support from adults, use 6"
+          },
+          {
+            "standard": "6",
+            "description": "With some guidance and support from adults, technology to produce and publish writing (using use technology, including the Internet, to use technology, including the Internet, to keyboarding skills) as"
+          },
+          {
+            "standard": "7",
+            "description": "Conduct short research projects that build 7"
+          },
+          {
+            "standard": "7",
+            "description": "Conduct short research projects that use several knowledge about a topic"
+          },
+          {
+            "standard": "8",
+            "description": "Recall information from experiences or gather 8"
+          },
+          {
+            "standard": "8",
+            "description": "Recall relevant information from experiences or information from print and digital sources; take gather relevant information from print and digital gather relevant information from print and digital br"
+          },
+          {
+            "standard": "9",
+            "description": "Draw evidence from literary or informational 9"
+          },
+          {
+            "standard": "10",
+            "description": "Write routinely over extended time frames (time 10"
+          },
+          {
+            "standard": "10",
+            "description": "Write routinely over extended time frames (time for research, reflection, and revision) and shorter for research, reflection, and revision) and shorter for research, reflection, and revision) and short"
+          }
+        ],
+        "Speaking_Listening": [
+          {
+            "standard": "1",
+            "description": "Engage effectively in a range of collaborative 1"
+          },
+          {
+            "standard": "1",
+            "description": "Engage effectively in a range of collaborative discussions (one-on-one, in groups, and teacher- discussions (one-on-one, in groups, and teacher- discussions (one-on-one, in groups, and teacher- led) wi"
+          },
+          {
+            "standard": "2",
+            "description": "Determine the main ideas and supporting details 2"
+          },
+          {
+            "standard": "2",
+            "description": "Summarize a written text read aloud or of a text read aloud or information presented in information presented in diverse media and information presented in diverse media and diverse media and formats,"
+          },
+          {
+            "standard": "3",
+            "description": "Ask and answer questions about information from 3"
+          },
+          {
+            "standard": "3",
+            "description": "Summarize the points a speaker makes and a speaker, offering appropriate elaboration and provides to support particular points"
+          },
+          {
+            "standard": "4",
+            "description": "Report on a topic or text, tell a story, or recount 4"
+          },
+          {
+            "standard": "4",
+            "description": "Report on a topic or text or present an opinion, an experience with appropriate facts and relevant, an experience in an organized manner, using sequencing ideas logically and using appropriate descript"
+          },
+          {
+            "standard": "5",
+            "description": "Create engaging audio recordings of stories 5"
+          },
+          {
+            "standard": "5",
+            "description": "Include multimedia components (e"
+          },
+          {
+            "standard": "6",
+            "description": "Speak in complete sentences when appropriate to 6"
+          },
+          {
+            "standard": "6",
+            "description": "Adapt speech to a variety of contexts and tasks, task and situation in order to provide requested English (e"
+          }
+        ],
+        "Language": [
+          {
+            "standard": "1",
+            "description": "Demonstrate command of the conventions of 1"
+          },
+          {
+            "standard": "1",
+            "description": "Demonstrate command of the conventions of standard English grammar and usage when standard English grammar and usage when standard English grammar and usage when writing writing or speaking"
+          },
+          {
+            "standard": "2",
+            "description": "Demonstrate command of the conventions of 2"
+          },
+          {
+            "standard": "2",
+            "description": "Demonstrate command of the conventions of standard English capitalization, punctuation, and standard English capitalization, punctuation, and standard English capitalization, punctuation, and spelling"
+          },
+          {
+            "standard": "3",
+            "description": "Use knowledge of language and its conventions 3"
+          },
+          {
+            "standard": "3",
+            "description": "Use knowledge of language and its conventions when writing, speaking, reading, or listening"
+          },
+          {
+            "standard": "4",
+            "description": "Determine or clarify the meaning of unknown 4"
+          },
+          {
+            "standard": "4",
+            "description": "Determine or clarify the meaning of unknown and and multiple-meaning word and phrases based multiple-meaning words and phrases based on multiple-meaning words and phrases based on on grade 3 reading an"
+          },
+          {
+            "standard": "5",
+            "description": "Demonstrate understanding of word relationships 5"
+          },
+          {
+            "standard": "5",
+            "description": "Demonstrate understanding of figurative language, and nuances in word meanings"
+          },
+          {
+            "standard": "6",
+            "description": "Acquire and use accurately grade-appropriate 6"
+          },
+          {
+            "standard": "6",
+            "description": "Acquire and use accurately grade-appropriate conversational, general academic, and domain- general academic and domain-specific words general academic and domain-specific words specific words and phras"
+          }
+        ]
+      }
+    },
+    "6": {
+      "grade": "6",
+      "grade_label": "Grade 6",
+      "standards_by_strand": {
+        "Reading_Literature": [],
+        "Reading_Informational": [],
+        "Writing": [],
+        "Speaking_Listening": [],
+        "Language": []
+      }
+    },
+    "7": {
+      "grade": "7",
+      "grade_label": "Grade 7",
+      "standards_by_strand": {
+        "Reading_Literature": [],
+        "Reading_Informational": [],
+        "Writing": [],
+        "Speaking_Listening": [],
+        "Language": []
+      }
+    },
+    "8": {
+      "grade": "8",
+      "grade_label": "Grade 8",
+      "standards_by_strand": {
+        "Reading_Literature": [],
+        "Reading_Informational": [],
+        "Writing": [],
+        "Speaking_Listening": [],
+        "Language": []
+      }
+    },
+    "9-10": {
+      "grade": "9-10",
+      "grade_label": "Grades 9-10",
+      "standards_by_strand": {}
+    },
+    "11-12": {
+      "grade": "11-12",
+      "grade_label": "Grades 11-12",
+      "standards_by_strand": {}
+    }
+  }
+}

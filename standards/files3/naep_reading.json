@@ -1,0 +1,98 @@
+{
+  "framework": "NAEP Reading Framework",
+  "version": "2026",
+  "source": "nagb.gov",
+  "assessment_grades": [
+    4,
+    8,
+    12
+  ],
+  "achievement_levels": {
+    "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient reading",
+    "Proficient": "Solid academic performance demonstrating competency over challenging reading material",
+    "Advanced": "Superior reading performance, demonstrating in-depth comprehension and analytical skills"
+  },
+  "comprehension_targets": {
+    "Locate_and_Recall": {
+      "description": "Students identify and retrieve information explicitly stated in texts",
+      "grade_expectations": {
+        "4": "Locate specific details, facts, or ideas stated in the text",
+        "8": "Locate and recall specific information, recognize text structure",
+        "12": "Identify and retrieve complex information across multiple texts"
+      }
+    },
+    "Integrate_and_Interpret": {
+      "description": "Students connect and synthesize information within and across texts",
+      "grade_expectations": {
+        "4": "Make simple inferences; identify cause-effect and main idea",
+        "8": "Draw inferences; determine theme; compare across texts",
+        "12": "Synthesize ideas across complex texts; analyze author purpose"
+      }
+    },
+    "Critique_and_Evaluate": {
+      "description": "Students analyze and assess the quality and validity of texts",
+      "grade_expectations": {
+        "4": "Express preferences; distinguish fact and opinion",
+        "8": "Evaluate author's craft; assess arguments and evidence",
+        "12": "Critically evaluate texts for bias, perspective, and validity"
+      }
+    },
+    "Use_and_Apply": {
+      "description": "Students apply information from texts to solve problems and create new products",
+      "grade_expectations": {
+        "4": "Apply information read to solve a simple problem or complete a task",
+        "8": "Use text information to address a real-world problem or scenario",
+        "12": "Apply reading to complex problems; synthesize across disciplines"
+      }
+    }
+  },
+  "text_types": {
+    "Literature": [
+      "Stories and novels",
+      "Poetry",
+      "Drama",
+      "Literary nonfiction"
+    ],
+    "Informational": [
+      "Social Studies texts",
+      "Science texts",
+      "Technical texts",
+      "Documents and practical texts"
+    ]
+  },
+  "reading_purposes": {
+    "Reading_to_Develop_Understanding": {
+      "description": "Reading carefully to comprehend and analyze text",
+      "distribution": {
+        "grade_4": "60%",
+        "grade_8": "50%",
+        "grade_12": "40%"
+      }
+    },
+    "Reading_to_Solve_Problems": {
+      "description": "Reading strategically to accomplish a specific goal or task",
+      "distribution": {
+        "grade_4": "40%",
+        "grade_8": "50%",
+        "grade_12": "60%"
+      }
+    }
+  },
+  "achievement_level_descriptions": {
+    "grade_4": {
+      "Basic": "Locate relevant information, make simple inferences, and use their understanding of the text to identify details that support a given interpretation",
+      "Proficient": "Demonstrate an understanding of the overall meaning of what they have read. When reading literary texts, fourth-grade students at this level should be able to make relatively complex inferences",
+      "Advanced": "Generalize about topics in the reading selection and demonstrate an awareness of how authors compose and use literary devices. When reading informational text, students at this level should be able to judge text critically"
+    },
+    "grade_8": {
+      "Basic": "Demonstrate a literal understanding of what they have read and be able to make some interpretations",
+      "Proficient": "Show an overall understanding of the text, including inferential as well as literal information. When reading literary texts, eighth-grade students at this level should be able to extend the ideas in the text",
+      "Advanced": "Describe the more abstract themes and ideas of the overall text. When reading literary texts, eighth-grade students at this level should be able to analyze both meaning and form"
+    },
+    "grade_12": {
+      "Basic": "Demonstrate an overall understanding and make some interpretations of the text",
+      "Proficient": "Show an overall understanding of the text which includes inferential as well as literal information. Twelfth-grade students at this level should be able to connect parts of a text",
+      "Advanced": "Analyze both the meaning and the form of the text and provide thorough, thoughtful, and supported responses. Twelfth-grade students should be able to analyze and evaluate texts"
+    }
+  }
+}
