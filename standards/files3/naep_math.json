@@ -1,0 +1,103 @@
+{
+  "framework": "NAEP Mathematics Framework",
+  "version": "2026",
+  "source": "nagb.gov",
+  "assessment_grades": [
+    4,
+    8,
+    12
+  ],
+  "achievement_levels": {
+    "Basic": "Partial mastery of prerequisite knowledge and skills",
+    "Proficient": "Solid academic performance demonstrating competency",
+    "Advanced": "Superior performance beyond Proficient"
+  },
+  "content_areas": {
+    "Number Properties and Operations": {
+      "grade_4": [
+        "a) Identify odd and even",
+        "c) Recognize or use prime and c) Solve problems using factors,",
+        "f) Recognize properties of the"
+      ],
+      "grade_8": [
+        "b) Identify factors of whole b) Recognize, find, or use",
+        "e) Apply basic properties of e) Apply basic properties of e) Apply basic properties of"
+      ],
+      "grade_12": [
+        "d) Use divisibility or remainders # d) Use divisibility or"
+      ]
+    },
+    "Measurement": {
+      "grade_4": [
+        "b) Solve problems using the fact",
+        "d) * Interpret and use the",
+        "g) * Use the law of cosines and"
+      ],
+      "grade_8": [
+        "c) Use the definitions of sine,",
+        "f) * Use trigonometric formulas"
+      ],
+      "grade_12": [
+        "e) * Determine the radian",
+        "h) * Interpret the graphs of the"
+      ]
+    },
+    "Geometry": {
+      "grade_4": [
+        "f) Find an equation of a circle",
+        "h) * Represent situations and"
+      ],
+      "grade_8": [
+        "g) * Graph or determine"
+      ],
+      "grade_12": []
+    },
+    "Data Analysis, Statistics, and Probability": {
+      "grade_4": [
+        "i) Determine conditional",
+        "k) * Use the binomial theorem"
+      ],
+      "grade_8": [
+        "j) Interpret and apply # j) Interpret and apply"
+      ],
+      "grade_12": []
+    },
+    "Algebra": {
+      "grade_4": [
+        "d) Analyze situations or solve # d) Analyze situations,",
+        "f) Use and evaluate common # f) Solve problems involving"
+      ],
+      "grade_8": [
+        "e) Interpret relationships e) Solve (symbolically or"
+      ],
+      "grade_12": [
+        "h) * Solve quadratic equations"
+      ]
+    }
+  },
+  "mathematical_practices": [
+    "Problem Solving",
+    "Reasoning and Proof",
+    "Communication",
+    "Connections",
+    "Representation",
+    "Mathematical Literacy"
+  ],
+  "achievement_level_descriptions": {
+    "grade_4": {
+      "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at the 4th grade level",
+      "Proficient": "Solid academic performance. Students reaching this level have demonstrated competency over challenging subject matter, including subject-matter knowledge, application of such knowledge to real-world situations, and analytical skills appropriate to the subject matter",
+      "Advanced": "Superior performance beyond proficient at grade 4. Fourth-grade students performing at this level should apply integrated procedural knowledge and conceptual understanding to complex and non-routine real-world problem solving"
+    },
+    "grade_8": {
+      "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at the 8th grade level",
+      "Proficient": "Solid academic performance at grade 8. Students use general mathematical rules and concepts to solve multi-step problems, and they can represent relationships with data tables and graphs",
+      "Advanced": "Superior performance at grade 8. Students can reason, solve problems, and communicate their thinking using a variety of mathematical concepts"
+    },
+    "grade_12": {
+      "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at grade 12",
+      "Proficient": "Solid academic performance at grade 12. Students demonstrate an understanding of mathematical concepts and procedures and can apply mathematical knowledge",
+      "Advanced": "Superior performance at grade 12. Students demonstrate in-depth understanding and apply mathematical concepts"
+    }
+  }
+}

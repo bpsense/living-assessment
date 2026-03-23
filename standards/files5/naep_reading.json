@@ -1,0 +1,165 @@
+{
+  "framework": {
+    "name": "NAEP Reading Framework",
+    "version": "2026",
+    "source": "nagb.gov",
+    "assessment_grades": [
+      4,
+      8,
+      12
+    ],
+    "note": "NAEP assesses at grades 4, 8, and 12 only.",
+    "comprehension_targets": [
+      "Locate_and_Recall",
+      "Integrate_and_Interpret",
+      "Critique_and_Evaluate",
+      "Use_and_Apply"
+    ],
+    "text_types": {
+      "Literature": [
+        "Stories and novels",
+        "Poetry",
+        "Drama",
+        "Literary nonfiction"
+      ],
+      "Informational": [
+        "Social Studies texts",
+        "Science texts",
+        "Technical texts",
+        "Documents and practical texts"
+      ]
+    },
+    "achievement_levels": {
+      "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient reading",
+      "Proficient": "Solid academic performance demonstrating competency over challenging reading material",
+      "Advanced": "Superior reading performance, demonstrating in-depth comprehension and analytical skills"
+    },
+    "achievement_level_descriptions": {
+      "grade_4": {
+        "Basic": "Locate relevant information, make simple inferences, and use their understanding of the text to identify details that support a given interpretation",
+        "Proficient": "Demonstrate an understanding of the overall meaning of what they have read. When reading literary texts, fourth-grade students at this level should be able to make relatively complex inferences",
+        "Advanced": "Generalize about topics in the reading selection and demonstrate an awareness of how authors compose and use literary devices. When reading informational text, students at this level should be able to judge text critically"
+      },
+      "grade_8": {
+        "Basic": "Demonstrate a literal understanding of what they have read and be able to make some interpretations",
+        "Proficient": "Show an overall understanding of the text, including inferential as well as literal information. When reading literary texts, eighth-grade students at this level should be able to extend the ideas in the text",
+        "Advanced": "Describe the more abstract themes and ideas of the overall text. When reading literary texts, eighth-grade students at this level should be able to analyze both meaning and form"
+      },
+      "grade_12": {
+        "Basic": "Demonstrate an overall understanding and make some interpretations of the text",
+        "Proficient": "Show an overall understanding of the text which includes inferential as well as literal information. Twelfth-grade students at this level should be able to connect parts of a text",
+        "Advanced": "Analyze both the meaning and the form of the text and provide thorough, thoughtful, and supported responses. Twelfth-grade students should be able to analyze and evaluate texts"
+      }
+    }
+  },
+  "standards": [
+    {
+      "id": "NAEP.Reading.4.Locate_and_Recall",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "comprehension_target": "Locate and Recall",
+      "target_definition": "Students identify and retrieve information explicitly stated in texts",
+      "description": "Locate specific details, facts, or ideas stated in the text",
+      "code": "NAEP.Reading.4.Locate_and_Recall"
+    },
+    {
+      "id": "NAEP.Reading.8.Locate_and_Recall",
+      "grade": "8",
+      "grade_label": "Grade 8",
+      "comprehension_target": "Locate and Recall",
+      "target_definition": "Students identify and retrieve information explicitly stated in texts",
+      "description": "Locate and recall specific information, recognize text structure",
+      "code": "NAEP.Reading.8.Locate_and_Recall"
+    },
+    {
+      "id": "NAEP.Reading.12.Locate_and_Recall",
+      "grade": "12",
+      "grade_label": "Grade 12",
+      "comprehension_target": "Locate and Recall",
+      "target_definition": "Students identify and retrieve information explicitly stated in texts",
+      "description": "Identify and retrieve complex information across multiple texts",
+      "code": "NAEP.Reading.12.Locate_and_Recall"
+    },
+    {
+      "id": "NAEP.Reading.4.Integrate_and_Interpret",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "comprehension_target": "Integrate and Interpret",
+      "target_definition": "Students connect and synthesize information within and across texts",
+      "description": "Make simple inferences; identify cause-effect and main idea",
+      "code": "NAEP.Reading.4.Integrate_and_Interpret"
+    },
+    {
+      "id": "NAEP.Reading.8.Integrate_and_Interpret",
+      "grade": "8",
+      "grade_label": "Grade 8",
+      "comprehension_target": "Integrate and Interpret",
+      "target_definition": "Students connect and synthesize information within and across texts",
+      "description": "Draw inferences; determine theme; compare across texts",
+      "code": "NAEP.Reading.8.Integrate_and_Interpret"
+    },
+    {
+      "id": "NAEP.Reading.12.Integrate_and_Interpret",
+      "grade": "12",
+      "grade_label": "Grade 12",
+      "comprehension_target": "Integrate and Interpret",
+      "target_definition": "Students connect and synthesize information within and across texts",
+      "description": "Synthesize ideas across complex texts; analyze author purpose",
+      "code": "NAEP.Reading.12.Integrate_and_Interpret"
+    },
+    {
+      "id": "NAEP.Reading.4.Critique_and_Evaluate",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "comprehension_target": "Critique and Evaluate",
+      "target_definition": "Students analyze and assess the quality and validity of texts",
+      "description": "Express preferences; distinguish fact and opinion",
+      "code": "NAEP.Reading.4.Critique_and_Evaluate"
+    },
+    {
+      "id": "NAEP.Reading.8.Critique_and_Evaluate",
+      "grade": "8",
+      "grade_label": "Grade 8",
+      "comprehension_target": "Critique and Evaluate",
+      "target_definition": "Students analyze and assess the quality and validity of texts",
+      "description": "Evaluate author's craft; assess arguments and evidence",
+      "code": "NAEP.Reading.8.Critique_and_Evaluate"
+    },
+    {
+      "id": "NAEP.Reading.12.Critique_and_Evaluate",
+      "grade": "12",
+      "grade_label": "Grade 12",
+      "comprehension_target": "Critique and Evaluate",
+      "target_definition": "Students analyze and assess the quality and validity of texts",
+      "description": "Critically evaluate texts for bias, perspective, and validity",
+      "code": "NAEP.Reading.12.Critique_and_Evaluate"
+    },
+    {
+      "id": "NAEP.Reading.4.Use_and_Apply",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "comprehension_target": "Use and Apply",
+      "target_definition": "Students apply information from texts to solve problems and create new products",
+      "description": "Apply information read to solve a simple problem or complete a task",
+      "code": "NAEP.Reading.4.Use_and_Apply"
+    },
+    {
+      "id": "NAEP.Reading.8.Use_and_Apply",
+      "grade": "8",
+      "grade_label": "Grade 8",
+      "comprehension_target": "Use and Apply",
+      "target_definition": "Students apply information from texts to solve problems and create new products",
+      "description": "Use text information to address a real-world problem or scenario",
+      "code": "NAEP.Reading.8.Use_and_Apply"
+    },
+    {
+      "id": "NAEP.Reading.12.Use_and_Apply",
+      "grade": "12",
+      "grade_label": "Grade 12",
+      "comprehension_target": "Use and Apply",
+      "target_definition": "Students apply information from texts to solve problems and create new products",
+      "description": "Apply reading to complex problems; synthesize across disciplines",
+      "code": "NAEP.Reading.12.Use_and_Apply"
+    }
+  ]
+}

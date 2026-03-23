@@ -1,0 +1,705 @@
+{
+  "framework": {
+    "name": "CDC Developmental Milestones",
+    "version": "2022",
+    "source": "cdc.gov/act-early",
+    "age_range": "1 year through 5 years",
+    "note": "These milestones represent what 75% or more of children achieve by each age. Not a substitute for professional developmental screening.",
+    "domains": [
+      "Social Emotional",
+      "Language Communication",
+      "Cognition",
+      "Physical Motor"
+    ],
+    "age_groups": [
+      "1_year",
+      "18_months",
+      "2_years",
+      "2_5_years",
+      "3_years",
+      "4_years",
+      "5_years"
+    ]
+  },
+  "standards": [
+    {
+      "id": "CDC.1_year.Social_Emotional.1",
+      "age_group": "1_year",
+      "age_label": "1 Year (12 months)",
+      "domain": "Social Emotional",
+      "description": "Plays games such as peek-a-boo and pat-a-cake"
+    },
+    {
+      "id": "CDC.1_year.Language_Communication.1",
+      "age_group": "1_year",
+      "age_label": "1 Year (12 months)",
+      "domain": "Language Communication",
+      "description": "Waves bye-bye"
+    },
+    {
+      "id": "CDC.1_year.Language_Communication.2",
+      "age_group": "1_year",
+      "age_label": "1 Year (12 months)",
+      "domain": "Language Communication",
+      "description": "Calls a parent mama or dada or another special name"
+    },
+    {
+      "id": "CDC.1_year.Language_Communication.3",
+      "age_group": "1_year",
+      "age_label": "1 Year (12 months)",
+      "domain": "Language Communication",
+      "description": "Understands no \u2014 pauses briefly or stops when you say it"
+    },
+    {
+      "id": "CDC.1_year.Cognition.1",
+      "age_group": "1_year",
+      "age_label": "1 Year (12 months)",
+      "domain": "Cognition",
+      "description": "Puts things in a container, like a block in a cup"
+    },
+    {
+      "id": "CDC.1_year.Cognition.2",
+      "age_group": "1_year",
+      "age_label": "1 Year (12 months)",
+      "domain": "Cognition",
+      "description": "Looks for things he sees you hide, like a toy under a blanket"
+    },
+    {
+      "id": "CDC.1_year.Physical_Motor.1",
+      "age_group": "1_year",
+      "age_label": "1 Year (12 months)",
+      "domain": "Physical Motor",
+      "description": "Pulls to stand"
+    },
+    {
+      "id": "CDC.1_year.Physical_Motor.2",
+      "age_group": "1_year",
+      "age_label": "1 Year (12 months)",
+      "domain": "Physical Motor",
+      "description": "Walks holding on to furniture"
+    },
+    {
+      "id": "CDC.1_year.Physical_Motor.3",
+      "age_group": "1_year",
+      "age_label": "1 Year (12 months)",
+      "domain": "Physical Motor",
+      "description": "Drinks from a cup without a lid as you hold it"
+    },
+    {
+      "id": "CDC.1_year.Physical_Motor.4",
+      "age_group": "1_year",
+      "age_label": "1 Year (12 months)",
+      "domain": "Physical Motor",
+      "description": "Picks things up between thumb and pointer finger"
+    },
+    {
+      "id": "CDC.18_months.Social_Emotional.1",
+      "age_group": "18_months",
+      "age_label": "1.5 Years (18 months)",
+      "domain": "Social Emotional",
+      "description": "Moves away from you, but looks to make sure you are close by"
+    },
+    {
+      "id": "CDC.18_months.Social_Emotional.2",
+      "age_group": "18_months",
+      "age_label": "1.5 Years (18 months)",
+      "domain": "Social Emotional",
+      "description": "Points to show you something interesting"
+    },
+    {
+      "id": "CDC.18_months.Social_Emotional.3",
+      "age_group": "18_months",
+      "age_label": "1.5 Years (18 months)",
+      "domain": "Social Emotional",
+      "description": "Puts hands out for you to wash them"
+    },
+    {
+      "id": "CDC.18_months.Social_Emotional.4",
+      "age_group": "18_months",
+      "age_label": "1.5 Years (18 months)",
+      "domain": "Social Emotional",
+      "description": "Looks at a few pages in a book with you"
+    },
+    {
+      "id": "CDC.18_months.Social_Emotional.5",
+      "age_group": "18_months",
+      "age_label": "1.5 Years (18 months)",
+      "domain": "Social Emotional",
+      "description": "Helps you dress him by pushing arm through sleeve or lifting up foot"
+    },
+    {
+      "id": "CDC.18_months.Language_Communication.1",
+      "age_group": "18_months",
+      "age_label": "1.5 Years (18 months)",
+      "domain": "Language Communication",
+      "description": "Tries to say three or more words besides mama or dada"
+    },
+    {
+      "id": "CDC.18_months.Language_Communication.2",
+      "age_group": "18_months",
+      "age_label": "1.5 Years (18 months)",
+      "domain": "Language Communication",
+      "description": "Follows one-step directions without gestures, like giving you a toy when you say give it to me"
+    },
+    {
+      "id": "CDC.18_months.Cognition.1",
+      "age_group": "18_months",
+      "age_label": "1.5 Years (18 months)",
+      "domain": "Cognition",
+      "description": "Copies you doing chores, like sweeping with a broom"
+    },
+    {
+      "id": "CDC.18_months.Cognition.2",
+      "age_group": "18_months",
+      "age_label": "1.5 Years (18 months)",
+      "domain": "Cognition",
+      "description": "Plays with toys in a simple way, like pushing a toy car"
+    },
+    {
+      "id": "CDC.18_months.Physical_Motor.1",
+      "age_group": "18_months",
+      "age_label": "1.5 Years (18 months)",
+      "domain": "Physical Motor",
+      "description": "Walks without holding on to anyone or anything"
+    },
+    {
+      "id": "CDC.18_months.Physical_Motor.2",
+      "age_group": "18_months",
+      "age_label": "1.5 Years (18 months)",
+      "domain": "Physical Motor",
+      "description": "Scribbles"
+    },
+    {
+      "id": "CDC.18_months.Physical_Motor.3",
+      "age_group": "18_months",
+      "age_label": "1.5 Years (18 months)",
+      "domain": "Physical Motor",
+      "description": "Drinks from a cup without a lid and may spill sometimes"
+    },
+    {
+      "id": "CDC.18_months.Physical_Motor.4",
+      "age_group": "18_months",
+      "age_label": "1.5 Years (18 months)",
+      "domain": "Physical Motor",
+      "description": "Feeds herself with her fingers"
+    },
+    {
+      "id": "CDC.18_months.Physical_Motor.5",
+      "age_group": "18_months",
+      "age_label": "1.5 Years (18 months)",
+      "domain": "Physical Motor",
+      "description": "Tries to eat with a spoon"
+    },
+    {
+      "id": "CDC.18_months.Physical_Motor.6",
+      "age_group": "18_months",
+      "age_label": "1.5 Years (18 months)",
+      "domain": "Physical Motor",
+      "description": "Climbs on and off a couch or chair without help"
+    },
+    {
+      "id": "CDC.2_years.Social_Emotional.1",
+      "age_group": "2_years",
+      "age_label": "2 Years (24 months)",
+      "domain": "Social Emotional",
+      "description": "Notices when others are hurt or upset, like pausing or looking sad when someone is crying"
+    },
+    {
+      "id": "CDC.2_years.Social_Emotional.2",
+      "age_group": "2_years",
+      "age_label": "2 Years (24 months)",
+      "domain": "Social Emotional",
+      "description": "Looks at your face to see how to react in a new situation"
+    },
+    {
+      "id": "CDC.2_years.Language_Communication.1",
+      "age_group": "2_years",
+      "age_label": "2 Years (24 months)",
+      "domain": "Language Communication",
+      "description": "Points to things or pictures when you ask"
+    },
+    {
+      "id": "CDC.2_years.Language_Communication.2",
+      "age_group": "2_years",
+      "age_label": "2 Years (24 months)",
+      "domain": "Language Communication",
+      "description": "Says at least two words together, like more milk"
+    },
+    {
+      "id": "CDC.2_years.Language_Communication.3",
+      "age_group": "2_years",
+      "age_label": "2 Years (24 months)",
+      "domain": "Language Communication",
+      "description": "Points to at least two body parts when asked"
+    },
+    {
+      "id": "CDC.2_years.Language_Communication.4",
+      "age_group": "2_years",
+      "age_label": "2 Years (24 months)",
+      "domain": "Language Communication",
+      "description": "Uses more gestures than just waving and pointing, like blowing a kiss or nodding yes"
+    },
+    {
+      "id": "CDC.2_years.Cognition.1",
+      "age_group": "2_years",
+      "age_label": "2 Years (24 months)",
+      "domain": "Cognition",
+      "description": "Holds something in one hand while using the other hand"
+    },
+    {
+      "id": "CDC.2_years.Cognition.2",
+      "age_group": "2_years",
+      "age_label": "2 Years (24 months)",
+      "domain": "Cognition",
+      "description": "Tries to use switches, knobs, or buttons on a toy"
+    },
+    {
+      "id": "CDC.2_years.Cognition.3",
+      "age_group": "2_years",
+      "age_label": "2 Years (24 months)",
+      "domain": "Cognition",
+      "description": "Plays with more than one toy at the same time"
+    },
+    {
+      "id": "CDC.2_years.Physical_Motor.1",
+      "age_group": "2_years",
+      "age_label": "2 Years (24 months)",
+      "domain": "Physical Motor",
+      "description": "Kicks a ball"
+    },
+    {
+      "id": "CDC.2_years.Physical_Motor.2",
+      "age_group": "2_years",
+      "age_label": "2 Years (24 months)",
+      "domain": "Physical Motor",
+      "description": "Runs"
+    },
+    {
+      "id": "CDC.2_years.Physical_Motor.3",
+      "age_group": "2_years",
+      "age_label": "2 Years (24 months)",
+      "domain": "Physical Motor",
+      "description": "Walks up a few stairs with or without help"
+    },
+    {
+      "id": "CDC.2_years.Physical_Motor.4",
+      "age_group": "2_years",
+      "age_label": "2 Years (24 months)",
+      "domain": "Physical Motor",
+      "description": "Eats with a spoon"
+    },
+    {
+      "id": "CDC.2_5_years.Social_Emotional.1",
+      "age_group": "2_5_years",
+      "age_label": "2.5 Years (30 months)",
+      "domain": "Social Emotional",
+      "description": "Plays next to other children and sometimes plays with them"
+    },
+    {
+      "id": "CDC.2_5_years.Social_Emotional.2",
+      "age_group": "2_5_years",
+      "age_label": "2.5 Years (30 months)",
+      "domain": "Social Emotional",
+      "description": "Shows you what she can do by saying look at me"
+    },
+    {
+      "id": "CDC.2_5_years.Social_Emotional.3",
+      "age_group": "2_5_years",
+      "age_label": "2.5 Years (30 months)",
+      "domain": "Social Emotional",
+      "description": "Follows simple routines when told, like helping to pick up toys at clean-up time"
+    },
+    {
+      "id": "CDC.2_5_years.Language_Communication.1",
+      "age_group": "2_5_years",
+      "age_label": "2.5 Years (30 months)",
+      "domain": "Language Communication",
+      "description": "Says about 50 words"
+    },
+    {
+      "id": "CDC.2_5_years.Language_Communication.2",
+      "age_group": "2_5_years",
+      "age_label": "2.5 Years (30 months)",
+      "domain": "Language Communication",
+      "description": "Says two or more words together with one action word, like doggie run"
+    },
+    {
+      "id": "CDC.2_5_years.Language_Communication.3",
+      "age_group": "2_5_years",
+      "age_label": "2.5 Years (30 months)",
+      "domain": "Language Communication",
+      "description": "Names things in a book when you point and ask what is this"
+    },
+    {
+      "id": "CDC.2_5_years.Language_Communication.4",
+      "age_group": "2_5_years",
+      "age_label": "2.5 Years (30 months)",
+      "domain": "Language Communication",
+      "description": "Says words like I, me, or we"
+    },
+    {
+      "id": "CDC.2_5_years.Cognition.1",
+      "age_group": "2_5_years",
+      "age_label": "2.5 Years (30 months)",
+      "domain": "Cognition",
+      "description": "Uses things to pretend, like feeding a block to a doll as if it were food"
+    },
+    {
+      "id": "CDC.2_5_years.Cognition.2",
+      "age_group": "2_5_years",
+      "age_label": "2.5 Years (30 months)",
+      "domain": "Cognition",
+      "description": "Shows simple problem-solving skills, like standing on a stool to reach something"
+    },
+    {
+      "id": "CDC.2_5_years.Cognition.3",
+      "age_group": "2_5_years",
+      "age_label": "2.5 Years (30 months)",
+      "domain": "Cognition",
+      "description": "Follows two-step instructions"
+    },
+    {
+      "id": "CDC.2_5_years.Cognition.4",
+      "age_group": "2_5_years",
+      "age_label": "2.5 Years (30 months)",
+      "domain": "Cognition",
+      "description": "Shows he knows at least one color"
+    },
+    {
+      "id": "CDC.2_5_years.Physical_Motor.1",
+      "age_group": "2_5_years",
+      "age_label": "2.5 Years (30 months)",
+      "domain": "Physical Motor",
+      "description": "Uses hands to twist things, like turning doorknobs or unscrewing lids"
+    },
+    {
+      "id": "CDC.2_5_years.Physical_Motor.2",
+      "age_group": "2_5_years",
+      "age_label": "2.5 Years (30 months)",
+      "domain": "Physical Motor",
+      "description": "Takes some clothes off by himself"
+    },
+    {
+      "id": "CDC.2_5_years.Physical_Motor.3",
+      "age_group": "2_5_years",
+      "age_label": "2.5 Years (30 months)",
+      "domain": "Physical Motor",
+      "description": "Jumps off the ground with both feet"
+    },
+    {
+      "id": "CDC.2_5_years.Physical_Motor.4",
+      "age_group": "2_5_years",
+      "age_label": "2.5 Years (30 months)",
+      "domain": "Physical Motor",
+      "description": "Turns book pages one at a time"
+    },
+    {
+      "id": "CDC.3_years.Social_Emotional.1",
+      "age_group": "3_years",
+      "age_label": "3 Years",
+      "domain": "Social Emotional",
+      "description": "Calms down within 10 minutes after you leave her at childcare or school"
+    },
+    {
+      "id": "CDC.3_years.Social_Emotional.2",
+      "age_group": "3_years",
+      "age_label": "3 Years",
+      "domain": "Social Emotional",
+      "description": "Notices other children and joins them to play"
+    },
+    {
+      "id": "CDC.3_years.Language_Communication.1",
+      "age_group": "3_years",
+      "age_label": "3 Years",
+      "domain": "Language Communication",
+      "description": "Talks with you in conversation using at least two back-and-forth exchanges"
+    },
+    {
+      "id": "CDC.3_years.Language_Communication.2",
+      "age_group": "3_years",
+      "age_label": "3 Years",
+      "domain": "Language Communication",
+      "description": "Asks who, what, where, and why questions"
+    },
+    {
+      "id": "CDC.3_years.Language_Communication.3",
+      "age_group": "3_years",
+      "age_label": "3 Years",
+      "domain": "Language Communication",
+      "description": "Says what action is happening in a picture or book when asked"
+    },
+    {
+      "id": "CDC.3_years.Language_Communication.4",
+      "age_group": "3_years",
+      "age_label": "3 Years",
+      "domain": "Language Communication",
+      "description": "Says first name when asked"
+    },
+    {
+      "id": "CDC.3_years.Language_Communication.5",
+      "age_group": "3_years",
+      "age_label": "3 Years",
+      "domain": "Language Communication",
+      "description": "Talks well enough for others to understand most of the time"
+    },
+    {
+      "id": "CDC.3_years.Cognition.1",
+      "age_group": "3_years",
+      "age_label": "3 Years",
+      "domain": "Cognition",
+      "description": "Draws a circle when you show him how"
+    },
+    {
+      "id": "CDC.3_years.Cognition.2",
+      "age_group": "3_years",
+      "age_label": "3 Years",
+      "domain": "Cognition",
+      "description": "Avoids touching hot objects like a stove when you warn her"
+    },
+    {
+      "id": "CDC.3_years.Physical_Motor.1",
+      "age_group": "3_years",
+      "age_label": "3 Years",
+      "domain": "Physical Motor",
+      "description": "Strings items together, like large beads or macaroni"
+    },
+    {
+      "id": "CDC.3_years.Physical_Motor.2",
+      "age_group": "3_years",
+      "age_label": "3 Years",
+      "domain": "Physical Motor",
+      "description": "Puts on some clothes by himself, like loose pants or a jacket"
+    },
+    {
+      "id": "CDC.3_years.Physical_Motor.3",
+      "age_group": "3_years",
+      "age_label": "3 Years",
+      "domain": "Physical Motor",
+      "description": "Uses a fork"
+    },
+    {
+      "id": "CDC.4_years.Social_Emotional.1",
+      "age_group": "4_years",
+      "age_label": "4 Years",
+      "domain": "Social Emotional",
+      "description": "Pretends to be something else during play such as teacher, superhero, dog"
+    },
+    {
+      "id": "CDC.4_years.Social_Emotional.2",
+      "age_group": "4_years",
+      "age_label": "4 Years",
+      "domain": "Social Emotional",
+      "description": "Asks to go play with children if none are around"
+    },
+    {
+      "id": "CDC.4_years.Social_Emotional.3",
+      "age_group": "4_years",
+      "age_label": "4 Years",
+      "domain": "Social Emotional",
+      "description": "Comforts others who are hurt or sad"
+    },
+    {
+      "id": "CDC.4_years.Social_Emotional.4",
+      "age_group": "4_years",
+      "age_label": "4 Years",
+      "domain": "Social Emotional",
+      "description": "Avoids danger, like not jumping from tall heights"
+    },
+    {
+      "id": "CDC.4_years.Social_Emotional.5",
+      "age_group": "4_years",
+      "age_label": "4 Years",
+      "domain": "Social Emotional",
+      "description": "Likes to be a helper"
+    },
+    {
+      "id": "CDC.4_years.Social_Emotional.6",
+      "age_group": "4_years",
+      "age_label": "4 Years",
+      "domain": "Social Emotional",
+      "description": "Changes behavior based on where she is"
+    },
+    {
+      "id": "CDC.4_years.Language_Communication.1",
+      "age_group": "4_years",
+      "age_label": "4 Years",
+      "domain": "Language Communication",
+      "description": "Says sentences with four or more words"
+    },
+    {
+      "id": "CDC.4_years.Language_Communication.2",
+      "age_group": "4_years",
+      "age_label": "4 Years",
+      "domain": "Language Communication",
+      "description": "Says some words from a song, story, or nursery rhyme"
+    },
+    {
+      "id": "CDC.4_years.Language_Communication.3",
+      "age_group": "4_years",
+      "age_label": "4 Years",
+      "domain": "Language Communication",
+      "description": "Talks about at least one thing that happened during his day"
+    },
+    {
+      "id": "CDC.4_years.Language_Communication.4",
+      "age_group": "4_years",
+      "age_label": "4 Years",
+      "domain": "Language Communication",
+      "description": "Answers simple questions like what is a coat for"
+    },
+    {
+      "id": "CDC.4_years.Cognition.1",
+      "age_group": "4_years",
+      "age_label": "4 Years",
+      "domain": "Cognition",
+      "description": "Names a few colors of items"
+    },
+    {
+      "id": "CDC.4_years.Cognition.2",
+      "age_group": "4_years",
+      "age_label": "4 Years",
+      "domain": "Cognition",
+      "description": "Tells what comes next in a well-known story"
+    },
+    {
+      "id": "CDC.4_years.Cognition.3",
+      "age_group": "4_years",
+      "age_label": "4 Years",
+      "domain": "Cognition",
+      "description": "Draws a person with three or more body parts"
+    },
+    {
+      "id": "CDC.4_years.Physical_Motor.1",
+      "age_group": "4_years",
+      "age_label": "4 Years",
+      "domain": "Physical Motor",
+      "description": "Catches a large ball most of the time"
+    },
+    {
+      "id": "CDC.4_years.Physical_Motor.2",
+      "age_group": "4_years",
+      "age_label": "4 Years",
+      "domain": "Physical Motor",
+      "description": "Serves himself food or pours water with adult supervision"
+    },
+    {
+      "id": "CDC.4_years.Physical_Motor.3",
+      "age_group": "4_years",
+      "age_label": "4 Years",
+      "domain": "Physical Motor",
+      "description": "Unbuttons some buttons"
+    },
+    {
+      "id": "CDC.4_years.Physical_Motor.4",
+      "age_group": "4_years",
+      "age_label": "4 Years",
+      "domain": "Physical Motor",
+      "description": "Holds crayon or pencil between fingers and thumb not a fist"
+    },
+    {
+      "id": "CDC.5_years.Social_Emotional.1",
+      "age_group": "5_years",
+      "age_label": "5 Years",
+      "domain": "Social Emotional",
+      "description": "Follows rules or takes turns when playing games with other children"
+    },
+    {
+      "id": "CDC.5_years.Social_Emotional.2",
+      "age_group": "5_years",
+      "age_label": "5 Years",
+      "domain": "Social Emotional",
+      "description": "Sings, dances, or acts for you"
+    },
+    {
+      "id": "CDC.5_years.Social_Emotional.3",
+      "age_group": "5_years",
+      "age_label": "5 Years",
+      "domain": "Social Emotional",
+      "description": "Does simple chores at home, like matching socks or clearing the table"
+    },
+    {
+      "id": "CDC.5_years.Language_Communication.1",
+      "age_group": "5_years",
+      "age_label": "5 Years",
+      "domain": "Language Communication",
+      "description": "Tells a story she heard or made up with at least two events"
+    },
+    {
+      "id": "CDC.5_years.Language_Communication.2",
+      "age_group": "5_years",
+      "age_label": "5 Years",
+      "domain": "Language Communication",
+      "description": "Answers questions about a book or story after you read or tell it to him"
+    },
+    {
+      "id": "CDC.5_years.Language_Communication.3",
+      "age_group": "5_years",
+      "age_label": "5 Years",
+      "domain": "Language Communication",
+      "description": "Keeps a conversation going with more than three back-and-forth exchanges"
+    },
+    {
+      "id": "CDC.5_years.Language_Communication.4",
+      "age_group": "5_years",
+      "age_label": "5 Years",
+      "domain": "Language Communication",
+      "description": "Uses or recognizes simple rhymes"
+    },
+    {
+      "id": "CDC.5_years.Cognition.1",
+      "age_group": "5_years",
+      "age_label": "5 Years",
+      "domain": "Cognition",
+      "description": "Counts to 10"
+    },
+    {
+      "id": "CDC.5_years.Cognition.2",
+      "age_group": "5_years",
+      "age_label": "5 Years",
+      "domain": "Cognition",
+      "description": "Names some numbers between 1 and 5 when you point to them"
+    },
+    {
+      "id": "CDC.5_years.Cognition.3",
+      "age_group": "5_years",
+      "age_label": "5 Years",
+      "domain": "Cognition",
+      "description": "Uses words about time, like yesterday, tomorrow, morning, or night"
+    },
+    {
+      "id": "CDC.5_years.Cognition.4",
+      "age_group": "5_years",
+      "age_label": "5 Years",
+      "domain": "Cognition",
+      "description": "Pays attention for 5 to 10 minutes during activities"
+    },
+    {
+      "id": "CDC.5_years.Cognition.5",
+      "age_group": "5_years",
+      "age_label": "5 Years",
+      "domain": "Cognition",
+      "description": "Writes some letters in her name"
+    },
+    {
+      "id": "CDC.5_years.Cognition.6",
+      "age_group": "5_years",
+      "age_label": "5 Years",
+      "domain": "Cognition",
+      "description": "Names some letters when you point to them"
+    },
+    {
+      "id": "CDC.5_years.Physical_Motor.1",
+      "age_group": "5_years",
+      "age_label": "5 Years",
+      "domain": "Physical Motor",
+      "description": "Buttons some buttons"
+    },
+    {
+      "id": "CDC.5_years.Physical_Motor.2",
+      "age_group": "5_years",
+      "age_label": "5 Years",
+      "domain": "Physical Motor",
+      "description": "Hops on one foot"
+    }
+  ]
+}

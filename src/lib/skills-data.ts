@@ -6,7 +6,7 @@
  */
 
 import { supabase } from './supabase'
-import type { Skill, SkillInsert, SkillUpdate } from '../types/database'
+import type { Skill, SkillInsert, SkillUpdate, Dimension } from '../types/database'
 
 // ============================================================
 // Composite types
@@ -37,6 +37,17 @@ export const GRADE_OPTIONS = [
   'Pre-K', 'TK', 'K',
   '1', '2', '3', '4', '5',
   '6', '7', '8', '9', '10',
+] as const
+
+/** Common age-band presets for skill forms. */
+export const AGE_BAND_PRESETS = [
+  { label: 'Ages 3–5 (Early Childhood)', min: 'Pre-K', max: 'K' },
+  { label: 'Ages 5–7 (Lower Elementary)', min: 'K', max: '2' },
+  { label: 'Ages 7–9 (Upper Elementary)', min: '2', max: '4' },
+  { label: 'Ages 9–11 (Middle Elementary)', min: '4', max: '6' },
+  { label: 'Ages 11–13 (Middle School)', min: '6', max: '8' },
+  { label: 'Ages 13–15 (Early High School)', min: '8', max: '10' },
+  { label: 'Ages 15–18 (Upper High School)', min: '10', max: '10' },
 ] as const
 
 // ============================================================
@@ -138,6 +149,39 @@ export function filterSkillsByGrade(
     if (maxOrd >= 0 && ord > maxOrd) return false
     return true
   })
+}
+
+/**
+ * Fetch active learner-profile dimensions for a school.
+ * Used to populate the "Domain" dropdown on skill forms.
+ */
+export async function fetchDimensions(schoolId: string): Promise<Dimension[]> {
+  const { data, error } = await supabase
+    .from('dimensions')
+    .select('*')
+    .eq('school_id', schoolId)
+    .eq('is_active', true)
+    .order('display_order')
+
+  if (error) throw error
+  return (data || []) as Dimension[]
+}
+
+/**
+ * Fetch distinct progression_domain values for a school's skills.
+ * These are the freeform domain strings already in use.
+ */
+export async function fetchSkillDomains(schoolId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('skills')
+    .select('progression_domain')
+    .eq('school_id', schoolId)
+    .not('progression_domain', 'is', null)
+    .order('progression_domain')
+
+  if (error) throw error
+
+  return [...new Set((data || []).map((d: any) => d.progression_domain as string))]
 }
 
 /**

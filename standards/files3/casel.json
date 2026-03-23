@@ -1,0 +1,117 @@
+{
+  "framework": "CASEL SEL Framework",
+  "version": "2020",
+  "source": "casel.org",
+  "description": "Social and emotional learning (SEL) is the process through which all young people and adults acquire and apply the knowledge, skills, and attitudes to develop healthy identities, manage emotions and achieve personal and collective goals, feel and show empathy for others, establish and maintain supportive relationships, and make responsible and caring decisions.",
+  "competencies": {
+    "Self_Awareness": {
+      "definition": "The abilities to understand one's own emotions, thoughts, and values and how they influence behavior across contexts. Includes recognizing strengths and limitations with a grounded sense of confidence and purpose.",
+      "skills": [
+        "Integrating personal and social identities",
+        "Identifying personal, cultural, and linguistic assets",
+        "Identifying one's emotions",
+        "Demonstrating honesty and integrity",
+        "Linking feelings, values, and thoughts",
+        "Examining prejudices and biases",
+        "Experiencing self-efficacy",
+        "Having a growth mindset",
+        "Developing interests and a sense of purpose"
+      ]
+    },
+    "Self_Management": {
+      "definition": "The abilities to manage one's emotions, thoughts, and behaviors effectively in different situations and to achieve goals and aspirations. Includes capacities to delay gratification, manage stress, and feel motivation and agency.",
+      "skills": [
+        "Managing one's emotions",
+        "Identifying and using stress-management strategies",
+        "Exhibiting self-discipline and self-motivation",
+        "Setting personal and collective goals",
+        "Using planning and organizational skills",
+        "Showing the courage to take initiative",
+        "Demonstrating personal and collective agency"
+      ]
+    },
+    "Social_Awareness": {
+      "definition": "The abilities to understand the perspectives of and empathize with others, including those from diverse backgrounds, cultures, and contexts. Includes capacities to feel compassion and understand broader social norms.",
+      "skills": [
+        "Taking others' perspectives",
+        "Recognizing strengths in others",
+        "Demonstrating empathy and compassion",
+        "Showing concern for the feelings of others",
+        "Understanding and expressing gratitude",
+        "Identifying diverse social norms, including unjust ones",
+        "Recognizing situational demands and opportunities",
+        "Understanding the influences of organizations/systems on behavior"
+      ]
+    },
+    "Relationship_Skills": {
+      "definition": "The abilities to establish and maintain healthy and supportive relationships and to effectively navigate settings with diverse individuals and groups. Includes communicating clearly, cooperating, and problem solving.",
+      "skills": [
+        "Communicating effectively",
+        "Developing positive relationships",
+        "Demonstrating cultural competency",
+        "Practicing teamwork and collaborative problem-solving",
+        "Resolving conflicts constructively",
+        "Resisting negative social pressure",
+        "Showing leadership in groups",
+        "Seeking or offering support and help when needed",
+        "Standing up for the rights of others"
+      ]
+    },
+    "Responsible_Decision_Making": {
+      "definition": "The abilities to make caring and constructive choices about personal behavior and social interactions across diverse situations. Includes considering ethical standards, safety concerns, and consequences.",
+      "skills": [
+        "Demonstrating curiosity and open-mindedness",
+        "Identifying solutions for personal and social problems",
+        "Learning to make a reasoned judgment after analyzing information",
+        "Anticipating and evaluating the consequences of one's actions",
+        "Recognizing how critical thinking skills are useful inside and outside school",
+        "Reflecting on one's role to promote personal, family, and community well-being",
+        "Evaluating personal, interpersonal, community, and institutional impacts"
+      ]
+    }
+  },
+  "key_settings": [
+    "Classrooms",
+    "Schools",
+    "Families_and_Caregivers",
+    "Communities"
+  ],
+  "developmental_applicability": "PreK through adulthood",
+  "grade_band_progressions": {
+    "PreK_K": {
+      "Self_Awareness": "Identify basic emotions; recognize own name and simple preferences",
+      "Self_Management": "Follow simple routines; manage transitions with support",
+      "Social_Awareness": "Notice feelings of others; show basic empathy",
+      "Relationship_Skills": "Take turns; share; play alongside peers",
+      "Responsible_Decision_Making": "Identify safe vs. unsafe behaviors with guidance"
+    },
+    "K_2": {
+      "Self_Awareness": "Name and describe emotions; identify personal strengths",
+      "Self_Management": "Use simple calming strategies; follow classroom rules",
+      "Social_Awareness": "Recognize emotions in others; understand different perspectives",
+      "Relationship_Skills": "Use kind words; ask for help; work cooperatively",
+      "Responsible_Decision_Making": "Identify consequences; make simple responsible choices"
+    },
+    "3_5": {
+      "Self_Awareness": "Understand how emotions affect behavior; recognize personal values",
+      "Self_Management": "Set short-term goals; manage frustration; persist through challenges",
+      "Social_Awareness": "Understand others' perspectives; appreciate diversity",
+      "Relationship_Skills": "Resolve conflicts; demonstrate active listening; lead and follow",
+      "Responsible_Decision_Making": "Analyze situations; evaluate choices; reflect on outcomes"
+    },
+    "6_8": {
+      "Self_Awareness": "Analyze complex emotions; reflect on identity and values",
+      "Self_Management": "Set long-term goals; manage stress; demonstrate resilience",
+      "Social_Awareness": "Understand systemic inequities; show compassion across difference",
+      "Relationship_Skills": "Navigate complex social dynamics; mentor peers; advocate",
+      "Responsible_Decision_Making": "Evaluate ethical dilemmas; consider community impact"
+    },
+    "9_12": {
+      "Self_Awareness": "Integrate identity; understand bias; develop purpose and agency",
+      "Self_Management": "Demonstrate independence; manage complex emotions; pursue goals",
+      "Social_Awareness": "Analyze societal systems; advocate for equity",
+      "Relationship_Skills": "Build professional relationships; resolve complex conflicts",
+      "Responsible_Decision_Making": "Make autonomous ethical decisions; consider long-term impact"
+    }
+  }
+}
