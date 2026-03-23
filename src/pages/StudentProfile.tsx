@@ -18,10 +18,12 @@ import SISSection from '../components/student/SISSection'
 import SISEditModal from '../components/student/SISEditModal'
 import TeacherNotes from '../components/student/TeacherNotes'
 import ParentNotes from '../components/student/ParentNotes'
+import StudentIncidents from '../components/student/StudentIncidents'
 import LearnerMessagesSection from '../components/student/LearnerMessagesSection'
 import StudentContextDoc from '../components/student/StudentContextDoc'
 import StudentClassroomsManager from '../components/student/StudentClassroomsManager'
 import StudentSkillsSection from '../components/skills/StudentSkillsSection'
+import TranslationHistory from '../components/student/TranslationHistory'
 
 // ============================================================
 // Student avatar with fallback initials
@@ -261,9 +263,13 @@ export default function StudentProfile() {
                   {formatStudentName(student.first_name, student.last_name)}
                 </h1>
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-muted">
-                  {classrooms.length > 0
-                    ? <span>{classrooms.map((c) => c.name).join(', ')}</span>
-                    : classroom && <span>{classroom.name}</span>}
+                  {classrooms.length > 0 ? (
+                    <span>
+                      {classrooms.filter((c) => c.status === 'active').map((c) => c.name).join(', ') || classroom?.name}
+                    </span>
+                  ) : (
+                    classroom && <span>{classroom.name}</span>
+                  )}
                   {student.grade_level && <span>Grade {student.grade_level}</span>}
                   {age !== null && <span>Age {age}</span>}
                 </div>
@@ -393,9 +399,22 @@ export default function StudentProfile() {
         </section>
       )}
 
+      {/* ========== TRANSLATION HISTORY (educator/admin only) ========== */}
+      {!isFamilyView && (
+        <TranslationHistory studentId={student.id} />
+      )}
+
       {/* ========== TEACHER NOTES (educator/admin only) ========== */}
       {!isFamilyView && (
         <TeacherNotes studentId={student.id} schoolId={student.school_id} />
+      )}
+
+      {/* ========== INCIDENT REPORTS ========== */}
+      {!isFamilyView && (
+        <StudentIncidents studentId={student.id} />
+      )}
+      {isFamilyView && (
+        <StudentIncidents studentId={student.id} isFamilyView />
       )}
 
       {/* ========== FAMILY INPUT — read-only for educators, editable for parents ========== */}

@@ -36,6 +36,9 @@ import AssignmentGrading from './pages/AssignmentGrading'
 import SkillGrading from './components/skills/SkillGrading'
 import Messages from './pages/Messages'
 import TemplatePreview from './pages/TemplatePreview'
+import IncidentReportPage from './pages/IncidentReport'
+import IncidentsPage from './pages/admin/IncidentsPage'
+import TranslatePage from './pages/Translate'
 
 function PasswordRecoveryRedirect() {
   const { isPasswordRecovery } = useAuth()
@@ -73,6 +76,7 @@ function AppRoutes() {
         <Route path="/export/:id" element={<ExportReport />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/department" element={<DepartmentDashboard />} />
+        <Route path="/incident/:id" element={<IncidentReportPage />} />
         <Route path="/settings" element={<SchoolProfile />} />
         <Route path="/assignments" element={<Assignments />} />
         <Route path="/assignment/:id" element={<AssignmentGrading />} />
@@ -129,6 +133,14 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/admin/incidents"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <IncidentsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin/departments"
           element={
             <ProtectedRoute requiredRole="admin">
@@ -149,6 +161,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute requiredRole="admin">
               <Standards />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/translate"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <TranslatePage />
             </ProtectedRoute>
           }
         />
