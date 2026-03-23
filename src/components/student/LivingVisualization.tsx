@@ -14,7 +14,7 @@ import { History, TrendingUp, Maximize2, X } from 'lucide-react'
 import type { DimensionScore } from '../../lib/student-data'
 import type { Snapshot } from '../../lib/living-data'
 import type { Observation } from '../../types/database'
-import { interpolateScores } from '../../lib/living-data'
+import { interpolateScores, computeSchoolYearRings } from '../../lib/living-data'
 import LivingBlob from './LivingBlob'
 import TimelinePlayback from './TimelinePlayback'
 
@@ -135,6 +135,12 @@ export default function LivingVisualization({
   // the hook seamlessly redirects from wherever it is, eliminating any gap.
   const animatedScores = useAnimatedScores(displayScores, 1400)
 
+  // School-year rings for the expanding canvas effect
+  const schoolYearRings = useMemo(
+    () => (showTimeline ? computeSchoolYearRings(snapshots) : []),
+    [snapshots, showTimeline]
+  )
+
   // Filter observations to those visible at the current snapshot date
   const snapshotObservations = useMemo(() => {
     if (!observations || !showTimeline || snapshotIdx === null || snapshots.length === 0) {
@@ -236,6 +242,7 @@ export default function LivingVisualization({
           onPlayingChange={onPlayingChange}
           isHistorical={isHistorical}
           onClose={closeExpanded}
+          schoolYearRings={schoolYearRings}
         />
       )}
 
@@ -270,6 +277,7 @@ export default function LivingVisualization({
             onDimensionClick={onDimensionClick}
             observations={snapshotObservations}
             observers={observers}
+            schoolYearRings={schoolYearRings}
           />
         </div>
 
@@ -366,6 +374,7 @@ function ExpandedBlobModal({
   onPlayingChange,
   isHistorical,
   onClose,
+  schoolYearRings,
 }: {
   animatedScores: DimensionScore[]
   snapshotObservations: Observation[]
@@ -380,6 +389,7 @@ function ExpandedBlobModal({
   onPlayingChange?: (playing: boolean) => void
   isHistorical: boolean
   onClose: () => void
+  schoolYearRings?: import('../../lib/living-data').SchoolYearRing[]
 }) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-bg/95 backdrop-blur-sm">
@@ -436,6 +446,7 @@ function ExpandedBlobModal({
               onDimensionClick={onDimensionClick}
               observations={snapshotObservations}
               observers={observers}
+              schoolYearRings={schoolYearRings}
               className="h-full w-full"
             />
           </div>
