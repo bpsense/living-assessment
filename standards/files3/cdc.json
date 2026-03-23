@@ -1,0 +1,182 @@
+{
+  "framework": "CDC Developmental Milestones",
+  "version": "2022",
+  "source": "cdc.gov/act-early",
+  "note": "Covers birth through age 5. These milestones represent what 75% or more of children achieve by each age. Not a substitute for professional developmental screening.",
+  "age_groups": {
+    "1_year": {
+      "age_label": "1 Year (12 months)",
+      "Social_Emotional": [
+        "Plays games such as peek-a-boo and pat-a-cake"
+      ],
+      "Language_Communication": [
+        "Waves bye-bye",
+        "Calls a parent mama or dada or another special name",
+        "Understands no \u2014 pauses briefly or stops when you say it"
+      ],
+      "Cognition": [
+        "Puts things in a container, like a block in a cup",
+        "Looks for things he sees you hide, like a toy under a blanket"
+      ],
+      "Physical_Motor": [
+        "Pulls to stand",
+        "Walks holding on to furniture",
+        "Drinks from a cup without a lid as you hold it",
+        "Picks things up between thumb and pointer finger"
+      ]
+    },
+    "18_months": {
+      "age_label": "1.5 Years (18 months)",
+      "Social_Emotional": [
+        "Moves away from you, but looks to make sure you are close by",
+        "Points to show you something interesting",
+        "Puts hands out for you to wash them",
+        "Looks at a few pages in a book with you",
+        "Helps you dress him by pushing arm through sleeve or lifting up foot"
+      ],
+      "Language_Communication": [
+        "Tries to say three or more words besides mama or dada",
+        "Follows one-step directions without gestures, like giving you a toy when you say give it to me"
+      ],
+      "Cognition": [
+        "Copies you doing chores, like sweeping with a broom",
+        "Plays with toys in a simple way, like pushing a toy car"
+      ],
+      "Physical_Motor": [
+        "Walks without holding on to anyone or anything",
+        "Scribbles",
+        "Drinks from a cup without a lid and may spill sometimes",
+        "Feeds herself with her fingers",
+        "Tries to eat with a spoon",
+        "Climbs on and off a couch or chair without help"
+      ]
+    },
+    "2_years": {
+      "age_label": "2 Years (24 months)",
+      "Social_Emotional": [
+        "Notices when others are hurt or upset, like pausing or looking sad when someone is crying",
+        "Looks at your face to see how to react in a new situation"
+      ],
+      "Language_Communication": [
+        "Points to things or pictures when you ask",
+        "Says at least two words together, like more milk",
+        "Points to at least two body parts when asked",
+        "Uses more gestures than just waving and pointing, like blowing a kiss or nodding yes"
+      ],
+      "Cognition": [
+        "Holds something in one hand while using the other hand",
+        "Tries to use switches, knobs, or buttons on a toy",
+        "Plays with more than one toy at the same time"
+      ],
+      "Physical_Motor": [
+        "Kicks a ball",
+        "Runs",
+        "Walks up a few stairs with or without help",
+        "Eats with a spoon"
+      ]
+    },
+    "2_5_years": {
+      "age_label": "2.5 Years (30 months)",
+      "Social_Emotional": [
+        "Plays next to other children and sometimes plays with them",
+        "Shows you what she can do by saying look at me",
+        "Follows simple routines when told, like helping to pick up toys at clean-up time"
+      ],
+      "Language_Communication": [
+        "Says about 50 words",
+        "Says two or more words together with one action word, like doggie run",
+        "Names things in a book when you point and ask what is this",
+        "Says words like I, me, or we"
+      ],
+      "Cognition": [
+        "Uses things to pretend, like feeding a block to a doll as if it were food",
+        "Shows simple problem-solving skills, like standing on a stool to reach something",
+        "Follows two-step instructions",
+        "Shows he knows at least one color"
+      ],
+      "Physical_Motor": [
+        "Uses hands to twist things, like turning doorknobs or unscrewing lids",
+        "Takes some clothes off by himself",
+        "Jumps off the ground with both feet",
+        "Turns book pages one at a time"
+      ]
+    },
+    "3_years": {
+      "age_label": "3 Years",
+      "Social_Emotional": [
+        "Calms down within 10 minutes after you leave her at childcare or school",
+        "Notices other children and joins them to play"
+      ],
+      "Language_Communication": [
+        "Talks with you in conversation using at least two back-and-forth exchanges",
+        "Asks who, what, where, and why questions",
+        "Says what action is happening in a picture or book when asked",
+        "Says first name when asked",
+        "Talks well enough for others to understand most of the time"
+      ],
+      "Cognition": [
+        "Draws a circle when you show him how",
+        "Avoids touching hot objects like a stove when you warn her"
+      ],
+      "Physical_Motor": [
+        "Strings items together, like large beads or macaroni",
+        "Puts on some clothes by himself, like loose pants or a jacket",
+        "Uses a fork"
+      ]
+    },
+    "4_years": {
+      "age_label": "4 Years",
+      "Social_Emotional": [
+        "Pretends to be something else during play such as teacher, superhero, dog",
+        "Asks to go play with children if none are around",
+        "Comforts others who are hurt or sad",
+        "Avoids danger, like not jumping from tall heights",
+        "Likes to be a helper",
+        "Changes behavior based on where she is"
+      ],
+      "Language_Communication": [
+        "Says sentences with four or more words",
+        "Says some words from a song, story, or nursery rhyme",
+        "Talks about at least one thing that happened during his day",
+        "Answers simple questions like what is a coat for"
+      ],
+      "Cognition": [
+        "Names a few colors of items",
+        "Tells what comes next in a well-known story",
+        "Draws a person with three or more body parts"
+      ],
+      "Physical_Motor": [
+        "Catches a large ball most of the time",
+        "Serves himself food or pours water with adult supervision",
+        "Unbuttons some buttons",
+        "Holds crayon or pencil between fingers and thumb not a fist"
+      ]
+    },
+    "5_years": {
+      "age_label": "5 Years",
+      "Social_Emotional": [
+        "Follows rules or takes turns when playing games with other children",
+        "Sings, dances, or acts for you",
+        "Does simple chores at home, like matching socks or clearing the table"
+      ],
+      "Language_Communication": [
+        "Tells a story she heard or made up with at least two events",
+        "Answers questions about a book or story after you read or tell it to him",
+        "Keeps a conversation going with more than three back-and-forth exchanges",
+        "Uses or recognizes simple rhymes"
+      ],
+      "Cognition": [
+        "Counts to 10",
+        "Names some numbers between 1 and 5 when you point to them",
+        "Uses words about time, like yesterday, tomorrow, morning, or night",
+        "Pays attention for 5 to 10 minutes during activities",
+        "Writes some letters in her name",
+        "Names some letters when you point to them"
+      ],
+      "Physical_Motor": [
+        "Buttons some buttons",
+        "Hops on one foot"
+      ]
+    }
+  }
+}

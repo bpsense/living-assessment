@@ -1,0 +1,303 @@
+{
+  "framework": {
+    "name": "NAEP Mathematics Framework",
+    "version": "2026",
+    "source": "nagb.gov",
+    "assessment_grades": [
+      4,
+      8,
+      12
+    ],
+    "note": "NAEP assesses at grades 4, 8, and 12 only. Defines Basic, Proficient, and Advanced achievement levels.",
+    "content_areas": [
+      "Number Properties and Operations",
+      "Measurement",
+      "Geometry",
+      "Data Analysis, Statistics, and Probability",
+      "Algebra"
+    ],
+    "achievement_levels": {
+      "Basic": "Partial mastery of prerequisite knowledge and skills",
+      "Proficient": "Solid academic performance demonstrating competency",
+      "Advanced": "Superior performance beyond Proficient"
+    }
+  },
+  "standards": [
+    {
+      "id": "NAEP.Math.4.NumberPro.1",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "content_area": "Number Properties and Operations",
+      "description": "a) Identify odd and even",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at the 4th grade level",
+        "Proficient": "Solid academic performance. Students reaching this level have demonstrated competency over challenging subject matter, including subject-matter knowledge, application of such knowledge to real-world situations, and analytical skills appropriate to the subject matter",
+        "Advanced": "Superior performance beyond proficient at grade 4. Fourth-grade students performing at this level should apply integrated procedural knowledge and conceptual understanding to complex and non-routine real-world problem solving"
+      }
+    },
+    {
+      "id": "NAEP.Math.4.NumberPro.2",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "content_area": "Number Properties and Operations",
+      "description": "c) Recognize or use prime and c) Solve problems using factors,",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at the 4th grade level",
+        "Proficient": "Solid academic performance. Students reaching this level have demonstrated competency over challenging subject matter, including subject-matter knowledge, application of such knowledge to real-world situations, and analytical skills appropriate to the subject matter",
+        "Advanced": "Superior performance beyond proficient at grade 4. Fourth-grade students performing at this level should apply integrated procedural knowledge and conceptual understanding to complex and non-routine real-world problem solving"
+      }
+    },
+    {
+      "id": "NAEP.Math.4.NumberPro.3",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "content_area": "Number Properties and Operations",
+      "description": "f) Recognize properties of the",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at the 4th grade level",
+        "Proficient": "Solid academic performance. Students reaching this level have demonstrated competency over challenging subject matter, including subject-matter knowledge, application of such knowledge to real-world situations, and analytical skills appropriate to the subject matter",
+        "Advanced": "Superior performance beyond proficient at grade 4. Fourth-grade students performing at this level should apply integrated procedural knowledge and conceptual understanding to complex and non-routine real-world problem solving"
+      }
+    },
+    {
+      "id": "NAEP.Math.8.NumberPro.1",
+      "grade": "8",
+      "grade_label": "Grade 8",
+      "content_area": "Number Properties and Operations",
+      "description": "b) Identify factors of whole b) Recognize, find, or use",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at the 8th grade level",
+        "Proficient": "Solid academic performance at grade 8. Students use general mathematical rules and concepts to solve multi-step problems, and they can represent relationships with data tables and graphs",
+        "Advanced": "Superior performance at grade 8. Students can reason, solve problems, and communicate their thinking using a variety of mathematical concepts"
+      }
+    },
+    {
+      "id": "NAEP.Math.8.NumberPro.2",
+      "grade": "8",
+      "grade_label": "Grade 8",
+      "content_area": "Number Properties and Operations",
+      "description": "e) Apply basic properties of e) Apply basic properties of e) Apply basic properties of",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at the 8th grade level",
+        "Proficient": "Solid academic performance at grade 8. Students use general mathematical rules and concepts to solve multi-step problems, and they can represent relationships with data tables and graphs",
+        "Advanced": "Superior performance at grade 8. Students can reason, solve problems, and communicate their thinking using a variety of mathematical concepts"
+      }
+    },
+    {
+      "id": "NAEP.Math.12.NumberPro.1",
+      "grade": "12",
+      "grade_label": "Grade 12",
+      "content_area": "Number Properties and Operations",
+      "description": "d) Use divisibility or remainders # d) Use divisibility or",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at grade 12",
+        "Proficient": "Solid academic performance at grade 12. Students demonstrate an understanding of mathematical concepts and procedures and can apply mathematical knowledge",
+        "Advanced": "Superior performance at grade 12. Students demonstrate in-depth understanding and apply mathematical concepts"
+      }
+    },
+    {
+      "id": "NAEP.Math.4.Measuremen.1",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "content_area": "Measurement",
+      "description": "b) Solve problems using the fact",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at the 4th grade level",
+        "Proficient": "Solid academic performance. Students reaching this level have demonstrated competency over challenging subject matter, including subject-matter knowledge, application of such knowledge to real-world situations, and analytical skills appropriate to the subject matter",
+        "Advanced": "Superior performance beyond proficient at grade 4. Fourth-grade students performing at this level should apply integrated procedural knowledge and conceptual understanding to complex and non-routine real-world problem solving"
+      }
+    },
+    {
+      "id": "NAEP.Math.4.Measuremen.2",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "content_area": "Measurement",
+      "description": "d) * Interpret and use the",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at the 4th grade level",
+        "Proficient": "Solid academic performance. Students reaching this level have demonstrated competency over challenging subject matter, including subject-matter knowledge, application of such knowledge to real-world situations, and analytical skills appropriate to the subject matter",
+        "Advanced": "Superior performance beyond proficient at grade 4. Fourth-grade students performing at this level should apply integrated procedural knowledge and conceptual understanding to complex and non-routine real-world problem solving"
+      }
+    },
+    {
+      "id": "NAEP.Math.4.Measuremen.3",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "content_area": "Measurement",
+      "description": "g) * Use the law of cosines and",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at the 4th grade level",
+        "Proficient": "Solid academic performance. Students reaching this level have demonstrated competency over challenging subject matter, including subject-matter knowledge, application of such knowledge to real-world situations, and analytical skills appropriate to the subject matter",
+        "Advanced": "Superior performance beyond proficient at grade 4. Fourth-grade students performing at this level should apply integrated procedural knowledge and conceptual understanding to complex and non-routine real-world problem solving"
+      }
+    },
+    {
+      "id": "NAEP.Math.8.Measuremen.1",
+      "grade": "8",
+      "grade_label": "Grade 8",
+      "content_area": "Measurement",
+      "description": "c) Use the definitions of sine,",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at the 8th grade level",
+        "Proficient": "Solid academic performance at grade 8. Students use general mathematical rules and concepts to solve multi-step problems, and they can represent relationships with data tables and graphs",
+        "Advanced": "Superior performance at grade 8. Students can reason, solve problems, and communicate their thinking using a variety of mathematical concepts"
+      }
+    },
+    {
+      "id": "NAEP.Math.8.Measuremen.2",
+      "grade": "8",
+      "grade_label": "Grade 8",
+      "content_area": "Measurement",
+      "description": "f) * Use trigonometric formulas",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at the 8th grade level",
+        "Proficient": "Solid academic performance at grade 8. Students use general mathematical rules and concepts to solve multi-step problems, and they can represent relationships with data tables and graphs",
+        "Advanced": "Superior performance at grade 8. Students can reason, solve problems, and communicate their thinking using a variety of mathematical concepts"
+      }
+    },
+    {
+      "id": "NAEP.Math.12.Measuremen.1",
+      "grade": "12",
+      "grade_label": "Grade 12",
+      "content_area": "Measurement",
+      "description": "e) * Determine the radian",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at grade 12",
+        "Proficient": "Solid academic performance at grade 12. Students demonstrate an understanding of mathematical concepts and procedures and can apply mathematical knowledge",
+        "Advanced": "Superior performance at grade 12. Students demonstrate in-depth understanding and apply mathematical concepts"
+      }
+    },
+    {
+      "id": "NAEP.Math.12.Measuremen.2",
+      "grade": "12",
+      "grade_label": "Grade 12",
+      "content_area": "Measurement",
+      "description": "h) * Interpret the graphs of the",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at grade 12",
+        "Proficient": "Solid academic performance at grade 12. Students demonstrate an understanding of mathematical concepts and procedures and can apply mathematical knowledge",
+        "Advanced": "Superior performance at grade 12. Students demonstrate in-depth understanding and apply mathematical concepts"
+      }
+    },
+    {
+      "id": "NAEP.Math.4.Geometry.1",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "content_area": "Geometry",
+      "description": "f) Find an equation of a circle",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at the 4th grade level",
+        "Proficient": "Solid academic performance. Students reaching this level have demonstrated competency over challenging subject matter, including subject-matter knowledge, application of such knowledge to real-world situations, and analytical skills appropriate to the subject matter",
+        "Advanced": "Superior performance beyond proficient at grade 4. Fourth-grade students performing at this level should apply integrated procedural knowledge and conceptual understanding to complex and non-routine real-world problem solving"
+      }
+    },
+    {
+      "id": "NAEP.Math.4.Geometry.2",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "content_area": "Geometry",
+      "description": "h) * Represent situations and",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at the 4th grade level",
+        "Proficient": "Solid academic performance. Students reaching this level have demonstrated competency over challenging subject matter, including subject-matter knowledge, application of such knowledge to real-world situations, and analytical skills appropriate to the subject matter",
+        "Advanced": "Superior performance beyond proficient at grade 4. Fourth-grade students performing at this level should apply integrated procedural knowledge and conceptual understanding to complex and non-routine real-world problem solving"
+      }
+    },
+    {
+      "id": "NAEP.Math.8.Geometry.1",
+      "grade": "8",
+      "grade_label": "Grade 8",
+      "content_area": "Geometry",
+      "description": "g) * Graph or determine",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at the 8th grade level",
+        "Proficient": "Solid academic performance at grade 8. Students use general mathematical rules and concepts to solve multi-step problems, and they can represent relationships with data tables and graphs",
+        "Advanced": "Superior performance at grade 8. Students can reason, solve problems, and communicate their thinking using a variety of mathematical concepts"
+      }
+    },
+    {
+      "id": "NAEP.Math.4.DataAnaly.1",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "content_area": "Data Analysis, Statistics, and Probability",
+      "description": "i) Determine conditional",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at the 4th grade level",
+        "Proficient": "Solid academic performance. Students reaching this level have demonstrated competency over challenging subject matter, including subject-matter knowledge, application of such knowledge to real-world situations, and analytical skills appropriate to the subject matter",
+        "Advanced": "Superior performance beyond proficient at grade 4. Fourth-grade students performing at this level should apply integrated procedural knowledge and conceptual understanding to complex and non-routine real-world problem solving"
+      }
+    },
+    {
+      "id": "NAEP.Math.4.DataAnaly.2",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "content_area": "Data Analysis, Statistics, and Probability",
+      "description": "k) * Use the binomial theorem",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at the 4th grade level",
+        "Proficient": "Solid academic performance. Students reaching this level have demonstrated competency over challenging subject matter, including subject-matter knowledge, application of such knowledge to real-world situations, and analytical skills appropriate to the subject matter",
+        "Advanced": "Superior performance beyond proficient at grade 4. Fourth-grade students performing at this level should apply integrated procedural knowledge and conceptual understanding to complex and non-routine real-world problem solving"
+      }
+    },
+    {
+      "id": "NAEP.Math.8.DataAnaly.1",
+      "grade": "8",
+      "grade_label": "Grade 8",
+      "content_area": "Data Analysis, Statistics, and Probability",
+      "description": "j) Interpret and apply # j) Interpret and apply",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at the 8th grade level",
+        "Proficient": "Solid academic performance at grade 8. Students use general mathematical rules and concepts to solve multi-step problems, and they can represent relationships with data tables and graphs",
+        "Advanced": "Superior performance at grade 8. Students can reason, solve problems, and communicate their thinking using a variety of mathematical concepts"
+      }
+    },
+    {
+      "id": "NAEP.Math.4.Algebra.1",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "content_area": "Algebra",
+      "description": "d) Analyze situations or solve # d) Analyze situations,",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at the 4th grade level",
+        "Proficient": "Solid academic performance. Students reaching this level have demonstrated competency over challenging subject matter, including subject-matter knowledge, application of such knowledge to real-world situations, and analytical skills appropriate to the subject matter",
+        "Advanced": "Superior performance beyond proficient at grade 4. Fourth-grade students performing at this level should apply integrated procedural knowledge and conceptual understanding to complex and non-routine real-world problem solving"
+      }
+    },
+    {
+      "id": "NAEP.Math.4.Algebra.2",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "content_area": "Algebra",
+      "description": "f) Use and evaluate common # f) Solve problems involving",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at the 4th grade level",
+        "Proficient": "Solid academic performance. Students reaching this level have demonstrated competency over challenging subject matter, including subject-matter knowledge, application of such knowledge to real-world situations, and analytical skills appropriate to the subject matter",
+        "Advanced": "Superior performance beyond proficient at grade 4. Fourth-grade students performing at this level should apply integrated procedural knowledge and conceptual understanding to complex and non-routine real-world problem solving"
+      }
+    },
+    {
+      "id": "NAEP.Math.8.Algebra.1",
+      "grade": "8",
+      "grade_label": "Grade 8",
+      "content_area": "Algebra",
+      "description": "e) Interpret relationships e) Solve (symbolically or",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at the 8th grade level",
+        "Proficient": "Solid academic performance at grade 8. Students use general mathematical rules and concepts to solve multi-step problems, and they can represent relationships with data tables and graphs",
+        "Advanced": "Superior performance at grade 8. Students can reason, solve problems, and communicate their thinking using a variety of mathematical concepts"
+      }
+    },
+    {
+      "id": "NAEP.Math.12.Algebra.1",
+      "grade": "12",
+      "grade_label": "Grade 12",
+      "content_area": "Algebra",
+      "description": "h) * Solve quadratic equations",
+      "achievement_levels": {
+        "Basic": "Partial mastery of prerequisite knowledge and skills fundamental for proficient work at grade 12",
+        "Proficient": "Solid academic performance at grade 12. Students demonstrate an understanding of mathematical concepts and procedures and can apply mathematical knowledge",
+        "Advanced": "Superior performance at grade 12. Students demonstrate in-depth understanding and apply mathematical concepts"
+      }
+    }
+  ]
+}

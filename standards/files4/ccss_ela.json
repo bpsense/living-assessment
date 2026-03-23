@@ -1,0 +1,3799 @@
+{
+  "framework": {
+    "name": "Common Core State Standards",
+    "subject": "English Language Arts",
+    "version": "2010",
+    "source": "corestandards.org",
+    "grades_covered": [
+      "K",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9-10",
+      "11-12"
+    ],
+    "strands": [
+      "Reading_Literature",
+      "Reading_Informational",
+      "Reading_Foundational",
+      "Writing",
+      "Speaking_Listening",
+      "Language"
+    ]
+  },
+  "standards": [
+    {
+      "id": "CCSS.ELA.K.Reading_Literature.1",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Literature",
+      "standard_number": "1",
+      "description": "With prompting and support, ask and answer 1"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Literature.1",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Literature",
+      "standard_number": "1",
+      "description": "Ask and answer such questions as who, what, questions about key details in a text"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Literature.2",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Literature",
+      "standard_number": "2",
+      "description": "With prompting and support, retell familiar 2"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Literature.2",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Literature",
+      "standard_number": "2",
+      "description": "Recount stories, including fables and folktales stories, including key details"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Literature.3",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Literature",
+      "standard_number": "3",
+      "description": "With prompting and support, identify characters, 3"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Literature.3",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Literature",
+      "standard_number": "3",
+      "description": "Describe how characters in a story respond to settings, and major events in a story"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Literature.4",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Literature",
+      "standard_number": "4",
+      "description": "Ask and answer questions about unknown words 4"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Literature.4",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Literature",
+      "standard_number": "4",
+      "description": "Describe how words and phrases (e"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Literature.5",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Literature",
+      "standard_number": "5",
+      "description": "Recognize common types of texts (e"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Literature.5",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Literature",
+      "standard_number": "5",
+      "description": "Explain major differences between books that tell 5"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Literature.6",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Literature",
+      "standard_number": "6",
+      "description": "With prompting and support, name the author 6"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Literature.6",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Literature",
+      "standard_number": "6",
+      "description": "Acknowledge differences in the points of view of and illustrator of a story and define the role of in a text"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Literature.7",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Literature",
+      "standard_number": "7",
+      "description": "With prompting and support, describe the 7"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Literature.7",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Literature",
+      "standard_number": "7",
+      "description": "Use information gained from the illustrations and relationship between illustrations and the story in its characters, setting, or events"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Literature.9",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Literature",
+      "standard_number": "9",
+      "description": "With prompting and support, compare and 9"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Literature.9",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Literature",
+      "standard_number": "9",
+      "description": "Compare and contrast two or more versions contrast the adventures and experiences of experiences of characters in stories"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Literature.10",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Literature",
+      "standard_number": "10",
+      "description": "Actively engage in group reading activities with 10"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Literature.10",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Literature",
+      "standard_number": "10",
+      "description": "By the end of the year, read and comprehend purpose and understanding"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Informational.1",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Informational",
+      "standard_number": "1",
+      "description": "With prompting and support, ask and answer 1"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Informational.1",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Informational",
+      "standard_number": "1",
+      "description": "Ask and answer such questions as who, what, questions about key details in a text"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Informational.2",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Informational",
+      "standard_number": "2",
+      "description": "With prompting and support, identify the main 2"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Informational.2",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Informational",
+      "standard_number": "2",
+      "description": "Identify the main topic of a multiparagraph text topic and retell key details of a text"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Informational.3",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Informational",
+      "standard_number": "3",
+      "description": "With prompting and support, describe the 3"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Informational.3",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Informational",
+      "standard_number": "3",
+      "description": "Describe the connection between a series of connection between two individuals, events, individuals, events, ideas, or pieces of information historical events, scientific ideas or concepts, or ideas, o"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Informational.4",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Informational",
+      "standard_number": "4",
+      "description": "With prompting and support, ask and answer 4"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Informational.4",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Informational",
+      "standard_number": "4",
+      "description": "Determine the meaning of words and phrases in a questions about unknown words in a text"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Informational.5",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Informational",
+      "standard_number": "5",
+      "description": "Identify the front cover, back cover, and title 5"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Informational.5",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Informational",
+      "standard_number": "5",
+      "description": "Know and use various text features (e"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Informational.6",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Informational",
+      "standard_number": "6",
+      "description": "Name the author and illustrator of a text and 6"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Informational.6",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Informational",
+      "standard_number": "6",
+      "description": "Identify the main purpose of a text, including define the role of each in presenting the ideas or pictures or other illustrations and information what the author wants to answer, explain, or informatio"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Informational.7",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Informational",
+      "standard_number": "7",
+      "description": "With prompting and support, describe the 7"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Informational.7",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Informational",
+      "standard_number": "7",
+      "description": "Explain how specific images (e"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Informational.8",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Informational",
+      "standard_number": "8",
+      "description": "With prompting and support, identify the 8"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Informational.8",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Informational",
+      "standard_number": "8",
+      "description": "Describe how reasons support specific points the reasons an author gives to support points in a points in a text"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Informational.9",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Informational",
+      "standard_number": "9",
+      "description": "With prompting and support, identify basic 9"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Informational.9",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Informational",
+      "standard_number": "9",
+      "description": "Compare and contrast the most important points similarities in and differences between two between two texts on the same topic (e"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Informational.10",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Informational",
+      "standard_number": "10",
+      "description": "Actively engage in group reading activities with 10"
+    },
+    {
+      "id": "CCSS.ELA.K.Reading_Informational.10",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Reading_Informational",
+      "standard_number": "10",
+      "description": "By the end of year, read and comprehend purpose and understanding"
+    },
+    {
+      "id": "CCSS.ELA.K.Writing.1",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Writing",
+      "standard_number": "1",
+      "description": "Use a combination of drawing, dictating, and 1"
+    },
+    {
+      "id": "CCSS.ELA.K.Writing.1",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Writing",
+      "standard_number": "1",
+      "description": "Write opinion pieces in which they introduce the writing to compose opinion pieces in which they topic or name the book they are writing about, topic or book they are writing about, state an tell a rea"
+    },
+    {
+      "id": "CCSS.ELA.K.Writing.2",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Writing",
+      "standard_number": "2",
+      "description": "Use a combination of drawing, dictating, and 2"
+    },
+    {
+      "id": "CCSS.ELA.K.Writing.2",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Writing",
+      "standard_number": "2",
+      "description": "Write informative/explanatory texts in which writing to compose informative/explanatory name a topic, supply some facts about the topic, they introduce a topic, use facts and definitions texts in which"
+    },
+    {
+      "id": "CCSS.ELA.K.Writing.3",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Writing",
+      "standard_number": "3",
+      "description": "Use a combination of drawing, dictating, and 3"
+    },
+    {
+      "id": "CCSS.ELA.K.Writing.3",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Writing",
+      "standard_number": "3",
+      "description": "Write narratives in which they recount a well- writing to narrate a single event or several more appropriately sequenced events, include elaborated event or short sequence of events, loosely linked eve"
+    },
+    {
+      "id": "CCSS.ELA.K.Writing.5",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Writing",
+      "standard_number": "5",
+      "description": "With guidance and support from adults, respond 5"
+    },
+    {
+      "id": "CCSS.ELA.K.Writing.5",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Writing",
+      "standard_number": "5",
+      "description": "With guidance and support from adults and to questions and suggestions from peers and a topic, respond to questions and suggestions peers, focus on a topic and strengthen writing as add details to stre"
+    },
+    {
+      "id": "CCSS.ELA.K.Writing.6",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Writing",
+      "standard_number": "6",
+      "description": "With guidance and support from adults, explore 6"
+    },
+    {
+      "id": "CCSS.ELA.K.Writing.6",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Writing",
+      "standard_number": "6",
+      "description": "With guidance and support from adults, use a a variety of digital tools to produce and publish variety of digital tools to produce and publish variety of digital tools to produce and publish writing, i"
+    },
+    {
+      "id": "CCSS.ELA.K.Writing.7",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Writing",
+      "standard_number": "7",
+      "description": "Participate in shared research and writing 7"
+    },
+    {
+      "id": "CCSS.ELA.K.Writing.7",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Writing",
+      "standard_number": "7",
+      "description": "Participate in shared research and writing projects (e"
+    },
+    {
+      "id": "CCSS.ELA.K.Writing.8",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Writing",
+      "standard_number": "8",
+      "description": "With guidance and support from adults, 8"
+    },
+    {
+      "id": "CCSS.ELA.K.Writing.8",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Writing",
+      "standard_number": "8",
+      "description": "Recall information from experiences or gather recall information from experiences or gather recall information from experiences or gather information from provided sources to answer a information from"
+    },
+    {
+      "id": "CCSS.ELA.K.Speaking_Listening.1",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Speaking_Listening",
+      "standard_number": "1",
+      "description": "Participate in collaborative conversations with 1"
+    },
+    {
+      "id": "CCSS.ELA.K.Speaking_Listening.1",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Speaking_Listening",
+      "standard_number": "1",
+      "description": "Participate in collaborative conversations with diverse partners about kindergarten topics and diverse partners about grade 1 topics and texts diverse partners about grade 2 topics and texts texts with"
+    },
+    {
+      "id": "CCSS.ELA.K.Speaking_Listening.2",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Speaking_Listening",
+      "standard_number": "2",
+      "description": "Confirm understanding of a text read aloud or 2"
+    },
+    {
+      "id": "CCSS.ELA.K.Speaking_Listening.2",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Speaking_Listening",
+      "standard_number": "2",
+      "description": "Recount or describe key ideas or details from a information presented orally or through other text read aloud or information presented orally or text read aloud or information presented orally or media"
+    },
+    {
+      "id": "CCSS.ELA.K.Speaking_Listening.3",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Speaking_Listening",
+      "standard_number": "3",
+      "description": "Ask and answer questions in order to seek help, 3"
+    },
+    {
+      "id": "CCSS.ELA.K.Speaking_Listening.3",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Speaking_Listening",
+      "standard_number": "3",
+      "description": "Ask and answer questions about what a speaker get information, or clarify something that is not says in order to gather additional information or says in order to clarify comprehension, gather understo"
+    },
+    {
+      "id": "CCSS.ELA.K.Speaking_Listening.4",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Speaking_Listening",
+      "standard_number": "4",
+      "description": "Describe familiar people, places, things, and 4"
+    },
+    {
+      "id": "CCSS.ELA.K.Speaking_Listening.4",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Speaking_Listening",
+      "standard_number": "4",
+      "description": "Tell a story or recount an experience with events and, with prompting and support, provide relevant details, expressing ideas and feelings appropriate facts and relevant, descriptive details, additiona"
+    },
+    {
+      "id": "CCSS.ELA.K.Speaking_Listening.5",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Speaking_Listening",
+      "standard_number": "5",
+      "description": "Add drawings or other visual displays to 5"
+    },
+    {
+      "id": "CCSS.ELA.K.Speaking_Listening.5",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Speaking_Listening",
+      "standard_number": "5",
+      "description": "Create audio recordings of stories or poems; descriptions as desired to provide additional descriptions when appropriate to clarify ideas, add drawings or other visual displays to stories detail"
+    },
+    {
+      "id": "CCSS.ELA.K.Speaking_Listening.6",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Speaking_Listening",
+      "standard_number": "6",
+      "description": "Speak audibly and express thoughts, feelings, and 6"
+    },
+    {
+      "id": "CCSS.ELA.K.Speaking_Listening.6",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Speaking_Listening",
+      "standard_number": "6",
+      "description": "Produce complete sentences when appropriate to ideas clearly"
+    },
+    {
+      "id": "CCSS.ELA.K.Language.1",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Language",
+      "standard_number": "1",
+      "description": "Demonstrate command of the conventions of 1"
+    },
+    {
+      "id": "CCSS.ELA.K.Language.1",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Language",
+      "standard_number": "1",
+      "description": "Demonstrate command of the conventions of standard English grammar and usage when standard English grammar and usage when standard English grammar and usage when writing writing or speaking"
+    },
+    {
+      "id": "CCSS.ELA.K.Language.2",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Language",
+      "standard_number": "2",
+      "description": "Demonstrate command of the conventions of 2"
+    },
+    {
+      "id": "CCSS.ELA.K.Language.2",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Language",
+      "standard_number": "2",
+      "description": "Demonstrate command of the conventions of standard English capitalization, punctuation, and standard English capitalization, punctuation, and standard English capitalization, punctuation, and spelling"
+    },
+    {
+      "id": "CCSS.ELA.K.Language.3",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Language",
+      "standard_number": "3",
+      "description": "Use knowledge of language and its conventions when writing, speaking, reading, or listening"
+    },
+    {
+      "id": "CCSS.ELA.K.Language.4",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Language",
+      "standard_number": "4",
+      "description": "Determine or clarify the meaning of unknown and 4"
+    },
+    {
+      "id": "CCSS.ELA.K.Language.4",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Language",
+      "standard_number": "4",
+      "description": "Determine or clarify the meaning of unknown and multiple-meaning words and phrases based on and multiple-meaning words and phrases based multiple-meaning words and phrases based on kindergarten reading"
+    },
+    {
+      "id": "CCSS.ELA.K.Language.5",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Language",
+      "standard_number": "5",
+      "description": "With guidance and support from adults, explore 5"
+    },
+    {
+      "id": "CCSS.ELA.K.Language.5",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Language",
+      "standard_number": "5",
+      "description": "Demonstrate understanding of word relationships word relationships and nuances in word meanings"
+    },
+    {
+      "id": "CCSS.ELA.K.Language.6",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Language",
+      "standard_number": "6",
+      "description": "Use words and phrases acquired through 6"
+    },
+    {
+      "id": "CCSS.ELA.K.Language.6",
+      "grade": "K",
+      "grade_label": "Kindergarten",
+      "strand": "Language",
+      "standard_number": "6",
+      "description": "Use words and phrases acquired through conversations, reading and being read to, and conversations, reading and being read to, and conversations, reading and being read to, and responding to texts"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Literature.1",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Literature",
+      "standard_number": "1",
+      "description": "With prompting and support, ask and answer 1"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Literature.1",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Literature",
+      "standard_number": "1",
+      "description": "Ask and answer such questions as who, what, questions about key details in a text"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Literature.2",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Literature",
+      "standard_number": "2",
+      "description": "With prompting and support, retell familiar 2"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Literature.2",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Literature",
+      "standard_number": "2",
+      "description": "Recount stories, including fables and folktales stories, including key details"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Literature.3",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Literature",
+      "standard_number": "3",
+      "description": "With prompting and support, identify characters, 3"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Literature.3",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Literature",
+      "standard_number": "3",
+      "description": "Describe how characters in a story respond to settings, and major events in a story"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Literature.4",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Literature",
+      "standard_number": "4",
+      "description": "Ask and answer questions about unknown words 4"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Literature.4",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Literature",
+      "standard_number": "4",
+      "description": "Describe how words and phrases (e"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Literature.5",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Literature",
+      "standard_number": "5",
+      "description": "Recognize common types of texts (e"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Literature.5",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Literature",
+      "standard_number": "5",
+      "description": "Explain major differences between books that tell 5"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Literature.6",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Literature",
+      "standard_number": "6",
+      "description": "With prompting and support, name the author 6"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Literature.6",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Literature",
+      "standard_number": "6",
+      "description": "Acknowledge differences in the points of view of and illustrator of a story and define the role of in a text"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Literature.7",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Literature",
+      "standard_number": "7",
+      "description": "With prompting and support, describe the 7"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Literature.7",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Literature",
+      "standard_number": "7",
+      "description": "Use information gained from the illustrations and relationship between illustrations and the story in its characters, setting, or events"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Literature.9",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Literature",
+      "standard_number": "9",
+      "description": "With prompting and support, compare and 9"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Literature.9",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Literature",
+      "standard_number": "9",
+      "description": "Compare and contrast two or more versions contrast the adventures and experiences of experiences of characters in stories"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Literature.10",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Literature",
+      "standard_number": "10",
+      "description": "Actively engage in group reading activities with 10"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Literature.10",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Literature",
+      "standard_number": "10",
+      "description": "By the end of the year, read and comprehend purpose and understanding"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Informational.1",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Informational",
+      "standard_number": "1",
+      "description": "With prompting and support, ask and answer 1"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Informational.1",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Informational",
+      "standard_number": "1",
+      "description": "Ask and answer such questions as who, what, questions about key details in a text"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Informational.2",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Informational",
+      "standard_number": "2",
+      "description": "With prompting and support, identify the main 2"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Informational.2",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Informational",
+      "standard_number": "2",
+      "description": "Identify the main topic of a multiparagraph text topic and retell key details of a text"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Informational.3",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Informational",
+      "standard_number": "3",
+      "description": "With prompting and support, describe the 3"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Informational.3",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Informational",
+      "standard_number": "3",
+      "description": "Describe the connection between a series of connection between two individuals, events, individuals, events, ideas, or pieces of information historical events, scientific ideas or concepts, or ideas, o"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Informational.4",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Informational",
+      "standard_number": "4",
+      "description": "With prompting and support, ask and answer 4"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Informational.4",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Informational",
+      "standard_number": "4",
+      "description": "Determine the meaning of words and phrases in a questions about unknown words in a text"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Informational.5",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Informational",
+      "standard_number": "5",
+      "description": "Identify the front cover, back cover, and title 5"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Informational.5",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Informational",
+      "standard_number": "5",
+      "description": "Know and use various text features (e"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Informational.6",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Informational",
+      "standard_number": "6",
+      "description": "Name the author and illustrator of a text and 6"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Informational.6",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Informational",
+      "standard_number": "6",
+      "description": "Identify the main purpose of a text, including define the role of each in presenting the ideas or pictures or other illustrations and information what the author wants to answer, explain, or informatio"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Informational.7",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Informational",
+      "standard_number": "7",
+      "description": "With prompting and support, describe the 7"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Informational.7",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Informational",
+      "standard_number": "7",
+      "description": "Explain how specific images (e"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Informational.8",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Informational",
+      "standard_number": "8",
+      "description": "With prompting and support, identify the 8"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Informational.8",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Informational",
+      "standard_number": "8",
+      "description": "Describe how reasons support specific points the reasons an author gives to support points in a points in a text"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Informational.9",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Informational",
+      "standard_number": "9",
+      "description": "With prompting and support, identify basic 9"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Informational.9",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Informational",
+      "standard_number": "9",
+      "description": "Compare and contrast the most important points similarities in and differences between two between two texts on the same topic (e"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Informational.10",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Informational",
+      "standard_number": "10",
+      "description": "Actively engage in group reading activities with 10"
+    },
+    {
+      "id": "CCSS.ELA.1.Reading_Informational.10",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Reading_Informational",
+      "standard_number": "10",
+      "description": "By the end of year, read and comprehend purpose and understanding"
+    },
+    {
+      "id": "CCSS.ELA.1.Writing.1",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Writing",
+      "standard_number": "1",
+      "description": "Use a combination of drawing, dictating, and 1"
+    },
+    {
+      "id": "CCSS.ELA.1.Writing.1",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Writing",
+      "standard_number": "1",
+      "description": "Write opinion pieces in which they introduce the writing to compose opinion pieces in which they topic or name the book they are writing about, topic or book they are writing about, state an tell a rea"
+    },
+    {
+      "id": "CCSS.ELA.1.Writing.2",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Writing",
+      "standard_number": "2",
+      "description": "Use a combination of drawing, dictating, and 2"
+    },
+    {
+      "id": "CCSS.ELA.1.Writing.2",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Writing",
+      "standard_number": "2",
+      "description": "Write informative/explanatory texts in which writing to compose informative/explanatory name a topic, supply some facts about the topic, they introduce a topic, use facts and definitions texts in which"
+    },
+    {
+      "id": "CCSS.ELA.1.Writing.3",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Writing",
+      "standard_number": "3",
+      "description": "Use a combination of drawing, dictating, and 3"
+    },
+    {
+      "id": "CCSS.ELA.1.Writing.3",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Writing",
+      "standard_number": "3",
+      "description": "Write narratives in which they recount a well- writing to narrate a single event or several more appropriately sequenced events, include elaborated event or short sequence of events, loosely linked eve"
+    },
+    {
+      "id": "CCSS.ELA.1.Writing.5",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Writing",
+      "standard_number": "5",
+      "description": "With guidance and support from adults, respond 5"
+    },
+    {
+      "id": "CCSS.ELA.1.Writing.5",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Writing",
+      "standard_number": "5",
+      "description": "With guidance and support from adults and to questions and suggestions from peers and a topic, respond to questions and suggestions peers, focus on a topic and strengthen writing as add details to stre"
+    },
+    {
+      "id": "CCSS.ELA.1.Writing.6",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Writing",
+      "standard_number": "6",
+      "description": "With guidance and support from adults, explore 6"
+    },
+    {
+      "id": "CCSS.ELA.1.Writing.6",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Writing",
+      "standard_number": "6",
+      "description": "With guidance and support from adults, use a a variety of digital tools to produce and publish variety of digital tools to produce and publish variety of digital tools to produce and publish writing, i"
+    },
+    {
+      "id": "CCSS.ELA.1.Writing.7",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Writing",
+      "standard_number": "7",
+      "description": "Participate in shared research and writing 7"
+    },
+    {
+      "id": "CCSS.ELA.1.Writing.7",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Writing",
+      "standard_number": "7",
+      "description": "Participate in shared research and writing projects (e"
+    },
+    {
+      "id": "CCSS.ELA.1.Writing.8",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Writing",
+      "standard_number": "8",
+      "description": "With guidance and support from adults, 8"
+    },
+    {
+      "id": "CCSS.ELA.1.Writing.8",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Writing",
+      "standard_number": "8",
+      "description": "Recall information from experiences or gather recall information from experiences or gather recall information from experiences or gather information from provided sources to answer a information from"
+    },
+    {
+      "id": "CCSS.ELA.1.Speaking_Listening.1",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Speaking_Listening",
+      "standard_number": "1",
+      "description": "Participate in collaborative conversations with 1"
+    },
+    {
+      "id": "CCSS.ELA.1.Speaking_Listening.1",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Speaking_Listening",
+      "standard_number": "1",
+      "description": "Participate in collaborative conversations with diverse partners about kindergarten topics and diverse partners about grade 1 topics and texts diverse partners about grade 2 topics and texts texts with"
+    },
+    {
+      "id": "CCSS.ELA.1.Speaking_Listening.2",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Speaking_Listening",
+      "standard_number": "2",
+      "description": "Confirm understanding of a text read aloud or 2"
+    },
+    {
+      "id": "CCSS.ELA.1.Speaking_Listening.2",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Speaking_Listening",
+      "standard_number": "2",
+      "description": "Recount or describe key ideas or details from a information presented orally or through other text read aloud or information presented orally or text read aloud or information presented orally or media"
+    },
+    {
+      "id": "CCSS.ELA.1.Speaking_Listening.3",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Speaking_Listening",
+      "standard_number": "3",
+      "description": "Ask and answer questions in order to seek help, 3"
+    },
+    {
+      "id": "CCSS.ELA.1.Speaking_Listening.3",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Speaking_Listening",
+      "standard_number": "3",
+      "description": "Ask and answer questions about what a speaker get information, or clarify something that is not says in order to gather additional information or says in order to clarify comprehension, gather understo"
+    },
+    {
+      "id": "CCSS.ELA.1.Speaking_Listening.4",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Speaking_Listening",
+      "standard_number": "4",
+      "description": "Describe familiar people, places, things, and 4"
+    },
+    {
+      "id": "CCSS.ELA.1.Speaking_Listening.4",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Speaking_Listening",
+      "standard_number": "4",
+      "description": "Tell a story or recount an experience with events and, with prompting and support, provide relevant details, expressing ideas and feelings appropriate facts and relevant, descriptive details, additiona"
+    },
+    {
+      "id": "CCSS.ELA.1.Speaking_Listening.5",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Speaking_Listening",
+      "standard_number": "5",
+      "description": "Add drawings or other visual displays to 5"
+    },
+    {
+      "id": "CCSS.ELA.1.Speaking_Listening.5",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Speaking_Listening",
+      "standard_number": "5",
+      "description": "Create audio recordings of stories or poems; descriptions as desired to provide additional descriptions when appropriate to clarify ideas, add drawings or other visual displays to stories detail"
+    },
+    {
+      "id": "CCSS.ELA.1.Speaking_Listening.6",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Speaking_Listening",
+      "standard_number": "6",
+      "description": "Speak audibly and express thoughts, feelings, and 6"
+    },
+    {
+      "id": "CCSS.ELA.1.Speaking_Listening.6",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Speaking_Listening",
+      "standard_number": "6",
+      "description": "Produce complete sentences when appropriate to ideas clearly"
+    },
+    {
+      "id": "CCSS.ELA.1.Language.1",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Language",
+      "standard_number": "1",
+      "description": "Demonstrate command of the conventions of 1"
+    },
+    {
+      "id": "CCSS.ELA.1.Language.1",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Language",
+      "standard_number": "1",
+      "description": "Demonstrate command of the conventions of standard English grammar and usage when standard English grammar and usage when standard English grammar and usage when writing writing or speaking"
+    },
+    {
+      "id": "CCSS.ELA.1.Language.2",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Language",
+      "standard_number": "2",
+      "description": "Demonstrate command of the conventions of 2"
+    },
+    {
+      "id": "CCSS.ELA.1.Language.2",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Language",
+      "standard_number": "2",
+      "description": "Demonstrate command of the conventions of standard English capitalization, punctuation, and standard English capitalization, punctuation, and standard English capitalization, punctuation, and spelling"
+    },
+    {
+      "id": "CCSS.ELA.1.Language.3",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Language",
+      "standard_number": "3",
+      "description": "Use knowledge of language and its conventions when writing, speaking, reading, or listening"
+    },
+    {
+      "id": "CCSS.ELA.1.Language.4",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Language",
+      "standard_number": "4",
+      "description": "Determine or clarify the meaning of unknown and 4"
+    },
+    {
+      "id": "CCSS.ELA.1.Language.4",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Language",
+      "standard_number": "4",
+      "description": "Determine or clarify the meaning of unknown and multiple-meaning words and phrases based on and multiple-meaning words and phrases based multiple-meaning words and phrases based on kindergarten reading"
+    },
+    {
+      "id": "CCSS.ELA.1.Language.5",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Language",
+      "standard_number": "5",
+      "description": "With guidance and support from adults, explore 5"
+    },
+    {
+      "id": "CCSS.ELA.1.Language.5",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Language",
+      "standard_number": "5",
+      "description": "Demonstrate understanding of word relationships word relationships and nuances in word meanings"
+    },
+    {
+      "id": "CCSS.ELA.1.Language.6",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Language",
+      "standard_number": "6",
+      "description": "Use words and phrases acquired through 6"
+    },
+    {
+      "id": "CCSS.ELA.1.Language.6",
+      "grade": "1",
+      "grade_label": "Grade 1",
+      "strand": "Language",
+      "standard_number": "6",
+      "description": "Use words and phrases acquired through conversations, reading and being read to, and conversations, reading and being read to, and conversations, reading and being read to, and responding to texts"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Literature.1",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Literature",
+      "standard_number": "1",
+      "description": "With prompting and support, ask and answer 1"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Literature.1",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Literature",
+      "standard_number": "1",
+      "description": "Ask and answer such questions as who, what, questions about key details in a text"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Literature.2",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Literature",
+      "standard_number": "2",
+      "description": "With prompting and support, retell familiar 2"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Literature.2",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Literature",
+      "standard_number": "2",
+      "description": "Recount stories, including fables and folktales stories, including key details"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Literature.3",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Literature",
+      "standard_number": "3",
+      "description": "With prompting and support, identify characters, 3"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Literature.3",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Literature",
+      "standard_number": "3",
+      "description": "Describe how characters in a story respond to settings, and major events in a story"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Literature.4",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Literature",
+      "standard_number": "4",
+      "description": "Ask and answer questions about unknown words 4"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Literature.4",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Literature",
+      "standard_number": "4",
+      "description": "Describe how words and phrases (e"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Literature.5",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Literature",
+      "standard_number": "5",
+      "description": "Recognize common types of texts (e"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Literature.5",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Literature",
+      "standard_number": "5",
+      "description": "Explain major differences between books that tell 5"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Literature.6",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Literature",
+      "standard_number": "6",
+      "description": "With prompting and support, name the author 6"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Literature.6",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Literature",
+      "standard_number": "6",
+      "description": "Acknowledge differences in the points of view of and illustrator of a story and define the role of in a text"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Literature.7",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Literature",
+      "standard_number": "7",
+      "description": "With prompting and support, describe the 7"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Literature.7",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Literature",
+      "standard_number": "7",
+      "description": "Use information gained from the illustrations and relationship between illustrations and the story in its characters, setting, or events"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Literature.9",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Literature",
+      "standard_number": "9",
+      "description": "With prompting and support, compare and 9"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Literature.9",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Literature",
+      "standard_number": "9",
+      "description": "Compare and contrast two or more versions contrast the adventures and experiences of experiences of characters in stories"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Literature.10",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Literature",
+      "standard_number": "10",
+      "description": "Actively engage in group reading activities with 10"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Literature.10",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Literature",
+      "standard_number": "10",
+      "description": "By the end of the year, read and comprehend purpose and understanding"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Informational.1",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Informational",
+      "standard_number": "1",
+      "description": "With prompting and support, ask and answer 1"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Informational.1",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Informational",
+      "standard_number": "1",
+      "description": "Ask and answer such questions as who, what, questions about key details in a text"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Informational.2",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Informational",
+      "standard_number": "2",
+      "description": "With prompting and support, identify the main 2"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Informational.2",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Informational",
+      "standard_number": "2",
+      "description": "Identify the main topic of a multiparagraph text topic and retell key details of a text"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Informational.3",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Informational",
+      "standard_number": "3",
+      "description": "With prompting and support, describe the 3"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Informational.3",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Informational",
+      "standard_number": "3",
+      "description": "Describe the connection between a series of connection between two individuals, events, individuals, events, ideas, or pieces of information historical events, scientific ideas or concepts, or ideas, o"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Informational.4",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Informational",
+      "standard_number": "4",
+      "description": "With prompting and support, ask and answer 4"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Informational.4",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Informational",
+      "standard_number": "4",
+      "description": "Determine the meaning of words and phrases in a questions about unknown words in a text"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Informational.5",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Informational",
+      "standard_number": "5",
+      "description": "Identify the front cover, back cover, and title 5"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Informational.5",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Informational",
+      "standard_number": "5",
+      "description": "Know and use various text features (e"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Informational.6",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Informational",
+      "standard_number": "6",
+      "description": "Name the author and illustrator of a text and 6"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Informational.6",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Informational",
+      "standard_number": "6",
+      "description": "Identify the main purpose of a text, including define the role of each in presenting the ideas or pictures or other illustrations and information what the author wants to answer, explain, or informatio"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Informational.7",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Informational",
+      "standard_number": "7",
+      "description": "With prompting and support, describe the 7"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Informational.7",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Informational",
+      "standard_number": "7",
+      "description": "Explain how specific images (e"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Informational.8",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Informational",
+      "standard_number": "8",
+      "description": "With prompting and support, identify the 8"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Informational.8",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Informational",
+      "standard_number": "8",
+      "description": "Describe how reasons support specific points the reasons an author gives to support points in a points in a text"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Informational.9",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Informational",
+      "standard_number": "9",
+      "description": "With prompting and support, identify basic 9"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Informational.9",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Informational",
+      "standard_number": "9",
+      "description": "Compare and contrast the most important points similarities in and differences between two between two texts on the same topic (e"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Informational.10",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Informational",
+      "standard_number": "10",
+      "description": "Actively engage in group reading activities with 10"
+    },
+    {
+      "id": "CCSS.ELA.2.Reading_Informational.10",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Reading_Informational",
+      "standard_number": "10",
+      "description": "By the end of year, read and comprehend purpose and understanding"
+    },
+    {
+      "id": "CCSS.ELA.2.Writing.1",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Writing",
+      "standard_number": "1",
+      "description": "Use a combination of drawing, dictating, and 1"
+    },
+    {
+      "id": "CCSS.ELA.2.Writing.1",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Writing",
+      "standard_number": "1",
+      "description": "Write opinion pieces in which they introduce the writing to compose opinion pieces in which they topic or name the book they are writing about, topic or book they are writing about, state an tell a rea"
+    },
+    {
+      "id": "CCSS.ELA.2.Writing.2",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Writing",
+      "standard_number": "2",
+      "description": "Use a combination of drawing, dictating, and 2"
+    },
+    {
+      "id": "CCSS.ELA.2.Writing.2",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Writing",
+      "standard_number": "2",
+      "description": "Write informative/explanatory texts in which writing to compose informative/explanatory name a topic, supply some facts about the topic, they introduce a topic, use facts and definitions texts in which"
+    },
+    {
+      "id": "CCSS.ELA.2.Writing.3",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Writing",
+      "standard_number": "3",
+      "description": "Use a combination of drawing, dictating, and 3"
+    },
+    {
+      "id": "CCSS.ELA.2.Writing.3",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Writing",
+      "standard_number": "3",
+      "description": "Write narratives in which they recount a well- writing to narrate a single event or several more appropriately sequenced events, include elaborated event or short sequence of events, loosely linked eve"
+    },
+    {
+      "id": "CCSS.ELA.2.Writing.5",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Writing",
+      "standard_number": "5",
+      "description": "With guidance and support from adults, respond 5"
+    },
+    {
+      "id": "CCSS.ELA.2.Writing.5",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Writing",
+      "standard_number": "5",
+      "description": "With guidance and support from adults and to questions and suggestions from peers and a topic, respond to questions and suggestions peers, focus on a topic and strengthen writing as add details to stre"
+    },
+    {
+      "id": "CCSS.ELA.2.Writing.6",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Writing",
+      "standard_number": "6",
+      "description": "With guidance and support from adults, explore 6"
+    },
+    {
+      "id": "CCSS.ELA.2.Writing.6",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Writing",
+      "standard_number": "6",
+      "description": "With guidance and support from adults, use a a variety of digital tools to produce and publish variety of digital tools to produce and publish variety of digital tools to produce and publish writing, i"
+    },
+    {
+      "id": "CCSS.ELA.2.Writing.7",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Writing",
+      "standard_number": "7",
+      "description": "Participate in shared research and writing 7"
+    },
+    {
+      "id": "CCSS.ELA.2.Writing.7",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Writing",
+      "standard_number": "7",
+      "description": "Participate in shared research and writing projects (e"
+    },
+    {
+      "id": "CCSS.ELA.2.Writing.8",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Writing",
+      "standard_number": "8",
+      "description": "With guidance and support from adults, 8"
+    },
+    {
+      "id": "CCSS.ELA.2.Writing.8",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Writing",
+      "standard_number": "8",
+      "description": "Recall information from experiences or gather recall information from experiences or gather recall information from experiences or gather information from provided sources to answer a information from"
+    },
+    {
+      "id": "CCSS.ELA.2.Speaking_Listening.1",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Speaking_Listening",
+      "standard_number": "1",
+      "description": "Participate in collaborative conversations with 1"
+    },
+    {
+      "id": "CCSS.ELA.2.Speaking_Listening.1",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Speaking_Listening",
+      "standard_number": "1",
+      "description": "Participate in collaborative conversations with diverse partners about kindergarten topics and diverse partners about grade 1 topics and texts diverse partners about grade 2 topics and texts texts with"
+    },
+    {
+      "id": "CCSS.ELA.2.Speaking_Listening.2",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Speaking_Listening",
+      "standard_number": "2",
+      "description": "Confirm understanding of a text read aloud or 2"
+    },
+    {
+      "id": "CCSS.ELA.2.Speaking_Listening.2",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Speaking_Listening",
+      "standard_number": "2",
+      "description": "Recount or describe key ideas or details from a information presented orally or through other text read aloud or information presented orally or text read aloud or information presented orally or media"
+    },
+    {
+      "id": "CCSS.ELA.2.Speaking_Listening.3",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Speaking_Listening",
+      "standard_number": "3",
+      "description": "Ask and answer questions in order to seek help, 3"
+    },
+    {
+      "id": "CCSS.ELA.2.Speaking_Listening.3",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Speaking_Listening",
+      "standard_number": "3",
+      "description": "Ask and answer questions about what a speaker get information, or clarify something that is not says in order to gather additional information or says in order to clarify comprehension, gather understo"
+    },
+    {
+      "id": "CCSS.ELA.2.Speaking_Listening.4",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Speaking_Listening",
+      "standard_number": "4",
+      "description": "Describe familiar people, places, things, and 4"
+    },
+    {
+      "id": "CCSS.ELA.2.Speaking_Listening.4",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Speaking_Listening",
+      "standard_number": "4",
+      "description": "Tell a story or recount an experience with events and, with prompting and support, provide relevant details, expressing ideas and feelings appropriate facts and relevant, descriptive details, additiona"
+    },
+    {
+      "id": "CCSS.ELA.2.Speaking_Listening.5",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Speaking_Listening",
+      "standard_number": "5",
+      "description": "Add drawings or other visual displays to 5"
+    },
+    {
+      "id": "CCSS.ELA.2.Speaking_Listening.5",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Speaking_Listening",
+      "standard_number": "5",
+      "description": "Create audio recordings of stories or poems; descriptions as desired to provide additional descriptions when appropriate to clarify ideas, add drawings or other visual displays to stories detail"
+    },
+    {
+      "id": "CCSS.ELA.2.Speaking_Listening.6",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Speaking_Listening",
+      "standard_number": "6",
+      "description": "Speak audibly and express thoughts, feelings, and 6"
+    },
+    {
+      "id": "CCSS.ELA.2.Speaking_Listening.6",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Speaking_Listening",
+      "standard_number": "6",
+      "description": "Produce complete sentences when appropriate to ideas clearly"
+    },
+    {
+      "id": "CCSS.ELA.2.Language.1",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Language",
+      "standard_number": "1",
+      "description": "Demonstrate command of the conventions of 1"
+    },
+    {
+      "id": "CCSS.ELA.2.Language.1",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Language",
+      "standard_number": "1",
+      "description": "Demonstrate command of the conventions of standard English grammar and usage when standard English grammar and usage when standard English grammar and usage when writing writing or speaking"
+    },
+    {
+      "id": "CCSS.ELA.2.Language.2",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Language",
+      "standard_number": "2",
+      "description": "Demonstrate command of the conventions of 2"
+    },
+    {
+      "id": "CCSS.ELA.2.Language.2",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Language",
+      "standard_number": "2",
+      "description": "Demonstrate command of the conventions of standard English capitalization, punctuation, and standard English capitalization, punctuation, and standard English capitalization, punctuation, and spelling"
+    },
+    {
+      "id": "CCSS.ELA.2.Language.3",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Language",
+      "standard_number": "3",
+      "description": "Use knowledge of language and its conventions when writing, speaking, reading, or listening"
+    },
+    {
+      "id": "CCSS.ELA.2.Language.4",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Language",
+      "standard_number": "4",
+      "description": "Determine or clarify the meaning of unknown and 4"
+    },
+    {
+      "id": "CCSS.ELA.2.Language.4",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Language",
+      "standard_number": "4",
+      "description": "Determine or clarify the meaning of unknown and multiple-meaning words and phrases based on and multiple-meaning words and phrases based multiple-meaning words and phrases based on kindergarten reading"
+    },
+    {
+      "id": "CCSS.ELA.2.Language.5",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Language",
+      "standard_number": "5",
+      "description": "With guidance and support from adults, explore 5"
+    },
+    {
+      "id": "CCSS.ELA.2.Language.5",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Language",
+      "standard_number": "5",
+      "description": "Demonstrate understanding of word relationships word relationships and nuances in word meanings"
+    },
+    {
+      "id": "CCSS.ELA.2.Language.6",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Language",
+      "standard_number": "6",
+      "description": "Use words and phrases acquired through 6"
+    },
+    {
+      "id": "CCSS.ELA.2.Language.6",
+      "grade": "2",
+      "grade_label": "Grade 2",
+      "strand": "Language",
+      "standard_number": "6",
+      "description": "Use words and phrases acquired through conversations, reading and being read to, and conversations, reading and being read to, and conversations, reading and being read to, and responding to texts"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Literature.1",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Literature",
+      "standard_number": "1",
+      "description": "Ask and answer questions to demonstrate 1"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Literature.1",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Literature",
+      "standard_number": "1",
+      "description": "Quote accurately from a text when explaining understanding of a text, referring explicitly to the explaining what the text says explicitly and when what the text says explicitly and when drawing text a"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Literature.2",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Literature",
+      "standard_number": "2",
+      "description": "Recount stories, including fables, folktales, and 2"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Literature.2",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Literature",
+      "standard_number": "2",
+      "description": "Determine a theme of a story, drama, or poem myths from diverse cultures; determine the from details in the text; summarize the text"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Literature.3",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Literature",
+      "standard_number": "3",
+      "description": "Describe characters in a story (e"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Literature.3",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Literature",
+      "standard_number": "3",
+      "description": "Describe in depth a character, setting, or event 3"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Literature.4",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Literature",
+      "standard_number": "4",
+      "description": "Determine the meaning of words and phrases as 4"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Literature.4",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Literature",
+      "standard_number": "4",
+      "description": "Determine the meaning of words and phrases they are used in a text, distinguishing literal from as they are used in a text, including those as they are used in a text, including figurative nonliteral l"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Literature.5",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Literature",
+      "standard_number": "5",
+      "description": "Refer to parts of stories, dramas, and poems 5"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Literature.5",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Literature",
+      "standard_number": "5",
+      "description": "Explain how a series of chapters, scenes, or when writing or speaking about a text, using drama, and prose, and refer to the structural stanzas fits together to provide the overall terms such as chapte"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Literature.6",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Literature",
+      "standard_number": "6",
+      "description": "Distinguish their own point of view from that of 6"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Literature.6",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Literature",
+      "standard_number": "6",
+      "description": "Describe how a narrator\u2019s or speaker\u2019s point of the narrator or those of the characters"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Literature.7",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Literature",
+      "standard_number": "7",
+      "description": "Explain how specific aspects of a text\u2019s 7"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Literature.7",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Literature",
+      "standard_number": "7",
+      "description": "Analyze how visual and multimedia elements illustrations contribute to what is conveyed or drama and a visual or oral presentation of contribute to the meaning, tone, or beauty of a by the words in a s"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Literature.9",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Literature",
+      "standard_number": "9",
+      "description": "Compare and contrast the themes, settings, and 9"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Literature.9",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Literature",
+      "standard_number": "9",
+      "description": "Compare and contrast stories in the same genre plots of stories written by the same author about themes and topics (e"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Literature.10",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Literature",
+      "standard_number": "10",
+      "description": "By the end of the year, read and comprehend 10"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Literature.10",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Literature",
+      "standard_number": "10",
+      "description": "By the end of the year, read and comprehend literature, including stories, dramas, and poetry, literature, including stories, dramas, and poetry, in literature, including stories, dramas, and poetry, a"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Informational.1",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Informational",
+      "standard_number": "1",
+      "description": "Ask and answer questions to demonstrate 1"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Informational.1",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Informational",
+      "standard_number": "1",
+      "description": "Quote accurately from a text when explaining understanding of a text, referring explicitly to the explaining what the text says explicitly and when what the text says explicitly and when drawing text a"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Informational.2",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Informational",
+      "standard_number": "2",
+      "description": "Determine the main idea of a text; recount the 2"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Informational.2",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Informational",
+      "standard_number": "2",
+      "description": "Determine two or more main ideas of a text and key details and explain how they support the how it is supported by key details; summarize the explain how they are supported by key details; main idea"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Informational.3",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Informational",
+      "standard_number": "3",
+      "description": "Describe the relationship between a series of 3"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Informational.3",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Informational",
+      "standard_number": "3",
+      "description": "Explain the relationships or interactions between historical events, scientific ideas or concepts, a historical, scientific, or technical text, including two or more individuals, events, ideas, or or s"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Informational.4",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Informational",
+      "standard_number": "4",
+      "description": "Determine the meaning of general academic 4"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Informational.4",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Informational",
+      "standard_number": "4",
+      "description": "Determine the meaning of general academic and domain-specific words and phrases in a text and domain-specific words or phrases in a text and domain-specific words and phrases in a text relevant to a gr"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Informational.5",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Informational",
+      "standard_number": "5",
+      "description": "Use text features and search tools (e"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Informational.5",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Informational",
+      "standard_number": "5",
+      "description": "Describe the overall structure (e"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Informational.5",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Informational",
+      "standard_number": "5",
+      "description": "Compare and contrast the overall structure words, sidebars, hyperlinks) to locate information comparison, cause/effect, problem/solution) of (e"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Informational.6",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Informational",
+      "standard_number": "6",
+      "description": "Distinguish their own point of view from that of 6"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Informational.6",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Informational",
+      "standard_number": "6",
+      "description": "Analyze multiple accounts of the same event the author of a text"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Informational.7",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Informational",
+      "standard_number": "7",
+      "description": "Use information gained from illustrations (e"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Informational.7",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Informational",
+      "standard_number": "7",
+      "description": "Interpret information presented visually, orally, or 7"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Informational.8",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Informational",
+      "standard_number": "8",
+      "description": "Describe the logical connection between 8"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Informational.8",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Informational",
+      "standard_number": "8",
+      "description": "Explain how an author uses reasons and evidence particular sentences and paragraphs in a text to support particular points in a text"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Informational.9",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Informational",
+      "standard_number": "9",
+      "description": "Compare and contrast the most important points 9"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Informational.9",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Informational",
+      "standard_number": "9",
+      "description": "Integrate information from several texts on the and key details presented in two texts on the topic in order to write or speak about the subject same topic in order to write or speak about the same top"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Informational.10",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Informational",
+      "standard_number": "10",
+      "description": "By the end of the year, read and comprehend 10"
+    },
+    {
+      "id": "CCSS.ELA.3.Reading_Informational.10",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Reading_Informational",
+      "standard_number": "10",
+      "description": "By the end of the year, read and comprehend informational texts, including history/social informational texts, including history/social studies, informational texts, including history/social studies, s"
+    },
+    {
+      "id": "CCSS.ELA.3.Writing.1",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Writing",
+      "standard_number": "1",
+      "description": "Write opinion pieces on topics or texts, supporting 1"
+    },
+    {
+      "id": "CCSS.ELA.3.Writing.1",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Writing",
+      "standard_number": "1",
+      "description": "Write opinion pieces on topics or texts, supporting a a point of view with reasons"
+    },
+    {
+      "id": "CCSS.ELA.3.Writing.2",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Writing",
+      "standard_number": "2",
+      "description": "Write informative/explanatory texts to examine a 2"
+    },
+    {
+      "id": "CCSS.ELA.3.Writing.2",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Writing",
+      "standard_number": "2",
+      "description": "Write informative/explanatory texts to examine a topic and convey ideas and information clearly"
+    },
+    {
+      "id": "CCSS.ELA.3.Writing.3",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Writing",
+      "standard_number": "3",
+      "description": "Write narratives to develop real or imagined 3"
+    },
+    {
+      "id": "CCSS.ELA.3.Writing.3",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Writing",
+      "standard_number": "3",
+      "description": "Write narratives to develop real or imagined experiences or events using effective technique, experiences or events using effective technique, experiences or events using effective technique, descripti"
+    },
+    {
+      "id": "CCSS.ELA.3.Writing.4",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Writing",
+      "standard_number": "4",
+      "description": "With guidance and support from adults, 4"
+    },
+    {
+      "id": "CCSS.ELA.3.Writing.4",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Writing",
+      "standard_number": "4",
+      "description": "Produce clear and coherent writing in which the produce writing in which the development development and organization are appropriate development and organization are appropriate and organization are a"
+    },
+    {
+      "id": "CCSS.ELA.3.Writing.5",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Writing",
+      "standard_number": "5",
+      "description": "With guidance and support from peers and 5"
+    },
+    {
+      "id": "CCSS.ELA.3.Writing.5",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Writing",
+      "standard_number": "5",
+      "description": "With guidance and support from peers and adults, adults, develop and strengthen writing as needed adults, develop and strengthen writing as needed develop and strengthen writing as needed by by plannin"
+    },
+    {
+      "id": "CCSS.ELA.3.Writing.6",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Writing",
+      "standard_number": "6",
+      "description": "With guidance and support from adults, use 6"
+    },
+    {
+      "id": "CCSS.ELA.3.Writing.6",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Writing",
+      "standard_number": "6",
+      "description": "With some guidance and support from adults, technology to produce and publish writing (using use technology, including the Internet, to use technology, including the Internet, to keyboarding skills) as"
+    },
+    {
+      "id": "CCSS.ELA.3.Writing.7",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Writing",
+      "standard_number": "7",
+      "description": "Conduct short research projects that build 7"
+    },
+    {
+      "id": "CCSS.ELA.3.Writing.7",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Writing",
+      "standard_number": "7",
+      "description": "Conduct short research projects that use several knowledge about a topic"
+    },
+    {
+      "id": "CCSS.ELA.3.Writing.8",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Writing",
+      "standard_number": "8",
+      "description": "Recall information from experiences or gather 8"
+    },
+    {
+      "id": "CCSS.ELA.3.Writing.8",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Writing",
+      "standard_number": "8",
+      "description": "Recall relevant information from experiences or information from print and digital sources; take gather relevant information from print and digital gather relevant information from print and digital br"
+    },
+    {
+      "id": "CCSS.ELA.3.Writing.9",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Writing",
+      "standard_number": "9",
+      "description": "Draw evidence from literary or informational 9"
+    },
+    {
+      "id": "CCSS.ELA.3.Writing.10",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Writing",
+      "standard_number": "10",
+      "description": "Write routinely over extended time frames (time 10"
+    },
+    {
+      "id": "CCSS.ELA.3.Writing.10",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Writing",
+      "standard_number": "10",
+      "description": "Write routinely over extended time frames (time for research, reflection, and revision) and shorter for research, reflection, and revision) and shorter for research, reflection, and revision) and short"
+    },
+    {
+      "id": "CCSS.ELA.3.Speaking_Listening.1",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Speaking_Listening",
+      "standard_number": "1",
+      "description": "Engage effectively in a range of collaborative 1"
+    },
+    {
+      "id": "CCSS.ELA.3.Speaking_Listening.1",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Speaking_Listening",
+      "standard_number": "1",
+      "description": "Engage effectively in a range of collaborative discussions (one-on-one, in groups, and teacher- discussions (one-on-one, in groups, and teacher- discussions (one-on-one, in groups, and teacher- led) wi"
+    },
+    {
+      "id": "CCSS.ELA.3.Speaking_Listening.2",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Speaking_Listening",
+      "standard_number": "2",
+      "description": "Determine the main ideas and supporting details 2"
+    },
+    {
+      "id": "CCSS.ELA.3.Speaking_Listening.2",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Speaking_Listening",
+      "standard_number": "2",
+      "description": "Summarize a written text read aloud or of a text read aloud or information presented in information presented in diverse media and information presented in diverse media and diverse media and formats,"
+    },
+    {
+      "id": "CCSS.ELA.3.Speaking_Listening.3",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Speaking_Listening",
+      "standard_number": "3",
+      "description": "Ask and answer questions about information from 3"
+    },
+    {
+      "id": "CCSS.ELA.3.Speaking_Listening.3",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Speaking_Listening",
+      "standard_number": "3",
+      "description": "Summarize the points a speaker makes and a speaker, offering appropriate elaboration and provides to support particular points"
+    },
+    {
+      "id": "CCSS.ELA.3.Speaking_Listening.4",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Speaking_Listening",
+      "standard_number": "4",
+      "description": "Report on a topic or text, tell a story, or recount 4"
+    },
+    {
+      "id": "CCSS.ELA.3.Speaking_Listening.4",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Speaking_Listening",
+      "standard_number": "4",
+      "description": "Report on a topic or text or present an opinion, an experience with appropriate facts and relevant, an experience in an organized manner, using sequencing ideas logically and using appropriate descript"
+    },
+    {
+      "id": "CCSS.ELA.3.Speaking_Listening.5",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Speaking_Listening",
+      "standard_number": "5",
+      "description": "Create engaging audio recordings of stories 5"
+    },
+    {
+      "id": "CCSS.ELA.3.Speaking_Listening.5",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Speaking_Listening",
+      "standard_number": "5",
+      "description": "Include multimedia components (e"
+    },
+    {
+      "id": "CCSS.ELA.3.Speaking_Listening.6",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Speaking_Listening",
+      "standard_number": "6",
+      "description": "Speak in complete sentences when appropriate to 6"
+    },
+    {
+      "id": "CCSS.ELA.3.Speaking_Listening.6",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Speaking_Listening",
+      "standard_number": "6",
+      "description": "Adapt speech to a variety of contexts and tasks, task and situation in order to provide requested English (e"
+    },
+    {
+      "id": "CCSS.ELA.3.Language.1",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Language",
+      "standard_number": "1",
+      "description": "Demonstrate command of the conventions of 1"
+    },
+    {
+      "id": "CCSS.ELA.3.Language.1",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Language",
+      "standard_number": "1",
+      "description": "Demonstrate command of the conventions of standard English grammar and usage when standard English grammar and usage when standard English grammar and usage when writing writing or speaking"
+    },
+    {
+      "id": "CCSS.ELA.3.Language.2",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Language",
+      "standard_number": "2",
+      "description": "Demonstrate command of the conventions of 2"
+    },
+    {
+      "id": "CCSS.ELA.3.Language.2",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Language",
+      "standard_number": "2",
+      "description": "Demonstrate command of the conventions of standard English capitalization, punctuation, and standard English capitalization, punctuation, and standard English capitalization, punctuation, and spelling"
+    },
+    {
+      "id": "CCSS.ELA.3.Language.3",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Language",
+      "standard_number": "3",
+      "description": "Use knowledge of language and its conventions 3"
+    },
+    {
+      "id": "CCSS.ELA.3.Language.3",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Language",
+      "standard_number": "3",
+      "description": "Use knowledge of language and its conventions when writing, speaking, reading, or listening"
+    },
+    {
+      "id": "CCSS.ELA.3.Language.4",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Language",
+      "standard_number": "4",
+      "description": "Determine or clarify the meaning of unknown 4"
+    },
+    {
+      "id": "CCSS.ELA.3.Language.4",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Language",
+      "standard_number": "4",
+      "description": "Determine or clarify the meaning of unknown and and multiple-meaning word and phrases based multiple-meaning words and phrases based on multiple-meaning words and phrases based on on grade 3 reading an"
+    },
+    {
+      "id": "CCSS.ELA.3.Language.5",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Language",
+      "standard_number": "5",
+      "description": "Demonstrate understanding of word relationships 5"
+    },
+    {
+      "id": "CCSS.ELA.3.Language.5",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Language",
+      "standard_number": "5",
+      "description": "Demonstrate understanding of figurative language, and nuances in word meanings"
+    },
+    {
+      "id": "CCSS.ELA.3.Language.6",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Language",
+      "standard_number": "6",
+      "description": "Acquire and use accurately grade-appropriate 6"
+    },
+    {
+      "id": "CCSS.ELA.3.Language.6",
+      "grade": "3",
+      "grade_label": "Grade 3",
+      "strand": "Language",
+      "standard_number": "6",
+      "description": "Acquire and use accurately grade-appropriate conversational, general academic, and domain- general academic and domain-specific words general academic and domain-specific words specific words and phras"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Literature.1",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Literature",
+      "standard_number": "1",
+      "description": "Ask and answer questions to demonstrate 1"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Literature.1",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Literature",
+      "standard_number": "1",
+      "description": "Quote accurately from a text when explaining understanding of a text, referring explicitly to the explaining what the text says explicitly and when what the text says explicitly and when drawing text a"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Literature.2",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Literature",
+      "standard_number": "2",
+      "description": "Recount stories, including fables, folktales, and 2"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Literature.2",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Literature",
+      "standard_number": "2",
+      "description": "Determine a theme of a story, drama, or poem myths from diverse cultures; determine the from details in the text; summarize the text"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Literature.3",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Literature",
+      "standard_number": "3",
+      "description": "Describe characters in a story (e"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Literature.3",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Literature",
+      "standard_number": "3",
+      "description": "Describe in depth a character, setting, or event 3"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Literature.4",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Literature",
+      "standard_number": "4",
+      "description": "Determine the meaning of words and phrases as 4"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Literature.4",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Literature",
+      "standard_number": "4",
+      "description": "Determine the meaning of words and phrases they are used in a text, distinguishing literal from as they are used in a text, including those as they are used in a text, including figurative nonliteral l"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Literature.5",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Literature",
+      "standard_number": "5",
+      "description": "Refer to parts of stories, dramas, and poems 5"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Literature.5",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Literature",
+      "standard_number": "5",
+      "description": "Explain how a series of chapters, scenes, or when writing or speaking about a text, using drama, and prose, and refer to the structural stanzas fits together to provide the overall terms such as chapte"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Literature.6",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Literature",
+      "standard_number": "6",
+      "description": "Distinguish their own point of view from that of 6"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Literature.6",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Literature",
+      "standard_number": "6",
+      "description": "Describe how a narrator\u2019s or speaker\u2019s point of the narrator or those of the characters"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Literature.7",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Literature",
+      "standard_number": "7",
+      "description": "Explain how specific aspects of a text\u2019s 7"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Literature.7",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Literature",
+      "standard_number": "7",
+      "description": "Analyze how visual and multimedia elements illustrations contribute to what is conveyed or drama and a visual or oral presentation of contribute to the meaning, tone, or beauty of a by the words in a s"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Literature.9",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Literature",
+      "standard_number": "9",
+      "description": "Compare and contrast the themes, settings, and 9"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Literature.9",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Literature",
+      "standard_number": "9",
+      "description": "Compare and contrast stories in the same genre plots of stories written by the same author about themes and topics (e"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Literature.10",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Literature",
+      "standard_number": "10",
+      "description": "By the end of the year, read and comprehend 10"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Literature.10",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Literature",
+      "standard_number": "10",
+      "description": "By the end of the year, read and comprehend literature, including stories, dramas, and poetry, literature, including stories, dramas, and poetry, in literature, including stories, dramas, and poetry, a"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Informational.1",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Informational",
+      "standard_number": "1",
+      "description": "Ask and answer questions to demonstrate 1"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Informational.1",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Informational",
+      "standard_number": "1",
+      "description": "Quote accurately from a text when explaining understanding of a text, referring explicitly to the explaining what the text says explicitly and when what the text says explicitly and when drawing text a"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Informational.2",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Informational",
+      "standard_number": "2",
+      "description": "Determine the main idea of a text; recount the 2"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Informational.2",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Informational",
+      "standard_number": "2",
+      "description": "Determine two or more main ideas of a text and key details and explain how they support the how it is supported by key details; summarize the explain how they are supported by key details; main idea"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Informational.3",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Informational",
+      "standard_number": "3",
+      "description": "Describe the relationship between a series of 3"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Informational.3",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Informational",
+      "standard_number": "3",
+      "description": "Explain the relationships or interactions between historical events, scientific ideas or concepts, a historical, scientific, or technical text, including two or more individuals, events, ideas, or or s"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Informational.4",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Informational",
+      "standard_number": "4",
+      "description": "Determine the meaning of general academic 4"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Informational.4",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Informational",
+      "standard_number": "4",
+      "description": "Determine the meaning of general academic and domain-specific words and phrases in a text and domain-specific words or phrases in a text and domain-specific words and phrases in a text relevant to a gr"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Informational.5",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Informational",
+      "standard_number": "5",
+      "description": "Use text features and search tools (e"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Informational.5",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Informational",
+      "standard_number": "5",
+      "description": "Describe the overall structure (e"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Informational.5",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Informational",
+      "standard_number": "5",
+      "description": "Compare and contrast the overall structure words, sidebars, hyperlinks) to locate information comparison, cause/effect, problem/solution) of (e"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Informational.6",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Informational",
+      "standard_number": "6",
+      "description": "Distinguish their own point of view from that of 6"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Informational.6",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Informational",
+      "standard_number": "6",
+      "description": "Analyze multiple accounts of the same event the author of a text"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Informational.7",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Informational",
+      "standard_number": "7",
+      "description": "Use information gained from illustrations (e"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Informational.7",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Informational",
+      "standard_number": "7",
+      "description": "Interpret information presented visually, orally, or 7"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Informational.8",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Informational",
+      "standard_number": "8",
+      "description": "Describe the logical connection between 8"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Informational.8",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Informational",
+      "standard_number": "8",
+      "description": "Explain how an author uses reasons and evidence particular sentences and paragraphs in a text to support particular points in a text"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Informational.9",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Informational",
+      "standard_number": "9",
+      "description": "Compare and contrast the most important points 9"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Informational.9",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Informational",
+      "standard_number": "9",
+      "description": "Integrate information from several texts on the and key details presented in two texts on the topic in order to write or speak about the subject same topic in order to write or speak about the same top"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Informational.10",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Informational",
+      "standard_number": "10",
+      "description": "By the end of the year, read and comprehend 10"
+    },
+    {
+      "id": "CCSS.ELA.4.Reading_Informational.10",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Reading_Informational",
+      "standard_number": "10",
+      "description": "By the end of the year, read and comprehend informational texts, including history/social informational texts, including history/social studies, informational texts, including history/social studies, s"
+    },
+    {
+      "id": "CCSS.ELA.4.Writing.1",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Writing",
+      "standard_number": "1",
+      "description": "Write opinion pieces on topics or texts, supporting 1"
+    },
+    {
+      "id": "CCSS.ELA.4.Writing.1",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Writing",
+      "standard_number": "1",
+      "description": "Write opinion pieces on topics or texts, supporting a a point of view with reasons"
+    },
+    {
+      "id": "CCSS.ELA.4.Writing.2",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Writing",
+      "standard_number": "2",
+      "description": "Write informative/explanatory texts to examine a 2"
+    },
+    {
+      "id": "CCSS.ELA.4.Writing.2",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Writing",
+      "standard_number": "2",
+      "description": "Write informative/explanatory texts to examine a topic and convey ideas and information clearly"
+    },
+    {
+      "id": "CCSS.ELA.4.Writing.3",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Writing",
+      "standard_number": "3",
+      "description": "Write narratives to develop real or imagined 3"
+    },
+    {
+      "id": "CCSS.ELA.4.Writing.3",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Writing",
+      "standard_number": "3",
+      "description": "Write narratives to develop real or imagined experiences or events using effective technique, experiences or events using effective technique, experiences or events using effective technique, descripti"
+    },
+    {
+      "id": "CCSS.ELA.4.Writing.4",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Writing",
+      "standard_number": "4",
+      "description": "With guidance and support from adults, 4"
+    },
+    {
+      "id": "CCSS.ELA.4.Writing.4",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Writing",
+      "standard_number": "4",
+      "description": "Produce clear and coherent writing in which the produce writing in which the development development and organization are appropriate development and organization are appropriate and organization are a"
+    },
+    {
+      "id": "CCSS.ELA.4.Writing.5",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Writing",
+      "standard_number": "5",
+      "description": "With guidance and support from peers and 5"
+    },
+    {
+      "id": "CCSS.ELA.4.Writing.5",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Writing",
+      "standard_number": "5",
+      "description": "With guidance and support from peers and adults, adults, develop and strengthen writing as needed adults, develop and strengthen writing as needed develop and strengthen writing as needed by by plannin"
+    },
+    {
+      "id": "CCSS.ELA.4.Writing.6",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Writing",
+      "standard_number": "6",
+      "description": "With guidance and support from adults, use 6"
+    },
+    {
+      "id": "CCSS.ELA.4.Writing.6",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Writing",
+      "standard_number": "6",
+      "description": "With some guidance and support from adults, technology to produce and publish writing (using use technology, including the Internet, to use technology, including the Internet, to keyboarding skills) as"
+    },
+    {
+      "id": "CCSS.ELA.4.Writing.7",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Writing",
+      "standard_number": "7",
+      "description": "Conduct short research projects that build 7"
+    },
+    {
+      "id": "CCSS.ELA.4.Writing.7",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Writing",
+      "standard_number": "7",
+      "description": "Conduct short research projects that use several knowledge about a topic"
+    },
+    {
+      "id": "CCSS.ELA.4.Writing.8",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Writing",
+      "standard_number": "8",
+      "description": "Recall information from experiences or gather 8"
+    },
+    {
+      "id": "CCSS.ELA.4.Writing.8",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Writing",
+      "standard_number": "8",
+      "description": "Recall relevant information from experiences or information from print and digital sources; take gather relevant information from print and digital gather relevant information from print and digital br"
+    },
+    {
+      "id": "CCSS.ELA.4.Writing.9",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Writing",
+      "standard_number": "9",
+      "description": "Draw evidence from literary or informational 9"
+    },
+    {
+      "id": "CCSS.ELA.4.Writing.10",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Writing",
+      "standard_number": "10",
+      "description": "Write routinely over extended time frames (time 10"
+    },
+    {
+      "id": "CCSS.ELA.4.Writing.10",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Writing",
+      "standard_number": "10",
+      "description": "Write routinely over extended time frames (time for research, reflection, and revision) and shorter for research, reflection, and revision) and shorter for research, reflection, and revision) and short"
+    },
+    {
+      "id": "CCSS.ELA.4.Speaking_Listening.1",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Speaking_Listening",
+      "standard_number": "1",
+      "description": "Engage effectively in a range of collaborative 1"
+    },
+    {
+      "id": "CCSS.ELA.4.Speaking_Listening.1",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Speaking_Listening",
+      "standard_number": "1",
+      "description": "Engage effectively in a range of collaborative discussions (one-on-one, in groups, and teacher- discussions (one-on-one, in groups, and teacher- discussions (one-on-one, in groups, and teacher- led) wi"
+    },
+    {
+      "id": "CCSS.ELA.4.Speaking_Listening.2",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Speaking_Listening",
+      "standard_number": "2",
+      "description": "Determine the main ideas and supporting details 2"
+    },
+    {
+      "id": "CCSS.ELA.4.Speaking_Listening.2",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Speaking_Listening",
+      "standard_number": "2",
+      "description": "Summarize a written text read aloud or of a text read aloud or information presented in information presented in diverse media and information presented in diverse media and diverse media and formats,"
+    },
+    {
+      "id": "CCSS.ELA.4.Speaking_Listening.3",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Speaking_Listening",
+      "standard_number": "3",
+      "description": "Ask and answer questions about information from 3"
+    },
+    {
+      "id": "CCSS.ELA.4.Speaking_Listening.3",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Speaking_Listening",
+      "standard_number": "3",
+      "description": "Summarize the points a speaker makes and a speaker, offering appropriate elaboration and provides to support particular points"
+    },
+    {
+      "id": "CCSS.ELA.4.Speaking_Listening.4",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Speaking_Listening",
+      "standard_number": "4",
+      "description": "Report on a topic or text, tell a story, or recount 4"
+    },
+    {
+      "id": "CCSS.ELA.4.Speaking_Listening.4",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Speaking_Listening",
+      "standard_number": "4",
+      "description": "Report on a topic or text or present an opinion, an experience with appropriate facts and relevant, an experience in an organized manner, using sequencing ideas logically and using appropriate descript"
+    },
+    {
+      "id": "CCSS.ELA.4.Speaking_Listening.5",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Speaking_Listening",
+      "standard_number": "5",
+      "description": "Create engaging audio recordings of stories 5"
+    },
+    {
+      "id": "CCSS.ELA.4.Speaking_Listening.5",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Speaking_Listening",
+      "standard_number": "5",
+      "description": "Include multimedia components (e"
+    },
+    {
+      "id": "CCSS.ELA.4.Speaking_Listening.6",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Speaking_Listening",
+      "standard_number": "6",
+      "description": "Speak in complete sentences when appropriate to 6"
+    },
+    {
+      "id": "CCSS.ELA.4.Speaking_Listening.6",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Speaking_Listening",
+      "standard_number": "6",
+      "description": "Adapt speech to a variety of contexts and tasks, task and situation in order to provide requested English (e"
+    },
+    {
+      "id": "CCSS.ELA.4.Language.1",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Language",
+      "standard_number": "1",
+      "description": "Demonstrate command of the conventions of 1"
+    },
+    {
+      "id": "CCSS.ELA.4.Language.1",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Language",
+      "standard_number": "1",
+      "description": "Demonstrate command of the conventions of standard English grammar and usage when standard English grammar and usage when standard English grammar and usage when writing writing or speaking"
+    },
+    {
+      "id": "CCSS.ELA.4.Language.2",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Language",
+      "standard_number": "2",
+      "description": "Demonstrate command of the conventions of 2"
+    },
+    {
+      "id": "CCSS.ELA.4.Language.2",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Language",
+      "standard_number": "2",
+      "description": "Demonstrate command of the conventions of standard English capitalization, punctuation, and standard English capitalization, punctuation, and standard English capitalization, punctuation, and spelling"
+    },
+    {
+      "id": "CCSS.ELA.4.Language.3",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Language",
+      "standard_number": "3",
+      "description": "Use knowledge of language and its conventions 3"
+    },
+    {
+      "id": "CCSS.ELA.4.Language.3",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Language",
+      "standard_number": "3",
+      "description": "Use knowledge of language and its conventions when writing, speaking, reading, or listening"
+    },
+    {
+      "id": "CCSS.ELA.4.Language.4",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Language",
+      "standard_number": "4",
+      "description": "Determine or clarify the meaning of unknown 4"
+    },
+    {
+      "id": "CCSS.ELA.4.Language.4",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Language",
+      "standard_number": "4",
+      "description": "Determine or clarify the meaning of unknown and and multiple-meaning word and phrases based multiple-meaning words and phrases based on multiple-meaning words and phrases based on on grade 3 reading an"
+    },
+    {
+      "id": "CCSS.ELA.4.Language.5",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Language",
+      "standard_number": "5",
+      "description": "Demonstrate understanding of word relationships 5"
+    },
+    {
+      "id": "CCSS.ELA.4.Language.5",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Language",
+      "standard_number": "5",
+      "description": "Demonstrate understanding of figurative language, and nuances in word meanings"
+    },
+    {
+      "id": "CCSS.ELA.4.Language.6",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Language",
+      "standard_number": "6",
+      "description": "Acquire and use accurately grade-appropriate 6"
+    },
+    {
+      "id": "CCSS.ELA.4.Language.6",
+      "grade": "4",
+      "grade_label": "Grade 4",
+      "strand": "Language",
+      "standard_number": "6",
+      "description": "Acquire and use accurately grade-appropriate conversational, general academic, and domain- general academic and domain-specific words general academic and domain-specific words specific words and phras"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Literature.1",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Literature",
+      "standard_number": "1",
+      "description": "Ask and answer questions to demonstrate 1"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Literature.1",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Literature",
+      "standard_number": "1",
+      "description": "Quote accurately from a text when explaining understanding of a text, referring explicitly to the explaining what the text says explicitly and when what the text says explicitly and when drawing text a"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Literature.2",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Literature",
+      "standard_number": "2",
+      "description": "Recount stories, including fables, folktales, and 2"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Literature.2",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Literature",
+      "standard_number": "2",
+      "description": "Determine a theme of a story, drama, or poem myths from diverse cultures; determine the from details in the text; summarize the text"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Literature.3",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Literature",
+      "standard_number": "3",
+      "description": "Describe characters in a story (e"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Literature.3",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Literature",
+      "standard_number": "3",
+      "description": "Describe in depth a character, setting, or event 3"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Literature.4",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Literature",
+      "standard_number": "4",
+      "description": "Determine the meaning of words and phrases as 4"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Literature.4",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Literature",
+      "standard_number": "4",
+      "description": "Determine the meaning of words and phrases they are used in a text, distinguishing literal from as they are used in a text, including those as they are used in a text, including figurative nonliteral l"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Literature.5",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Literature",
+      "standard_number": "5",
+      "description": "Refer to parts of stories, dramas, and poems 5"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Literature.5",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Literature",
+      "standard_number": "5",
+      "description": "Explain how a series of chapters, scenes, or when writing or speaking about a text, using drama, and prose, and refer to the structural stanzas fits together to provide the overall terms such as chapte"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Literature.6",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Literature",
+      "standard_number": "6",
+      "description": "Distinguish their own point of view from that of 6"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Literature.6",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Literature",
+      "standard_number": "6",
+      "description": "Describe how a narrator\u2019s or speaker\u2019s point of the narrator or those of the characters"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Literature.7",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Literature",
+      "standard_number": "7",
+      "description": "Explain how specific aspects of a text\u2019s 7"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Literature.7",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Literature",
+      "standard_number": "7",
+      "description": "Analyze how visual and multimedia elements illustrations contribute to what is conveyed or drama and a visual or oral presentation of contribute to the meaning, tone, or beauty of a by the words in a s"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Literature.9",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Literature",
+      "standard_number": "9",
+      "description": "Compare and contrast the themes, settings, and 9"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Literature.9",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Literature",
+      "standard_number": "9",
+      "description": "Compare and contrast stories in the same genre plots of stories written by the same author about themes and topics (e"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Literature.10",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Literature",
+      "standard_number": "10",
+      "description": "By the end of the year, read and comprehend 10"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Literature.10",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Literature",
+      "standard_number": "10",
+      "description": "By the end of the year, read and comprehend literature, including stories, dramas, and poetry, literature, including stories, dramas, and poetry, in literature, including stories, dramas, and poetry, a"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Informational.1",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Informational",
+      "standard_number": "1",
+      "description": "Ask and answer questions to demonstrate 1"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Informational.1",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Informational",
+      "standard_number": "1",
+      "description": "Quote accurately from a text when explaining understanding of a text, referring explicitly to the explaining what the text says explicitly and when what the text says explicitly and when drawing text a"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Informational.2",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Informational",
+      "standard_number": "2",
+      "description": "Determine the main idea of a text; recount the 2"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Informational.2",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Informational",
+      "standard_number": "2",
+      "description": "Determine two or more main ideas of a text and key details and explain how they support the how it is supported by key details; summarize the explain how they are supported by key details; main idea"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Informational.3",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Informational",
+      "standard_number": "3",
+      "description": "Describe the relationship between a series of 3"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Informational.3",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Informational",
+      "standard_number": "3",
+      "description": "Explain the relationships or interactions between historical events, scientific ideas or concepts, a historical, scientific, or technical text, including two or more individuals, events, ideas, or or s"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Informational.4",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Informational",
+      "standard_number": "4",
+      "description": "Determine the meaning of general academic 4"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Informational.4",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Informational",
+      "standard_number": "4",
+      "description": "Determine the meaning of general academic and domain-specific words and phrases in a text and domain-specific words or phrases in a text and domain-specific words and phrases in a text relevant to a gr"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Informational.5",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Informational",
+      "standard_number": "5",
+      "description": "Use text features and search tools (e"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Informational.5",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Informational",
+      "standard_number": "5",
+      "description": "Describe the overall structure (e"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Informational.5",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Informational",
+      "standard_number": "5",
+      "description": "Compare and contrast the overall structure words, sidebars, hyperlinks) to locate information comparison, cause/effect, problem/solution) of (e"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Informational.6",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Informational",
+      "standard_number": "6",
+      "description": "Distinguish their own point of view from that of 6"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Informational.6",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Informational",
+      "standard_number": "6",
+      "description": "Analyze multiple accounts of the same event the author of a text"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Informational.7",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Informational",
+      "standard_number": "7",
+      "description": "Use information gained from illustrations (e"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Informational.7",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Informational",
+      "standard_number": "7",
+      "description": "Interpret information presented visually, orally, or 7"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Informational.8",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Informational",
+      "standard_number": "8",
+      "description": "Describe the logical connection between 8"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Informational.8",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Informational",
+      "standard_number": "8",
+      "description": "Explain how an author uses reasons and evidence particular sentences and paragraphs in a text to support particular points in a text"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Informational.9",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Informational",
+      "standard_number": "9",
+      "description": "Compare and contrast the most important points 9"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Informational.9",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Informational",
+      "standard_number": "9",
+      "description": "Integrate information from several texts on the and key details presented in two texts on the topic in order to write or speak about the subject same topic in order to write or speak about the same top"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Informational.10",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Informational",
+      "standard_number": "10",
+      "description": "By the end of the year, read and comprehend 10"
+    },
+    {
+      "id": "CCSS.ELA.5.Reading_Informational.10",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Reading_Informational",
+      "standard_number": "10",
+      "description": "By the end of the year, read and comprehend informational texts, including history/social informational texts, including history/social studies, informational texts, including history/social studies, s"
+    },
+    {
+      "id": "CCSS.ELA.5.Writing.1",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Writing",
+      "standard_number": "1",
+      "description": "Write opinion pieces on topics or texts, supporting 1"
+    },
+    {
+      "id": "CCSS.ELA.5.Writing.1",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Writing",
+      "standard_number": "1",
+      "description": "Write opinion pieces on topics or texts, supporting a a point of view with reasons"
+    },
+    {
+      "id": "CCSS.ELA.5.Writing.2",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Writing",
+      "standard_number": "2",
+      "description": "Write informative/explanatory texts to examine a 2"
+    },
+    {
+      "id": "CCSS.ELA.5.Writing.2",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Writing",
+      "standard_number": "2",
+      "description": "Write informative/explanatory texts to examine a topic and convey ideas and information clearly"
+    },
+    {
+      "id": "CCSS.ELA.5.Writing.3",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Writing",
+      "standard_number": "3",
+      "description": "Write narratives to develop real or imagined 3"
+    },
+    {
+      "id": "CCSS.ELA.5.Writing.3",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Writing",
+      "standard_number": "3",
+      "description": "Write narratives to develop real or imagined experiences or events using effective technique, experiences or events using effective technique, experiences or events using effective technique, descripti"
+    },
+    {
+      "id": "CCSS.ELA.5.Writing.4",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Writing",
+      "standard_number": "4",
+      "description": "With guidance and support from adults, 4"
+    },
+    {
+      "id": "CCSS.ELA.5.Writing.4",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Writing",
+      "standard_number": "4",
+      "description": "Produce clear and coherent writing in which the produce writing in which the development development and organization are appropriate development and organization are appropriate and organization are a"
+    },
+    {
+      "id": "CCSS.ELA.5.Writing.5",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Writing",
+      "standard_number": "5",
+      "description": "With guidance and support from peers and 5"
+    },
+    {
+      "id": "CCSS.ELA.5.Writing.5",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Writing",
+      "standard_number": "5",
+      "description": "With guidance and support from peers and adults, adults, develop and strengthen writing as needed adults, develop and strengthen writing as needed develop and strengthen writing as needed by by plannin"
+    },
+    {
+      "id": "CCSS.ELA.5.Writing.6",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Writing",
+      "standard_number": "6",
+      "description": "With guidance and support from adults, use 6"
+    },
+    {
+      "id": "CCSS.ELA.5.Writing.6",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Writing",
+      "standard_number": "6",
+      "description": "With some guidance and support from adults, technology to produce and publish writing (using use technology, including the Internet, to use technology, including the Internet, to keyboarding skills) as"
+    },
+    {
+      "id": "CCSS.ELA.5.Writing.7",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Writing",
+      "standard_number": "7",
+      "description": "Conduct short research projects that build 7"
+    },
+    {
+      "id": "CCSS.ELA.5.Writing.7",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Writing",
+      "standard_number": "7",
+      "description": "Conduct short research projects that use several knowledge about a topic"
+    },
+    {
+      "id": "CCSS.ELA.5.Writing.8",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Writing",
+      "standard_number": "8",
+      "description": "Recall information from experiences or gather 8"
+    },
+    {
+      "id": "CCSS.ELA.5.Writing.8",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Writing",
+      "standard_number": "8",
+      "description": "Recall relevant information from experiences or information from print and digital sources; take gather relevant information from print and digital gather relevant information from print and digital br"
+    },
+    {
+      "id": "CCSS.ELA.5.Writing.9",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Writing",
+      "standard_number": "9",
+      "description": "Draw evidence from literary or informational 9"
+    },
+    {
+      "id": "CCSS.ELA.5.Writing.10",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Writing",
+      "standard_number": "10",
+      "description": "Write routinely over extended time frames (time 10"
+    },
+    {
+      "id": "CCSS.ELA.5.Writing.10",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Writing",
+      "standard_number": "10",
+      "description": "Write routinely over extended time frames (time for research, reflection, and revision) and shorter for research, reflection, and revision) and shorter for research, reflection, and revision) and short"
+    },
+    {
+      "id": "CCSS.ELA.5.Speaking_Listening.1",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Speaking_Listening",
+      "standard_number": "1",
+      "description": "Engage effectively in a range of collaborative 1"
+    },
+    {
+      "id": "CCSS.ELA.5.Speaking_Listening.1",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Speaking_Listening",
+      "standard_number": "1",
+      "description": "Engage effectively in a range of collaborative discussions (one-on-one, in groups, and teacher- discussions (one-on-one, in groups, and teacher- discussions (one-on-one, in groups, and teacher- led) wi"
+    },
+    {
+      "id": "CCSS.ELA.5.Speaking_Listening.2",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Speaking_Listening",
+      "standard_number": "2",
+      "description": "Determine the main ideas and supporting details 2"
+    },
+    {
+      "id": "CCSS.ELA.5.Speaking_Listening.2",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Speaking_Listening",
+      "standard_number": "2",
+      "description": "Summarize a written text read aloud or of a text read aloud or information presented in information presented in diverse media and information presented in diverse media and diverse media and formats,"
+    },
+    {
+      "id": "CCSS.ELA.5.Speaking_Listening.3",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Speaking_Listening",
+      "standard_number": "3",
+      "description": "Ask and answer questions about information from 3"
+    },
+    {
+      "id": "CCSS.ELA.5.Speaking_Listening.3",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Speaking_Listening",
+      "standard_number": "3",
+      "description": "Summarize the points a speaker makes and a speaker, offering appropriate elaboration and provides to support particular points"
+    },
+    {
+      "id": "CCSS.ELA.5.Speaking_Listening.4",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Speaking_Listening",
+      "standard_number": "4",
+      "description": "Report on a topic or text, tell a story, or recount 4"
+    },
+    {
+      "id": "CCSS.ELA.5.Speaking_Listening.4",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Speaking_Listening",
+      "standard_number": "4",
+      "description": "Report on a topic or text or present an opinion, an experience with appropriate facts and relevant, an experience in an organized manner, using sequencing ideas logically and using appropriate descript"
+    },
+    {
+      "id": "CCSS.ELA.5.Speaking_Listening.5",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Speaking_Listening",
+      "standard_number": "5",
+      "description": "Create engaging audio recordings of stories 5"
+    },
+    {
+      "id": "CCSS.ELA.5.Speaking_Listening.5",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Speaking_Listening",
+      "standard_number": "5",
+      "description": "Include multimedia components (e"
+    },
+    {
+      "id": "CCSS.ELA.5.Speaking_Listening.6",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Speaking_Listening",
+      "standard_number": "6",
+      "description": "Speak in complete sentences when appropriate to 6"
+    },
+    {
+      "id": "CCSS.ELA.5.Speaking_Listening.6",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Speaking_Listening",
+      "standard_number": "6",
+      "description": "Adapt speech to a variety of contexts and tasks, task and situation in order to provide requested English (e"
+    },
+    {
+      "id": "CCSS.ELA.5.Language.1",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Language",
+      "standard_number": "1",
+      "description": "Demonstrate command of the conventions of 1"
+    },
+    {
+      "id": "CCSS.ELA.5.Language.1",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Language",
+      "standard_number": "1",
+      "description": "Demonstrate command of the conventions of standard English grammar and usage when standard English grammar and usage when standard English grammar and usage when writing writing or speaking"
+    },
+    {
+      "id": "CCSS.ELA.5.Language.2",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Language",
+      "standard_number": "2",
+      "description": "Demonstrate command of the conventions of 2"
+    },
+    {
+      "id": "CCSS.ELA.5.Language.2",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Language",
+      "standard_number": "2",
+      "description": "Demonstrate command of the conventions of standard English capitalization, punctuation, and standard English capitalization, punctuation, and standard English capitalization, punctuation, and spelling"
+    },
+    {
+      "id": "CCSS.ELA.5.Language.3",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Language",
+      "standard_number": "3",
+      "description": "Use knowledge of language and its conventions 3"
+    },
+    {
+      "id": "CCSS.ELA.5.Language.3",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Language",
+      "standard_number": "3",
+      "description": "Use knowledge of language and its conventions when writing, speaking, reading, or listening"
+    },
+    {
+      "id": "CCSS.ELA.5.Language.4",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Language",
+      "standard_number": "4",
+      "description": "Determine or clarify the meaning of unknown 4"
+    },
+    {
+      "id": "CCSS.ELA.5.Language.4",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Language",
+      "standard_number": "4",
+      "description": "Determine or clarify the meaning of unknown and and multiple-meaning word and phrases based multiple-meaning words and phrases based on multiple-meaning words and phrases based on on grade 3 reading an"
+    },
+    {
+      "id": "CCSS.ELA.5.Language.5",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Language",
+      "standard_number": "5",
+      "description": "Demonstrate understanding of word relationships 5"
+    },
+    {
+      "id": "CCSS.ELA.5.Language.5",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Language",
+      "standard_number": "5",
+      "description": "Demonstrate understanding of figurative language, and nuances in word meanings"
+    },
+    {
+      "id": "CCSS.ELA.5.Language.6",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Language",
+      "standard_number": "6",
+      "description": "Acquire and use accurately grade-appropriate 6"
+    },
+    {
+      "id": "CCSS.ELA.5.Language.6",
+      "grade": "5",
+      "grade_label": "Grade 5",
+      "strand": "Language",
+      "standard_number": "6",
+      "description": "Acquire and use accurately grade-appropriate conversational, general academic, and domain- general academic and domain-specific words general academic and domain-specific words specific words and phras"
+    }
+  ]
+}
