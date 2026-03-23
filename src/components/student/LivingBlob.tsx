@@ -14,6 +14,7 @@
 import { useMemo, useId, useState, useRef, useEffect } from 'react'
 import type { DimensionScore } from '../../lib/student-data'
 import type { Observation } from '../../types/database'
+import type { SchoolYearRing } from '../../lib/living-data'
 import ObservationPopup from './ObservationPopup'
 
 interface Props {
@@ -32,6 +33,8 @@ interface Props {
   observations?: Observation[]
   /** Map of observer_id -> display name */
   observers?: Map<string, string>
+  /** School-year rings showing the expanding canvas */
+  schoolYearRings?: SchoolYearRing[]
 }
 
 // ── Design tokens ──────────────────────────────────────────────
@@ -139,6 +142,7 @@ export default function LivingBlob({
   onDimensionClick,
   observations,
   observers,
+  schoolYearRings,
 }: Props) {
   const uid = useId()
   const svgRef = useRef<SVGSVGElement>(null)
@@ -398,6 +402,38 @@ export default function LivingBlob({
               {LEVEL_META[i].label}
             </text>
           ))}
+
+        {/* ── School-year rings (expanding canvas markers) ── */}
+        {schoolYearRings && schoolYearRings.length > 0 && schoolYearRings.map((ring) => {
+          const r = maxR * ring.scale
+          return (
+            <g key={`yr-${ring.label}`}>
+              <circle
+                cx={cx}
+                cy={cy}
+                r={r}
+                fill="none"
+                stroke={TEAL}
+                strokeWidth={1.5}
+                strokeDasharray="6 4"
+                opacity={0.25}
+              />
+              {/* Year label positioned at the top of the ring */}
+              <text
+                x={cx}
+                y={cy - r - 6}
+                textAnchor="middle"
+                fill={TEAL}
+                fontSize={11}
+                fontWeight={700}
+                opacity={0.4}
+                letterSpacing="0.03em"
+              >
+                {ring.label}
+              </text>
+            </g>
+          )
+        })}
 
         {/* ── Dotted axis lines from center to label position ── */}
         {labels.map((l) => (

@@ -19,6 +19,65 @@ export interface Snapshot {
   label: string
   /** Scores at this point in time */
   dimensionScores: DimensionScore[]
+  /** If this snapshot is the first in a new school year, the year label (e.g. "24/25") */
+  schoolYearTransition?: string
+}
+
+/**
+ * Represents a school-year boundary visible in the amoeba.
+ * The `scale` is the fraction of the current canvas that this year's
+ * canvas occupied (e.g. 0.75 means the outer ring of that year was 75%
+ * of the current outer ring).
+ */
+export interface SchoolYearRing {
+  /** Short label, e.g. "22/23" */
+  label: string
+  /** Scale factor relative to the current (outermost) canvas. 0–1. */
+  scale: number
+}
+
+/**
+ * Compute the school-year rings that should be drawn on the amoeba
+ * to show the "expanding canvas" effect. Each ring represents a
+ * previous school year's outer boundary, compressed inward.
+ *
+ * The current school year always has scale = 1 (the outermost ring).
+ * Each prior year's scale shrinks by a compounding compression factor,
+ * representing growing expectations as the student ages.
+ */
+export function computeSchoolYearRings(snapshots: Snapshot[]): SchoolYearRing[] {
+  if (snapshots.length === 0) return []
+
+  // Find all distinct school years in the data
+  const years = new Set<number>()
+  for (const snap of snapshots) {
+    const d = new Date(snap.date)
+    years.add(schoolYearOf(d))
+  }
+  const sorted = [...years].sort((a, b) => a - b)
+  if (sorted.length <= 1) return [] // no prior years to show
+
+  const currentYear = sorted[sorted.length - 1]
+  const rings: SchoolYearRing[] = []
+
+  // Each prior year's canvas is compressed relative to the current.
+  // The compression factor represents how expectations expand each year.
+  const COMPRESSION_PER_YEAR = 0.78 // each prior year shrinks by ~22%
+
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const yearsBehind = currentYear - sorted[i]
+    const scale = Math.pow(COMPRESSION_PER_YEAR, yearsBehind)
+    const startYr = sorted[i]
+    const label = `${String(startYr).slice(-2)}/${String(startYr + 1).slice(-2)}`
+    rings.push({ label, scale })
+  }
+
+  return rings
+}
+
+/** A school year spans Aug–Jul. Aug-Dec → startYear = that year. Jan-Jul → startYear = prev year. */
+function schoolYearOf(d: Date): number {
+  return d.getMonth() >= 7 ? d.getFullYear() : d.getFullYear() - 1
 }
 
 // ============================================================
@@ -236,7 +295,73 @@ export function buildSnapshots(
     }
   })
 
-  return snapshots
+  // Apply school-year compression: when the timeline crosses from one
+  // school year to the next (July→August), compress older competency
+  // values so the canvas appears to expand with growing expectations.
+  return applyYearTransitionCompression(snapshots)
+}
+
+/**
+ * At each school-year boundary (August), compress all competency values
+ * so that the previous year's levels are rescaled to a smaller canvas:
+ *
+ * - Previous Achieving/Mastery (3-4) → Developing range (~1.5–2.5)
+ * - Previous Emerging/Developing (0-2) → Emerging range (~0–1.5)
+ *
+ * This creates the visual effect of the canvas expanding: the same
+ * absolute competency level occupies less of the chart after the
+ * transition, because expectations have grown.
+ *
+ * The compression is applied backwards from the current year — each
+ * prior year gets progressively more compressed.
+ */
+function applyYearTransitionCompression(snapshots: Snapshot[]): Snapshot[] {
+  if (snapshots.length === 0) return snapshots
+
+  // Find all distinct school years
+  const yearSet = new Set<number>()
+  for (const snap of snapshots) {
+    yearSet.add(schoolYearOf(new Date(snap.date)))
+  }
+  const sortedYears = [...yearSet].sort((a, b) => a - b)
+
+  if (sortedYears.length <= 1) return snapshots // nothing to compress
+
+  const currentYear = sortedYears[sortedYears.length - 1]
+
+  // Compression per year back: each prior year's values are scaled down
+  const COMPRESSION_PER_YEAR = 0.78
+
+  return snapshots.map((snap) => {
+    const snapYear = schoolYearOf(new Date(snap.date))
+    if (snapYear >= currentYear) {
+      // Current year — no compression, but mark Aug as transition
+      const d = new Date(snap.date)
+      const isAugust = d.getMonth() === 7 && snapYear === currentYear
+      return isAugust
+        ? { ...snap, schoolYearTransition: `${String(currentYear).slice(-2)}/${String(currentYear + 1).slice(-2)}` }
+        : snap
+    }
+
+    const yearsBehind = currentYear - snapYear
+    const scale = Math.pow(COMPRESSION_PER_YEAR, yearsBehind)
+
+    // Mark the first month of each school year as a transition
+    const d = new Date(snap.date)
+    const isAugust = d.getMonth() === 7
+    const yearLabel = `${String(snapYear).slice(-2)}/${String(snapYear + 1).slice(-2)}`
+
+    return {
+      ...snap,
+      ...(isAugust ? { schoolYearTransition: yearLabel } : {}),
+      dimensionScores: snap.dimensionScores.map((ds) => ({
+        ...ds,
+        // Scale competency down: a "4" from 2 years ago looks like ~2.4 on today's canvas
+        competency: ds.competency * scale,
+        // Interest stays unscaled (it's the student's current feeling, not relative to expectations)
+      })),
+    }
+  })
 }
 
 /**
