@@ -17,31 +17,52 @@ import { useAuth } from '../../lib/auth'
 import {
   fetchSkills,
   fetchSkillCategories,
+  fetchDimensions,
+  fetchSkillDomains,
   createSkill,
   updateSkill,
   deleteSkill,
   GRADE_OPTIONS,
+  AGE_BAND_PRESETS,
   type SkillWithCompetencies,
 } from '../../lib/skills-data'
 import {
   fetchCompetencyTree,
   type CompetencyTreeNode,
 } from '../../lib/assignment-data'
+import SmartSelect, { type SmartSelectOption } from '../SmartSelect'
+import { supabase } from '../../lib/supabase'
+import type { Dimension } from '../../types/database'
 
 // ============================================================
 // Skill Edit/Create Modal
 // ============================================================
 
+/** Map dimension category to a dot color for the dropdown */
+const CATEGORY_COLORS: Record<string, string> = {
+  'Academic': '#3b82f6',
+  'Creative & Arts': '#a855f7',
+  'Physical & Health': '#10b981',
+  'Social & Emotional': '#f59e0b',
+  'Cognitive': '#6366f1',
+}
+
 function SkillEditModal({
   open,
   skill,
   competencyTree,
+  dimensions,
+  categoryOptions,
+  domainOptions,
   onClose,
   onSaved,
 }: {
   open: boolean
   skill: SkillWithCompetencies | null // null = create mode
   competencyTree: CompetencyTreeNode[]
+  dimensions: Dimension[]
+  categoryOptions: SmartSelectOption[]
+  domainOptions: SmartSelectOption[]
   onClose: () => void
   onSaved: () => void
 }) {
@@ -51,6 +72,8 @@ function SkillEditModal({
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
+  const [domain, setDomain] = useState('')
+  const [ageBandPreset, setAgeBandPreset] = useState('')
   const [minGrade, setMinGrade] = useState('')
   const [maxGrade, setMaxGrade] = useState('')
   const [selectedCompetencies, setSelectedCompetencies] = useState<Set<string>>(new Set())
@@ -62,13 +85,21 @@ function SkillEditModal({
       setName(skill.name)
       setDescription(skill.description || '')
       setCategory(skill.category || '')
+      setDomain(skill.progression_domain || '')
       setMinGrade(skill.min_grade || '')
       setMaxGrade(skill.max_grade || '')
       setSelectedCompetencies(new Set(skill.competencies.map((c) => c.id)))
+      // Check if current min/max matches a preset
+      const match = AGE_BAND_PRESETS.find(
+        (p) => p.min === (skill.min_grade || '') && p.max === (skill.max_grade || '')
+      )
+      setAgeBandPreset(match ? match.label : (skill.min_grade || skill.max_grade) ? 'custom' : '')
     } else if (open) {
       setName('')
       setDescription('')
       setCategory('')
+      setDomain('')
+      setAgeBandPreset('')
       setMinGrade('')
       setMaxGrade('')
       setSelectedCompetencies(new Set())
@@ -85,6 +116,49 @@ function SkillEditModal({
     })
   }
 
+  function handleAgeBandChange(value: string) {
+    setAgeBandPreset(value)
+    if (value === 'custom' || value === '') {
+      if (value === '') {
+        setMinGrade('')
+        setMaxGrade('')
+      }
+      return
+    }
+    const preset = AGE_BAND_PRESETS.find((p) => p.label === value)
+    if (preset) {
+      setMinGrade(preset.min)
+      setMaxGrade(preset.max)
+    }
+  }
+
+  /** Create a new category value — just returns the string (no DB insert needed, categories are freeform on skills) */
+  async function handleCreateCategory(input: string): Promise<string> {
+    return input
+  }
+
+  /** Create a new domain — creates a dimension in the learner profile */
+  async function handleCreateDomain(input: string): Promise<string> {
+    if (!profile?.school_id) throw new Error('No school')
+    // Insert as a new dimension
+    const { data, error } = await supabase
+      .from('dimensions')
+      .insert({
+        school_id: profile.school_id,
+        name: input.trim(),
+        category: 'Academic',
+        display_order: dimensions.length,
+        is_active: true,
+        visible_to_family: true,
+      })
+      .select('id, name')
+      .single()
+    if (error) throw error
+    toast(`Domain "${data.name}" created`, 'success')
+    // Return the name as the value (domain is stored as a string on skills)
+    return data.name
+  }
+
   async function handleSave() {
     if (!name.trim() || !profile?.school_id) return
 
@@ -98,6 +172,7 @@ function SkillEditModal({
             name: name.trim(),
             description: description.trim() || null,
             category: category.trim() || null,
+            progression_domain: domain.trim() || null,
             min_grade: minGrade || null,
             max_grade: maxGrade || null,
           },
@@ -111,6 +186,7 @@ function SkillEditModal({
             name: name.trim(),
             description: description.trim() || null,
             category: category.trim() || null,
+            progression_domain: domain.trim() || null,
             min_grade: minGrade || null,
             max_grade: maxGrade || null,
             is_default: false,
@@ -128,6 +204,12 @@ function SkillEditModal({
       setSaving(false)
     }
   }
+
+  // Build age-band options for SmartSelect
+  const ageBandOptions: SmartSelectOption[] = [
+    ...AGE_BAND_PRESETS.map((p) => ({ value: p.label, label: p.label })),
+    { value: 'custom', label: 'Custom range' },
+  ]
 
   if (!open) return null
 
@@ -175,54 +257,77 @@ function SkillEditModal({
             />
           </div>
 
-          {/* Category */}
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-text-light">
-              Category <span className="font-normal text-text-light">(optional)</span>
-            </label>
-            <input
-              type="text"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder="e.g. Research & Inquiry"
-              list="skill-categories"
-              className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
-            />
-          </div>
+          {/* Domain (Learner Profile dimension) */}
+          <SmartSelect
+            value={domain}
+            onChange={setDomain}
+            options={domainOptions}
+            label="Domain"
+            optional
+            placeholder="Select a learner profile domain…"
+            allowCreate
+            onCreateNew={handleCreateDomain}
+            createPlaceholder="New domain name…"
+          />
 
-          {/* Grade range */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-text-light">
-                Min Grade <span className="font-normal text-text-light">(optional)</span>
-              </label>
-              <select
-                value={minGrade}
-                onChange={(e) => setMinGrade(e.target.value)}
-                className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
-              >
-                <option value="">Any</option>
-                {GRADE_OPTIONS.map((g) => (
-                  <option key={g} value={g}>{g}</option>
-                ))}
-              </select>
+          {/* Category */}
+          <SmartSelect
+            value={category}
+            onChange={setCategory}
+            options={categoryOptions}
+            label="Category"
+            optional
+            placeholder="Select a category…"
+            allowCreate
+            onCreateNew={handleCreateCategory}
+            createPlaceholder="New category name…"
+          />
+
+          {/* Age band */}
+          <SmartSelect
+            value={ageBandPreset}
+            onChange={handleAgeBandChange}
+            options={ageBandOptions}
+            label="Age Band"
+            optional
+            placeholder="Select an age range…"
+          />
+
+          {/* Custom grade range (shown when "Custom" is selected) */}
+          {ageBandPreset === 'custom' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-text-light">
+                  Min Grade
+                </label>
+                <select
+                  value={minGrade}
+                  onChange={(e) => setMinGrade(e.target.value)}
+                  className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+                >
+                  <option value="">Any</option>
+                  {GRADE_OPTIONS.map((g) => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-text-light">
+                  Max Grade
+                </label>
+                <select
+                  value={maxGrade}
+                  onChange={(e) => setMaxGrade(e.target.value)}
+                  className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+                >
+                  <option value="">Any</option>
+                  {GRADE_OPTIONS.map((g) => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-text-light">
-                Max Grade <span className="font-normal text-text-light">(optional)</span>
-              </label>
-              <select
-                value={maxGrade}
-                onChange={(e) => setMaxGrade(e.target.value)}
-                className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
-              >
-                <option value="">Any</option>
-                {GRADE_OPTIONS.map((g) => (
-                  <option key={g} value={g}>{g}</option>
-                ))}
-              </select>
-            </div>
-          </div>
+          )}
 
           {/* Competency links */}
           <div>
@@ -322,6 +427,8 @@ export default function SkillsLibrarySection() {
 
   const [skills, setSkills] = useState<SkillWithCompetencies[]>([])
   const [categories, setCategories] = useState<string[]>([])
+  const [dims, setDims] = useState<Dimension[]>([])
+  const [skillDomains, setSkillDomains] = useState<string[]>([])
   const [competencyTree, setCompetencyTree] = useState<CompetencyTreeNode[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -334,20 +441,45 @@ export default function SkillsLibrarySection() {
     if (!profile?.school_id) return
     setLoading(true)
     try {
-      const [skillsData, cats, tree] = await Promise.all([
+      const [skillsData, cats, tree, dimsData, domainsData] = await Promise.all([
         fetchSkills(profile.school_id),
         fetchSkillCategories(profile.school_id),
         fetchCompetencyTree(profile.school_id),
+        fetchDimensions(profile.school_id),
+        fetchSkillDomains(profile.school_id),
       ])
       setSkills(skillsData)
       setCategories(cats)
       setCompetencyTree(tree)
+      setDims(dimsData)
+      setSkillDomains(domainsData)
     } catch {
       toast('Failed to load skills', 'error')
     } finally {
       setLoading(false)
     }
   }, [profile?.school_id, toast])
+
+  // Build domain options: dimensions first, then any freeform domains not already covered
+  const domainOptions: SmartSelectOption[] = (() => {
+    const dimNames = new Set(dims.map((d) => d.name))
+    const fromDims: SmartSelectOption[] = dims.map((d) => ({
+      value: d.name,
+      label: d.name,
+      color: CATEGORY_COLORS[d.category] || '#94a3b8',
+      detail: d.category,
+    }))
+    const fromSkills: SmartSelectOption[] = skillDomains
+      .filter((name) => !dimNames.has(name))
+      .map((name) => ({ value: name, label: name }))
+    return [...fromDims, ...fromSkills]
+  })()
+
+  // Build category options from existing categories
+  const categoryOptions: SmartSelectOption[] = categories.map((c) => ({
+    value: c,
+    label: c,
+  }))
 
   useEffect(() => {
     loadData()
@@ -535,18 +667,14 @@ export default function SkillsLibrarySection() {
         </div>
       )}
 
-      {/* Category datalist */}
-      <datalist id="skill-categories">
-        {categories.map((c) => (
-          <option key={c} value={c} />
-        ))}
-      </datalist>
-
       {/* Edit/Create modal */}
       <SkillEditModal
         open={showCreate}
         skill={editSkill}
         competencyTree={competencyTree}
+        dimensions={dims}
+        categoryOptions={categoryOptions}
+        domainOptions={domainOptions}
         onClose={() => { setShowCreate(false); setEditSkill(null) }}
         onSaved={loadData}
       />

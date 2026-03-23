@@ -3,7 +3,14 @@ import { X, Loader2, Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '../../lib/auth'
 import { useToast } from '../Toast'
 import { createSkillWithProgression, fetchSkillWithProgression } from '../../lib/skill-progression-data'
-import type { Skill, SkillProgressionStep } from '../../types/database'
+import {
+  fetchSkillCategories,
+  fetchDimensions,
+  fetchSkillDomains,
+} from '../../lib/skills-data'
+import { supabase } from '../../lib/supabase'
+import SmartSelect, { type SmartSelectOption } from '../SmartSelect'
+import type { Skill, SkillProgressionStep, Dimension } from '../../types/database'
 
 // ============================================================
 // Types
@@ -22,6 +29,15 @@ interface Props {
 }
 
 const GRADE_LEVELS = ['K', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+
+/** Map dimension category to a dot color */
+const CATEGORY_COLORS: Record<string, string> = {
+  'Academic': '#3b82f6',
+  'Creative & Arts': '#a855f7',
+  'Physical & Health': '#10b981',
+  'Social & Emotional': '#f59e0b',
+  'Cognitive': '#6366f1',
+}
 
 const inputCls =
   'w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400'
@@ -43,6 +59,28 @@ export default function InlineSkillCreator({ open, onClose, onCreated }: Props) 
     { id: crypto.randomUUID(), grade_level: '3', expectation: '' },
   ])
   const [saving, setSaving] = useState(false)
+
+  // Dropdown data
+  const [dimensions, setDimensions] = useState<Dimension[]>([])
+  const [categoryList, setCategoryList] = useState<string[]>([])
+  const [skillDomainList, setSkillDomainList] = useState<string[]>([])
+
+  // Load dropdown data when modal opens
+  useEffect(() => {
+    if (!open || !profile?.school_id) return
+    const sid = profile.school_id
+    Promise.all([
+      fetchDimensions(sid),
+      fetchSkillCategories(sid),
+      fetchSkillDomains(sid),
+    ]).then(([dims, cats, doms]) => {
+      setDimensions(dims)
+      setCategoryList(cats)
+      setSkillDomainList(doms)
+    }).catch(() => {
+      // Non-critical — dropdowns just won't be pre-populated
+    })
+  }, [open, profile?.school_id])
 
   // Reset on open
   useEffect(() => {
@@ -74,6 +112,51 @@ export default function InlineSkillCreator({ open, onClose, onCreated }: Props) 
     }
     return () => { document.body.style.overflow = '' }
   }, [open])
+
+  // Build domain options
+  const domainOptions: SmartSelectOption[] = (() => {
+    const dimNames = new Set(dimensions.map((d) => d.name))
+    const fromDims: SmartSelectOption[] = dimensions.map((d) => ({
+      value: d.name,
+      label: d.name,
+      color: CATEGORY_COLORS[d.category] || '#94a3b8',
+      detail: d.category,
+    }))
+    const fromSkills: SmartSelectOption[] = skillDomainList
+      .filter((n) => !dimNames.has(n))
+      .map((n) => ({ value: n, label: n }))
+    return [...fromDims, ...fromSkills]
+  })()
+
+  // Build category options
+  const categoryOptions: SmartSelectOption[] = categoryList.map((c) => ({
+    value: c,
+    label: c,
+  }))
+
+  async function handleCreateDomain(input: string): Promise<string> {
+    if (!profile?.school_id) throw new Error('No school')
+    const { data, error } = await supabase
+      .from('dimensions')
+      .insert({
+        school_id: profile.school_id,
+        name: input.trim(),
+        category: 'Academic',
+        display_order: dimensions.length,
+        is_active: true,
+        visible_to_family: true,
+      })
+      .select('id, name')
+      .single()
+    if (error) throw error
+    setDimensions((prev) => [...prev, data as unknown as Dimension])
+    toast(`Domain "${data.name}" created`, 'success')
+    return data.name
+  }
+
+  async function handleCreateCategory(input: string): Promise<string> {
+    return input
+  }
 
   function addStep() {
     // Find the first grade not already used
@@ -196,26 +279,30 @@ export default function InlineSkillCreator({ open, onClose, onCreated }: Props) 
             />
           </div>
 
-          {/* Category & Domain */}
+          {/* Domain & Category — smart dropdowns */}
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelCls}>Category</label>
-              <input
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                placeholder="e.g. Mathematics"
-                className={inputCls}
-              />
-            </div>
-            <div>
-              <label className={labelCls}>Domain</label>
-              <input
-                value={domain}
-                onChange={(e) => setDomain(e.target.value)}
-                placeholder="e.g. Number & Operations"
-                className={inputCls}
-              />
-            </div>
+            <SmartSelect
+              value={domain}
+              onChange={setDomain}
+              options={domainOptions}
+              label="Domain"
+              optional
+              placeholder="Select domain…"
+              allowCreate
+              onCreateNew={handleCreateDomain}
+              createPlaceholder="New domain…"
+            />
+            <SmartSelect
+              value={category}
+              onChange={setCategory}
+              options={categoryOptions}
+              label="Category"
+              optional
+              placeholder="Select category…"
+              allowCreate
+              onCreateNew={handleCreateCategory}
+              createPlaceholder="New category…"
+            />
           </div>
 
           {/* Progression Steps */}

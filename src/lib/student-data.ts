@@ -132,9 +132,14 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
 
         const stu = studentData as Student
 
-        // 12-month lookback window for observations
+        // Lookback window: use enrollment date if available, otherwise 12 months
+        const lookbackDate = stu.enrollment_date
+          ? new Date(stu.enrollment_date)
+          : (() => { const d = new Date(); d.setMonth(d.getMonth() - 12); return d })()
+        // Ensure at least 12 months of history
         const twelveMonthsAgo = new Date()
         twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12)
+        const observationCutoff = lookbackDate < twelveMonthsAgo ? lookbackDate : twelveMonthsAgo
 
         // Fetch all classroom enrollments via junction table
         const { data: scData } = await supabase
@@ -171,7 +176,7 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
             .from('observations')
             .select('*')
             .eq('student_id', studentId)
-            .gte('observed_at', twelveMonthsAgo.toISOString())
+            .gte('observed_at', observationCutoff.toISOString())
             .order('observed_at', { ascending: false }),
           supabase
             .from('interest_surveys')
