@@ -1,7 +1,8 @@
 /**
  * TimelinePlayback.tsx
  * Timeline scrubber with:
- * - Period selector buttons (3 months, 6 months, 1 year, All time)
+ * - School-year buttons (e.g. "22/23", "23/24", "24/25", "25/26")
+ *   School year = August of one year → June of the next
  * - Play/pause with looping
  * - Evolving date label during playback
  * - Dot markers for each snapshot
@@ -23,17 +24,79 @@ interface Props {
   className?: string
 }
 
-type Period = '3m' | '6m' | '1y' | 'all'
+// ============================================================
+// School year helpers
+// ============================================================
 
-const PERIODS: { key: Period; label: string; months: number }[] = [
-  { key: '3m', label: '3 Mo', months: 3 },
-  { key: '6m', label: '6 Mo', months: 6 },
-  { key: '1y', label: '1 Yr', months: 12 },
-  { key: 'all', label: 'All', months: Infinity },
-]
+/** A school year spans Aug 1 of `startYear` through Jul 31 of `startYear + 1`. */
+interface SchoolYear {
+  /** Short label, e.g. "24/25" */
+  label: string
+  /** Full label, e.g. "2024–2025" */
+  fullLabel: string
+  /** Unique key */
+  key: string
+  /** Calendar year the school year starts (August) */
+  startYear: number
+  /** Aug 1 of start year */
+  startDate: Date
+  /** Jul 31 of next year */
+  endDate: Date
+}
 
-const PLAY_INTERVAL_MS = 1250 // matches animation duration for seamless continuous motion
-const END_PAUSE_MS = 2000 // pause at "current" before looping
+/**
+ * Given a date, return the school year it falls in.
+ * Aug-Dec → that year is the start year.
+ * Jan-Jul → previous year is the start year.
+ */
+function schoolYearOf(d: Date): number {
+  return d.getMonth() >= 7 ? d.getFullYear() : d.getFullYear() - 1
+}
+
+function buildSchoolYear(startYear: number): SchoolYear {
+  const endYear = startYear + 1
+  const shortStart = String(startYear).slice(-2)
+  const shortEnd = String(endYear).slice(-2)
+  return {
+    label: `${shortStart}/${shortEnd}`,
+    fullLabel: `${startYear}–${endYear}`,
+    key: `${startYear}`,
+    startYear,
+    startDate: new Date(startYear, 7, 1), // Aug 1
+    endDate: new Date(endYear, 6, 31, 23, 59, 59, 999), // Jul 31
+  }
+}
+
+/**
+ * Derive the list of school years that have data in the snapshots.
+ * Always includes the current school year.
+ */
+function deriveSchoolYears(snapshots: Snapshot[]): SchoolYear[] {
+  if (snapshots.length === 0) return []
+
+  const yearsWithData = new Set<number>()
+  for (const snap of snapshots) {
+    const d = new Date(snap.date)
+    yearsWithData.add(schoolYearOf(d))
+  }
+
+  // Always include current school year
+  yearsWithData.add(schoolYearOf(new Date()))
+
+  const sorted = [...yearsWithData].sort((a, b) => a - b)
+  return sorted.map(buildSchoolYear)
+}
+
+// ============================================================
+// Constants
+// ============================================================
+
+const PLAY_INTERVAL_MS = 1250
+const END_PAUSE_MS = 2000
+
+// ============================================================
+// Component
+// ============================================================
 
 export default function TimelinePlayback({
   snapshots,
@@ -46,42 +109,68 @@ export default function TimelinePlayback({
   const [internalPlaying, setInternalPlaying] = useState(false)
   const playing = controlledPlaying ?? internalPlaying
   const setPlaying = onPlayingChange ?? setInternalPlaying
-  const [period, setPeriod] = useState<Period>('all')
   const intervalRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Filter snapshots by selected period
+  // Derive school years from snapshot data
+  const schoolYears = useMemo(() => deriveSchoolYears(snapshots), [snapshots])
+  const currentSchoolYear = useMemo(() => schoolYearOf(new Date()), [])
+
+  // Default to current school year, or "all" if only one year of data
+  const [selectedYear, setSelectedYear] = useState<string | 'all'>(
+    schoolYears.length <= 1 ? 'all' : String(currentSchoolYear)
+  )
+
+  // Update selected year when school years change (e.g. data loads)
+  useEffect(() => {
+    if (schoolYears.length <= 1) {
+      setSelectedYear('all')
+    } else if (selectedYear === 'all') {
+      // Keep "all" if user chose it
+    } else {
+      // Ensure the selected year still exists
+      const exists = schoolYears.some((sy) => sy.key === selectedYear)
+      if (!exists) setSelectedYear('all')
+    }
+  }, [schoolYears])
+
+  // Filter snapshots by selected school year
   const { filteredSnapshots, startOffset } = useMemo(() => {
-    if (period === 'all') {
+    if (selectedYear === 'all') {
       return { filteredSnapshots: snapshots, startOffset: 0 }
     }
 
-    const periodConfig = PERIODS.find((p) => p.key === period)!
-    const now = new Date()
-    const cutoff = new Date(now.getFullYear(), now.getMonth() - periodConfig.months, 1)
+    const sy = schoolYears.find((y) => y.key === selectedYear)
+    if (!sy) return { filteredSnapshots: snapshots, startOffset: 0 }
 
     let startIdx = 0
     for (let i = 0; i < snapshots.length; i++) {
-      if (new Date(snapshots[i].date) >= cutoff) {
+      if (new Date(snapshots[i].date) >= sy.startDate) {
         startIdx = i
         break
       }
     }
 
+    let endIdx = snapshots.length
+    for (let i = snapshots.length - 1; i >= 0; i--) {
+      if (new Date(snapshots[i].date) <= sy.endDate) {
+        endIdx = i + 1
+        break
+      }
+    }
+
     return {
-      filteredSnapshots: snapshots.slice(startIdx),
+      filteredSnapshots: snapshots.slice(startIdx, endIdx),
       startOffset: startIdx,
     }
-  }, [snapshots, period])
+  }, [snapshots, selectedYear, schoolYears])
 
   const total = filteredSnapshots.length
-  // Map the global currentIndex to the filtered view
   const filteredIndex = Math.max(0, Math.min(currentIndex - startOffset, total - 1))
 
-  // Use a ref to track current filtered index for the interval
   const idxRef = useRef(filteredIndex)
   idxRef.current = filteredIndex
 
-  // Auto-advance when playing (loops back to start with pause at end)
+  // Auto-advance when playing
   useEffect(() => {
     if (!playing) {
       if (intervalRef.current) clearTimeout(intervalRef.current)
@@ -92,7 +181,6 @@ export default function TimelinePlayback({
     function scheduleNext() {
       const next = idxRef.current + 1
       if (next >= total) {
-        // Reached the end — pause for 2 seconds, then loop
         intervalRef.current = setTimeout(() => {
           onChange(startOffset)
           intervalRef.current = setTimeout(scheduleNext, PLAY_INTERVAL_MS)
@@ -103,7 +191,6 @@ export default function TimelinePlayback({
       }
     }
 
-    // Start first tick
     intervalRef.current = setTimeout(scheduleNext, PLAY_INTERVAL_MS)
 
     return () => {
@@ -116,34 +203,34 @@ export default function TimelinePlayback({
 
   const handlePlay = useCallback(() => {
     if (filteredIndex >= total - 1) {
-      // At end, restart from beginning
       onChange(startOffset)
     }
     setPlaying(true)
   }, [filteredIndex, total, startOffset, onChange])
 
-  const handlePeriodChange = useCallback(
-    (p: Period) => {
+  const handleYearChange = useCallback(
+    (yearKey: string | 'all') => {
       setPlaying(false)
-      setPeriod(p)
-      // Jump to start of new period
-      if (p === 'all') {
+      setSelectedYear(yearKey)
+
+      if (yearKey === 'all') {
         onChange(0)
-      } else {
-        const periodConfig = PERIODS.find((x) => x.key === p)!
-        const now = new Date()
-        const cutoff = new Date(now.getFullYear(), now.getMonth() - periodConfig.months, 1)
-        let startIdx = 0
-        for (let i = 0; i < snapshots.length; i++) {
-          if (new Date(snapshots[i].date) >= cutoff) {
-            startIdx = i
-            break
-          }
-        }
-        onChange(startIdx)
+        return
       }
+
+      const sy = schoolYears.find((y) => y.key === yearKey)
+      if (!sy) return
+
+      let startIdx = 0
+      for (let i = 0; i < snapshots.length; i++) {
+        if (new Date(snapshots[i].date) >= sy.startDate) {
+          startIdx = i
+          break
+        }
+      }
+      onChange(startIdx)
     },
-    [snapshots, onChange]
+    [snapshots, schoolYears, onChange]
   )
 
   if (total <= 1) return null
@@ -153,24 +240,38 @@ export default function TimelinePlayback({
 
   return (
     <div className={clsx('space-y-3', className)}>
-      {/* ── Period selector + date label ── */}
+      {/* ── School year selector + date label ── */}
       <div className="flex items-center justify-between gap-3">
-        {/* Period pills */}
-        <div className="flex gap-1">
-          {PERIODS.map((p) => (
+        {/* School year pills */}
+        <div className="flex flex-wrap gap-1">
+          {schoolYears.map((sy) => (
             <button
-              key={p.key}
-              onClick={() => handlePeriodChange(p.key)}
+              key={sy.key}
+              onClick={() => handleYearChange(sy.key)}
               className={clsx(
                 'rounded-full px-3 py-1 text-[11px] font-medium transition-colors',
-                period === p.key
+                selectedYear === sy.key
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-bg-muted text-text-muted hover:bg-bg hover:text-text'
+              )}
+              title={sy.fullLabel}
+            >
+              {sy.label}
+            </button>
+          ))}
+          {schoolYears.length > 1 && (
+            <button
+              onClick={() => handleYearChange('all')}
+              className={clsx(
+                'rounded-full px-3 py-1 text-[11px] font-medium transition-colors',
+                selectedYear === 'all'
                   ? 'bg-primary-500 text-white'
                   : 'bg-bg-muted text-text-muted hover:bg-bg hover:text-text'
               )}
             >
-              {p.label}
+              All
             </button>
-          ))}
+          )}
         </div>
 
         {/* Current date — large, prominent during playback */}
@@ -274,7 +375,10 @@ export default function TimelinePlayback({
         <div className="flex items-center justify-center gap-1.5">
           <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary-400" />
           <span className="text-[10px] font-medium text-text-light">
-            Looping {PERIODS.find((p) => p.key === period)?.label ?? 'All'}
+            Looping{' '}
+            {selectedYear === 'all'
+              ? 'All'
+              : schoolYears.find((y) => y.key === selectedYear)?.label ?? ''}
           </span>
         </div>
       )}
