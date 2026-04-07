@@ -302,6 +302,14 @@ export function buildSnapshots(
   })
 
   // Mark September grade transitions and apply score reductions
+  if (typeof console !== 'undefined') {
+    console.log(
+      `[LivingData] buildSnapshots called with gradeLevel="${gradeLevel}", ` +
+      `found in GRADE_ORDER: ${gradeLevel ? GRADE_ORDER.indexOf(gradeLevel) >= 0 : 'null'}, ` +
+      `snapshots: ${snapshots.length}, ` +
+      `septemberSnapshots: ${snapshots.filter(s => new Date(s.date).getMonth() === 8).map(s => s.label).join(', ') || 'none'}`
+    )
+  }
   if (gradeLevel && GRADE_ORDER.indexOf(gradeLevel) >= 0) {
     for (let i = 1; i < snapshots.length; i++) {
       const prev = snapshots[i - 1]
