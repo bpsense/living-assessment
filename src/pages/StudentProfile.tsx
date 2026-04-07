@@ -105,7 +105,12 @@ export default function StudentProfile() {
   // gradually toward each change rather than jumping in a single step.
   // (Experiment — remove smoothSnapshots() wrapper to revert to raw steps)
   const snapshots = useMemo(
-    () => smoothSnapshots(buildSnapshots(observations, surveys, visibleDimensions, competencyData, student?.grade_level)),
+    () => {
+      const s = smoothSnapshots(buildSnapshots(observations, surveys, visibleDimensions, competencyData, student?.grade_level));
+      // Debug: expose snapshots for inspection
+      if (typeof window !== 'undefined') (window as any).__snapshots = s;
+      return s;
+    },
     [observations, surveys, visibleDimensions, competencyData, student?.grade_level]
   )
 
