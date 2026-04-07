@@ -356,35 +356,25 @@ export function applyGradeTransitionDecay(snapshots: Snapshot[]): Snapshot[] {
     dimensionScores: s.dimensionScores.map((ds) => ({ ...ds })),
   }))
 
-  // For each transition, decay all months from September through end of that school year
+  // For each transition, simply multiply ALL scores from September through
+  // end of that school year by the decay factor. This is applied sequentially
+  // so the second transition decays the already-decayed scores from the first,
+  // which is correct — each new grade compounds the expectation increase.
   for (const tIdx of transitionIndices) {
     const nextTransition = transitionIndices.find((t) => t > tIdx)
     const endIdx = nextTransition ?? result.length
 
-    // Pre-transition scores (the month before September — end of previous year)
-    const preCompetency = result[tIdx - 1].dimensionScores.map((ds) => ds.competency)
-
     for (let i = tIdx; i < endIdx; i++) {
-      result[i].dimensionScores = result[i].dimensionScores.map((ds, d) => {
-        // The actual score for this month (may have grown from new observations)
-        // Take the MINIMUM of: raw score, or the pre-transition level
-        // Then apply decay to that baseline. Any growth above the decayed floor is real new-grade growth.
-        const cappedAtPrev = Math.min(ds.competency, preCompetency[d])
-        const decayedScore = cappedAtPrev > 0
-          ? Math.max(cappedAtPrev * GRADE_TRANSITION_COMPETENCY_FACTOR, GRADE_TRANSITION_MIN_COMPETENCY)
-          : 0
-
-        // New-grade growth = how much the score exceeds the pre-transition level
-        const newGrowth = Math.max(0, ds.competency - preCompetency[d])
-
-        return {
-          ...ds,
-          competency: decayedScore + newGrowth,
-          interest: i === tIdx
-            ? ds.interest * GRADE_TRANSITION_INTEREST_FACTOR
-            : ds.interest,
-        }
-      })
+      result[i].dimensionScores = result[i].dimensionScores.map((ds) => ({
+        ...ds,
+        competency:
+          ds.competency > 0
+            ? Math.max(ds.competency * GRADE_TRANSITION_COMPETENCY_FACTOR, GRADE_TRANSITION_MIN_COMPETENCY)
+            : 0,
+        interest: i === tIdx
+          ? ds.interest * GRADE_TRANSITION_INTEREST_FACTOR
+          : ds.interest,
+      }))
     }
   }
 
