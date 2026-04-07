@@ -301,14 +301,18 @@ export function buildSnapshots(
     }
   })
 
-  // Mark September grade transitions and apply score reductions.
+  // ── Grade transition: forward-only decay ──────────────────────
   //
-  // The decay must apply to ALL snapshots in prior school years, not just
-  // September. Otherwise scores jump back up in October because the raw
-  // "latest observation" carries forward unchanged.
+  // Each school year should show FULL-SIZE scores during its months.
+  // At each September, scores decay because expectations increased.
+  // The decay applies FORWARD from September until new observations
+  // provide fresh data at the higher grade level.
   //
-  // Strategy: count how many grade transitions are AHEAD of each snapshot
-  // (between it and the final snapshot). Each transition compounds the decay.
+  // Visual effect during playback:
+  //   Grade 1: blob at full size (Achieving = Achieving ring) ✓
+  //   Sep → Grade 2: blob compresses to Emerging area ✓
+  //   Grade 2: blob grows as new observations come in ✓
+  //   Sep → Grade 3: blob compresses again ✓
   if (gradeLevel && GRADE_ORDER.indexOf(gradeLevel) >= 0) {
     // First pass: find all September transition indices
     const transitionIndices: number[] = []
@@ -329,34 +333,59 @@ export function buildSnapshots(
       }
     }
 
-    // Second pass: for each snapshot, count how many transitions come AFTER it.
-    // Snapshots before the FIRST transition get decayed by all transitions.
-    // Snapshots between transitions get decayed by remaining transitions.
-    // Snapshots after the LAST transition get no decay (current school year).
-    for (let i = 0; i < snapshots.length; i++) {
-      // How many transitions are strictly after this snapshot index?
-      const transitionsAhead = transitionIndices.filter((t) => t > i).length
-      if (transitionsAhead === 0) continue // current school year — no decay
+    // Second pass: for each transition, decay scores FORWARD.
+    // At September, record each dimension's pre-transition score.
+    // For subsequent months, if the raw score is still the same
+    // (carried-forward old observation), apply the decay.
+    // Once a dimension's score changes (new observation), stop decaying it.
+    for (const tIdx of transitionIndices) {
+      // Pre-transition scores (August / the month before September)
+      const preScores = snapshots[tIdx - 1].dimensionScores.map((ds) => ds.competency)
+      const preInterest = snapshots[tIdx - 1].dimensionScores.map((ds) => ds.interest)
 
-      const compFactor = Math.pow(GRADE_TRANSITION_COMPETENCY_FACTOR, transitionsAhead)
-      const intFactor = Math.pow(GRADE_TRANSITION_INTEREST_FACTOR, transitionsAhead)
+      // Track which dimensions have received new data (score changed from pre-transition)
+      const dimHasNewData = new Array(preScores.length).fill(false)
 
-      snapshots[i].dimensionScores = snapshots[i].dimensionScores.map((ds) => ({
-        ...ds,
-        competency:
-          ds.competency > 0
-            ? Math.max(ds.competency * compFactor, GRADE_TRANSITION_MIN_COMPETENCY)
-            : 0,
-        interest:
-          ds.interest > 0
-            ? ds.interest * intFactor
-            : 0,
-      }))
+      // Find the end of this school year (next transition or end of snapshots)
+      const nextTransition = transitionIndices.find((t) => t > tIdx)
+      const endIdx = nextTransition ?? snapshots.length
+
+      for (let i = tIdx; i < endIdx; i++) {
+        snapshots[i].dimensionScores = snapshots[i].dimensionScores.map((ds, d) => {
+          // If this dimension already got new data in this school year, leave it alone
+          if (dimHasNewData[d]) return ds
+
+          // Check if the raw score has changed from the pre-transition value
+          // (meaning a new observation was recorded at the new grade level)
+          const scoreDiff = Math.abs(ds.competency - preScores[d])
+          if (scoreDiff > 0.15 && i > tIdx) {
+            // Score changed — new observation at this grade level
+            dimHasNewData[d] = true
+            return ds
+          }
+
+          // Still carrying forward old-grade data — apply decay
+          return {
+            ...ds,
+            competency:
+              ds.competency > 0
+                ? Math.max(
+                    ds.competency * GRADE_TRANSITION_COMPETENCY_FACTOR,
+                    GRADE_TRANSITION_MIN_COMPETENCY
+                  )
+                : 0,
+            interest:
+              ds.interest > 0 && Math.abs(ds.interest - preInterest[d]) < 0.15
+                ? ds.interest * GRADE_TRANSITION_INTEREST_FACTOR
+                : ds.interest,
+          }
+        })
+      }
     }
 
     if (typeof console !== 'undefined' && transitionIndices.length > 0) {
       console.log(
-        `[LivingData] Grade transitions: ${transitionIndices.map((i) =>
+        `[LivingData] Grade transitions (forward-decay): ${transitionIndices.map((i) =>
           `${snapshots[i].prevGradeYear} → ${snapshots[i].gradeYear} at ${snapshots[i].label}`
         ).join(', ')}`
       )
