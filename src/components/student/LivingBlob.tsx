@@ -32,6 +32,10 @@ interface Props {
   observations?: Observation[]
   /** Map of observer_id -> display name */
   observers?: Map<string, string>
+  /** Grade transition squeeze progress: 1 = max squeeze (rings at largest), 0 = normal. Animates 1→0. */
+  ringSqueezeProgress?: number
+  /** Label shown during grade transition, e.g. "Grade 3" */
+  gradeTransitionLabel?: string
 }
 
 // ── Design tokens ──────────────────────────────────────────────
@@ -139,6 +143,8 @@ export default function LivingBlob({
   onDimensionClick,
   observations,
   observers,
+  ringSqueezeProgress = 0,
+  gradeTransitionLabel,
 }: Props) {
   const uid = useId()
   const svgRef = useRef<SVGSVGElement>(null)
@@ -352,159 +358,205 @@ export default function LivingBlob({
           filter={`url(#${uid}-ring-glow)`}
         />
 
-        {/* ── Background: concentric level fill bands (outermost first) ── */}
-        {[...ringRadii].reverse().map((r, revI) => {
-          const i = ringRadii.length - 1 - revI
+        {/* ── Incoming squeeze rings (visible during grade transition) ── */}
+        {ringSqueezeProgress > 0 && ringRadii.map((r, i) => {
+          // Incoming rings start large and squeeze to normal position
+          const inflatedR = r * (1 + 0.5 * ringSqueezeProgress)
           return (
             <circle
-              key={`ring-fill-${i}`}
+              key={`squeeze-ring-${i}`}
               cx={cx}
               cy={cy}
-              r={r}
-              fill={LEVEL_META[i].fill}
-              stroke="none"
+              r={inflatedR}
+              fill="none"
+              stroke={LEVEL_META[i].stroke}
+              strokeWidth={i === LEVEL_COUNT - 1 ? 2.5 : 2}
+              strokeDasharray={i < LEVEL_COUNT - 1 ? '4 6' : 'none'}
+              opacity={0.4 + 0.4 * ringSqueezeProgress}
+              style={{ transition: 'none' }}
             />
           )
         })}
 
-        {/* ── Concentric level ring strokes ── */}
-        {ringRadii.map((r, i) => (
-          <circle
-            key={`ring-${i}`}
-            cx={cx}
-            cy={cy}
-            r={r}
-            fill="none"
-            stroke={LEVEL_META[i].stroke}
-            strokeWidth={i === LEVEL_COUNT - 1 ? 2 : 1.5}
-            strokeDasharray={i < LEVEL_COUNT - 1 ? '4 6' : 'none'}
-            opacity={0.9}
-          />
-        ))}
+        {/* ── Main content group: compressed during grade transition ── */}
+        <g
+          transform={
+            ringSqueezeProgress > 0
+              ? `translate(${cx},${cy}) scale(${1 - 0.3 * ringSqueezeProgress}) translate(${-cx},${-cy})`
+              : undefined
+          }
+          style={ringSqueezeProgress > 0 ? { transition: 'none' } : undefined}
+        >
+          {/* ── Background: concentric level fill bands (outermost first) ── */}
+          {[...ringRadii].reverse().map((r, revI) => {
+            const i = ringRadii.length - 1 - revI
+            return (
+              <circle
+                key={`ring-fill-${i}`}
+                cx={cx}
+                cy={cy}
+                r={r}
+                fill={LEVEL_META[i].fill}
+                stroke="none"
+              />
+            )
+          })}
 
-        {/* Level labels along the right axis */}
-        {showLevelLabels &&
-          ringRadii.map((r, i) => (
-            <text
-              key={`lvl-${i}`}
-              x={cx + 8}
-              y={cy - r + 15}
-              fill="#A9A49A"
-              fontSize={12}
-              fontWeight={600}
+          {/* ── Concentric level ring strokes ── */}
+          {ringRadii.map((r, i) => (
+            <circle
+              key={`ring-${i}`}
+              cx={cx}
+              cy={cy}
+              r={r}
+              fill="none"
+              stroke={LEVEL_META[i].stroke}
+              strokeWidth={i === LEVEL_COUNT - 1 ? 2 : 1.5}
+              strokeDasharray={i < LEVEL_COUNT - 1 ? '4 6' : 'none'}
               opacity={0.9}
-              letterSpacing="0.02em"
-            >
-              {LEVEL_META[i].label}
-            </text>
+            />
           ))}
 
-        {/* ── Dotted axis lines from center to label position ── */}
-        {labels.map((l) => (
-          <line
-            key={`spoke-${l.id}`}
-            x1={cx}
-            y1={cy}
-            x2={l.spokeEnd.x}
-            y2={l.spokeEnd.y}
-            stroke="#A9A49A"
-            strokeWidth={1.2}
-            strokeDasharray="2 5"
-            opacity={0.7}
-          />
-        ))}
+          {/* Level labels along the right axis */}
+          {showLevelLabels &&
+            ringRadii.map((r, i) => (
+              <text
+                key={`lvl-${i}`}
+                x={cx + 8}
+                y={cy - r + 15}
+                fill="#A9A49A"
+                fontSize={12}
+                fontWeight={600}
+                opacity={0.9}
+                letterSpacing="0.02em"
+              >
+                {LEVEL_META[i].label}
+              </text>
+            ))}
 
-        {/* ── Competency blob (organic filled shape) ── */}
-        {blobD && (
-          <path
-            d={blobD}
-            fill={`url(#${uid}-blob-grad)`}
-            stroke={TEAL}
-            strokeWidth={2.5}
-            strokeLinejoin="round"
-            filter={`url(#${uid}-glow)`}
-            className="living-blob-path"
-          />
-        )}
-
-        {/* ── Competency dots (on blob edge) ── */}
-        {compDots.map((dot) => (
-          <g key={`cdot-${dot.id}`}>
-            {/* Subtle halo behind competency dot */}
-            <circle
-              cx={dot.x}
-              cy={dot.y}
-              r={10}
-              fill={TEAL}
-              opacity={0.08}
-              className="living-blob-dot"
+          {/* ── Dotted axis lines from center to label position ── */}
+          {labels.map((l) => (
+            <line
+              key={`spoke-${l.id}`}
+              x1={cx}
+              y1={cy}
+              x2={l.spokeEnd.x}
+              y2={l.spokeEnd.y}
+              stroke="#A9A49A"
+              strokeWidth={1.2}
+              strokeDasharray="2 5"
+              opacity={0.7}
             />
-            <circle
-              cx={dot.x}
-              cy={dot.y}
-              r={6}
-              fill={TEAL}
-              stroke="white"
+          ))}
+
+          {/* ── Competency blob (organic filled shape) ── */}
+          {blobD && (
+            <path
+              d={blobD}
+              fill={`url(#${uid}-blob-grad)`}
+              stroke={TEAL}
               strokeWidth={2.5}
-              className="living-blob-dot"
+              strokeLinejoin="round"
+              filter={`url(#${uid}-glow)`}
+              className="living-blob-path"
+            />
+          )}
+
+          {/* ── Competency dots (on blob edge) ── */}
+          {compDots.map((dot) => (
+            <g key={`cdot-${dot.id}`}>
+              {/* Subtle halo behind competency dot */}
+              <circle
+                cx={dot.x}
+                cy={dot.y}
+                r={10}
+                fill={TEAL}
+                opacity={0.08}
+                className="living-blob-dot"
+              />
+              <circle
+                cx={dot.x}
+                cy={dot.y}
+                r={6}
+                fill={TEAL}
+                stroke="white"
+                strokeWidth={2.5}
+                className="living-blob-dot"
+                style={{ cursor: 'pointer' }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDotClick(dot.id, dot.x, dot.y)
+                }}
+              >
+                <title>
+                  {dot.name}: Competency {dot.competency.toFixed(1)}/4
+                </title>
+              </circle>
+            </g>
+          ))}
+
+          {/* ── Interest dots (amber markers) ── */}
+          {interestDots.map((dot) => (
+            <g
+              key={`idot-${dot.id}`}
               style={{ cursor: 'pointer' }}
               onClick={(e) => {
                 e.stopPropagation()
                 handleDotClick(dot.id, dot.x, dot.y)
               }}
             >
-              <title>
-                {dot.name}: Competency {dot.competency.toFixed(1)}/4
-              </title>
-            </circle>
-          </g>
-        ))}
-
-        {/* ── Interest dots (amber markers) ── */}
-        {interestDots.map((dot) => (
-          <g
-            key={`idot-${dot.id}`}
-            style={{ cursor: 'pointer' }}
-            onClick={(e) => {
-              e.stopPropagation()
-              handleDotClick(dot.id, dot.x, dot.y)
-            }}
-          >
-            {/* Subtle halo behind interest dot */}
-            {dot.interest > 0 && (
+              {/* Subtle halo behind interest dot */}
+              {dot.interest > 0 && (
+                <circle
+                  cx={dot.x}
+                  cy={dot.y}
+                  r={11}
+                  fill={AMBER}
+                  opacity={0.08}
+                  className="living-blob-dot"
+                />
+              )}
               <circle
                 cx={dot.x}
                 cy={dot.y}
-                r={11}
+                r={7}
                 fill={AMBER}
-                opacity={0.08}
+                stroke="white"
+                strokeWidth={2.5}
+                opacity={dot.interest > 0 ? 0.92 : 0.15}
                 className="living-blob-dot"
               />
-            )}
-            <circle
-              cx={dot.x}
-              cy={dot.y}
-              r={7}
-              fill={AMBER}
-              stroke="white"
-              strokeWidth={2.5}
-              opacity={dot.interest > 0 ? 0.92 : 0.15}
-              className="living-blob-dot"
-            />
-            {/* Inner highlight */}
-            <circle
-              cx={dot.x}
-              cy={dot.y}
-              r={2.5}
-              fill="white"
-              opacity={dot.interest > 0 ? 0.7 : 0}
-              className="living-blob-dot"
-            />
-            <title>
-              {dot.name}: Interest {dot.interest.toFixed(1)}/5
-            </title>
-          </g>
-        ))}
+              {/* Inner highlight */}
+              <circle
+                cx={dot.x}
+                cy={dot.y}
+                r={2.5}
+                fill="white"
+                opacity={dot.interest > 0 ? 0.7 : 0}
+                className="living-blob-dot"
+              />
+              <title>
+                {dot.name}: Interest {dot.interest.toFixed(1)}/5
+              </title>
+            </g>
+          ))}
+        </g>
+
+        {/* ── Grade transition label ── */}
+        {ringSqueezeProgress > 0 && gradeTransitionLabel && (
+          <text
+            x={cx}
+            y={cy - maxR - 10}
+            textAnchor="middle"
+            fill={TEAL}
+            fontSize={16}
+            fontWeight={700}
+            opacity={Math.min(1, ringSqueezeProgress * 2)}
+            letterSpacing="0.02em"
+          >
+            {gradeTransitionLabel}
+          </text>
+        )}
 
         {/* ── Dimension labels (multi-line, word-wrapped) ── */}
         {labels.map((l) => {

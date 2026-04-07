@@ -79,6 +79,77 @@ function useAnimatedScores(
   return displayed
 }
 
+// ── Grade transition squeeze hook ───────────────────────────────
+// Detects when playback crosses a September grade boundary and
+// drives a 1→0 animation of the ring squeeze effect.
+
+function useGradeTransition(
+  snapshots: Snapshot[],
+  snapshotIdx: number | null,
+  playing: boolean
+): { squeezeProgress: number; transitionLabel: string | null } {
+  const [squeezeProgress, setSqueezeProgress] = useState(0)
+  const [transitionLabel, setTransitionLabel] = useState<string | null>(null)
+  const rafRef = useRef<number>(0)
+  const prevIdxRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (snapshotIdx === null || snapshots.length === 0) return
+
+    const snap = snapshots[Math.min(snapshotIdx, snapshots.length - 1)]
+    const prevIdx = prevIdxRef.current
+    prevIdxRef.current = snapshotIdx
+
+    // Only trigger when advancing forward to a grade transition snapshot
+    if (
+      !snap?.isGradeTransition ||
+      prevIdx === null ||
+      snapshotIdx <= prevIdx
+    ) {
+      return
+    }
+
+    // Start the squeeze animation
+    const label = snap.gradeYear
+      ? `Grade ${snap.gradeYear}`
+      : 'New School Year'
+    console.log(`[GradeTransition] Triggering squeeze: ${snap.prevGradeYear} → ${snap.gradeYear} at ${snap.label}`)
+    setTransitionLabel(label)
+    setSqueezeProgress(1)
+
+    const duration = playing ? 1200 : 600
+    const startTime = performance.now()
+
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+
+    function tick(now: number) {
+      const elapsed = now - startTime
+      const rawT = Math.min(elapsed / duration, 1)
+      // Ease-out: fast start, slow finish
+      const eased = 1 - (1 - rawT) * (1 - rawT)
+      const progress = 1 - eased
+
+      setSqueezeProgress(progress)
+
+      if (rawT < 1) {
+        rafRef.current = requestAnimationFrame(tick)
+      } else {
+        setSqueezeProgress(0)
+        setTransitionLabel(null)
+        rafRef.current = 0
+      }
+    }
+
+    rafRef.current = requestAnimationFrame(tick)
+
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    }
+  }, [snapshotIdx, snapshots, playing])
+
+  return { squeezeProgress, transitionLabel }
+}
+
 interface Props {
   /** Current dimension scores (the "now" snapshot) */
   dimensionScores: DimensionScore[]
@@ -134,6 +205,13 @@ export default function LivingVisualization({
   // so each animation is still in-flight when the next snapshot arrives —
   // the hook seamlessly redirects from wherever it is, eliminating any gap.
   const animatedScores = useAnimatedScores(displayScores, 1400)
+
+  // Grade transition squeeze animation
+  const { squeezeProgress, transitionLabel } = useGradeTransition(
+    snapshots,
+    snapshotIdx,
+    playing ?? false
+  )
 
   // Filter observations to those visible at the current snapshot date
   const snapshotObservations = useMemo(() => {
@@ -236,6 +314,8 @@ export default function LivingVisualization({
           onPlayingChange={onPlayingChange}
           isHistorical={isHistorical}
           onClose={closeExpanded}
+          ringSqueezeProgress={squeezeProgress}
+          gradeTransitionLabel={transitionLabel}
         />
       )}
 
@@ -270,6 +350,8 @@ export default function LivingVisualization({
             onDimensionClick={onDimensionClick}
             observations={snapshotObservations}
             observers={observers}
+            ringSqueezeProgress={squeezeProgress}
+            gradeTransitionLabel={transitionLabel}
           />
         </div>
 
@@ -366,6 +448,8 @@ function ExpandedBlobModal({
   onPlayingChange,
   isHistorical,
   onClose,
+  ringSqueezeProgress,
+  gradeTransitionLabel,
 }: {
   animatedScores: DimensionScore[]
   snapshotObservations: Observation[]
@@ -380,6 +464,8 @@ function ExpandedBlobModal({
   onPlayingChange?: (playing: boolean) => void
   isHistorical: boolean
   onClose: () => void
+  ringSqueezeProgress?: number
+  gradeTransitionLabel?: string | null
 }) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-bg/95 backdrop-blur-sm">
@@ -437,6 +523,8 @@ function ExpandedBlobModal({
               observations={snapshotObservations}
               observers={observers}
               className="h-full w-full"
+              ringSqueezeProgress={ringSqueezeProgress}
+              gradeTransitionLabel={gradeTransitionLabel}
             />
           </div>
         </div>

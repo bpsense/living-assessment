@@ -226,6 +226,10 @@ export default function TimelinePlayback({
             {filteredSnapshots.map((snap, i) => {
               const left = total > 1 ? (i / (total - 1)) * 100 : 50
               const isActive = i === filteredIndex
+              const isGradeTransition = snap.isGradeTransition
+              const transitionTitle = isGradeTransition && snap.prevGradeYear && snap.gradeYear
+                ? `Grade ${snap.prevGradeYear} → Grade ${snap.gradeYear}`
+                : snap.label
               return (
                 <button
                   key={snap.date}
@@ -236,11 +240,18 @@ export default function TimelinePlayback({
                   className={clsx(
                     'absolute -translate-x-1/2 rounded-full transition-all duration-200',
                     isActive
-                      ? 'h-4 w-4 -top-[5px] border-2 border-white bg-primary-500 shadow-md'
-                      : 'h-2 w-2 -top-[1px] bg-primary-200 hover:bg-primary-400'
+                      ? 'h-4 w-4 -top-[5px] border-2 border-white shadow-md'
+                      : isGradeTransition
+                        ? 'h-3 w-3 -top-[3px] hover:scale-125'
+                        : 'h-2 w-2 -top-[1px] hover:bg-primary-400',
+                    isActive
+                      ? (isGradeTransition ? 'bg-amber-500' : 'bg-primary-500')
+                      : isGradeTransition
+                        ? 'bg-amber-400 border border-amber-500'
+                        : 'bg-primary-200'
                   )}
                   style={{ left: `${left}%` }}
-                  title={snap.label}
+                  title={transitionTitle}
                 />
               )
             })}

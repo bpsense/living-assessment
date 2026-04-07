@@ -19,7 +19,65 @@ export interface Snapshot {
   label: string
   /** Scores at this point in time */
   dimensionScores: DimensionScore[]
+  /** Which grade level this snapshot belongs to (e.g. "3", "K") */
+  gradeYear?: string
+  /** True on September snapshots where the grade increments */
+  isGradeTransition?: boolean
+  /** The grade that just ended (only on transition snapshots) */
+  prevGradeYear?: string
 }
+
+// ============================================================
+// Grade-level ordering & transition helpers
+// ============================================================
+
+/** Ordered list of grade levels from youngest to oldest */
+const GRADE_ORDER = ['Pre-K', 'TK', 'K', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+
+/**
+ * Count how many September 1st boundaries fall between a date and today.
+ * A September boundary is crossed when moving from before Sep 1 of a year
+ * to on/after Sep 1 of that year.
+ */
+function countSeptembersBetween(fromDate: Date, toDate: Date): number {
+  let count = 0
+  const startYear = fromDate.getFullYear()
+  const endYear = toDate.getFullYear()
+
+  for (let y = startYear; y <= endYear; y++) {
+    const sep1 = new Date(y, 8, 1) // September 1
+    if (sep1 > fromDate && sep1 <= toDate) {
+      count++
+    }
+  }
+  return count
+}
+
+/**
+ * Given a student's current grade level and a snapshot date,
+ * determine what grade the student was in at that time.
+ * Returns undefined if grade_level is null or not in the ordered list.
+ */
+function gradeAtDate(
+  currentGrade: string,
+  snapshotDate: Date,
+  now: Date
+): string | undefined {
+  const idx = GRADE_ORDER.indexOf(currentGrade)
+  if (idx < 0) return undefined
+
+  const sepsBetween = countSeptembersBetween(snapshotDate, now)
+  const historicalIdx = idx - sepsBetween
+  if (historicalIdx < 0) return GRADE_ORDER[0]
+  return GRADE_ORDER[historicalIdx]
+}
+
+/** Competency decay factor applied at grade transitions */
+const GRADE_TRANSITION_COMPETENCY_FACTOR = 0.35
+/** Interest decay factor at grade transitions (interest persists more) */
+const GRADE_TRANSITION_INTEREST_FACTOR = 0.85
+/** Minimum competency to maintain presence in the Emerging ring */
+const GRADE_TRANSITION_MIN_COMPETENCY = 0.25
 
 // ============================================================
 // Build time-series snapshots
@@ -38,7 +96,8 @@ export function buildSnapshots(
   observations: Observation[],
   surveys: InterestSurvey[],
   dimensions: Dimension[],
-  competencyData?: CompetencyBasedData | null
+  competencyData?: CompetencyBasedData | null,
+  gradeLevel?: string | null
 ): Snapshot[] {
   if (dimensions.length === 0) return []
 
@@ -226,6 +285,11 @@ export function buildSnapshots(
       }
     })
 
+    // Determine grade metadata for this snapshot
+    const snapshotGrade = gradeLevel
+      ? gradeAtDate(gradeLevel, snapshotDate, now)
+      : undefined
+
     return {
       date: snapshotDate.toISOString(),
       label: snapshotDate.toLocaleDateString('en-US', {
@@ -233,8 +297,61 @@ export function buildSnapshots(
         year: 'numeric',
       }),
       dimensionScores,
+      gradeYear: snapshotGrade,
     }
   })
+
+  // Mark September grade transitions and apply score reductions
+  if (gradeLevel && GRADE_ORDER.indexOf(gradeLevel) >= 0) {
+    for (let i = 1; i < snapshots.length; i++) {
+      const prev = snapshots[i - 1]
+      const curr = snapshots[i]
+      const currDate = new Date(curr.date)
+
+      // September snapshot with a different (higher) grade than the previous month
+      if (
+        currDate.getMonth() === 8 && // September (0-indexed)
+        curr.gradeYear &&
+        prev.gradeYear &&
+        curr.gradeYear !== prev.gradeYear
+      ) {
+        curr.isGradeTransition = true
+        curr.prevGradeYear = prev.gradeYear
+
+        // Check if there are any non-zero scores to decay
+        const hasScores = curr.dimensionScores.some(
+          (ds) => ds.competency > 0 || ds.interest > 0
+        )
+
+        if (hasScores) {
+          // Apply competency decay — the student's skills are now measured
+          // against a higher bar, so scores drop toward Emerging
+          curr.dimensionScores = curr.dimensionScores.map((ds) => ({
+            ...ds,
+            competency:
+              ds.competency > 0
+                ? Math.max(
+                    ds.competency * GRADE_TRANSITION_COMPETENCY_FACTOR,
+                    GRADE_TRANSITION_MIN_COMPETENCY
+                  )
+                : 0,
+            interest:
+              ds.interest > 0
+                ? ds.interest * GRADE_TRANSITION_INTEREST_FACTOR
+                : 0,
+          }))
+        }
+
+        if (typeof console !== 'undefined') {
+          console.log(
+            `[LivingData] Grade transition at ${curr.label}: ` +
+            `${prev.gradeYear} → ${curr.gradeYear}` +
+            (hasScores ? ' (scores decayed)' : ' (no pre-transition scores)')
+          )
+        }
+      }
+    }
+  }
 
   return snapshots
 }
@@ -317,6 +434,12 @@ export function smoothSnapshots(
   const dimCount = snapshots[0].dimensionScores.length
   if (dimCount === 0) return snapshots
 
+  // Identify grade boundary indices so smoothing doesn't ramp across them
+  const gradeBoundaries = new Set<number>()
+  for (let i = 0; i < snapshots.length; i++) {
+    if (snapshots[i].isGradeTransition) gradeBoundaries.add(i)
+  }
+
   // Extract and smooth each dimension's time series independently
   const smoothedComp: number[][] = []
   const smoothedInt: number[][] = []
@@ -324,8 +447,8 @@ export function smoothSnapshots(
   for (let d = 0; d < dimCount; d++) {
     const rawComp = snapshots.map((s) => s.dimensionScores[d].competency)
     const rawInt = snapshots.map((s) => s.dimensionScores[d].interest)
-    smoothedComp.push(forwardSmooth(rawComp, lookahead))
-    smoothedInt.push(forwardSmooth(rawInt, lookahead))
+    smoothedComp.push(forwardSmooth(rawComp, lookahead, gradeBoundaries))
+    smoothedInt.push(forwardSmooth(rawInt, lookahead, gradeBoundaries))
   }
 
   // Rebuild snapshots with smoothed values
@@ -350,23 +473,28 @@ export function smoothSnapshots(
  *   Raw:      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2]
  *   Smoothed: [1, 1, 1, 1, 1, 1, 1, 1, 1.06, 1.25, 1.56, 2]
  */
-function forwardSmooth(values: number[], lookahead: number): number[] {
+function forwardSmooth(values: number[], lookahead: number, gradeBoundaries?: Set<number>): number[] {
   const n = values.length
   const result = [...values]
 
   for (let i = 1; i < n; i++) {
     // Only smooth transitions between non-zero values.
     // 0 means "no data" — don't ramp into or out of it.
+    // Also skip smoothing if this index crosses a grade boundary.
     if (values[i] === values[i - 1] || values[i] === 0 || values[i - 1] === 0) {
+      continue
+    }
+    if (gradeBoundaries && gradeBoundaries.has(i)) {
       continue
     }
 
     const fromVal = values[i - 1]
     const toVal = values[i]
 
-    // Find where the flat "from" region starts (don't ramp past it)
+    // Find where the flat "from" region starts (don't ramp past it or past grade boundaries)
     let flatStart = i - 1
     while (flatStart > 0 && values[flatStart - 1] === fromVal) {
+      if (gradeBoundaries && gradeBoundaries.has(flatStart)) break
       flatStart--
     }
 
