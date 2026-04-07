@@ -7,7 +7,7 @@ import { useAuth } from '../lib/auth'
 import { useAccessControl } from '../lib/access-control'
 import { useToast } from '../components/Toast'
 import { supabase } from '../lib/supabase'
-import { buildSnapshots, getSnapshotObservationDate, smoothSnapshots } from '../lib/living-data'
+import { buildSnapshots, getSnapshotObservationDate, smoothSnapshots, applyGradeTransitionDecay } from '../lib/living-data'
 import LivingVisualization from '../components/student/LivingVisualization'
 import ZoneMatrix from '../components/student/ZoneMatrix'
 import AILearningGuide from '../components/student/AILearningGuide'
@@ -106,7 +106,7 @@ export default function StudentProfile() {
   // (Experiment — remove smoothSnapshots() wrapper to revert to raw steps)
   const snapshots = useMemo(
     () => {
-      const s = smoothSnapshots(buildSnapshots(observations, surveys, visibleDimensions, competencyData, student?.grade_level));
+      const s = applyGradeTransitionDecay(smoothSnapshots(buildSnapshots(observations, surveys, visibleDimensions, competencyData, student?.grade_level)));
       // Debug: expose snapshots for inspection
       if (typeof window !== 'undefined') (window as any).__snapshots = s;
       return s;
