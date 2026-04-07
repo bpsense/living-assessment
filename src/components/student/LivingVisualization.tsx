@@ -315,7 +315,7 @@ export default function LivingVisualization({
           isHistorical={isHistorical}
           onClose={closeExpanded}
           ringSqueezeProgress={squeezeProgress}
-          gradeTransitionLabel={transitionLabel}
+          gradeTransitionLabel={transitionLabel ?? undefined}
         />
       )}
 
@@ -351,7 +351,7 @@ export default function LivingVisualization({
             observations={snapshotObservations}
             observers={observers}
             ringSqueezeProgress={squeezeProgress}
-            gradeTransitionLabel={transitionLabel}
+            gradeTransitionLabel={transitionLabel ?? undefined}
           />
         </div>
 
@@ -522,10 +522,9 @@ function ExpandedBlobModal({
               onDimensionClick={onDimensionClick}
               observations={snapshotObservations}
               observers={observers}
-              schoolYearRings={schoolYearRings}
               className="h-full w-full"
               ringSqueezeProgress={ringSqueezeProgress}
-              gradeTransitionLabel={gradeTransitionLabel}
+              gradeTransitionLabel={gradeTransitionLabel ?? undefined}
             />
           </div>
         </div>
