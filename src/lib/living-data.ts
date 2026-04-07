@@ -301,63 +301,65 @@ export function buildSnapshots(
     }
   })
 
-  // Mark September grade transitions and apply score reductions
-  if (typeof console !== 'undefined') {
-    console.log(
-      `[LivingData] buildSnapshots called with gradeLevel="${gradeLevel}", ` +
-      `found in GRADE_ORDER: ${gradeLevel ? GRADE_ORDER.indexOf(gradeLevel) >= 0 : 'null'}, ` +
-      `snapshots: ${snapshots.length}, ` +
-      `septemberSnapshots: ${snapshots.filter(s => new Date(s.date).getMonth() === 8).map(s => s.label).join(', ') || 'none'}`
-    )
-  }
+  // Mark September grade transitions and apply score reductions.
+  //
+  // The decay must apply to ALL snapshots in prior school years, not just
+  // September. Otherwise scores jump back up in October because the raw
+  // "latest observation" carries forward unchanged.
+  //
+  // Strategy: count how many grade transitions are AHEAD of each snapshot
+  // (between it and the final snapshot). Each transition compounds the decay.
   if (gradeLevel && GRADE_ORDER.indexOf(gradeLevel) >= 0) {
+    // First pass: find all September transition indices
+    const transitionIndices: number[] = []
     for (let i = 1; i < snapshots.length; i++) {
       const prev = snapshots[i - 1]
       const curr = snapshots[i]
       const currDate = new Date(curr.date)
 
-      // September snapshot with a different (higher) grade than the previous month
       if (
-        currDate.getMonth() === 8 && // September (0-indexed)
+        currDate.getMonth() === 8 &&
         curr.gradeYear &&
         prev.gradeYear &&
         curr.gradeYear !== prev.gradeYear
       ) {
         curr.isGradeTransition = true
         curr.prevGradeYear = prev.gradeYear
-
-        // Check if there are any non-zero scores to decay
-        const hasScores = curr.dimensionScores.some(
-          (ds) => ds.competency > 0 || ds.interest > 0
-        )
-
-        if (hasScores) {
-          // Apply competency decay — the student's skills are now measured
-          // against a higher bar, so scores drop toward Emerging
-          curr.dimensionScores = curr.dimensionScores.map((ds) => ({
-            ...ds,
-            competency:
-              ds.competency > 0
-                ? Math.max(
-                    ds.competency * GRADE_TRANSITION_COMPETENCY_FACTOR,
-                    GRADE_TRANSITION_MIN_COMPETENCY
-                  )
-                : 0,
-            interest:
-              ds.interest > 0
-                ? ds.interest * GRADE_TRANSITION_INTEREST_FACTOR
-                : 0,
-          }))
-        }
-
-        if (typeof console !== 'undefined') {
-          console.log(
-            `[LivingData] Grade transition at ${curr.label}: ` +
-            `${prev.gradeYear} → ${curr.gradeYear}` +
-            (hasScores ? ' (scores decayed)' : ' (no pre-transition scores)')
-          )
-        }
+        transitionIndices.push(i)
       }
+    }
+
+    // Second pass: for each snapshot, count how many transitions come AFTER it.
+    // Snapshots before the FIRST transition get decayed by all transitions.
+    // Snapshots between transitions get decayed by remaining transitions.
+    // Snapshots after the LAST transition get no decay (current school year).
+    for (let i = 0; i < snapshots.length; i++) {
+      // How many transitions are strictly after this snapshot index?
+      const transitionsAhead = transitionIndices.filter((t) => t > i).length
+      if (transitionsAhead === 0) continue // current school year — no decay
+
+      const compFactor = Math.pow(GRADE_TRANSITION_COMPETENCY_FACTOR, transitionsAhead)
+      const intFactor = Math.pow(GRADE_TRANSITION_INTEREST_FACTOR, transitionsAhead)
+
+      snapshots[i].dimensionScores = snapshots[i].dimensionScores.map((ds) => ({
+        ...ds,
+        competency:
+          ds.competency > 0
+            ? Math.max(ds.competency * compFactor, GRADE_TRANSITION_MIN_COMPETENCY)
+            : 0,
+        interest:
+          ds.interest > 0
+            ? ds.interest * intFactor
+            : 0,
+      }))
+    }
+
+    if (typeof console !== 'undefined' && transitionIndices.length > 0) {
+      console.log(
+        `[LivingData] Grade transitions: ${transitionIndices.map((i) =>
+          `${snapshots[i].prevGradeYear} → ${snapshots[i].gradeYear} at ${snapshots[i].label}`
+        ).join(', ')}`
+      )
     }
   }
 

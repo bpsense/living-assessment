@@ -117,7 +117,7 @@ function useGradeTransition(
     setTransitionLabel(label)
     setSqueezeProgress(1)
 
-    const duration = playing ? 1200 : 600
+    const duration = playing ? 2000 : 1000
     const startTime = performance.now()
 
     if (rafRef.current) cancelAnimationFrame(rafRef.current)

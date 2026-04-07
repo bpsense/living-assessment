@@ -359,20 +359,22 @@ export default function LivingBlob({
         />
 
         {/* ── Incoming squeeze rings (visible during grade transition) ── */}
-        {ringSqueezeProgress > 0 && ringRadii.map((r, i) => {
-          // Incoming rings start large and squeeze to normal position
-          const inflatedR = r * (1 + 0.5 * ringSqueezeProgress)
+        {ringSqueezeProgress > 0.01 && ringRadii.map((r, i) => {
+          // Incoming rings start large (80% beyond normal) and squeeze to normal position
+          const inflatedR = r * (1 + 0.8 * ringSqueezeProgress)
+          // Outer rings inflate even more for dramatic effect
+          const outerBoost = 1 + (i / LEVEL_COUNT) * 0.3 * ringSqueezeProgress
           return (
             <circle
               key={`squeeze-ring-${i}`}
               cx={cx}
               cy={cy}
-              r={inflatedR}
-              fill="none"
-              stroke={LEVEL_META[i].stroke}
-              strokeWidth={i === LEVEL_COUNT - 1 ? 2.5 : 2}
+              r={inflatedR * outerBoost}
+              fill={i === 0 ? `rgba(13,115,119,${0.04 * ringSqueezeProgress})` : 'none'}
+              stroke={TEAL}
+              strokeWidth={i === LEVEL_COUNT - 1 ? 3 : 2}
               strokeDasharray={i < LEVEL_COUNT - 1 ? '4 6' : 'none'}
-              opacity={0.4 + 0.4 * ringSqueezeProgress}
+              opacity={0.15 + 0.5 * ringSqueezeProgress}
               style={{ transition: 'none' }}
             />
           )
@@ -381,11 +383,11 @@ export default function LivingBlob({
         {/* ── Main content group: compressed during grade transition ── */}
         <g
           transform={
-            ringSqueezeProgress > 0
-              ? `translate(${cx},${cy}) scale(${1 - 0.3 * ringSqueezeProgress}) translate(${-cx},${-cy})`
+            ringSqueezeProgress > 0.01
+              ? `translate(${cx},${cy}) scale(${1 - 0.4 * ringSqueezeProgress}) translate(${-cx},${-cy})`
               : undefined
           }
-          style={ringSqueezeProgress > 0 ? { transition: 'none' } : undefined}
+          style={ringSqueezeProgress > 0.01 ? { transition: 'none' } : undefined}
         >
           {/* ── Background: concentric level fill bands (outermost first) ── */}
           {[...ringRadii].reverse().map((r, revI) => {
@@ -543,19 +545,32 @@ export default function LivingBlob({
         </g>
 
         {/* ── Grade transition label ── */}
-        {ringSqueezeProgress > 0 && gradeTransitionLabel && (
-          <text
-            x={cx}
-            y={cy - maxR - 10}
-            textAnchor="middle"
-            fill={TEAL}
-            fontSize={16}
-            fontWeight={700}
-            opacity={Math.min(1, ringSqueezeProgress * 2)}
-            letterSpacing="0.02em"
-          >
-            {gradeTransitionLabel}
-          </text>
+        {ringSqueezeProgress > 0.05 && gradeTransitionLabel && (
+          <>
+            {/* Background pill */}
+            <rect
+              x={cx - 60}
+              y={cy - 18}
+              width={120}
+              height={36}
+              rx={18}
+              fill="white"
+              opacity={0.9 * Math.min(1, ringSqueezeProgress * 3)}
+            />
+            <text
+              x={cx}
+              y={cy + 1}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fill={TEAL}
+              fontSize={18}
+              fontWeight={800}
+              opacity={Math.min(1, ringSqueezeProgress * 3)}
+              letterSpacing="0.03em"
+            >
+              {gradeTransitionLabel}
+            </text>
+          </>
         )}
 
         {/* ── Dimension labels (multi-line, word-wrapped) ── */}
