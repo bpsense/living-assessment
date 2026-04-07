@@ -105,8 +105,8 @@ export default function StudentProfile() {
   // gradually toward each change rather than jumping in a single step.
   // (Experiment — remove smoothSnapshots() wrapper to revert to raw steps)
   const snapshots = useMemo(
-    () => smoothSnapshots(buildSnapshots(observations, surveys, visibleDimensions, competencyData)),
-    [observations, surveys, visibleDimensions, competencyData]
+    () => smoothSnapshots(buildSnapshots(observations, surveys, visibleDimensions, competencyData, student?.grade_level)),
+    [observations, surveys, visibleDimensions, competencyData, student?.grade_level]
   )
 
   // Initialize snapshotIdx to latest when snapshots become available

@@ -19,66 +19,65 @@ export interface Snapshot {
   label: string
   /** Scores at this point in time */
   dimensionScores: DimensionScore[]
-  /** If this snapshot is the first in a new school year, the year label (e.g. "24/25") */
-  schoolYearTransition?: string
+  /** Which grade level this snapshot belongs to (e.g. "3", "K") */
+  gradeYear?: string
+  /** True on September snapshots where the grade increments */
+  isGradeTransition?: boolean
+  /** The grade that just ended (only on transition snapshots) */
+  prevGradeYear?: string
+}
+
+// ============================================================
+// Grade-level ordering & transition helpers
+// ============================================================
+
+/** Ordered list of grade levels from youngest to oldest */
+const GRADE_ORDER = ['Pre-K', 'TK', 'K', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+
+/**
+ * Count how many September 1st boundaries fall between a date and today.
+ * A September boundary is crossed when moving from before Sep 1 of a year
+ * to on/after Sep 1 of that year.
+ */
+function countSeptembersBetween(fromDate: Date, toDate: Date): number {
+  let count = 0
+  const startYear = fromDate.getFullYear()
+  const endYear = toDate.getFullYear()
+
+  for (let y = startYear; y <= endYear; y++) {
+    const sep1 = new Date(y, 8, 1) // September 1
+    if (sep1 > fromDate && sep1 <= toDate) {
+      count++
+    }
+  }
+  return count
 }
 
 /**
- * Represents a school-year boundary visible in the amoeba.
- * The `scale` is the fraction of the current canvas that this year's
- * canvas occupied (e.g. 0.75 means the outer ring of that year was 75%
- * of the current outer ring).
+ * Given a student's current grade level and a snapshot date,
+ * determine what grade the student was in at that time.
+ * Returns undefined if grade_level is null or not in the ordered list.
  */
-export interface SchoolYearRing {
-  /** Short label, e.g. "22/23" */
-  label: string
-  /** Scale factor relative to the current (outermost) canvas. 0–1. */
-  scale: number
+function gradeAtDate(
+  currentGrade: string,
+  snapshotDate: Date,
+  now: Date
+): string | undefined {
+  const idx = GRADE_ORDER.indexOf(currentGrade)
+  if (idx < 0) return undefined
+
+  const sepsBetween = countSeptembersBetween(snapshotDate, now)
+  const historicalIdx = idx - sepsBetween
+  if (historicalIdx < 0) return GRADE_ORDER[0]
+  return GRADE_ORDER[historicalIdx]
 }
 
-/**
- * Compute the school-year rings that should be drawn on the amoeba
- * to show the "expanding canvas" effect. Each ring represents a
- * previous school year's outer boundary, compressed inward.
- *
- * The current school year always has scale = 1 (the outermost ring).
- * Each prior year's scale shrinks by a compounding compression factor,
- * representing growing expectations as the student ages.
- */
-export function computeSchoolYearRings(snapshots: Snapshot[]): SchoolYearRing[] {
-  if (snapshots.length === 0) return []
-
-  // Find all distinct school years in the data
-  const years = new Set<number>()
-  for (const snap of snapshots) {
-    const d = new Date(snap.date)
-    years.add(schoolYearOf(d))
-  }
-  const sorted = [...years].sort((a, b) => a - b)
-  if (sorted.length <= 1) return [] // no prior years to show
-
-  const currentYear = sorted[sorted.length - 1]
-  const rings: SchoolYearRing[] = []
-
-  // Each prior year's canvas is compressed relative to the current.
-  // The compression factor represents how expectations expand each year.
-  const COMPRESSION_PER_YEAR = 0.78 // each prior year shrinks by ~22%
-
-  for (let i = 0; i < sorted.length - 1; i++) {
-    const yearsBehind = currentYear - sorted[i]
-    const scale = Math.pow(COMPRESSION_PER_YEAR, yearsBehind)
-    const startYr = sorted[i]
-    const label = `${String(startYr).slice(-2)}/${String(startYr + 1).slice(-2)}`
-    rings.push({ label, scale })
-  }
-
-  return rings
-}
-
-/** A school year spans Aug–Jul. Aug-Dec → startYear = that year. Jan-Jul → startYear = prev year. */
-function schoolYearOf(d: Date): number {
-  return d.getMonth() >= 7 ? d.getFullYear() : d.getFullYear() - 1
-}
+/** Competency decay factor applied at grade transitions */
+const GRADE_TRANSITION_COMPETENCY_FACTOR = 0.35
+/** Interest decay factor at grade transitions (interest persists more) */
+const GRADE_TRANSITION_INTEREST_FACTOR = 0.85
+/** Minimum competency to maintain presence in the Emerging ring */
+const GRADE_TRANSITION_MIN_COMPETENCY = 0.25
 
 // ============================================================
 // Build time-series snapshots
@@ -97,7 +96,8 @@ export function buildSnapshots(
   observations: Observation[],
   surveys: InterestSurvey[],
   dimensions: Dimension[],
-  competencyData?: CompetencyBasedData | null
+  competencyData?: CompetencyBasedData | null,
+  gradeLevel?: string | null
 ): Snapshot[] {
   if (dimensions.length === 0) return []
 
@@ -285,6 +285,11 @@ export function buildSnapshots(
       }
     })
 
+    // Determine grade metadata for this snapshot
+    const snapshotGrade = gradeLevel
+      ? gradeAtDate(gradeLevel, snapshotDate, now)
+      : undefined
+
     return {
       date: snapshotDate.toISOString(),
       label: snapshotDate.toLocaleDateString('en-US', {
@@ -292,76 +297,63 @@ export function buildSnapshots(
         year: 'numeric',
       }),
       dimensionScores,
+      gradeYear: snapshotGrade,
     }
   })
 
-  // Apply school-year compression: when the timeline crosses from one
-  // school year to the next (July→August), compress older competency
-  // values so the canvas appears to expand with growing expectations.
-  return applyYearTransitionCompression(snapshots)
-}
+  // Mark September grade transitions and apply score reductions
+  if (gradeLevel && GRADE_ORDER.indexOf(gradeLevel) >= 0) {
+    for (let i = 1; i < snapshots.length; i++) {
+      const prev = snapshots[i - 1]
+      const curr = snapshots[i]
+      const currDate = new Date(curr.date)
 
-/**
- * At each school-year boundary (August), compress all competency values
- * so that the previous year's levels are rescaled to a smaller canvas:
- *
- * - Previous Achieving/Mastery (3-4) → Developing range (~1.5–2.5)
- * - Previous Emerging/Developing (0-2) → Emerging range (~0–1.5)
- *
- * This creates the visual effect of the canvas expanding: the same
- * absolute competency level occupies less of the chart after the
- * transition, because expectations have grown.
- *
- * The compression is applied backwards from the current year — each
- * prior year gets progressively more compressed.
- */
-function applyYearTransitionCompression(snapshots: Snapshot[]): Snapshot[] {
-  if (snapshots.length === 0) return snapshots
+      // September snapshot with a different (higher) grade than the previous month
+      if (
+        currDate.getMonth() === 8 && // September (0-indexed)
+        curr.gradeYear &&
+        prev.gradeYear &&
+        curr.gradeYear !== prev.gradeYear
+      ) {
+        curr.isGradeTransition = true
+        curr.prevGradeYear = prev.gradeYear
 
-  // Find all distinct school years
-  const yearSet = new Set<number>()
-  for (const snap of snapshots) {
-    yearSet.add(schoolYearOf(new Date(snap.date)))
+        // Check if there are any non-zero scores to decay
+        const hasScores = curr.dimensionScores.some(
+          (ds) => ds.competency > 0 || ds.interest > 0
+        )
+
+        if (hasScores) {
+          // Apply competency decay — the student's skills are now measured
+          // against a higher bar, so scores drop toward Emerging
+          curr.dimensionScores = curr.dimensionScores.map((ds) => ({
+            ...ds,
+            competency:
+              ds.competency > 0
+                ? Math.max(
+                    ds.competency * GRADE_TRANSITION_COMPETENCY_FACTOR,
+                    GRADE_TRANSITION_MIN_COMPETENCY
+                  )
+                : 0,
+            interest:
+              ds.interest > 0
+                ? ds.interest * GRADE_TRANSITION_INTEREST_FACTOR
+                : 0,
+          }))
+        }
+
+        if (typeof console !== 'undefined') {
+          console.log(
+            `[LivingData] Grade transition at ${curr.label}: ` +
+            `${prev.gradeYear} → ${curr.gradeYear}` +
+            (hasScores ? ' (scores decayed)' : ' (no pre-transition scores)')
+          )
+        }
+      }
+    }
   }
-  const sortedYears = [...yearSet].sort((a, b) => a - b)
 
-  if (sortedYears.length <= 1) return snapshots // nothing to compress
-
-  const currentYear = sortedYears[sortedYears.length - 1]
-
-  // Compression per year back: each prior year's values are scaled down
-  const COMPRESSION_PER_YEAR = 0.78
-
-  return snapshots.map((snap) => {
-    const snapYear = schoolYearOf(new Date(snap.date))
-    if (snapYear >= currentYear) {
-      // Current year — no compression, but mark Aug as transition
-      const d = new Date(snap.date)
-      const isAugust = d.getMonth() === 7 && snapYear === currentYear
-      return isAugust
-        ? { ...snap, schoolYearTransition: `${String(currentYear).slice(-2)}/${String(currentYear + 1).slice(-2)}` }
-        : snap
-    }
-
-    const yearsBehind = currentYear - snapYear
-    const scale = Math.pow(COMPRESSION_PER_YEAR, yearsBehind)
-
-    // Mark the first month of each school year as a transition
-    const d = new Date(snap.date)
-    const isAugust = d.getMonth() === 7
-    const yearLabel = `${String(snapYear).slice(-2)}/${String(snapYear + 1).slice(-2)}`
-
-    return {
-      ...snap,
-      ...(isAugust ? { schoolYearTransition: yearLabel } : {}),
-      dimensionScores: snap.dimensionScores.map((ds) => ({
-        ...ds,
-        // Scale competency down: a "4" from 2 years ago looks like ~2.4 on today's canvas
-        competency: ds.competency * scale,
-        // Interest stays unscaled (it's the student's current feeling, not relative to expectations)
-      })),
-    }
-  })
+  return snapshots
 }
 
 /**
@@ -442,6 +434,12 @@ export function smoothSnapshots(
   const dimCount = snapshots[0].dimensionScores.length
   if (dimCount === 0) return snapshots
 
+  // Identify grade boundary indices so smoothing doesn't ramp across them
+  const gradeBoundaries = new Set<number>()
+  for (let i = 0; i < snapshots.length; i++) {
+    if (snapshots[i].isGradeTransition) gradeBoundaries.add(i)
+  }
+
   // Extract and smooth each dimension's time series independently
   const smoothedComp: number[][] = []
   const smoothedInt: number[][] = []
@@ -449,8 +447,8 @@ export function smoothSnapshots(
   for (let d = 0; d < dimCount; d++) {
     const rawComp = snapshots.map((s) => s.dimensionScores[d].competency)
     const rawInt = snapshots.map((s) => s.dimensionScores[d].interest)
-    smoothedComp.push(forwardSmooth(rawComp, lookahead))
-    smoothedInt.push(forwardSmooth(rawInt, lookahead))
+    smoothedComp.push(forwardSmooth(rawComp, lookahead, gradeBoundaries))
+    smoothedInt.push(forwardSmooth(rawInt, lookahead, gradeBoundaries))
   }
 
   // Rebuild snapshots with smoothed values
@@ -475,23 +473,28 @@ export function smoothSnapshots(
  *   Raw:      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2]
  *   Smoothed: [1, 1, 1, 1, 1, 1, 1, 1, 1.06, 1.25, 1.56, 2]
  */
-function forwardSmooth(values: number[], lookahead: number): number[] {
+function forwardSmooth(values: number[], lookahead: number, gradeBoundaries?: Set<number>): number[] {
   const n = values.length
   const result = [...values]
 
   for (let i = 1; i < n; i++) {
     // Only smooth transitions between non-zero values.
     // 0 means "no data" — don't ramp into or out of it.
+    // Also skip smoothing if this index crosses a grade boundary.
     if (values[i] === values[i - 1] || values[i] === 0 || values[i - 1] === 0) {
+      continue
+    }
+    if (gradeBoundaries && gradeBoundaries.has(i)) {
       continue
     }
 
     const fromVal = values[i - 1]
     const toVal = values[i]
 
-    // Find where the flat "from" region starts (don't ramp past it)
+    // Find where the flat "from" region starts (don't ramp past it or past grade boundaries)
     let flatStart = i - 1
     while (flatStart > 0 && values[flatStart - 1] === fromVal) {
+      if (gradeBoundaries && gradeBoundaries.has(flatStart)) break
       flatStart--
     }
 
