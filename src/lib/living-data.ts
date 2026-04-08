@@ -356,26 +356,19 @@ export function applyGradeTransitionDecay(snapshots: Snapshot[]): Snapshot[] {
     dimensionScores: s.dimensionScores.map((ds) => ({ ...ds })),
   }))
 
-  // For each transition, simply multiply ALL scores from September through
-  // end of that school year by the decay factor. This is applied sequentially
-  // so the second transition decays the already-decayed scores from the first,
-  // which is correct — each new grade compounds the expectation increase.
+  // For each transition, decay ONLY the September snapshot itself.
+  // Subsequent months keep their natural scores — they represent the
+  // student's competency as observed at the new grade level.
+  // This creates a sharp "reset" at September that the blob grows out of.
   for (const tIdx of transitionIndices) {
-    const nextTransition = transitionIndices.find((t) => t > tIdx)
-    const endIdx = nextTransition ?? result.length
-
-    for (let i = tIdx; i < endIdx; i++) {
-      result[i].dimensionScores = result[i].dimensionScores.map((ds) => ({
-        ...ds,
-        competency:
-          ds.competency > 0
-            ? Math.max(ds.competency * GRADE_TRANSITION_COMPETENCY_FACTOR, GRADE_TRANSITION_MIN_COMPETENCY)
-            : 0,
-        interest: i === tIdx
-          ? ds.interest * GRADE_TRANSITION_INTEREST_FACTOR
-          : ds.interest,
-      }))
-    }
+    result[tIdx].dimensionScores = result[tIdx].dimensionScores.map((ds) => ({
+      ...ds,
+      competency:
+        ds.competency > 0
+          ? Math.max(ds.competency * GRADE_TRANSITION_COMPETENCY_FACTOR, GRADE_TRANSITION_MIN_COMPETENCY)
+          : 0,
+      interest: ds.interest * GRADE_TRANSITION_INTEREST_FACTOR,
+    }))
   }
 
   return result
