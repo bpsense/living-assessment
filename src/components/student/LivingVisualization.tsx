@@ -94,7 +94,12 @@ function useGradeTransition(
   const prevIdxRef = useRef<number | null>(null)
 
   useEffect(() => {
-    if (snapshotIdx === null || snapshots.length === 0) return
+    if (snapshotIdx === null || snapshots.length === 0) {
+      // Clear any lingering state
+      setSqueezeProgress(0)
+      setTransitionLabel(null)
+      return
+    }
 
     const snap = snapshots[Math.min(snapshotIdx, snapshots.length - 1)]
     const prevIdx = prevIdxRef.current
@@ -106,6 +111,13 @@ function useGradeTransition(
       prevIdx === null ||
       snapshotIdx <= prevIdx
     ) {
+      // Not a transition — if we were animating, cancel and clear
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = 0
+      }
+      setSqueezeProgress(0)
+      setTransitionLabel(null)
       return
     }
 
@@ -113,7 +125,6 @@ function useGradeTransition(
     const label = snap.gradeYear
       ? `Grade ${snap.gradeYear}`
       : 'New School Year'
-    console.log(`[GradeTransition] Triggering squeeze: ${snap.prevGradeYear} → ${snap.gradeYear} at ${snap.label}`)
     setTransitionLabel(label)
     setSqueezeProgress(1)
 
@@ -122,7 +133,10 @@ function useGradeTransition(
 
     if (rafRef.current) cancelAnimationFrame(rafRef.current)
 
+    let cancelled = false
+
     function tick(now: number) {
+      if (cancelled) return
       const elapsed = now - startTime
       const rawT = Math.min(elapsed / duration, 1)
       // Ease-out: fast start, slow finish
@@ -143,7 +157,13 @@ function useGradeTransition(
     rafRef.current = requestAnimationFrame(tick)
 
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      cancelled = true
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = 0
+      }
+      setSqueezeProgress(0)
+      setTransitionLabel(null)
     }
   }, [snapshotIdx, snapshots, playing])
 
