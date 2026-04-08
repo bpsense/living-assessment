@@ -233,6 +233,14 @@ export default function LivingVisualization({
     playing ?? false
   )
 
+  // Current grade label — always shows during timeline playback
+  const currentGradeLabel = useMemo(() => {
+    if (!showTimeline || snapshotIdx === null || snapshots.length === 0) return undefined
+    const idx = Math.min(snapshotIdx, snapshots.length - 1)
+    const grade = snapshots[idx]?.gradeYear
+    return grade ? `Grade ${grade}` : undefined
+  }, [showTimeline, snapshotIdx, snapshots])
+
   // Filter observations to those visible at the current snapshot date
   const snapshotObservations = useMemo(() => {
     if (!observations || !showTimeline || snapshotIdx === null || snapshots.length === 0) {
@@ -336,6 +344,7 @@ export default function LivingVisualization({
           onClose={closeExpanded}
           ringSqueezeProgress={squeezeProgress}
           gradeTransitionLabel={transitionLabel ?? undefined}
+            currentGradeLabel={currentGradeLabel}
         />
       )}
 
@@ -372,6 +381,7 @@ export default function LivingVisualization({
             observers={observers}
             ringSqueezeProgress={squeezeProgress}
             gradeTransitionLabel={transitionLabel ?? undefined}
+            currentGradeLabel={currentGradeLabel}
           />
         </div>
 
@@ -470,6 +480,7 @@ function ExpandedBlobModal({
   onClose,
   ringSqueezeProgress,
   gradeTransitionLabel,
+  currentGradeLabel,
 }: {
   animatedScores: DimensionScore[]
   snapshotObservations: Observation[]
@@ -486,6 +497,7 @@ function ExpandedBlobModal({
   onClose: () => void
   ringSqueezeProgress?: number
   gradeTransitionLabel?: string | null
+  currentGradeLabel?: string
 }) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-bg/95 backdrop-blur-sm">
@@ -545,6 +557,7 @@ function ExpandedBlobModal({
               className="h-full w-full"
               ringSqueezeProgress={ringSqueezeProgress}
               gradeTransitionLabel={gradeTransitionLabel ?? undefined}
+            currentGradeLabel={currentGradeLabel}
             />
           </div>
         </div>

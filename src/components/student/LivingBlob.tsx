@@ -36,6 +36,8 @@ interface Props {
   ringSqueezeProgress?: number
   /** Label shown during grade transition, e.g. "Grade 3" */
   gradeTransitionLabel?: string
+  /** Persistent grade label shown in the background during playback */
+  currentGradeLabel?: string
 }
 
 // ── Design tokens ──────────────────────────────────────────────
@@ -145,6 +147,7 @@ export default function LivingBlob({
   observers,
   ringSqueezeProgress = 0,
   gradeTransitionLabel,
+  currentGradeLabel,
 }: Props) {
   const uid = useId()
   const svgRef = useRef<SVGSVGElement>(null)
@@ -544,34 +547,46 @@ export default function LivingBlob({
           ))}
         </g>
 
-        {/* ── Grade transition label ── */}
-        {ringSqueezeProgress > 0.05 && gradeTransitionLabel && (
-          <>
-            {/* Background pill */}
-            <rect
-              x={cx - 60}
-              y={cy - 18}
-              width={120}
-              height={36}
-              rx={18}
-              fill="white"
-              opacity={0.9 * Math.min(1, ringSqueezeProgress * 3)}
-            />
-            <text
-              x={cx}
-              y={cy + 1}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fill={TEAL}
-              fontSize={18}
-              fontWeight={800}
-              opacity={Math.min(1, ringSqueezeProgress * 3)}
-              letterSpacing="0.03em"
-            >
-              {gradeTransitionLabel}
-            </text>
-          </>
-        )}
+        {/* ── Grade label (persistent during playback, emphasized during squeeze) ── */}
+        {(currentGradeLabel || (ringSqueezeProgress > 0.05 && gradeTransitionLabel)) && (() => {
+          const label = ringSqueezeProgress > 0.05 && gradeTransitionLabel
+            ? gradeTransitionLabel
+            : currentGradeLabel
+          // During squeeze: full opacity, larger, white pill background
+          // Normal playback: subtle, smaller, no pill
+          const isSqueeze = ringSqueezeProgress > 0.05
+          const textOpacity = isSqueeze ? Math.min(1, ringSqueezeProgress * 3) : 0.35
+          const fontSize = isSqueeze ? 18 : 14
+          const pillOpacity = isSqueeze ? 0.9 * Math.min(1, ringSqueezeProgress * 3) : 0
+          return (
+            <>
+              {pillOpacity > 0 && (
+                <rect
+                  x={cx - 60}
+                  y={cy - 18}
+                  width={120}
+                  height={36}
+                  rx={18}
+                  fill="white"
+                  opacity={pillOpacity}
+                />
+              )}
+              <text
+                x={cx}
+                y={cy + 1}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill={isSqueeze ? TEAL : '#A9A49A'}
+                fontSize={fontSize}
+                fontWeight={isSqueeze ? 800 : 600}
+                opacity={textOpacity}
+                letterSpacing="0.03em"
+              >
+                {label}
+              </text>
+            </>
+          )
+        })()}
 
         {/* ── Dimension labels (multi-line, word-wrapped) ── */}
         {labels.map((l) => {
