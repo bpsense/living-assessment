@@ -113,12 +113,8 @@ export default function TimelinePlayback({
 
   // Derive school years from snapshot data
   const schoolYears = useMemo(() => deriveSchoolYears(snapshots), [snapshots])
-  const currentSchoolYear = useMemo(() => schoolYearOf(new Date()), [])
-
-  // Default to current school year, or "all" if only one year of data
-  const [selectedYear, setSelectedYear] = useState<string | 'all'>(
-    schoolYears.length <= 1 ? 'all' : String(currentSchoolYear)
-  )
+  // Default to "all" so the full multi-year timeline plays from the start
+  const [selectedYear, setSelectedYear] = useState<string | 'all'>('all')
 
   // Update selected year when school years change (e.g. data loads)
   useEffect(() => {
