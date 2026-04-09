@@ -552,33 +552,31 @@ export default function LivingBlob({
           const label = ringSqueezeProgress > 0.05 && gradeTransitionLabel
             ? gradeTransitionLabel
             : currentGradeLabel
-          // During squeeze: full opacity, larger, white pill background
-          // Normal playback: subtle, smaller, no pill
+          // During squeeze: full opacity, larger, prominent pill
+          // Normal playback: visible pill behind the label so it reads clearly over the blob
           const isSqueeze = ringSqueezeProgress > 0.05
-          const textOpacity = isSqueeze ? Math.min(1, ringSqueezeProgress * 3) : 0.35
-          const fontSize = isSqueeze ? 18 : 14
-          const pillOpacity = isSqueeze ? 0.9 * Math.min(1, ringSqueezeProgress * 3) : 0
+          const textOpacity = isSqueeze ? Math.min(1, ringSqueezeProgress * 3) : 0.7
+          const fontSize = isSqueeze ? 20 : 16
+          const pillOpacity = isSqueeze ? 0.92 * Math.min(1, ringSqueezeProgress * 3) : 0.55
           return (
             <>
-              {pillOpacity > 0 && (
-                <rect
-                  x={cx - 60}
-                  y={cy - 18}
-                  width={120}
-                  height={36}
-                  rx={18}
-                  fill="white"
-                  opacity={pillOpacity}
-                />
-              )}
+              <rect
+                x={cx - 56}
+                y={cy - 15}
+                width={112}
+                height={30}
+                rx={15}
+                fill="white"
+                opacity={pillOpacity}
+              />
               <text
                 x={cx}
                 y={cy + 1}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                fill={isSqueeze ? TEAL : '#A9A49A'}
+                fill={isSqueeze ? TEAL : '#6B6760'}
                 fontSize={fontSize}
-                fontWeight={isSqueeze ? 800 : 600}
+                fontWeight={700}
                 opacity={textOpacity}
                 letterSpacing="0.03em"
               >
