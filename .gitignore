@@ -6,3 +6,4 @@ dist/
 *.log
 .netlify/
 .claude/worktrees/
+.patches/

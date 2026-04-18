@@ -7,17 +7,19 @@ A learner-centered assessment platform that visualizes student growth across mul
 
 ## Deployment
 
-- **Netlify deploys from the `main` branch** — push to `main` to deploy.
-- Auto-publish is on: merges/pushes to `main` trigger a build and go live automatically.
-- Build command: `npm run build` → outputs to `dist/`
-- Typical deploy time: ~30 seconds.
-- **Do NOT use `claude/cranky-williamson` or any other branch for deploys.** That was a legacy setup that caused repeated missed deployments.
+- **Netlify deploys from `main`.** Push to `main` → auto-build → live in ~30s.
+- Build: `npm run build` → `dist/`. Config in `netlify.toml`.
+- GitHub default branch is `main`. No other branches deploy.
 
-## Git Workflow
+## Git Workflow (enforced to prevent branch sprawl)
 
-- Work directly on `main` for small fixes, or create feature branches and merge to `main` via PR.
-- Always verify your changes are on `main` before expecting them to deploy.
-- When using worktrees, remember the worktree branch is NOT `main` — you must merge/push to `main` for production.
+- **`main` is the only long-lived branch.** All work returns to it via PR.
+- **Feature branches:** short-lived, named for what they do — `feat/<slug>`, `fix/<slug>`, `chore/<slug>`. **Do not** use session-generated names like `claude/<adjective-scientist>` for anything that will live past one sitting.
+- **PR base is always `main`.** Never branch off a feature branch for another feature.
+- **Delete the branch on merge.** Both locally and on GitHub. Worktrees too (`git worktree remove`).
+- **Worktrees:** treat them as ephemeral. If a session ends with uncommitted work you want to keep, either commit + push or save a patch (`git diff HEAD > .patches/<name>.patch`) before removing the worktree. `.patches/` is gitignored.
+- **Verify before expecting a deploy:** `git log origin/main -1` should show your commit.
+- **If in doubt about branch state:** `git branch -a && git worktree list` — anything beyond `main` + your current feature branch is a cleanup target.
 
 ## Tech Stack
 
