@@ -27,6 +27,7 @@ import ResetPassword from './pages/ResetPassword'
 import ExportReport from './pages/Export'
 import NotFound from './pages/NotFound'
 import SchoolsPage from './pages/system/Schools'
+import SystemActivity from './pages/system/SystemActivity'
 import UsersPage from './pages/admin/Users'
 import LearnerProfile from './pages/LearnerProfile'
 import CompetencyFrameworks from './pages/admin/CompetencyFrameworks'
@@ -88,6 +89,7 @@ function AppRoutes() {
 
         {/* System admin routes */}
         <Route path="/system/schools" element={<SchoolsPage />} />
+        <Route path="/system/activity" element={<SystemActivity />} />
 
         {/* User management — dept admins (4) and up */}
         <Route
