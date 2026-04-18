@@ -74,7 +74,7 @@ export default function NewAssignmentChooser({ open, onClose, onChoice }: Props)
       />
 
       {/* Panel */}
-      <div className="relative z-10 w-full max-w-lg rounded-2xl bg-bg-card shadow-2xl">
+      <div className="glass-modal relative z-10 w-full max-w-lg rounded-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-bg-muted px-5 py-4">
           <div className="flex items-center gap-2">

@@ -77,7 +77,7 @@ function TemplateDetailView({
       onClick={onClose}
     >
       <div
-        className="flex h-[85vh] w-full max-w-2xl flex-col rounded-2xl bg-bg-card shadow-xl"
+        className="glass-modal flex h-[85vh] w-full max-w-2xl flex-col rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-bg-muted px-5 py-4">

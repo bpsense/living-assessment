@@ -43,7 +43,7 @@ export default function LinkStudentModal({ onClose, onLinked }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-sm rounded-xl bg-bg-card shadow-xl">
+      <div className="glass-modal w-full max-w-sm rounded-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-bg-muted px-5 py-4">
           <h2 className="text-lg font-semibold text-text">Add a Learner</h2>

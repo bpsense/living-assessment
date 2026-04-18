@@ -620,7 +620,7 @@ function ExpandedBlobModal({
 
       {/* Timeline playback at the bottom */}
       {showTimeline && snapshots.length > 0 && (
-        <div className="mx-5 mb-5 rounded-xl border border-bg-muted bg-bg-card p-4 shadow-sm sm:mx-8">
+        <div className="mx-5 mb-5 glass-card p-4 sm:mx-8">
           <TimelinePlayback
             snapshots={snapshots}
             currentIndex={snapshotIdx ?? snapshots.length - 1}

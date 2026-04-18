@@ -141,7 +141,7 @@ function Section({
   canEdit?: boolean
 }) {
   return (
-    <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+    <div className="glass-card p-5">
       <div className="mb-4 flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-50">
           {icon}
@@ -495,7 +495,7 @@ export default function SchoolProfile() {
       )}
 
       {/* School name */}
-      <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+      <div className="glass-card p-5">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-500">
             <Building2 className="h-5 w-5 text-white" />
@@ -511,7 +511,7 @@ export default function SchoolProfile() {
 
       {/* Organizational terminology */}
       {canEditSchoolProfile && (
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+        <div className="glass-card p-5">
           <h3 className="mb-1 text-sm font-semibold text-text">Organizational Terminology</h3>
           <p className="mb-3 text-xs text-text-muted">
             Choose how classrooms are grouped in your school. This label appears throughout the interface.

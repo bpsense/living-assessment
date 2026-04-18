@@ -85,7 +85,7 @@ export default function EducatorDashboard({ data, userName }: Props) {
         <h2 className="mb-3 text-lg font-bold text-text">My Classrooms</h2>
 
         {data.classrooms.length === 0 ? (
-          <div className="rounded-xl border border-bg-muted bg-bg-card p-8 text-center shadow-sm">
+          <div className="glass-card p-8 text-center">
             <School className="mx-auto h-10 w-10 text-text-light" />
             <p className="mt-3 text-sm text-text-muted">
               No classrooms assigned yet. Ask your admin to assign you to a
@@ -98,7 +98,7 @@ export default function EducatorDashboard({ data, userName }: Props) {
               <button
                 key={c.id}
                 onClick={() => navigate(`/classrooms`)}
-                className="group rounded-xl border border-bg-muted bg-bg-card p-5 text-left shadow-sm transition-all hover:border-primary-200 hover:shadow-md"
+                className="glass-card glass-card-interactive group p-5 text-left"
               >
                 <div className="mb-3 flex items-center justify-between">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-50">
@@ -195,14 +195,14 @@ export default function EducatorDashboard({ data, userName }: Props) {
         </div>
 
         {data.recentActivity.length === 0 ? (
-          <div className="rounded-xl border border-bg-muted bg-bg-card p-8 text-center shadow-sm">
+          <div className="glass-card p-8 text-center">
             <Eye className="mx-auto h-10 w-10 text-text-light" />
             <p className="mt-3 text-sm text-text-muted">
               No observations yet. Start recording to see activity here.
             </p>
           </div>
         ) : (
-          <div className="rounded-xl border border-bg-muted bg-bg-card shadow-sm">
+          <div className="glass-card">
             <div className="divide-y divide-bg-muted">
               {data.recentActivity.map((item) => (
                 <button

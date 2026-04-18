@@ -107,7 +107,7 @@ export default function Educators() {
       {showInvite && (
         <form
           onSubmit={handleInvite}
-          className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm"
+          className="glass-card p-5"
         >
           <h3 className="mb-1 text-sm font-semibold text-text">Invite New Educator</h3>
           <p className="mb-4 text-xs text-text-muted">
@@ -169,7 +169,7 @@ export default function Educators() {
 
       {/* Educator list */}
       {educators.length === 0 && !showInvite ? (
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-10 text-center shadow-sm">
+        <div className="glass-card p-10 text-center">
           <Users className="mx-auto h-10 w-10 text-text-light" />
           <p className="mt-3 text-sm text-text-muted">
             No educators yet. Invite your first educator to get started.
@@ -195,7 +195,7 @@ export default function Educators() {
             return (
               <div
                 key={edu.id}
-                className="group relative rounded-xl border border-bg-muted bg-bg-card p-5 text-left shadow-sm transition-shadow hover:shadow-md"
+                className="glass-card glass-card-interactive group relative p-5 text-left"
               >
                 {/* Action menu */}
                 {canDeactivateUsers && (

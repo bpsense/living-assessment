@@ -68,7 +68,7 @@ export default function StudentIncidents({ studentId, isFamilyView = false }: Pr
   )
 
   return (
-    <section className="rounded-xl border border-bg-muted bg-bg-card shadow-sm">
+    <section className="glass-card">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-bg-muted px-5 py-4">
         <div className="flex items-center gap-2">

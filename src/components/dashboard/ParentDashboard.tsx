@@ -99,7 +99,7 @@ export default function ParentDashboard({ data, userName, hideAddLearner }: Prop
       )}
 
       {/* ---- Recent Messages ---- */}
-      <section className="rounded-xl border border-bg-muted bg-bg-card shadow-sm">
+      <section className="glass-card">
         <div className="flex items-center justify-between border-b border-bg-muted px-5 py-4">
           <div className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5 text-primary-600" />
@@ -178,7 +178,7 @@ export default function ParentDashboard({ data, userName, hideAddLearner }: Prop
 
       {/* ---- Child Cards ---- */}
       {data.children.length === 0 ? (
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-8 text-center shadow-sm">
+        <div className="glass-card p-8 text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary-50">
             <Plus className="h-6 w-6 text-primary-500" />
           </div>
@@ -210,7 +210,7 @@ export default function ParentDashboard({ data, userName, hideAddLearner }: Prop
             return (
               <div
                 key={student.id}
-                className="rounded-xl border border-bg-muted bg-bg-card shadow-sm"
+                className="glass-card"
               >
                 {/* Student info header */}
                 <div className="flex items-center gap-4 border-b border-bg-muted px-5 pt-5 pb-4">

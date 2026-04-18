@@ -73,7 +73,7 @@ export default function StudentSkillsSection({
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+      <div className="glass-card p-5">
         <div className="flex items-center gap-2 mb-4">
           <Target className="h-5 w-5 text-emerald-500" />
           <h2 className="text-lg font-bold text-text">Skills</h2>
@@ -87,7 +87,7 @@ export default function StudentSkillsSection({
 
   if (assignments.length === 0) {
     return (
-      <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+      <div className="glass-card p-5">
         <div className="flex items-center gap-2 mb-4">
           <Target className="h-5 w-5 text-emerald-500" />
           <h2 className="text-lg font-bold text-text">Skills</h2>
@@ -98,7 +98,7 @@ export default function StudentSkillsSection({
   }
 
   return (
-    <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+    <div className="glass-card p-5">
       <div className="flex items-center gap-2 mb-4">
         <Target className="h-5 w-5 text-emerald-500" />
         <h2 className="text-lg font-bold text-text">Skills</h2>

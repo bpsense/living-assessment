@@ -86,7 +86,7 @@ export default function RecordObservation() {
       </button>
 
       {/* Header card */}
-      <div className="mb-6 rounded-xl border border-bg-muted bg-bg-card p-4 shadow-sm">
+      <div className="mb-6 glass-card p-4">
         <div className="flex items-center gap-3">
           {student.avatar_url ? (
             <img
@@ -112,7 +112,7 @@ export default function RecordObservation() {
       </div>
 
       {/* Form */}
-      <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+      <div className="glass-card p-5">
         <ObservationForm
           studentId={student.id}
           schoolId={student.school_id}

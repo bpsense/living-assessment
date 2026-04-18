@@ -22,7 +22,7 @@ export default function SystemDashboard() {
 
       {/* Summary stats */}
       <div className="mb-8 grid gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+        <div className="glass-card p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-100">
               <Building2 className="h-5 w-5 text-primary-600" />
@@ -33,7 +33,7 @@ export default function SystemDashboard() {
             </div>
           </div>
         </div>
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+        <div className="glass-card p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success-100">
               <Users className="h-5 w-5 text-success-600" />
@@ -44,7 +44,7 @@ export default function SystemDashboard() {
             </div>
           </div>
         </div>
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+        <div className="glass-card p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-100">
               <UserCheck className="h-5 w-5 text-accent-600" />
@@ -58,7 +58,7 @@ export default function SystemDashboard() {
       </div>
 
       {/* School list */}
-      <div className="rounded-xl border border-bg-muted bg-bg-card shadow-sm">
+      <div className="glass-card">
         <div className="border-b border-bg-muted px-5 py-3">
           <h2 className="font-semibold text-text">Schools</h2>
         </div>

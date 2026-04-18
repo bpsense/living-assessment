@@ -95,7 +95,7 @@ export default function Observe() {
 
       {/* Student list */}
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-10 text-center shadow-sm">
+        <div className="glass-card p-10 text-center">
           <Users className="mx-auto h-10 w-10 text-text-light" />
           <p className="mt-3 text-sm text-text-muted">
             {search ? 'No learners match your search.' : 'No learners in your school yet.'}
@@ -110,7 +110,7 @@ export default function Observe() {
               <button
                 key={student.id}
                 onClick={() => navigate(`/student/${student.id}/observe`)}
-                className="flex w-full items-center gap-4 rounded-xl border border-bg-muted bg-bg-card p-4 text-left shadow-sm transition-all hover:border-primary-200 hover:shadow-md"
+                className="glass-card glass-card-interactive flex w-full items-center gap-4 p-4 text-left"
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-700">
                   {initials}

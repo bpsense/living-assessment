@@ -123,7 +123,7 @@ export default function ObservationPopup({
   return (
     <div
       ref={popupRef}
-      className="absolute z-50 overflow-hidden rounded-xl border border-bg-muted bg-bg-card shadow-xl"
+      className="glass-modal absolute z-50 overflow-hidden rounded-xl"
       style={{
         top,
         left,

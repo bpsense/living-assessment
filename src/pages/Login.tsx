@@ -66,7 +66,7 @@ export default function Login() {
         </div>
 
         {/* Card */}
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-6 shadow-sm">
+        <div className="glass-card p-6">
           {resetSent ? (
             <div className="text-center">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-success-50">

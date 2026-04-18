@@ -176,7 +176,7 @@ export default function Departments() {
 
       {/* Create/edit form */}
       {showForm && (
-        <div className="mb-6 rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+        <div className="mb-6 glass-card p-5">
           <h2 className="mb-4 text-lg font-semibold text-text">
             {editingId ? `Edit ${singular}` : `New ${singular}`}
           </h2>
@@ -226,7 +226,7 @@ export default function Departments() {
 
       {/* Empty state */}
       {departments.length === 0 && !showForm && (
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-8 text-center shadow-sm">
+        <div className="glass-card p-8 text-center">
           <MapPin className="mx-auto h-10 w-10 text-text-light" />
           <p className="mt-3 font-medium text-text">No {plural.toLowerCase()} yet</p>
           <p className="mt-1 text-sm text-text-muted">
@@ -242,7 +242,7 @@ export default function Departments() {
           const availableEducators = allEducators.filter((e) => !adminUserIds.has(e.id))
 
           return (
-            <div key={dept.id} className="rounded-xl border border-bg-muted bg-bg-card shadow-sm">
+            <div key={dept.id} className="glass-card">
               <div className="flex items-center justify-between border-b border-bg-muted px-5 py-3">
                 <div className="flex items-center gap-3">
                   <MapPin className="h-5 w-5 text-primary-500" />

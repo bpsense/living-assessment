@@ -288,14 +288,14 @@ export default function QuickObserveModal({ open, onClose }: Props) {
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-text/40 backdrop-blur-sm"
+        className="glass-scrim absolute inset-0"
         onClick={onClose}
       />
 
       {/* Panel */}
       <div
         className={clsx(
-          'relative z-10 flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-2xl bg-bg-card shadow-2xl sm:max-w-lg sm:rounded-2xl',
+          'glass-modal relative z-10 flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-2xl sm:max-w-lg sm:rounded-2xl',
           'animate-in slide-in-from-bottom duration-200'
         )}
       >

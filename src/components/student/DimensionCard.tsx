@@ -282,7 +282,7 @@ export default function DimensionCard({
   return (
     <div
       id={`dimension-${score.dimension_id}`}
-      className="rounded-xl border border-bg-muted bg-bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
+      className="glass-card p-4 transition-shadow hover:shadow-md"
     >
       {/* Header */}
       <div className="mb-3 flex items-start justify-between">

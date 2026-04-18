@@ -104,7 +104,7 @@ export default function Families() {
       {showInvite && (
         <form
           onSubmit={handleInvite}
-          className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm"
+          className="glass-card p-5"
         >
           <h3 className="mb-1 text-sm font-semibold text-text">Invite Family Member</h3>
           <p className="mb-4 text-xs text-text-muted">
@@ -166,7 +166,7 @@ export default function Families() {
 
       {/* Family list */}
       {families.length === 0 && !showInvite ? (
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-10 text-center shadow-sm">
+        <div className="glass-card p-10 text-center">
           <UsersRound className="mx-auto h-10 w-10 text-text-light" />
           <p className="mt-3 text-sm text-text-muted">
             No family accounts yet. Invite your first family to get started.
@@ -192,7 +192,7 @@ export default function Families() {
             return (
               <div
                 key={family.id}
-                className="relative rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm"
+                className="relative glass-card p-5"
               >
                 {/* Action menu */}
                 {canDeactivateUsers && (

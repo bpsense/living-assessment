@@ -250,7 +250,7 @@ export default function AILearningGuide({
   }
 
   return (
-    <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+    <div className="glass-card p-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">

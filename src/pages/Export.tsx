@@ -189,7 +189,7 @@ export default function ExportPage() {
           <ArrowLeft className="h-4 w-4" /> Back to Profile
         </button>
 
-        <div className="flex flex-wrap items-end gap-4 rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+        <div className="glass-card flex flex-wrap items-end gap-4 p-5">
           {/* Period selector */}
           <div className="flex-1">
             <label className="mb-1 block text-xs font-semibold text-text-muted">
