@@ -62,7 +62,7 @@ export default function NotificationBell({ profileId }: Props) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-80 rounded-xl border border-bg-muted bg-bg-card shadow-xl">
+        <div className="glass-modal absolute right-0 top-full z-50 mt-2 w-80 rounded-xl">
           <div className="border-b border-bg-muted px-4 py-3">
             <h3 className="text-sm font-semibold text-text">Notifications</h3>
           </div>

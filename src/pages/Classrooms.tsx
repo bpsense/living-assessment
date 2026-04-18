@@ -259,7 +259,7 @@ export default function Classrooms() {
       {canEditClassrooms && !isReadOnly && showCreate && (
         <form
           onSubmit={handleCreate}
-          className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm"
+          className="glass-card p-5"
         >
           <h3 className="mb-4 text-sm font-semibold text-text">Create Classroom</h3>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -309,7 +309,7 @@ export default function Classrooms() {
 
       {/* Classroom list */}
       {classrooms.length === 0 ? (
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-10 text-center shadow-sm">
+        <div className="glass-card p-10 text-center">
           <School className="mx-auto h-10 w-10 text-text-light" />
           <p className="mt-3 text-sm text-text-muted">
             No classrooms yet.{canEditClassrooms ? ' Create your first classroom to get started.' : ''}
@@ -321,7 +321,7 @@ export default function Classrooms() {
             <div
               key={room.id}
               onClick={() => navigate(`/classroom/${room.id}`)}
-              className="group cursor-pointer rounded-xl border border-bg-muted bg-bg-card shadow-sm transition-shadow hover:shadow-md"
+              className="glass-card glass-card-interactive group"
             >
               <div className="p-5">
                 <div className="flex items-start justify-between">

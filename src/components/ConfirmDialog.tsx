@@ -51,12 +51,12 @@ export default function ConfirmDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-text/40 backdrop-blur-sm"
+        className="glass-scrim absolute inset-0"
         onClick={loading ? undefined : onClose}
       />
 
       {/* Panel */}
-      <div className="relative z-10 w-full max-w-md rounded-2xl bg-bg-card p-6 shadow-2xl">
+      <div className="glass-modal relative z-10 w-full max-w-md rounded-2xl p-6">
         {/* Close button */}
         <button
           onClick={onClose}

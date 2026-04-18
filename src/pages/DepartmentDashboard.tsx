@@ -34,7 +34,7 @@ function DepartmentCard({ dept }: { dept: DepartmentSummary }) {
   const navigate = useNavigate()
 
   return (
-    <div className="rounded-xl border border-bg-muted bg-bg-card shadow-sm">
+    <div className="glass-card">
       <div className="p-5">
         <div className="flex items-center gap-3 mb-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-50">
@@ -146,7 +146,7 @@ export default function DepartmentDashboard() {
 
       {/* Department cards */}
       {departments.length === 0 ? (
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-10 text-center shadow-sm">
+        <div className="glass-card p-10 text-center">
           <MapPin className="mx-auto h-10 w-10 text-text-light" />
           <p className="mt-3 text-sm text-text-muted">
             You are not assigned as an admin for any {plural.toLowerCase()}.
@@ -162,7 +162,7 @@ export default function DepartmentDashboard() {
 
       {/* Recent observations */}
       {recentObservations.length > 0 && (
-        <div className="rounded-xl border border-bg-muted bg-bg-card shadow-sm">
+        <div className="glass-card">
           <div className="border-b border-bg-muted px-5 py-3">
             <h2 className="text-sm font-semibold text-text">Recent Observations</h2>
           </div>

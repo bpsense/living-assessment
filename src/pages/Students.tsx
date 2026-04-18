@@ -488,7 +488,7 @@ export default function Students() {
 
       {/* Add/Edit form modal */}
       {showForm && (
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+        <div className="glass-card p-5">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-text">
               {editStudent ? 'Edit Learner' : 'Add New Learner'}
@@ -577,14 +577,14 @@ export default function Students() {
 
       {/* Student list */}
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-10 text-center shadow-sm">
+        <div className="glass-card p-10 text-center">
           <Users className="mx-auto h-10 w-10 text-text-light" />
           <p className="mt-3 text-sm text-text-muted">
             {search ? 'No learners match your search.' : 'No learners yet. Add your first learner!'}
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-bg-muted bg-bg-card shadow-sm">
+        <div className="glass-card overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-bg-muted bg-bg-muted/30">

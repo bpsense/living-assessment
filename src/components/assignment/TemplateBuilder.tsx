@@ -463,7 +463,7 @@ export default function TemplateBuilder({ open, onClose, onSaved, template, show
       onClick={onClose}
     >
       <div
-        className="flex h-[90vh] w-full max-w-3xl flex-col rounded-2xl bg-bg-card shadow-xl"
+        className="glass-modal flex h-[90vh] w-full max-w-3xl flex-col rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

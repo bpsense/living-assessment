@@ -259,12 +259,12 @@ export default function StudentProfile() {
           Back
         </button>
 
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+        <div className="glass-card p-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
               <StudentAvatar student={student} />
               <div>
-                <h1 className="text-xl font-bold text-text">
+                <h1 className="text-2xl font-semibold tracking-tight text-text">
                   {formatStudentName(student.first_name, student.last_name)}
                 </h1>
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-muted">
@@ -359,7 +359,7 @@ export default function StudentProfile() {
 
       {/* ========== LIVING BLOB VISUALIZATION ========== */}
       <section>
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+        <div className="glass-card p-5">
           <LivingVisualization
             dimensionScores={filteredDimensionScores}
             snapshots={snapshots}
@@ -379,7 +379,7 @@ export default function StudentProfile() {
 
       {/* ========== CLASSROOM ENROLLMENTS (educator/admin only) ========== */}
       {!isFamilyView && (
-        <section className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+        <section className="glass-card p-5">
           <StudentClassroomsManager
             studentId={student.id}
             schoolId={student.school_id}
@@ -466,7 +466,7 @@ export default function StudentProfile() {
       {/* ========== ZONE MATRIX (educator/admin only) ========== */}
       {!isFamilyView && (
         <section>
-          <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+          <div className="glass-card p-5">
             <h2 className="mb-1 text-lg font-bold text-text">Learning Zones</h2>
             <p className="mb-4 text-sm text-text-muted">
               Dimensions mapped to interest and competency levels for actionable insights.
@@ -559,7 +559,7 @@ export default function StudentProfile() {
       {/* ========== TIMELINE (educator/admin only) ========== */}
       {!isFamilyView && (
         <section>
-          <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+          <div className="glass-card p-5">
             <h2 className="mb-4 text-lg font-bold text-text">Timeline</h2>
             <Timeline entries={timeline} dimensions={dimensions} />
           </div>

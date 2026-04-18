@@ -35,10 +35,10 @@ export default function SubmitAssignmentModal({ assignment, open, onClose, onSub
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="glass-scrim absolute inset-0" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md rounded-2xl bg-bg-card p-6 shadow-2xl">
+      <div className="glass-modal relative w-full max-w-md rounded-2xl p-6">
         {/* Close button */}
         <button
           onClick={onClose}

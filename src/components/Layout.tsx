@@ -233,11 +233,11 @@ export default function Layout() {
       : ROLE_LABELS[role]
 
   return (
-    <div className="flex min-h-screen bg-bg">
+    <div className="flex min-h-screen">
       {/* ============ Desktop sidebar ============ */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-bg-muted bg-bg-card md:flex print:!hidden">
+      <aside className="glass-chrome fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-white/40 md:flex print:!hidden">
         {/* Brand */}
-        <div className="flex h-16 items-center gap-2.5 border-b border-bg-muted px-5">
+        <div className="flex h-16 items-center gap-2.5 border-b border-white/30 px-5">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-500">
             <GraduationCap className="h-4 w-4 text-white" />
           </div>
@@ -267,7 +267,7 @@ export default function Layout() {
         </nav>
 
         {/* User footer */}
-        <div className="border-t border-bg-muted p-4">
+        <div className="border-t border-white/30 p-4">
           <div className="mb-3 flex items-center gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-700">
               {profile?.full_name?.charAt(0)?.toUpperCase() ?? '?'}
@@ -294,7 +294,7 @@ export default function Layout() {
       {/* ============ Main content ============ */}
       <div className="flex flex-1 flex-col md:pl-60 print:!pl-0">
         {/* Top bar (mobile brand + desktop school name & user) */}
-        <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-bg-muted bg-bg-card px-4 md:px-6 print:!hidden">
+        <header className="glass-chrome sticky top-0 z-20 flex h-14 items-center justify-between border-b border-white/30 px-4 md:px-6 print:!hidden">
           {/* Mobile brand */}
           <div className="flex items-center gap-2 md:hidden">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-500">
@@ -349,7 +349,7 @@ export default function Layout() {
 
         {/* View-as role switcher with user impersonation dropdowns */}
         {switchableRoles.length > 1 && (
-          <div className="border-b border-bg-muted bg-bg-card/80 print:!hidden">
+          <div className="glass-chrome border-b border-white/30 print:!hidden">
             {/* Impersonation banner */}
             {viewAsUserId && viewAsUserName && (
               <div className="flex items-center justify-between bg-accent-50 px-4 py-1.5 md:px-6">
@@ -513,7 +513,7 @@ export default function Layout() {
       </div>
 
       {/* ============ Mobile bottom nav ============ */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-bg-muted bg-bg-card md:hidden print:!hidden">
+      <nav className="glass-chrome fixed inset-x-0 bottom-0 z-30 flex border-t border-white/30 md:hidden print:!hidden">
         {navItems.slice(0, 5).map((item) => (
           <NavLink
             key={item.to}

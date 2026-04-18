@@ -298,7 +298,7 @@ export default function UploadCompetencyFrameworkModal({ open, onClose, onUpload
       />
 
       {/* Panel */}
-      <div className="relative z-10 flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-2xl bg-bg-card shadow-2xl sm:max-w-xl sm:rounded-2xl">
+      <div className="glass-modal relative z-10 flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-2xl sm:max-w-xl sm:rounded-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-bg-muted px-5 py-4">
           <h2 className="text-base font-bold text-text">Upload Competency Framework</h2>

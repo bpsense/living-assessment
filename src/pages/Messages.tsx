@@ -84,7 +84,7 @@ export default function Messages() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <div className="overflow-hidden rounded-xl border border-bg-muted bg-bg-card shadow-sm" style={{ height: 'calc(100vh - 140px)' }}>
+      <div className="glass-card overflow-hidden" style={{ height: 'calc(100vh - 140px)' }}>
         {/* Desktop: two-panel layout */}
         <div className="hidden h-full md:flex">
           {/* Left panel - conversation list */}

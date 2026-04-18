@@ -94,7 +94,7 @@ export default function Schools() {
 
       {/* Create school form */}
       {showCreateForm && (
-        <div className="mb-6 rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+        <div className="mb-6 glass-card p-5">
           <h2 className="mb-4 text-lg font-semibold text-text">Create New School</h2>
           <form onSubmit={handleCreateSchool} className="space-y-4">
             <div>
@@ -150,7 +150,7 @@ export default function Schools() {
             <button
               key={school.id}
               onClick={() => handleSchoolClick(school.id)}
-              className="rounded-xl border border-bg-muted bg-bg-card p-5 text-left shadow-sm transition-all hover:border-primary-300 hover:shadow-md"
+              className="glass-card glass-card-interactive p-5 text-left"
             >
               <div className="mb-3 flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-100">

@@ -357,7 +357,7 @@ export default function TranslatePage() {
           STEP 0: Select Student
           ============================================================ */}
       {step === 0 && (
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-6 shadow-sm">
+        <div className="glass-card p-6">
           <h2 className="mb-4 text-lg font-semibold text-text">Select a Student</h2>
 
           <input
@@ -411,7 +411,7 @@ export default function TranslatePage() {
           STEP 1: Select Framework
           ============================================================ */}
       {step === 1 && selectedStudent && (
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-6 shadow-sm">
+        <div className="glass-card p-6">
           <div className="mb-4 flex items-center gap-2">
             <button onClick={() => setStep(0)} className="text-text-muted hover:text-text">
               <ArrowLeft className="h-4 w-4" />
@@ -471,7 +471,7 @@ export default function TranslatePage() {
           STEP 2: Generate Translation
           ============================================================ */}
       {step === 2 && selectedStudent && selectedFramework && (
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-6 shadow-sm">
+        <div className="glass-card p-6">
           <div className="mb-4 flex items-center gap-2">
             <button onClick={() => setStep(1)} className="text-text-muted hover:text-text">
               <ArrowLeft className="h-4 w-4" />
@@ -536,7 +536,7 @@ export default function TranslatePage() {
           ============================================================ */}
       {step === 3 && (
         <div className="space-y-4">
-          <div className="rounded-xl border border-bg-muted bg-bg-card p-6 shadow-sm">
+          <div className="glass-card p-6">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-semibold text-text">Review Mappings</h2>
@@ -666,7 +666,7 @@ export default function TranslatePage() {
 
           {/* Action bar */}
           {mappings.length > 0 && (
-            <div className="flex items-center justify-between rounded-xl border border-bg-muted bg-bg-card p-4 shadow-sm">
+            <div className="flex items-center justify-between glass-card p-4">
               <p className="text-sm text-text-muted">
                 {approvedMappings.size} of {mappings.length} mappings approved
               </p>
@@ -693,7 +693,7 @@ export default function TranslatePage() {
       {step === 4 && selectedStudent && selectedFramework && translationRecord && (
         <div className="space-y-4">
           {/* Print toolbar */}
-          <div className="flex items-center justify-between rounded-xl border border-bg-muted bg-bg-card p-4 shadow-sm print:hidden">
+          <div className="flex items-center justify-between glass-card p-4 print:hidden">
             <p className="text-sm text-success-600 font-medium flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4" />
               Translation reviewed and approved

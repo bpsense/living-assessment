@@ -57,7 +57,7 @@ export default function Profile() {
       <h1 className="text-2xl font-bold text-text">Profile</h1>
 
       {/* Account info */}
-      <div className="rounded-xl border border-bg-muted bg-bg-card p-6 shadow-sm space-y-4">
+      <div className="glass-card p-6 space-y-4">
         <h2 className="text-lg font-semibold text-text">Account Information</h2>
 
         <div className="flex items-center gap-3">
@@ -86,7 +86,7 @@ export default function Profile() {
       </div>
 
       {/* Change password */}
-      <div className="rounded-xl border border-bg-muted bg-bg-card p-6 shadow-sm">
+      <div className="glass-card p-6">
         <h2 className="text-lg font-semibold text-text mb-4">Change Password</h2>
 
         {success && (

@@ -32,7 +32,7 @@ export default function LearnerMessagesSection({ studentId, parentId, childName 
   if (loading) {
     return (
       <section>
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+        <div className="glass-card p-5">
           <div className="mb-4 flex items-center gap-2">
             <Eye className="h-5 w-5 text-blue-500" />
             <h2 className="text-lg font-bold text-text">Messages</h2>
@@ -48,7 +48,7 @@ export default function LearnerMessagesSection({ studentId, parentId, childName 
   if (conversations.length === 0) {
     return (
       <section>
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+        <div className="glass-card p-5">
           <div className="mb-4 flex items-center gap-2">
             <Eye className="h-5 w-5 text-blue-500" />
             <h2 className="text-lg font-bold text-text">Messages</h2>
@@ -64,7 +64,7 @@ export default function LearnerMessagesSection({ studentId, parentId, childName 
 
   return (
     <section>
-      <div className="rounded-xl border border-bg-muted bg-bg-card shadow-sm overflow-hidden">
+      <div className="glass-card overflow-hidden">
         {/* Header */}
         <div className="flex items-center gap-2 border-b border-bg-muted px-5 py-3">
           {selectedConv && (

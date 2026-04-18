@@ -217,7 +217,7 @@ function SkillEditModal({
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div className="absolute inset-0 bg-text/40 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative z-10 flex max-h-[85vh] w-full flex-col overflow-hidden rounded-t-2xl bg-bg-card shadow-2xl sm:max-w-lg sm:rounded-2xl">
+      <div className="glass-modal relative z-10 flex max-h-[85vh] w-full flex-col overflow-hidden rounded-t-2xl sm:max-w-lg sm:rounded-2xl">
         <div className="flex items-center justify-between border-b border-bg-muted px-5 py-4">
           <h2 className="text-base font-bold text-text">
             {skill ? 'Edit Skill' : 'Add Skill'}

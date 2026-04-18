@@ -353,7 +353,7 @@ export default function Standards() {
             return (
               <div
                 key={gfw.id}
-                className="overflow-hidden rounded-xl border border-bg-muted bg-bg-card shadow-sm"
+                className="glass-card overflow-hidden"
               >
                 {/* Card header */}
                 <div className="flex items-center gap-3 px-4 py-3">
@@ -438,7 +438,7 @@ export default function Standards() {
             return (
               <div
                 key={fw.id}
-                className="overflow-hidden rounded-xl border border-bg-muted bg-bg-card shadow-sm"
+                className="glass-card overflow-hidden"
               >
                 {/* Card header */}
                 <div className="flex items-center gap-3 px-4 py-3">

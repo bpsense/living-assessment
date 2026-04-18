@@ -182,7 +182,7 @@ export default function EducatorProfile() {
       </div>
 
       {/* ============ Classroom Assignment ============ */}
-      <section className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+      <section className="glass-card p-5">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-text">Assigned Classrooms</h2>
           {unassignedClassrooms.length > 0 && (
@@ -242,7 +242,7 @@ export default function EducatorProfile() {
       </section>
 
       {/* ============ Monthly Observation Stats ============ */}
-      <section className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+      <section className="glass-card p-5">
         <h2 className="mb-4 text-sm font-semibold text-text">
           Monthly Observations
           <span className="ml-2 text-xs font-normal text-text-muted">
@@ -282,7 +282,7 @@ export default function EducatorProfile() {
       </section>
 
       {/* ============ Student Stats ============ */}
-      <section className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+      <section className="glass-card p-5">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-text">
             Observations by Learner
@@ -346,7 +346,7 @@ export default function EducatorProfile() {
       </section>
 
       {/* ============ Recent Observations ============ */}
-      <section className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+      <section className="glass-card p-5">
         <h2 className="mb-4 text-sm font-semibold text-text">
           Recent Observations
           <span className="ml-2 text-xs font-normal text-text-muted">

@@ -55,7 +55,7 @@ function StatCard({
   accent: string
 }) {
   return (
-    <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+    <div className="glass-card p-5">
       <div className="mb-3 flex items-center justify-between">
         <div
           className="flex h-10 w-10 items-center justify-center rounded-lg"
@@ -64,8 +64,8 @@ function StatCard({
           {icon}
         </div>
       </div>
-      <p className="text-2xl font-bold text-text">{value.toLocaleString()}</p>
-      <p className="mt-0.5 text-xs text-text-muted">{label}</p>
+      <p className="text-3xl font-semibold tracking-tight tabular-nums text-text">{value.toLocaleString()}</p>
+      <p className="mt-1 text-xs text-text-muted">{label}</p>
     </div>
   )
 }
@@ -86,7 +86,7 @@ function BarTooltip({
 }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-lg border border-bg-muted bg-bg-card px-3 py-2 shadow-lg">
+    <div className="glass-card px-3 py-2">
       <p className="mb-1 text-xs font-semibold text-text">{label}</p>
       {payload.map(
         (
@@ -148,7 +148,7 @@ export default function AdminDashboard({ data }: Props) {
     <div className="space-y-8">
       {/* ---- Header ---- */}
       <div>
-        <h1 className="text-2xl font-bold text-text">School Overview</h1>
+        <h1 className="text-3xl font-semibold tracking-tight text-text">School Overview</h1>
         <p className="mt-1 text-sm text-text-muted">{currentPeriod}</p>
       </div>
 
@@ -183,8 +183,8 @@ export default function AdminDashboard({ data }: Props) {
       {/* ---- Charts row ---- */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Cross-classroom comparison */}
-        <section className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
-          <h2 className="mb-1 text-base font-bold text-text">
+        <section className="glass-card p-5">
+          <h2 className="mb-1 text-base font-semibold tracking-tight text-text">
             Competency by Classroom
           </h2>
           <p className="mb-4 text-xs text-text-muted">
@@ -238,8 +238,8 @@ export default function AdminDashboard({ data }: Props) {
         </section>
 
         {/* Observation volume */}
-        <section className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
-          <h2 className="mb-1 text-base font-bold text-text">
+        <section className="glass-card p-5">
+          <h2 className="mb-1 text-base font-semibold tracking-tight text-text">
             Observation Volume
           </h2>
           <p className="mb-4 text-xs text-text-muted">
@@ -292,7 +292,7 @@ export default function AdminDashboard({ data }: Props) {
 
       {/* ---- Quick Links ---- */}
       <section>
-        <h2 className="mb-3 text-lg font-bold text-text">Quick Links</h2>
+        <h2 className="mb-3 text-lg font-semibold tracking-tight text-text">Quick Links</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <QuickLink
             icon={<School className="h-5 w-5 text-primary-600" />}
@@ -338,7 +338,7 @@ function QuickLink({
   return (
     <button
       onClick={() => navigate(to)}
-      className="group flex items-center gap-3 rounded-xl border border-bg-muted bg-bg-card px-4 py-3.5 text-left shadow-sm transition-all hover:border-primary-200 hover:shadow-md"
+      className="glass-card glass-card-interactive group flex items-center gap-3 px-4 py-3.5 text-left"
     >
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50">
         {icon}

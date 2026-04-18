@@ -244,7 +244,7 @@ export default function CsvImportModal({
       />
 
       {/* Panel */}
-      <div className="relative z-10 flex max-h-[90vh] w-full flex-col rounded-t-2xl bg-bg-card shadow-2xl sm:max-w-3xl sm:rounded-2xl">
+      <div className="glass-modal relative z-10 flex max-h-[90vh] w-full flex-col rounded-t-2xl sm:max-w-3xl sm:rounded-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-bg-muted px-5 py-4">
           <div>

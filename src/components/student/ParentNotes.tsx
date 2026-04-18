@@ -134,7 +134,7 @@ export default function ParentNotes({ studentId, schoolId, editable = false }: P
   }
 
   return (
-    <section className="rounded-xl border border-bg-muted bg-bg-card shadow-sm">
+    <section className="glass-card">
       {/* Header */}
       <button
         onClick={() => setOpen((v) => !v)}

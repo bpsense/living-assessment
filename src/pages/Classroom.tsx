@@ -272,7 +272,7 @@ export default function ClassroomPage() {
           1b. EDUCATORS (admin can add/remove)
           ================================================================ */}
       {isAdmin && (
-        <section className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+        <section className="glass-card p-5">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-sm font-semibold text-text">
               <UserCheck className="h-4 w-4 text-primary-500" />
@@ -431,7 +431,7 @@ export default function ClassroomPage() {
         </div>
 
         {displayedStudents.length === 0 ? (
-          <div className="rounded-xl border border-bg-muted bg-bg-card p-8 text-center shadow-sm">
+          <div className="glass-card p-8 text-center">
             <Users className="mx-auto h-10 w-10 text-text-light" />
             <p className="mt-3 text-sm text-text-muted">
               {rosterFilter === 'archived'
@@ -570,7 +570,7 @@ function StudentCard({
 
   return (
     <div className={clsx(
-      'group relative rounded-xl border border-bg-muted bg-bg-card p-4 text-left shadow-sm transition-all hover:border-primary-200 hover:shadow-md',
+      'glass-card glass-card-interactive group relative p-4 text-left',
       isArchived && 'opacity-70'
     )}>
       {/* Archive/Restore button (staff only) */}
@@ -690,7 +690,7 @@ function StudentTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-bg-muted bg-bg-card shadow-sm">
+    <div className="glass-card overflow-x-auto">
       <table className="w-full min-w-[600px] border-collapse text-sm">
         <thead>
           <tr className="border-b border-bg-muted bg-bg">
@@ -869,7 +869,7 @@ function CompetencyHeatmap({
   onStudentClick: (id: string) => void
 }) {
   return (
-    <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+    <div className="glass-card p-5">
       <h3 className="mb-1 text-base font-bold text-text">
         Dimension Heatmap
       </h3>
@@ -981,7 +981,7 @@ function ClassInterestPulse({
   }))
 
   return (
-    <div className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+    <div className="glass-card p-5">
       <h3 className="mb-1 text-base font-bold text-text">
         Class Interest Pulse
       </h3>

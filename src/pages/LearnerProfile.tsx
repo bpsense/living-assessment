@@ -222,7 +222,7 @@ export default function LearnerProfile() {
       </div>
 
       {/* My Classrooms */}
-      <section className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+      <section className="glass-card p-5">
         <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-text">
           <School className="h-5 w-5 text-primary-600" />
           My Classrooms
@@ -250,7 +250,7 @@ export default function LearnerProfile() {
 
       {/* Past Classrooms */}
       {archivedClassrooms.length > 0 && (
-        <section className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+        <section className="glass-card p-5">
           <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-text-muted">
             <Archive className="h-4 w-4" />
             Past Classrooms
@@ -271,7 +271,7 @@ export default function LearnerProfile() {
       )}
 
       {/* My Assignments — per-classroom kanban */}
-      <section className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+      <section className="glass-card p-5">
         <div className="mb-4 flex items-center gap-2">
           <ClipboardList className="h-5 w-5 text-primary-600" />
           <h2 className="text-base font-bold text-text">My Assignments</h2>
@@ -320,7 +320,7 @@ export default function LearnerProfile() {
       </section>
 
       {/* Dimension progress */}
-      <section className="rounded-xl border border-bg-muted bg-bg-card p-5 shadow-sm">
+      <section className="glass-card p-5">
         <h2 className="mb-4 text-base font-bold text-text">My Progress</h2>
         {progress.length === 0 ? (
           <p className="text-sm text-text-muted">No dimensions set up for your school yet.</p>
@@ -352,11 +352,11 @@ export default function LearnerProfile() {
 
 function InfoCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-bg-muted bg-bg-card p-4 shadow-sm">
+    <div className="glass-card p-4">
       <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-bg-muted">
         {icon}
       </div>
-      <p className="text-lg font-bold text-text">{value}</p>
+      <p className="text-xl font-semibold tracking-tight tabular-nums text-text">{value}</p>
       <p className="text-xs text-text-muted">{label}</p>
     </div>
   )

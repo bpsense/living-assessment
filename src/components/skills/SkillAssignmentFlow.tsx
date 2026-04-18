@@ -289,7 +289,7 @@ export default function SkillAssignmentFlow({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="relative flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl bg-bg-card shadow-2xl">
+      <div className="glass-modal relative flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-bg-muted px-6 py-4">
           <div>
