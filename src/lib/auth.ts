@@ -122,8 +122,8 @@ export function useAuthProvider(): AuthState {
           .select('*')
           .order('name')
         setAllSchools((schools as School[]) ?? [])
-        // Default to user's own school
-        setActiveSchoolId(data.school_id)
+        // Default to "All Schools" view — system admins start at the platform overview
+        setActiveSchoolId(null)
       }
       return
     }

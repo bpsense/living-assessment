@@ -27,6 +27,7 @@ import {
   AlertTriangle,
   ShieldAlert,
   Languages,
+  Activity,
 } from 'lucide-react'
 import type { UserRole } from '../types/database'
 import QuickObserveModal from './QuickObserveModal'
@@ -57,6 +58,7 @@ function getNavItems(
     return [
       { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
       { to: '/system/schools', label: 'Schools', icon: <Building2 className="h-5 w-5" /> },
+      { to: '/system/activity', label: 'Activity', icon: <Activity className="h-5 w-5" /> },
       { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
     ]
   }
@@ -168,7 +170,7 @@ function getSwitchableRoles(actualRole: UserRole): UserRole[] {
 }
 
 export default function Layout() {
-  const { profile, actualRole, signOut, viewAsRole, setViewAs, viewAsUserId, viewAsUserName, isSystemAdmin, activeSchoolId } = useAuth()
+  const { profile, actualRole, signOut, viewAsRole, setViewAs, viewAsUserId, viewAsUserName, isSystemAdmin, activeSchoolId, setActiveSchool } = useAuth()
   const { isDepartmentAdmin, accessLevel } = useAccessControl()
   const navigate = useNavigate()
   const [quickObserveOpen, setQuickObserveOpen] = useState(false)
@@ -498,11 +500,25 @@ export default function Layout() {
           </div>
         )}
 
-        {/* System admin: show which school context is active */}
+        {/* System admin: prominent banner when viewing into a specific school */}
         {isSystemAdmin && !isAllSchoolsView && (
-          <div className="flex items-center gap-2 border-b border-bg-muted bg-primary-50/50 px-4 py-1.5 md:hidden print:!hidden">
-            <Building2 className="h-3.5 w-3.5 text-primary-500" />
-            <span className="text-xs font-medium text-primary-700">{schoolName}</span>
+          <div className="flex items-center justify-between border-b border-primary-200 bg-primary-50 px-4 py-1.5 md:px-6 print:!hidden">
+            <div className="flex items-center gap-2">
+              <Eye className="h-3.5 w-3.5 text-primary-600" />
+              <span className="text-xs font-medium text-primary-700">
+                Viewing as School Admin
+              </span>
+              <span className="text-xs text-primary-700">·</span>
+              <Building2 className="h-3.5 w-3.5 text-primary-600" />
+              <span className="text-xs font-semibold text-primary-800">{schoolName || 'Loading…'}</span>
+            </div>
+            <button
+              onClick={() => setActiveSchool(null)}
+              className="flex items-center gap-1 rounded-full bg-primary-100 px-2 py-0.5 text-[10px] font-medium text-primary-700 hover:bg-primary-200"
+            >
+              <X className="h-3 w-3" />
+              Exit to All Schools
+            </button>
           </div>
         )}
 
