@@ -25,7 +25,7 @@ export interface InterestPulseItem {
 
 export interface ClassroomViewData {
   classroom: Classroom | null
-  educators: Pick<Profile, 'id' | 'full_name'>[]
+  educators: (Pick<Profile, 'id' | 'full_name'> & { role: 'lead' | 'support' })[]
   /** All educators in the school (for admin assignment UI) */
   allSchoolEducators: Pick<Profile, 'id' | 'full_name'>[]
   students: Student[]
@@ -50,9 +50,7 @@ export function useClassroomView(
   classroomId: string | undefined
 ): ClassroomViewData {
   const [classroom, setClassroom] = useState<Classroom | null>(null)
-  const [educators, setEducators] = useState<
-    Pick<Profile, 'id' | 'full_name'>[]
-  >([])
+  const [educators, setEducators] = useState<(Pick<Profile, 'id' | 'full_name'> & { role: 'lead' | 'support' })[]>([])
   const [allSchoolEducators, setAllSchoolEducators] = useState<
     Pick<Profile, 'id' | 'full_name'>[]
   >([])
@@ -100,7 +98,7 @@ export function useClassroomView(
         const [ecRes, scRes, dimsRes, allEducatorsRes] = await Promise.all([
           supabase
             .from('educator_classrooms')
-            .select('educator_id')
+            .select('educator_id, role')
             .eq('classroom_id', classroomId),
           supabase
             .from('student_classrooms')
@@ -123,9 +121,9 @@ export function useClassroomView(
 
         if (cancelled) return
 
-        const educatorIds = (ecRes.data ?? []).map(
-          (r) => (r as { educator_id: string }).educator_id
-        )
+        const ecRows = (ecRes.data ?? []) as { educator_id: string; role: 'lead' | 'support' }[]
+        const educatorIds = ecRows.map((r) => r.educator_id)
+        const roleByEducatorId = new Map(ecRows.map((r) => [r.educator_id, r.role]))
         const scData = (scRes.data ?? []) as { student_id: string; is_primary: boolean; status: string }[]
         const enrolledStudentIds = scData.map((r) => r.student_id)
 
@@ -156,17 +154,17 @@ export function useClassroomView(
         setDimensions(dimsData)
         setAllSchoolEducators(allEducators)
 
-        // 3. Educator profiles
-        let educatorProfiles: Pick<Profile, 'id' | 'full_name'>[] = []
+        // 3. Educator profiles, joined with their per-classroom role
+        let educatorProfiles: (Pick<Profile, 'id' | 'full_name'> & { role: 'lead' | 'support' })[] = []
         if (educatorIds.length > 0) {
           const { data: epData } = await supabase
             .from('profiles')
             .select('id, full_name')
             .in('id', educatorIds)
-          educatorProfiles = (epData ?? []) as Pick<
-            Profile,
-            'id' | 'full_name'
-          >[]
+          educatorProfiles = ((epData ?? []) as Pick<Profile, 'id' | 'full_name'>[]).map((p) => ({
+            ...p,
+            role: roleByEducatorId.get(p.id) ?? 'lead',
+          }))
         }
         if (cancelled) return
         setEducators(educatorProfiles)

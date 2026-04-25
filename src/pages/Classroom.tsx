@@ -35,7 +35,7 @@ import { useClassroomView, updateStudentClassroomStatus } from '../lib/classroom
 import { useAuth } from '../lib/auth'
 import { useToast } from '../components/Toast'
 import { supabase } from '../lib/supabase'
-import { assignClassroom, unassignClassroom } from '../lib/educator-data'
+import { assignClassroom, unassignClassroom, updateClassroomEducatorRole, type ClassroomEducatorRole } from '../lib/educator-data'
 import { DimensionIcon } from '../components/student/DimensionIcon'
 import MiniRadar from '../components/dashboard/MiniRadar'
 import AddStudentModal from '../components/classroom/AddStudentModal'
@@ -121,6 +121,7 @@ export default function ClassroomPage() {
   const [analyticsOpen, setAnalyticsOpen] = useState(false)
   const [showAddEducator, setShowAddEducator] = useState(false)
   const [assigningEducator, setAssigningEducator] = useState(false)
+  const [newEducatorRole, setNewEducatorRole] = useState<ClassroomEducatorRole>('lead')
   const [showAddStudentModal, setShowAddStudentModal] = useState(false)
   const [showCsvModal, setShowCsvModal] = useState(false)
   const [showCreateAssignment, setShowCreateAssignment] = useState(false)
@@ -295,7 +296,24 @@ export default function ClassroomPage() {
               <div className="mb-3 rounded-lg border border-bg-muted bg-bg p-3">
                 {unassigned.length > 0 ? (
                   <>
-                    <p className="mb-2 text-xs font-medium text-text-muted">Select an educator to assign:</p>
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <p className="text-xs font-medium text-text-muted">Select an educator to assign:</p>
+                      <div className="flex items-center gap-1 rounded-md border border-bg-muted bg-bg-card p-0.5">
+                        {(['lead', 'support'] as ClassroomEducatorRole[]).map((r) => (
+                          <button
+                            key={r}
+                            onClick={() => setNewEducatorRole(r)}
+                            className={
+                              newEducatorRole === r
+                                ? 'rounded px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary-700 bg-primary-50'
+                                : 'rounded px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-text-light hover:text-text'
+                            }
+                          >
+                            {r}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       {unassigned.map((e) => (
                         <button
@@ -303,11 +321,11 @@ export default function ClassroomPage() {
                           onClick={async () => {
                             if (assigningEducator || !classroom) return
                             setAssigningEducator(true)
-                            const { error: err } = await assignClassroom(e.id, classroom.id, classroom.school_id)
+                            const { error: err } = await assignClassroom(e.id, classroom.id, classroom.school_id, newEducatorRole)
                             if (err) {
                               toast(`Failed to assign: ${err}`, 'error')
                             } else {
-                              toast(`${e.full_name} assigned to ${classroom.name}`, 'success')
+                              toast(`${e.full_name} assigned to ${classroom.name} as ${newEducatorRole}`, 'success')
                               refetch()
                             }
                             setAssigningEducator(false)
@@ -332,33 +350,70 @@ export default function ClassroomPage() {
             <p className="text-sm text-text-light">No educators assigned yet.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {educators.map((e) => (
-                <div
-                  key={e.id}
-                  className="flex items-center gap-1.5 rounded-full bg-primary-50 py-1 pl-3 pr-1.5"
-                >
-                  <span className="text-xs font-medium text-primary-700">{e.full_name}</span>
-                  <button
-                    onClick={async () => {
-                      if (assigningEducator || !classroom) return
-                      setAssigningEducator(true)
-                      const { error: err } = await unassignClassroom(e.id, classroom.id)
-                      if (err) {
-                        toast(`Failed to remove: ${err}`, 'error')
-                      } else {
-                        toast(`${e.full_name} removed from ${classroom.name}`, 'success')
-                        refetch()
-                      }
-                      setAssigningEducator(false)
-                    }}
-                    disabled={assigningEducator}
-                    className="rounded-full p-0.5 text-primary-400 transition-colors hover:bg-primary-100 hover:text-primary-700 disabled:opacity-50"
-                    title={`Remove ${e.full_name}`}
+              {educators.map((e) => {
+                const isLead = e.role === 'lead'
+                const next: ClassroomEducatorRole = isLead ? 'support' : 'lead'
+                return (
+                  <div
+                    key={e.id}
+                    className={
+                      isLead
+                        ? 'flex items-center gap-1.5 rounded-full bg-primary-50 py-1 pl-1.5 pr-1.5'
+                        : 'flex items-center gap-1.5 rounded-full bg-bg-muted py-1 pl-1.5 pr-1.5'
+                    }
                   >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
+                    <button
+                      onClick={async () => {
+                        if (assigningEducator || !classroom) return
+                        setAssigningEducator(true)
+                        const { error: err } = await updateClassroomEducatorRole(e.id, classroom.id, next)
+                        if (err) {
+                          toast(`Failed to update role: ${err}`, 'error')
+                        } else {
+                          toast(`${e.full_name} is now ${next === 'lead' ? 'Lead' : 'Support'}`, 'success')
+                          refetch()
+                        }
+                        setAssigningEducator(false)
+                      }}
+                      disabled={assigningEducator}
+                      className={
+                        isLead
+                          ? 'rounded-full bg-primary-200 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary-800 hover:bg-primary-300 disabled:opacity-50'
+                          : 'rounded-full bg-bg-card px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-text-muted hover:bg-bg disabled:opacity-50'
+                      }
+                      title={`Change to ${next === 'lead' ? 'Lead' : 'Support'}`}
+                    >
+                      {isLead ? 'Lead' : 'Support'}
+                    </button>
+                    <span className={isLead ? 'text-xs font-medium text-primary-700' : 'text-xs font-medium text-text'}>
+                      {e.full_name}
+                    </span>
+                    <button
+                      onClick={async () => {
+                        if (assigningEducator || !classroom) return
+                        setAssigningEducator(true)
+                        const { error: err } = await unassignClassroom(e.id, classroom.id)
+                        if (err) {
+                          toast(`Failed to remove: ${err}`, 'error')
+                        } else {
+                          toast(`${e.full_name} removed from ${classroom.name}`, 'success')
+                          refetch()
+                        }
+                        setAssigningEducator(false)
+                      }}
+                      disabled={assigningEducator}
+                      className={
+                        isLead
+                          ? 'rounded-full p-0.5 text-primary-400 transition-colors hover:bg-primary-100 hover:text-primary-700 disabled:opacity-50'
+                          : 'rounded-full p-0.5 text-text-light transition-colors hover:bg-bg-card hover:text-text disabled:opacity-50'
+                      }
+                      title={`Remove ${e.full_name}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                )
+              })}
             </div>
           )}
         </section>

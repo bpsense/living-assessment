@@ -476,16 +476,33 @@ export function useEducatorProfile(educatorId: string | undefined): EducatorProf
 // Classroom assignment helpers (admin-only, protected by RLS)
 // ============================================================
 
+export type ClassroomEducatorRole = 'lead' | 'support'
+
 export async function assignClassroom(
   educatorId: string,
   classroomId: string,
-  schoolId: string
+  schoolId: string,
+  role: ClassroomEducatorRole = 'lead'
 ): Promise<{ error: string | null }> {
   const { error } = await supabase.from('educator_classrooms').insert({
     educator_id: educatorId,
     classroom_id: classroomId,
     school_id: schoolId,
+    role,
   })
+  return { error: error?.message ?? null }
+}
+
+export async function updateClassroomEducatorRole(
+  educatorId: string,
+  classroomId: string,
+  role: ClassroomEducatorRole
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from('educator_classrooms')
+    .update({ role })
+    .eq('educator_id', educatorId)
+    .eq('classroom_id', classroomId)
   return { error: error?.message ?? null }
 }
 
