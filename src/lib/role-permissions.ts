@@ -131,17 +131,22 @@ export function useRolePermissions(role: EffectiveRole | undefined): {
 
 /**
  * Hook for page-level gating. Returns the effective access for a sidebar key
- * for the currently-viewing role, plus convenience booleans. Department/
- * Location admins resolve as the 'dept_admin' effective role.
+ * for the currently-viewing role, plus convenience booleans. Respects the
+ * "view as" impersonation in useAuth — when a user is viewing as another
+ * role, page-level edit affordances should mirror that target role
+ * (including dropping their dept admin elevation).
  */
 export function usePageAccess(key: SidebarKey): {
   access: ItemAccess
   canView: boolean
   canEdit: boolean
 } {
-  const { profile } = useAuth()
+  const { profile, viewAsRole } = useAuth()
   const { isDepartmentAdmin } = useAccessControl()
-  const effective = profile ? effectiveRoleFor(profile.role, isDepartmentAdmin) : undefined
+  const isViewingAs = !!viewAsRole
+  const effective = profile
+    ? effectiveRoleFor(profile.role, isDepartmentAdmin && !isViewingAs)
+    : undefined
   const { permissions } = useRolePermissions(effective)
   const access = effective ? resolveAccess(key, effective, permissions) : 'hidden'
   return {

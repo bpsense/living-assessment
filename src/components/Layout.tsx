@@ -302,14 +302,18 @@ export default function Layout() {
   }, [profile?.school_id, isSystemAdmin, activeSchoolId])
 
   const deptLabel = useDepartmentLabel()
+  // profile.role already reflects viewAsRole when impersonating; viewAsRole
+  // is the truth for "is the user currently viewing as someone else".
+  const isViewingAs = !!viewAsRole
   const role = profile?.role ?? 'educator'
-  // System admin viewing into a school renders nav as the admin role.
-  // Otherwise, dept admins resolve to the 'dept_admin' effective role so the
-  // catalog grants them their elevated items (Educators/Families/Users/dept dashboard).
+  // System admin viewing into a school renders nav as the admin role —
+  // unless they're explicitly impersonating, in which case respect that.
+  // Dept admin status only applies to the actual user, not the impersonated
+  // role, so we strip it during view-as.
   const effectiveRole: EffectiveRole =
-    isSystemAdmin && !isAllSchoolsView
+    isSystemAdmin && !isAllSchoolsView && !isViewingAs
       ? 'admin'
-      : effectiveRoleFor(role, isDepartmentAdmin)
+      : effectiveRoleFor(role, isDepartmentAdmin && !isViewingAs)
   const { permissions } = useRolePermissions(effectiveRole)
   const navItems = getNavItems(effectiveRole, isSystemAdmin, isAllSchoolsView, permissions, deptLabel)
   // Hide FAB when impersonating (read-only context) or in All Schools view
