@@ -99,8 +99,17 @@ function buildNavFromCatalog(
   perms: RolePermissionMap,
   deptLabel: { singular: string; plural: string }
 ): NavItem[] {
+  // Items referenced as children of a folder shouldn't also appear at the
+  // top level (the catalog lists them both ways so SIDEBAR_BY_KEY can resolve
+  // them, but they're meant to be nested when rendered).
+  const folderChildKeys = new Set<string>()
+  for (const item of SIDEBAR_ITEMS) {
+    if (item.children) for (const k of item.children) folderChildKeys.add(k)
+  }
+
   const nav: NavItem[] = []
   for (const item of SIDEBAR_ITEMS) {
+    if (folderChildKeys.has(item.key)) continue
     if (resolveAccess(item.key, role, perms) === 'hidden') continue
 
     if (item.children) {
