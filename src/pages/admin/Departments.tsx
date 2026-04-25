@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { useActiveSchoolId } from '../../lib/school-context'
 import { supabase } from '../../lib/supabase'
 import { useDepartmentLabel } from '../../lib/department-label'
@@ -340,14 +341,17 @@ export default function Departments() {
                 ) : (
                   <div className="space-y-2">
                     {dept.classrooms.map((c) => (
-                      <div key={c.id} className="flex items-center justify-between rounded-lg bg-bg px-3 py-2">
-                        <div className="flex items-center gap-2">
+                      <div key={c.id} className="flex items-center justify-between rounded-lg bg-bg px-3 py-2 transition-colors hover:bg-bg-muted">
+                        <Link
+                          to={`/classroom/${c.id}`}
+                          className="flex flex-1 items-center gap-2 text-text hover:text-primary-600"
+                        >
                           <School className="h-4 w-4 text-text-light" />
-                          <span className="text-sm text-text">{c.name}</span>
+                          <span className="text-sm font-medium">{c.name}</span>
                           {c.grade_level && (
                             <span className="text-xs text-text-light">({c.grade_level})</span>
                           )}
-                        </div>
+                        </Link>
                         <button
                           onClick={() => handleAssignClassroom(c.id, null)}
                           className="text-xs text-text-light hover:text-alert-500"
