@@ -11,7 +11,8 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { useAccessControl } from '../lib/access-control'
 import { useToast } from '../components/Toast'
-import type { Classroom } from '../types/database'
+import { useDepartmentLabel } from '../lib/department-label'
+import type { Classroom, Department } from '../types/database'
 
 // ============================================================
 // Types
@@ -31,11 +32,14 @@ export default function Classrooms() {
   const { role, canEditClassrooms, isDepartmentAdmin, departmentAdminIds, isReadOnly } = useAccessControl()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const deptLabel = useDepartmentLabel()
   const [classrooms, setClassrooms] = useState<ClassroomRow[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
   const [newName, setNewName] = useState('')
   const [newGrade, setNewGrade] = useState('')
+  const [newDeptId, setNewDeptId] = useState<string>('')
   const [creating, setCreating] = useState(false)
 
   useEffect(() => {
@@ -130,6 +134,15 @@ export default function Classrooms() {
         rooms = (classroomData ?? []) as Classroom[]
       }
 
+      // Departments for grouping (school admin + system admin see all; others
+      // still benefit from labels for their visible classrooms)
+      const { data: deptData } = await supabase
+        .from('departments')
+        .select('*')
+        .eq('school_id', profile.school_id)
+        .order('name')
+      setDepartments((deptData ?? []) as Department[])
+
       if (rooms.length === 0) {
         setClassrooms([])
         setLoading(false)
@@ -196,6 +209,7 @@ export default function Classrooms() {
         school_id: profile.school_id,
         name: newName.trim(),
         grade_level: newGrade.trim() || null,
+        department_id: newDeptId || null,
       })
       .select()
       .single()
@@ -218,6 +232,7 @@ export default function Classrooms() {
     toast('Classroom created!', 'success')
     setNewName('')
     setNewGrade('')
+    setNewDeptId('')
     setShowCreate(false)
     setCreating(false)
     fetchClassrooms()
@@ -262,7 +277,7 @@ export default function Classrooms() {
           className="glass-card p-5"
         >
           <h3 className="mb-4 text-sm font-semibold text-text">Create Classroom</h3>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             <div>
               <label className="mb-1 block text-xs font-medium text-text-muted">
                 Classroom Name *
@@ -285,6 +300,21 @@ export default function Classrooms() {
                 placeholder="e.g. 3-5"
                 className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
               />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-text-muted">
+                {deptLabel.singular}
+              </label>
+              <select
+                value={newDeptId}
+                onChange={(e) => setNewDeptId(e.target.value)}
+                className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              >
+                <option value="">Unassigned</option>
+                {departments.map((d) => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="mt-4 flex gap-2">
@@ -316,48 +346,98 @@ export default function Classrooms() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {classrooms.map((room) => (
-            <div
-              key={room.id}
-              onClick={() => navigate(`/classroom/${room.id}`)}
-              className="glass-card glass-card-interactive group"
-            >
-              <div className="p-5">
-                <div className="flex items-start justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-50">
-                    <School className="h-5 w-5 text-primary-600" />
-                  </div>
-                  {room.grade_level && (
-                    <span className="rounded-full bg-bg-muted px-2 py-0.5 text-[10px] font-medium text-text-muted">
-                      Grade {room.grade_level}
-                    </span>
-                  )}
-                </div>
-
-                <h3 className="mt-3 text-base font-bold text-text">{room.name}</h3>
-
-                <div className="mt-3 flex items-center gap-4 text-xs text-text-muted">
-                  <span className="flex items-center gap-1">
-                    <Users className="h-3.5 w-3.5" />
-                    {room.student_count} student{room.student_count !== 1 ? 's' : ''}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <ClipboardPen className="h-3.5 w-3.5" />
-                    {room.observation_count} obs
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex border-t border-bg-muted">
-                <span className="flex flex-1 items-center justify-center gap-1.5 py-3 text-xs font-medium text-primary-600 transition-colors group-hover:bg-primary-50">
-                  View Classroom
+        <div className="space-y-8">
+          {groupClassroomsByDepartment(classrooms, departments).map((group) => (
+            <section key={group.id ?? 'unassigned'}>
+              <div className="mb-3 flex items-baseline justify-between border-b border-bg-muted pb-2">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">
+                  {group.name}
+                </h2>
+                <span className="text-xs text-text-light">
+                  {group.rooms.length} classroom{group.rooms.length !== 1 ? 's' : ''}
                 </span>
               </div>
-            </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {group.rooms.map((room) => (
+                  <ClassroomCard
+                    key={room.id}
+                    room={room}
+                    onClick={() => navigate(`/classroom/${room.id}`)}
+                  />
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+interface ClassroomGroup {
+  id: string | null
+  name: string
+  rooms: ClassroomRow[]
+}
+
+function groupClassroomsByDepartment(
+  rooms: ClassroomRow[],
+  departments: Department[]
+): ClassroomGroup[] {
+  const byId = new Map<string, ClassroomGroup>()
+  for (const d of departments) {
+    byId.set(d.id, { id: d.id, name: d.name, rooms: [] })
+  }
+  const unassigned: ClassroomGroup = { id: null, name: 'Unassigned', rooms: [] }
+  for (const r of rooms) {
+    const group = (r.department_id && byId.get(r.department_id)) || unassigned
+    group.rooms.push(r)
+  }
+  const groups = [...byId.values()].filter((g) => g.rooms.length > 0)
+  if (unassigned.rooms.length > 0) groups.push(unassigned)
+  return groups
+}
+
+function ClassroomCard({
+  room,
+  onClick,
+}: {
+  room: ClassroomRow
+  onClick: () => void
+}) {
+  return (
+    <div onClick={onClick} className="glass-card glass-card-interactive group">
+      <div className="p-5">
+        <div className="flex items-start justify-between">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-50">
+            <School className="h-5 w-5 text-primary-600" />
+          </div>
+          {room.grade_level && (
+            <span className="rounded-full bg-bg-muted px-2 py-0.5 text-[10px] font-medium text-text-muted">
+              Grade {room.grade_level}
+            </span>
+          )}
+        </div>
+
+        <h3 className="mt-3 text-base font-bold text-text">{room.name}</h3>
+
+        <div className="mt-3 flex items-center gap-4 text-xs text-text-muted">
+          <span className="flex items-center gap-1">
+            <Users className="h-3.5 w-3.5" />
+            {room.student_count} student{room.student_count !== 1 ? 's' : ''}
+          </span>
+          <span className="flex items-center gap-1">
+            <ClipboardPen className="h-3.5 w-3.5" />
+            {room.observation_count} obs
+          </span>
+        </div>
+      </div>
+
+      <div className="flex border-t border-bg-muted">
+        <span className="flex flex-1 items-center justify-center gap-1.5 py-3 text-xs font-medium text-primary-600 transition-colors group-hover:bg-primary-50">
+          View Classroom
+        </span>
+      </div>
     </div>
   )
 }
