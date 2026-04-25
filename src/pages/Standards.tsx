@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Globe,
 } from 'lucide-react'
+import { usePageAccess } from '../lib/role-permissions'
 import { useAuth } from '../lib/auth'
 import { useToast } from '../components/Toast'
 import { useStandardsManager } from '../lib/standards-data'
@@ -131,6 +132,7 @@ type ViewMode = 'all_schools' | 'school'
 export default function Standards() {
   const { profile } = useAuth()
   const { toast } = useToast()
+  const { canEdit } = usePageAccess('standards')
   const {
     frameworks,
     globalFrameworks,
@@ -265,13 +267,15 @@ export default function Standards() {
               : 'Manage standards frameworks for student reports.'}
           </p>
         </div>
-        <button
-          onClick={() => setUploadModalOpen(true)}
-          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-primary-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-600"
-        >
-          <Upload className="h-4 w-4" />
-          Upload Framework
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => setUploadModalOpen(true)}
+            className="flex shrink-0 items-center gap-1.5 rounded-xl bg-primary-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-600"
+          >
+            <Upload className="h-4 w-4" />
+            Upload Framework
+          </button>
+        )}
       </div>
 
       {/* View mode selector */}

@@ -30,6 +30,7 @@ import {
   Activity,
   Wrench,
   ChevronRight,
+  Lock,
 } from 'lucide-react'
 import type { UserRole } from '../types/database'
 import QuickObserveModal from './QuickObserveModal'
@@ -38,9 +39,45 @@ import IncidentReportModal from './incident/IncidentReportModal'
 import SpeedDial from './SpeedDial'
 import SchoolSwitcher from './SchoolSwitcher'
 import NotificationBell from './incident/NotificationBell'
-import { useEducatorList } from '../lib/educator-data'
+import { useEducatorList, useDepartmentAdminList } from '../lib/educator-data'
 import { useFamilyList } from '../lib/family-data'
 import { useDepartmentLabel } from '../lib/department-label'
+import { SIDEBAR_ITEMS, SIDEBAR_BY_KEY, effectiveRoleFor, type EffectiveRole, type SidebarItem } from '../lib/sidebar-catalog'
+import { useRolePermissions, resolveAccess, type RolePermissionMap } from '../lib/role-permissions'
+
+// ============================================================
+// Icon registry — catalog stores icon names as strings; we resolve
+// them here so the catalog stays React-free.
+// ============================================================
+const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  LayoutDashboard, School, Users, UserCheck, UsersRound, Layers, BookOpen,
+  Building2, PlusCircle, User, MapPin, ClipboardList, MessageCircle, Target,
+  ShieldAlert, Languages, Wrench, Lock,
+}
+
+function renderIcon(name: string) {
+  const Cmp = ICONS[name] ?? LayoutDashboard
+  return <Cmp className="h-5 w-5" />
+}
+
+// ============================================================
+// Per-role label/route overrides — keeps the catalog generic and
+// lets each role get its preferred terminology / target route.
+// ============================================================
+function labelFor(item: SidebarItem, role: EffectiveRole, deptLabel: { singular: string; plural: string }): string {
+  if (item.key === 'departments') return deptLabel.plural
+  if (item.key === 'department-dashboard') return deptLabel.singular
+  if (item.key === 'classrooms' && (role === 'educator' || role === 'dept_admin')) return 'My Classrooms'
+  if (item.key === 'students' && role === 'parent') return 'My Children'
+  if (item.key === 'school-profile' && role === 'parent') return 'School Info'
+  if (item.key === 'profile' && role === 'learner') return 'My Profile'
+  return item.label
+}
+
+function routeFor(item: SidebarItem, role: EffectiveRole): string | undefined {
+  if (item.key === 'profile' && role === 'learner') return '/learner/profile'
+  return item.to
+}
 
 interface NavItem {
   to?: string
@@ -51,41 +88,73 @@ interface NavItem {
   folderKey?: string
 }
 
-function buildSchoolAdminNav(deptLabel: { singular: string; plural: string }): NavItem[] {
-  return [
-    { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-    { to: '/classrooms', label: 'Classrooms', icon: <School className="h-5 w-5" /> },
-    { to: '/messages', label: 'Messages', icon: <MessageCircle className="h-5 w-5" /> },
-    { to: '/admin/incidents', label: 'Incidents', icon: <ShieldAlert className="h-5 w-5" /> },
-    { to: '/admin/departments', label: deptLabel.plural, icon: <MapPin className="h-5 w-5" /> },
-    { to: '/settings', label: 'School Profile', icon: <Building2 className="h-5 w-5" /> },
-    {
-      label: 'Utilities',
-      icon: <Wrench className="h-5 w-5" />,
-      folderKey: 'utilities-admin',
-      children: [
-        { to: '/admin/dimensions', label: 'Dimensions', icon: <Layers className="h-5 w-5" /> },
-        { to: '/standards', label: 'Standards', icon: <BookOpen className="h-5 w-5" /> },
-        { to: '/translate', label: 'Translate', icon: <Languages className="h-5 w-5" /> },
-        { to: '/admin/skill-library', label: 'Skill Library', icon: <Target className="h-5 w-5" /> },
-        { to: '/assignments', label: 'Assignments', icon: <ClipboardList className="h-5 w-5" /> },
-        { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
-        { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
-        { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
-        { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
-      ],
-    },
-  ]
+/**
+ * Build the role's sidebar from the central catalog + role_permissions
+ * overrides. Items resolve to 'hidden' / 'view' / 'edit' for the role; only
+ * non-hidden items are rendered. Folders disappear when all children are
+ * hidden.
+ */
+function buildNavFromCatalog(
+  role: EffectiveRole,
+  perms: RolePermissionMap,
+  deptLabel: { singular: string; plural: string }
+): NavItem[] {
+  // Items referenced as children of a folder shouldn't also appear at the
+  // top level (the catalog lists them both ways so SIDEBAR_BY_KEY can resolve
+  // them, but they're meant to be nested when rendered).
+  const folderChildKeys = new Set<string>()
+  for (const item of SIDEBAR_ITEMS) {
+    if (item.children) for (const k of item.children) folderChildKeys.add(k)
+  }
+
+  const nav: NavItem[] = []
+  for (const item of SIDEBAR_ITEMS) {
+    if (folderChildKeys.has(item.key)) continue
+    if (resolveAccess(item.key, role, perms) === 'hidden') continue
+
+    if (item.children) {
+      const children: NavItem[] = []
+      for (const childKey of item.children) {
+        const child = SIDEBAR_BY_KEY[childKey]
+        if (!child) continue
+        if (resolveAccess(child.key, role, perms) === 'hidden') continue
+        const to = routeFor(child, role)
+        if (!to) continue
+        children.push({
+          to,
+          label: labelFor(child, role, deptLabel),
+          icon: renderIcon(child.icon),
+        })
+      }
+      if (children.length === 0) continue
+      nav.push({
+        label: labelFor(item, role, deptLabel),
+        icon: renderIcon(item.icon),
+        folderKey: `folder-${item.key}-${role}`,
+        children,
+      })
+    } else {
+      const to = routeFor(item, role)
+      if (!to) continue
+      nav.push({
+        to,
+        label: labelFor(item, role, deptLabel),
+        icon: renderIcon(item.icon),
+      })
+    }
+  }
+  return nav
 }
 
 function getNavItems(
-  role: UserRole,
+  effectiveRole: EffectiveRole,
   isSystemAdmin: boolean,
   isAllSchoolsView: boolean,
-  isDepartmentAdmin: boolean,
+  perms: RolePermissionMap,
   deptLabel: { singular: string; plural: string }
 ): NavItem[] {
-  // System admin viewing "All Schools" gets the system nav
+  // System admin viewing "All Schools" gets a hardcoded system nav (these
+  // routes aren't in the per-school catalog).
   if (isSystemAdmin && isAllSchoolsView) {
     return [
       { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
@@ -95,58 +164,7 @@ function getNavItems(
     ]
   }
 
-  // System admin viewing a specific school gets the school admin nav
-  if (isSystemAdmin) {
-    return buildSchoolAdminNav(deptLabel)
-  }
-
-  switch (role) {
-    case 'educator': {
-      const items: NavItem[] = [
-        { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-        { to: '/classrooms', label: 'My Classrooms', icon: <School className="h-5 w-5" /> },
-        { to: '/assignments', label: 'Assignments', icon: <ClipboardList className="h-5 w-5" /> },
-        { to: '/messages', label: 'Messages', icon: <MessageCircle className="h-5 w-5" /> },
-        { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
-        { to: '/observe', label: 'Quick Observe', icon: <PlusCircle className="h-5 w-5" /> },
-      ]
-      // Department admins get extra nav items
-      if (isDepartmentAdmin) {
-        items.push(
-          { to: '/department', label: deptLabel.singular, icon: <MapPin className="h-5 w-5" /> },
-          { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
-          { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
-          { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
-        )
-      }
-      items.push(
-        { to: '/settings', label: 'School Profile', icon: <Building2 className="h-5 w-5" /> },
-        { to: '/profile', label: 'Profile', icon: <User className="h-5 w-5" /> },
-      )
-      return items
-    }
-    case 'admin':
-      return buildSchoolAdminNav(deptLabel)
-    case 'parent':
-      return [
-        { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-        { to: '/messages', label: 'Messages', icon: <MessageCircle className="h-5 w-5" /> },
-        { to: '/students', label: 'My Children', icon: <Users className="h-5 w-5" /> },
-        { to: '/classrooms', label: 'Classrooms', icon: <School className="h-5 w-5" /> },
-        { to: '/settings', label: 'School Info', icon: <Building2 className="h-5 w-5" /> },
-        { to: '/profile', label: 'Profile', icon: <User className="h-5 w-5" /> },
-      ]
-    case 'learner':
-      return [
-        { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-        { to: '/messages', label: 'Messages', icon: <MessageCircle className="h-5 w-5" /> },
-        { to: '/learner/profile', label: 'My Profile', icon: <User className="h-5 w-5" /> },
-      ]
-    default:
-      return [
-        { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-      ]
-  }
+  return buildNavFromCatalog(effectiveRole, perms, deptLabel)
 }
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -154,6 +172,14 @@ const ROLE_LABELS: Record<UserRole, string> = {
   educator: 'Educator',
   parent: 'Family',
   learner: 'Learner',
+}
+
+/** Pill labels in the View As switcher; the dept_admin label is rendered
+ *  via the school's department/location term at call sites. */
+const VIEW_AS_PILL_LABELS: Record<Exclude<ViewAsPill, 'dept_admin'>, string> = {
+  admin: 'Admin',
+  educator: 'Educator',
+  parent: 'Family',
 }
 
 function flattenLeafItems(items: NavItem[]): NavItem[] {
@@ -232,16 +258,23 @@ function NavFolder({ item, currentPath }: { item: NavItem; currentPath: string }
   )
 }
 
-/** Which roles can the current user's actual role switch to? */
-function getSwitchableRoles(actualRole: UserRole): UserRole[] {
+/**
+ * Pill identifiers in the View-As switcher. Wider than UserRole because
+ * "Dept/Location Admin" has its own filtered dropdown even though the
+ * impersonated person is technically role='educator'.
+ */
+type ViewAsPill = 'admin' | 'dept_admin' | 'educator' | 'parent'
+
+/** Which switcher pills the current user's actual role can use. */
+function getSwitchableRoles(actualRole: UserRole): ViewAsPill[] {
   switch (actualRole) {
     case 'admin':
-      return ['admin', 'educator', 'parent'] // Admin sees all 3
+      return ['admin', 'dept_admin', 'educator', 'parent']
     case 'educator':
-      return ['educator', 'parent']           // Educator sees Educator + Family
+      return ['educator', 'parent']
     case 'parent':
     default:
-      return []                               // Family sees no switcher
+      return []
   }
 }
 
@@ -254,7 +287,7 @@ export default function Layout() {
   const [showCreateAssignment, setShowCreateAssignment] = useState(false)
   const [incidentReportOpen, setIncidentReportOpen] = useState(false)
   const [schoolName, setSchoolName] = useState<string>('')
-  const [openDropdown, setOpenDropdown] = useState<UserRole | null>(null)
+  const [openDropdown, setOpenDropdown] = useState<ViewAsPill | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const isAllSchoolsView = isSystemAdmin && activeSchoolId === null
@@ -274,6 +307,7 @@ export default function Layout() {
   const schoolIdForLists = isSystemAdmin ? activeSchoolId : profile?.school_id
   const { educators } = useEducatorList(schoolIdForLists ?? undefined)
   const { families } = useFamilyList(schoolIdForLists ?? undefined)
+  const { admins: deptAdmins } = useDepartmentAdminList(schoolIdForLists ?? undefined)
 
   // Fetch school name once (based on active school for system admins)
   useEffect(() => {
@@ -293,8 +327,18 @@ export default function Layout() {
   }, [profile?.school_id, isSystemAdmin, activeSchoolId])
 
   const deptLabel = useDepartmentLabel()
+  // profile.role and isDepartmentAdmin both already reflect impersonation
+  // (auth swaps them based on viewAsRole/viewAsUserId).
+  const isViewingAs = !!viewAsRole
   const role = profile?.role ?? 'educator'
-  const navItems = getNavItems(role, isSystemAdmin, isAllSchoolsView, isDepartmentAdmin, deptLabel)
+  // System admin viewing into a school renders nav as the admin role —
+  // unless they're explicitly impersonating, in which case respect that.
+  const effectiveRole: EffectiveRole =
+    isSystemAdmin && !isAllSchoolsView && !isViewingAs
+      ? 'admin'
+      : effectiveRoleFor(role, isDepartmentAdmin)
+  const { permissions } = useRolePermissions(effectiveRole)
+  const navItems = getNavItems(effectiveRole, isSystemAdmin, isAllSchoolsView, permissions, deptLabel)
   // Hide FAB when impersonating (read-only context) or in All Schools view
   const showFab = (role === 'educator' || role === 'admin' || isSystemAdmin) && !isAllSchoolsView && !viewAsUserId
   // System admins can switch roles when viewing a specific school, but not in the "All Schools" view
@@ -442,7 +486,18 @@ export default function Layout() {
               <Eye className="h-3.5 w-3.5 text-text-light" />
               <span className="text-xs text-text-light">View as:</span>
 
-              {switchableRoles.map((r) => (
+              {switchableRoles.map((r) => {
+                const pillLabel =
+                  r === 'dept_admin' ? `${deptLabel.singular} Admin` : VIEW_AS_PILL_LABELS[r]
+                const pillActive =
+                  r === 'admin'
+                    ? role === 'admin' && !viewAsUserId
+                    : r === 'dept_admin'
+                      ? role === 'educator' && isDepartmentAdmin
+                      : r === 'educator'
+                        ? role === 'educator' && !isDepartmentAdmin
+                        : role === 'parent'
+                return (
                 <div key={r} className="relative">
                   {r === 'admin' ? (
                     /* Admin: simple click, no dropdown */
@@ -453,27 +508,66 @@ export default function Layout() {
                       }}
                       className={clsx(
                         'rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
-                        role === r && !viewAsUserId
+                        pillActive
                           ? 'bg-primary-500 text-white'
                           : 'bg-bg-muted text-text-muted hover:bg-primary-50 hover:text-primary-600'
                       )}
                     >
-                      {ROLE_LABELS[r]}
+                      {pillLabel}
                     </button>
                   ) : (
-                    /* Educator / Family: click opens dropdown */
+                    /* Dept Admin / Educator / Family: click opens dropdown */
                     <button
                       onClick={() => setOpenDropdown(openDropdown === r ? null : r)}
                       className={clsx(
                         'flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
-                        role === r
+                        pillActive
                           ? 'bg-primary-500 text-white'
                           : 'bg-bg-muted text-text-muted hover:bg-primary-50 hover:text-primary-600'
                       )}
                     >
-                      {ROLE_LABELS[r]}
+                      {pillLabel}
                       <ChevronDown className={clsx('h-3 w-3 transition-transform', openDropdown === r && 'rotate-180')} />
                     </button>
+                  )}
+
+                  {/* Dept Admin dropdown — filtered list of educators that have a department_admins row */}
+                  {openDropdown === r && r === 'dept_admin' && (
+                    <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-lg border border-bg-muted bg-bg-card shadow-lg">
+                      <div className="max-h-64 overflow-y-auto py-1">
+                        {deptAdmins.length === 0 ? (
+                          <p className="px-3 py-2 text-xs text-text-light">
+                            No {deptLabel.singular.toLowerCase()} admins
+                          </p>
+                        ) : (
+                          deptAdmins.map((da) => (
+                            <button
+                              key={da.id}
+                              onClick={() => {
+                                setViewAs('educator', da.id, da.full_name)
+                                setOpenDropdown(null)
+                              }}
+                              className={clsx(
+                                'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors hover:bg-bg-muted',
+                                viewAsUserId === da.id && 'bg-primary-50 text-primary-700 font-medium'
+                              )}
+                            >
+                              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-100 text-[10px] font-semibold text-primary-700">
+                                {da.full_name.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm">{da.full_name}</p>
+                                {da.departments.length > 0 && (
+                                  <p className="truncate text-[10px] text-text-light">
+                                    {da.departments.map((d) => d.name).join(', ')}
+                                  </p>
+                                )}
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
                   )}
 
                   {/* Dropdown for educator/family selection */}
@@ -549,7 +643,8 @@ export default function Layout() {
                     </div>
                   )}
                 </div>
-              ))}
+                )
+              })}
 
               {(viewAsRole || viewAsUserId) && (
                 <button

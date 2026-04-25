@@ -17,6 +17,7 @@ import {
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { useAccessControl } from '../lib/access-control'
+import { usePageAccess } from '../lib/role-permissions'
 import { useToast } from '../components/Toast'
 import InviteLearnerModal from '../components/student/InviteLearnerModal'
 import type { Student, Classroom } from '../types/database'
@@ -45,6 +46,7 @@ interface UnlinkedLearner {
 export default function Students() {
   const { profile } = useAuth()
   const { role, canEditStudents, canViewAllStudents, canInviteUsers, isDepartmentAdmin, departmentAdminIds, isReadOnly, formatStudentName, accessLevel } = useAccessControl()
+  const { canEdit: canEditPerms } = usePageAccess('students')
   const navigate = useNavigate()
   const { toast } = useToast()
   const [students, setStudents] = useState<StudentRow[]>([])
@@ -375,7 +377,7 @@ export default function Students() {
             )}
           </p>
         </div>
-        {canEditStudents && !isReadOnly && (
+        {canEditStudents && !isReadOnly && canEditPerms && (
           <button
             onClick={openAddForm}
             className="flex items-center gap-2 rounded-lg bg-primary-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-600"

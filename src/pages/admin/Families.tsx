@@ -6,12 +6,14 @@ import { useAccessControl } from '../../lib/access-control'
 import { useToast } from '../../components/Toast'
 import { useFamilyList, inviteFamily } from '../../lib/family-data'
 import { supabase } from '../../lib/supabase'
+import { usePageAccess } from '../../lib/role-permissions'
 
 export default function Families() {
   const { profile } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
   const { canDeactivateUsers } = useAccessControl()
+  const { canEdit } = usePageAccess('families')
   const { families, loading, error, refetch } = useFamilyList(profile?.school_id)
   const [actionMenu, setActionMenu] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
@@ -91,13 +93,15 @@ export default function Families() {
             {totalLinked} student{totalLinked !== 1 ? 's' : ''} linked
           </p>
         </div>
-        <button
-          onClick={() => setShowInvite((v) => !v)}
-          className="flex items-center gap-2 rounded-lg bg-primary-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-600"
-        >
-          <Plus className="h-4 w-4" />
-          Invite Family
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => setShowInvite((v) => !v)}
+            className="flex items-center gap-2 rounded-lg bg-primary-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-600"
+          >
+            <Plus className="h-4 w-4" />
+            Invite Family
+          </button>
+        )}
       </div>
 
       {/* Invite form */}

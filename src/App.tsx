@@ -32,6 +32,7 @@ import UsersPage from './pages/admin/Users'
 import LearnerProfile from './pages/LearnerProfile'
 import CompetencyFrameworks from './pages/admin/CompetencyFrameworks'
 import SkillLibrary from './pages/admin/SkillLibrary'
+import Permissions from './pages/admin/Permissions'
 import Assignments from './pages/Assignments'
 import AssignmentGrading from './pages/AssignmentGrading'
 import SkillGrading from './components/skills/SkillGrading'
@@ -187,6 +188,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute requiredRole="admin">
               <SkillLibrary />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/permissions"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <Permissions />
             </ProtectedRoute>
           }
         />
