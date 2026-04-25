@@ -14,6 +14,7 @@ import type {
   IncidentReportStudentInsert,
   IncidentReportAttachment,
   IncidentReportNotification,
+  IncidentReportTaggedUser,
   IncidentStudentRole,
   Profile,
 } from '../types/database'
@@ -30,6 +31,10 @@ export interface IncidentFilters {
   date_to?: string
   student_id?: string
   classroom_id?: string
+  /** ilike-match on the free-text location field */
+  location?: string
+  /** When set, restrict to incidents where the current user is assignee or tagged */
+  involved_user_id?: string
   search?: string
 }
 
@@ -68,6 +73,7 @@ export function useIncidentReports(
         if (filters?.severity) query = query.eq('severity', filters.severity)
         if (filters?.date_from) query = query.gte('incident_date', filters.date_from)
         if (filters?.date_to) query = query.lte('incident_date', filters.date_to)
+        if (filters?.location) query = query.ilike('location', `%${filters.location}%`)
         if (filters?.search) query = query.ilike('description', `%${filters.search}%`)
 
         const { data, error: err } = await query
@@ -99,17 +105,57 @@ export function useIncidentReports(
           items = items.filter((i) => linkedIds.has(i.id))
         }
 
-        // Fetch student names for each incident
+        // Filter by involvement (assignee or tagged) — applied client-side
+        // by intersecting with the tag set for the current user.
+        const involvedUserId = filters?.involved_user_id
+        let involvedTaggedIncidentIds: Set<string> | null = null
+        if (involvedUserId) {
+          const { data: myTags } = await supabase
+            .from('incident_report_tagged_users')
+            .select('incident_report_id')
+            .eq('user_id', involvedUserId)
+          involvedTaggedIncidentIds = new Set((myTags ?? []).map((t) => t.incident_report_id as string))
+          items = items.filter(
+            (i) => i.assigned_to === involvedUserId || involvedTaggedIncidentIds!.has(i.id)
+          )
+        }
+
+        // Fetch student names + tag list + unread state for each incident
         const incidentIds = items.map((i) => i.id)
         let studentMap: Record<string, string[]> = {}
         let studentCountMap: Record<string, number> = {}
+        let taggedIncidentIds = new Set<string>()
+        let unreadIncidentIds = new Set<string>()
 
         if (incidentIds.length > 0) {
-          const { data: students } = await supabase
-            .from('incident_report_students')
-            .select('incident_report_id, students(first_name, last_name)')
-            .in('incident_report_id', incidentIds)
+          // Resolve "current user" for the tag/unread enrichment — prefer the
+          // explicit involved_user_id filter, else use auth.user
+          const currentUserId =
+            involvedUserId ?? (await supabase.auth.getUser()).data.user?.id ?? null
 
+          const [studentsRes, tagsRes, notifsRes] = await Promise.all([
+            supabase
+              .from('incident_report_students')
+              .select('incident_report_id, students(first_name, last_name)')
+              .in('incident_report_id', incidentIds),
+            currentUserId
+              ? supabase
+                  .from('incident_report_tagged_users')
+                  .select('incident_report_id')
+                  .eq('user_id', currentUserId)
+                  .in('incident_report_id', incidentIds)
+              : Promise.resolve({ data: [] as { incident_report_id: string }[] }),
+            currentUserId
+              ? supabase
+                  .from('incident_report_notifications')
+                  .select('incident_report_id')
+                  .eq('recipient_id', currentUserId)
+                  .eq('read', false)
+                  .in('incident_report_id', incidentIds)
+              : Promise.resolve({ data: [] as { incident_report_id: string }[] }),
+          ])
+
+          const students = studentsRes.data
           if (students) {
             for (const row of students as unknown as { incident_report_id: string; students: { first_name: string; last_name: string } | null }[]) {
               if (!studentMap[row.incident_report_id]) {
@@ -124,6 +170,13 @@ export function useIncidentReports(
               studentCountMap[row.incident_report_id]++
             }
           }
+
+          for (const t of (tagsRes.data ?? []) as { incident_report_id: string }[]) {
+            taggedIncidentIds.add(t.incident_report_id)
+          }
+          for (const n of (notifsRes.data ?? []) as { incident_report_id: string }[]) {
+            unreadIncidentIds.add(n.incident_report_id)
+          }
         }
 
         const result: IncidentReportListItem[] = items.map((item) => ({
@@ -131,6 +184,8 @@ export function useIncidentReports(
           reporter_name: item.profiles?.full_name,
           student_names: studentMap[item.id] ?? [],
           student_count: studentCountMap[item.id] ?? 0,
+          is_tagged: taggedIncidentIds.has(item.id),
+          has_unread: unreadIncidentIds.has(item.id),
         }))
 
         setIncidents(result)
@@ -143,7 +198,7 @@ export function useIncidentReports(
 
     load()
     return () => { cancelled = true }
-  }, [schoolId, fetchCount, filters?.status, filters?.incident_type, filters?.severity, filters?.date_from, filters?.date_to, filters?.student_id, filters?.classroom_id, filters?.search])
+  }, [schoolId, fetchCount, filters?.status, filters?.incident_type, filters?.severity, filters?.date_from, filters?.date_to, filters?.student_id, filters?.classroom_id, filters?.location, filters?.involved_user_id, filters?.search])
 
   return { incidents, loading, error, refetch }
 }
@@ -183,6 +238,7 @@ export function useIncidentReport(id: string | undefined) {
           classroomsRes,
           attachmentsRes,
           followUpsRes,
+          taggedRes,
         ] = await Promise.all([
           supabase.from('profiles').select('*').eq('id', report.reported_by).single(),
           report.assigned_to
@@ -204,6 +260,11 @@ export function useIncidentReport(id: string | undefined) {
           supabase
             .from('incident_report_follow_ups')
             .select('*, profiles!incident_report_follow_ups_author_id_fkey(*)')
+            .eq('incident_report_id', id)
+            .order('created_at'),
+          supabase
+            .from('incident_report_tagged_users')
+            .select('*, profiles!incident_report_tagged_users_user_id_fkey(*)')
             .eq('incident_report_id', id)
             .order('created_at'),
         ])
@@ -238,6 +299,14 @@ export function useIncidentReport(id: string | undefined) {
             created_at: f.created_at as string,
             author: f.profiles as Profile | undefined,
           })) as IncidentReportWithDetails['follow_ups'],
+          tagged_users: (taggedRes.data ?? []).map((t: Record<string, unknown>) => ({
+            id: t.id as string,
+            incident_report_id: t.incident_report_id as string,
+            user_id: t.user_id as string,
+            tagged_by: t.tagged_by as string,
+            created_at: t.created_at as string,
+            user: t.profiles as Profile | undefined,
+          })) as IncidentReportWithDetails['tagged_users'],
         }
 
         setIncident(result)
@@ -599,3 +668,72 @@ export async function getAttachmentUrl(filePath: string): Promise<string> {
   if (!data?.signedUrl) throw new Error('Failed to get attachment URL')
   return data.signedUrl
 }
+
+// ============================================================
+// Staff tagging (CC / FYI)
+// ============================================================
+
+export async function addIncidentTags(
+  incidentId: string,
+  userIds: string[],
+  taggedBy: string
+): Promise<void> {
+  if (userIds.length === 0) return
+
+  const rows = userIds.map((uid) => ({
+    incident_report_id: incidentId,
+    user_id: uid,
+    tagged_by: taggedBy,
+  }))
+
+  // Upsert against the unique (incident, user) pair so re-tagging a person
+  // is a no-op rather than an error.
+  const { error } = await supabase
+    .from('incident_report_tagged_users')
+    .upsert(rows, { onConflict: 'incident_report_id,user_id', ignoreDuplicates: true })
+
+  if (error) throw new Error(`Failed to tag staff: ${error.message}`)
+
+  // Notify each newly tagged user (skip self)
+  const notifRows = userIds
+    .filter((uid) => uid !== taggedBy)
+    .map((uid) => ({
+      incident_report_id: incidentId,
+      recipient_id: uid,
+      notification_type: 'tagged' as const,
+    }))
+
+  if (notifRows.length > 0) {
+    await supabase.from('incident_report_notifications').insert(notifRows)
+  }
+}
+
+export async function removeIncidentTag(incidentId: string, userId: string): Promise<void> {
+  const { error } = await supabase
+    .from('incident_report_tagged_users')
+    .delete()
+    .eq('incident_report_id', incidentId)
+    .eq('user_id', userId)
+
+  if (error) throw new Error(`Failed to remove tag: ${error.message}`)
+}
+
+/**
+ * Mark all unread notifications for the current user on a given incident as
+ * read — call when the user opens the incident detail page so the bold
+ * indicator clears.
+ */
+export async function markIncidentNotificationsRead(
+  incidentId: string,
+  userId: string
+): Promise<void> {
+  await supabase
+    .from('incident_report_notifications')
+    .update({ read: true })
+    .eq('incident_report_id', incidentId)
+    .eq('recipient_id', userId)
+    .eq('read', false)
+}
+
+export type { IncidentReportTaggedUser }
+

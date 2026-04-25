@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { format } from 'date-fns'
 import { clsx } from 'clsx'
@@ -20,6 +20,9 @@ import {
   Trash2,
   FileImage,
   File as FileIcon,
+  AtSign,
+  X,
+  Plus,
 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { useAccessControl } from '../lib/access-control'
@@ -30,7 +33,12 @@ import {
   toggleFamilySharing,
   deleteIncidentAttachment,
   getAttachmentUrl,
+  addIncidentTags,
+  removeIncidentTag,
+  markIncidentNotificationsRead,
 } from '../lib/incident-data'
+import { supabase } from '../lib/supabase'
+import type { Profile } from '../types/database'
 // IncidentStatus used by follow-up status change dropdown values
 
 // ============================================================
@@ -147,6 +155,16 @@ export default function IncidentReportPage() {
       toast((e as Error).message, 'error')
     }
   }, [toast, refetch])
+
+  // Mark this user's unread notifications for the incident as read on open,
+  // so the bold/dot indicators clear after the user has actually seen it.
+  useEffect(() => {
+    if (incident && profile) {
+      markIncidentNotificationsRead(incident.id, profile.id).catch(() => {
+        // Silent — failing to clear a notification badge isn't worth alerting
+      })
+    }
+  }, [incident, profile])
 
   if (loading) {
     return (
@@ -463,6 +481,197 @@ export default function IncidentReportPage() {
               {incident.assigned_person.full_name.charAt(0).toUpperCase()}
             </div>
             <span className="text-sm text-text">{incident.assigned_person.full_name}</span>
+          </div>
+        </div>
+      )}
+
+      {/* CC'd Staff */}
+      {!isFamilyView && (
+        <TaggedStaffSection
+          incidentId={incident.id}
+          schoolId={incident.school_id}
+          tagged={incident.tagged_users ?? []}
+          assigneeId={incident.assigned_to}
+          reporterId={incident.reported_by}
+          currentUserId={profile?.id}
+          canEdit={isAdmin || isAssigned || isReporter}
+          onChanged={refetch}
+        />
+      )}
+    </div>
+  )
+}
+
+// ============================================================
+// Tagged Staff (CC) sub-component
+// ============================================================
+
+interface TaggedStaffSectionProps {
+  incidentId: string
+  schoolId: string
+  tagged: NonNullable<ReturnType<typeof useIncidentReport>['incident']>['tagged_users']
+  assigneeId: string | null
+  reporterId: string
+  currentUserId: string | undefined
+  canEdit: boolean
+  onChanged: () => void
+}
+
+function TaggedStaffSection({
+  incidentId,
+  schoolId,
+  tagged,
+  assigneeId,
+  reporterId,
+  currentUserId,
+  canEdit,
+  onChanged,
+}: TaggedStaffSectionProps) {
+  const { toast } = useToast()
+  const [allStaff, setAllStaff] = useState<Pick<Profile, 'id' | 'full_name' | 'email'>[]>([])
+  const [picking, setPicking] = useState(false)
+  const [selectedToAdd, setSelectedToAdd] = useState<Set<string>>(new Set())
+  const [saving, setSaving] = useState(false)
+
+  // Fetch all staff (admins + educators) in the school for the picker
+  useEffect(() => {
+    if (!picking) return
+    let cancelled = false
+    supabase
+      .from('profiles')
+      .select('id, full_name, email')
+      .eq('school_id', schoolId)
+      .in('role', ['admin', 'educator'])
+      .eq('is_active', true)
+      .order('full_name')
+      .then(({ data }) => {
+        if (cancelled) return
+        setAllStaff((data ?? []) as Pick<Profile, 'id' | 'full_name' | 'email'>[])
+      })
+    return () => { cancelled = true }
+  }, [picking, schoolId])
+
+  const taggedIds = new Set((tagged ?? []).map((t) => t.user_id))
+  // Hide assignee, reporter, and already-tagged from the picker
+  const excluded = new Set<string>(taggedIds)
+  if (assigneeId) excluded.add(assigneeId)
+  excluded.add(reporterId)
+
+  async function handleSave() {
+    if (!currentUserId || selectedToAdd.size === 0) return
+    setSaving(true)
+    try {
+      await addIncidentTags(incidentId, [...selectedToAdd], currentUserId)
+      toast('Tagged successfully', 'success')
+      setSelectedToAdd(new Set())
+      setPicking(false)
+      onChanged()
+    } catch (e) {
+      toast((e as Error).message, 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleRemove(userId: string) {
+    try {
+      await removeIncidentTag(incidentId, userId)
+      onChanged()
+    } catch (e) {
+      toast((e as Error).message, 'error')
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-bg-muted bg-bg-card p-5">
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-text">
+          <AtSign className="h-4 w-4" />
+          CC'd Staff (FYI)
+        </h3>
+        {canEdit && !picking && (
+          <button
+            onClick={() => setPicking(true)}
+            className="flex items-center gap-1 rounded-lg bg-primary-50 px-2.5 py-1 text-xs font-medium text-primary-700 hover:bg-primary-100"
+          >
+            <Plus className="h-3 w-3" />
+            Tag staff
+          </button>
+        )}
+      </div>
+
+      {(!tagged || tagged.length === 0) && !picking && (
+        <p className="text-xs text-text-light">No staff CC'd. The assignee is automatically notified.</p>
+      )}
+
+      {tagged && tagged.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {tagged.map((t) => (
+            <span
+              key={t.id}
+              className="inline-flex items-center gap-1 rounded-full bg-accent-50 px-2.5 py-0.5 text-xs font-medium text-accent-700"
+            >
+              {t.user?.full_name ?? 'Unknown'}
+              {canEdit && (
+                <button
+                  onClick={() => handleRemove(t.user_id)}
+                  className="ml-0.5 rounded-full p-0.5 hover:bg-accent-200"
+                  title="Remove tag"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {picking && (
+        <div className="mt-3 rounded-lg border border-bg-muted bg-bg p-3">
+          <p className="mb-2 text-xs text-text-muted">Select staff to CC (they'll be notified):</p>
+          <div className="max-h-48 space-y-1 overflow-y-auto">
+            {allStaff.filter((s) => !excluded.has(s.id)).map((s) => {
+              const checked = selectedToAdd.has(s.id)
+              return (
+                <label
+                  key={s.id}
+                  className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm hover:bg-bg-muted"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(e) => {
+                      const next = new Set(selectedToAdd)
+                      if (e.target.checked) next.add(s.id)
+                      else next.delete(s.id)
+                      setSelectedToAdd(next)
+                    }}
+                    className="rounded border-bg-muted text-primary-500 focus:ring-primary-400"
+                  />
+                  <span className="flex-1">{s.full_name}</span>
+                  <span className="text-xs text-text-light">{s.email}</span>
+                </label>
+              )
+            })}
+            {allStaff.filter((s) => !excluded.has(s.id)).length === 0 && (
+              <p className="px-2 text-xs text-text-light">No one to add — assignee, reporter, and already-tagged are excluded.</p>
+            )}
+          </div>
+          <div className="mt-3 flex justify-end gap-2">
+            <button
+              onClick={() => { setPicking(false); setSelectedToAdd(new Set()) }}
+              className="rounded-lg px-3 py-1.5 text-xs text-text-muted hover:bg-bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving || selectedToAdd.size === 0}
+              className="flex items-center gap-1.5 rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-600 disabled:opacity-50"
+            >
+              {saving && <Loader2 className="h-3 w-3 animate-spin" />}
+              Add {selectedToAdd.size > 0 && `(${selectedToAdd.size})`}
+            </button>
           </div>
         </div>
       )}

@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { format } from 'date-fns'
-import { Send, Loader2, Flag, ChevronUp, Eye, Shield } from 'lucide-react'
+import { Send, Loader2, Flag, ChevronUp, Eye, Shield, Inbox } from 'lucide-react'
 import { useAuth } from '../../lib/auth'
 import {
   fetchMessages,
   sendMessage,
   markConversationRead,
   flagMessage,
+  claimAdminInboxThread,
   type MessageWithSender,
   type ConversationWithDetails,
 } from '../../lib/messaging-data'
@@ -183,6 +184,21 @@ export default function ConversationView({ conversation, isParentView = false, c
         </div>
       )}
 
+      {/* Admin inbox claim banner */}
+      {conversation.conversation_type === 'admin_inbox' && (
+        <AdminInboxBanner
+          conversationId={conversation.id}
+          assignedTo={conversation.admin_assigned_to ?? null}
+          assignedName={
+            conversation.participants.find((p) => p.user_id === conversation.admin_assigned_to)?.profile?.full_name
+            ?? null
+          }
+          currentUserId={profile?.id ?? null}
+          isAdmin={profile?.role === 'admin'}
+          onChanged={() => onMessageSent?.()}
+        />
+      )}
+
       {/* Family visibility reminder for learner conversations */}
       {!isParentView && isLearnerConversation && profile?.role === 'learner' && (
         <div className="flex items-center gap-2 bg-amber-50 px-4 py-2 text-xs text-amber-700">
@@ -347,6 +363,85 @@ function MessageBubble({
           {message.is_flagged && ' · Flagged'}
         </p>
       </div>
+    </div>
+  )
+}
+
+// ============================================================
+// Admin inbox claim/release banner
+// ============================================================
+
+function AdminInboxBanner({
+  conversationId,
+  assignedTo,
+  assignedName,
+  currentUserId,
+  isAdmin,
+  onChanged,
+}: {
+  conversationId: string
+  assignedTo: string | null
+  assignedName: string | null
+  currentUserId: string | null
+  isAdmin: boolean
+  onChanged: () => void
+}) {
+  const [busy, setBusy] = useState(false)
+
+  async function set(adminId: string | null) {
+    setBusy(true)
+    try {
+      await claimAdminInboxThread(conversationId, adminId)
+      onChanged()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const claimedByMe = assignedTo && assignedTo === currentUserId
+  const claimedBySomeoneElse = assignedTo && !claimedByMe
+
+  return (
+    <div className="flex items-center justify-between gap-3 bg-accent-50 px-4 py-2 text-xs text-accent-700">
+      <div className="flex items-center gap-2">
+        <Inbox className="h-3.5 w-3.5 shrink-0" />
+        {!assignedTo && <span>Unclaimed admin inbox thread</span>}
+        {claimedByMe && <span>Claimed by you</span>}
+        {claimedBySomeoneElse && (
+          <span>Claimed by <strong>{assignedName ?? 'another admin'}</strong></span>
+        )}
+      </div>
+      {isAdmin && (
+        <div className="flex items-center gap-2">
+          {!assignedTo && (
+            <button
+              onClick={() => set(currentUserId)}
+              disabled={busy}
+              className="rounded-full bg-accent-100 px-2.5 py-0.5 text-[11px] font-medium text-accent-700 hover:bg-accent-200 disabled:opacity-50"
+            >
+              Claim
+            </button>
+          )}
+          {claimedByMe && (
+            <button
+              onClick={() => set(null)}
+              disabled={busy}
+              className="rounded-full bg-accent-100 px-2.5 py-0.5 text-[11px] font-medium text-accent-700 hover:bg-accent-200 disabled:opacity-50"
+            >
+              Release
+            </button>
+          )}
+          {claimedBySomeoneElse && (
+            <button
+              onClick={() => set(currentUserId)}
+              disabled={busy}
+              className="rounded-full bg-accent-100 px-2.5 py-0.5 text-[11px] font-medium text-accent-700 hover:bg-accent-200 disabled:opacity-50"
+            >
+              Take over
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

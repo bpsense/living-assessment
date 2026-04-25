@@ -512,6 +512,60 @@ export async function fetchLearnerConversations(
   }))
 }
 
+// ============================================================
+// Admin inbox
+// ============================================================
+
+/**
+ * Open a new "contact admin" thread. The DB trigger
+ * `populate_admin_inbox_participants` auto-attaches the sender + every
+ * school admin as participants.
+ */
+export async function createAdminInboxThread(
+  schoolId: string,
+  currentUserId: string,
+  subject: string,
+  firstMessage: string
+): Promise<string> {
+  const { data: conv, error: convErr } = await supabase
+    .from('conversations')
+    .insert({
+      school_id: schoolId,
+      conversation_type: 'admin_inbox' as ConversationType,
+      title: subject,
+      created_by: currentUserId,
+    } as ConversationInsert)
+    .select('id')
+    .single()
+
+  if (convErr || !conv) throw new Error(`Failed to open admin inbox thread: ${convErr?.message}`)
+
+  const { error: msgErr } = await supabase
+    .from('messages')
+    .insert({
+      conversation_id: conv.id,
+      sender_id: currentUserId,
+      content: firstMessage,
+    } as MessageInsert)
+
+  if (msgErr) throw new Error(`Failed to send first message: ${msgErr.message}`)
+
+  return conv.id
+}
+
+/** Claim or release an admin_inbox thread. Pass null to release. */
+export async function claimAdminInboxThread(
+  conversationId: string,
+  adminId: string | null
+): Promise<void> {
+  const { error } = await supabase
+    .from('conversations')
+    .update({ admin_assigned_to: adminId })
+    .eq('id', conversationId)
+
+  if (error) throw new Error(`Failed to update assignment: ${error.message}`)
+}
+
 /**
  * Search for users in the school that can be messaged.
  */

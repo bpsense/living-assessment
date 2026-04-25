@@ -795,7 +795,7 @@ export type StudentAssignmentUpdate = Partial<Omit<StudentAssignment, 'id' | 'as
 // Community Messaging
 // ============================================================
 
-export type ConversationType = 'direct' | 'class' | 'group'
+export type ConversationType = 'direct' | 'class' | 'group' | 'admin_inbox'
 
 export interface Conversation {
   id: string
@@ -803,6 +803,8 @@ export interface Conversation {
   conversation_type: ConversationType
   title: string | null
   classroom_id: string | null
+  /** Set when an admin "claims" an admin_inbox thread; null otherwise. */
+  admin_assigned_to: string | null
   created_by: string
   created_at: string
   updated_at: string
@@ -812,6 +814,7 @@ export type ConversationInsert = Pick<Conversation, 'school_id' | 'conversation_
   id?: string
   title?: string | null
   classroom_id?: string | null
+  admin_assigned_to?: string | null
 }
 
 export interface ConversationParticipant {
@@ -1215,7 +1218,7 @@ export type IncidentType = 'behavioral' | 'medical_injury' | 'safety' | 'bullyin
 export type IncidentSeverity = 'low' | 'medium' | 'high' | 'critical'
 export type IncidentStatus = 'open' | 'in_progress' | 'resolved' | 'closed'
 export type IncidentStudentRole = 'involved' | 'victim' | 'aggressor' | 'witness' | 'bystander'
-export type IncidentNotificationType = 'new_incident' | 'assigned' | 'follow_up' | 'status_change'
+export type IncidentNotificationType = 'new_incident' | 'assigned' | 'follow_up' | 'status_change' | 'tagged'
 
 export interface IncidentReport {
   id: string
@@ -1305,6 +1308,14 @@ export interface IncidentReportNotification {
   created_at: string
 }
 
+export interface IncidentReportTaggedUser {
+  id: string
+  incident_report_id: string
+  user_id: string
+  tagged_by: string
+  created_at: string
+}
+
 // Composite types for UI
 export interface IncidentReportWithDetails extends IncidentReport {
   reporter?: Profile
@@ -1313,12 +1324,17 @@ export interface IncidentReportWithDetails extends IncidentReport {
   classrooms?: (IncidentReportClassroom & { classroom?: Classroom })[]
   attachments?: IncidentReportAttachment[]
   follow_ups?: (IncidentReportFollowUp & { author?: Profile })[]
+  tagged_users?: (IncidentReportTaggedUser & { user?: Profile })[]
 }
 
 export interface IncidentReportListItem extends IncidentReport {
   reporter_name?: string
   student_names?: string[]
   student_count?: number
+  /** Set when current user has at least one unread notification for this incident */
+  has_unread?: boolean
+  /** Set when current user is on the tagged_users list (cc'd) */
+  is_tagged?: boolean
 }
 
 // ============================================================
