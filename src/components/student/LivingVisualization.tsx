@@ -10,6 +10,7 @@
  */
 
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { History, TrendingUp, Maximize2, X } from 'lucide-react'
 import type { DimensionScore } from '../../lib/student-data'
 import type { Snapshot } from '../../lib/living-data'
@@ -326,8 +327,13 @@ export default function LivingVisualization({
         </div>
       </div>
 
-      {/* ── Expanded fullscreen modal ── */}
-      {expanded && (
+      {/* ── Expanded fullscreen modal ──
+          Portaled to document.body so position:fixed isn't trapped by an
+          ancestor with backdrop-filter / transform / filter (e.g. the
+          surrounding .glass-card on StudentProfile), which would otherwise
+          turn the modal's containing block into the card itself instead of
+          the viewport. */}
+      {expanded && createPortal(
         <ExpandedBlobModal
           animatedScores={animatedScores}
           snapshotObservations={snapshotObservations}
@@ -344,8 +350,9 @@ export default function LivingVisualization({
           onClose={closeExpanded}
           ringSqueezeProgress={squeezeProgress}
           gradeTransitionLabel={transitionLabel ?? undefined}
-            currentGradeLabel={currentGradeLabel}
-        />
+          currentGradeLabel={currentGradeLabel}
+        />,
+        document.body
       )}
 
       {/* ── Historical data banner ── */}
