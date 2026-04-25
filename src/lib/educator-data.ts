@@ -76,6 +76,69 @@ export interface EducatorProfileData {
 // Educator list hook (admin page)
 // ============================================================
 
+/**
+ * Compact list of department/location admins in a school — for use in the
+ * "view as" switcher and similar pickers where the full EducatorSummary is
+ * overkill.
+ */
+export interface DepartmentAdminSummary {
+  id: string
+  full_name: string
+  email: string
+  departments: { id: string; name: string }[]
+}
+
+export function useDepartmentAdminList(schoolId: string | undefined): {
+  admins: DepartmentAdminSummary[]
+  loading: boolean
+} {
+  const [admins, setAdmins] = useState<DepartmentAdminSummary[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!schoolId) {
+      setAdmins([])
+      setLoading(false)
+      return
+    }
+    let cancelled = false
+    setLoading(true)
+    supabase
+      .from('department_admins')
+      .select('user_id, profiles(id, full_name, email), departments(id, name)')
+      .eq('school_id', schoolId)
+      .then(({ data }) => {
+        if (cancelled) return
+        // Group rows by user_id so a user with multiple departments appears once
+        const byUser = new Map<string, DepartmentAdminSummary>()
+        for (const row of (data ?? []) as unknown as {
+          user_id: string
+          profiles: { id: string; full_name: string; email: string } | null
+          departments: { id: string; name: string } | null
+        }[]) {
+          if (!row.profiles) continue
+          const existing = byUser.get(row.user_id)
+          if (existing) {
+            if (row.departments) existing.departments.push(row.departments)
+          } else {
+            byUser.set(row.user_id, {
+              id: row.profiles.id,
+              full_name: row.profiles.full_name,
+              email: row.profiles.email,
+              departments: row.departments ? [row.departments] : [],
+            })
+          }
+        }
+        const list = [...byUser.values()].sort((a, b) => a.full_name.localeCompare(b.full_name))
+        setAdmins(list)
+        setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [schoolId])
+
+  return { admins, loading }
+}
+
 export function useEducatorList(schoolId: string | undefined): EducatorListData {
   const [educators, setEducators] = useState<EducatorSummary[]>([])
   const [loading, setLoading] = useState(true)

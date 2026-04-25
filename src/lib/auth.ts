@@ -59,6 +59,12 @@ export function useAuthProvider(): AuthState {
   const [viewAsRole, setViewAsRole] = useState<UserRole | null>(null)
   const [viewAsUserId, setViewAsUserId] = useState<string | null>(null)
   const [viewAsUserName, setViewAsUserName] = useState<string | null>(null)
+  /**
+   * Departments the IMPERSONATED user (viewAsUserId) admins. Loaded when the
+   * impersonated user is an educator, so `isDepartmentAdmin` reflects the
+   * person being viewed-as instead of the actual viewer.
+   */
+  const [viewAsDepartmentAdminIds, setViewAsDepartmentAdminIds] = useState<string[]>([])
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false)
   const [isSystemAdmin, setIsSystemAdmin] = useState(false)
   const [departmentAdminIds, setDepartmentAdminIds] = useState<string[]>([])
@@ -259,6 +265,21 @@ export function useAuthProvider(): AuthState {
     setViewAsRole(role)
     setViewAsUserId(userId ?? null)
     setViewAsUserName(userName ?? null)
+
+    // Reset impersonated dept admin status; reload it if we're now
+    // impersonating a specific educator.
+    setViewAsDepartmentAdminIds([])
+    if (userId && role === 'educator') {
+      supabase
+        .from('department_admins')
+        .select('department_id')
+        .eq('user_id', userId)
+        .then(({ data }) => {
+          setViewAsDepartmentAdminIds(
+            (data ?? []).map((d: { department_id: string }) => d.department_id)
+          )
+        })
+    }
   }, [])
 
   const setActiveSchool = useCallback((schoolId: string | null) => {
@@ -267,10 +288,15 @@ export function useAuthProvider(): AuthState {
     setViewAsRole(null)
     setViewAsUserId(null)
     setViewAsUserName(null)
+    setViewAsDepartmentAdminIds([])
   }, [])
 
   const actualRole = rawProfile?.role ?? null
-  const isDepartmentAdmin = departmentAdminIds.length > 0
+  // When impersonating a specific user, reflect THEIR dept admin status.
+  // Otherwise fall through to the actual viewer's status.
+  const isDepartmentAdmin = viewAsUserId
+    ? viewAsDepartmentAdminIds.length > 0
+    : departmentAdminIds.length > 0
 
   const accessLevel: AccessLevel = useMemo(() => {
     if (isSystemAdmin) return 6

@@ -141,11 +141,13 @@ export function usePageAccess(key: SidebarKey): {
   canView: boolean
   canEdit: boolean
 } {
-  const { profile, viewAsRole } = useAuth()
+  const { profile } = useAuth()
+  // useAccessControl reads isDepartmentAdmin from useAuth, which already
+  // reflects impersonation (returns the impersonated user's status when
+  // viewing-as someone, otherwise the actual user's status).
   const { isDepartmentAdmin } = useAccessControl()
-  const isViewingAs = !!viewAsRole
   const effective = profile
-    ? effectiveRoleFor(profile.role, isDepartmentAdmin && !isViewingAs)
+    ? effectiveRoleFor(profile.role, isDepartmentAdmin)
     : undefined
   const { permissions } = useRolePermissions(effective)
   const access = effective ? resolveAccess(key, effective, permissions) : 'hidden'
