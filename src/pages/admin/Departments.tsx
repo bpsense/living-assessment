@@ -14,11 +14,19 @@ interface DeptAdmin {
   email: string
 }
 
+interface ClassroomEducator {
+  educator_id: string
+  full_name: string
+  role: 'lead' | 'support'
+}
+
+type ClassroomWithEducators = Classroom & { educators: ClassroomEducator[] }
+
 export default function Departments() {
   const schoolId = useActiveSchoolId()
   const { singular, plural } = useDepartmentLabel()
-  const [departments, setDepartments] = useState<(Department & { classrooms: Classroom[] })[]>([])
-  const [unassignedClassrooms, setUnassignedClassrooms] = useState<Classroom[]>([])
+  const [departments, setDepartments] = useState<(Department & { classrooms: ClassroomWithEducators[] })[]>([])
+  const [unassignedClassrooms, setUnassignedClassrooms] = useState<ClassroomWithEducators[]>([])
   const [deptAdmins, setDeptAdmins] = useState<Map<string, DeptAdmin[]>>(new Map())
   const [allEducators, setAllEducators] = useState<Pick<Profile, 'id' | 'full_name' | 'email'>[]>([])
   const [loading, setLoading] = useState(true)
@@ -38,7 +46,7 @@ export default function Departments() {
     if (!schoolId) return
     setLoading(true)
 
-    const [deptRes, classroomRes, adminsRes, educatorsRes] = await Promise.all([
+    const [deptRes, classroomRes, adminsRes, educatorsRes, ecRes] = await Promise.all([
       supabase.from('departments').select('*').eq('school_id', schoolId).order('name'),
       supabase.from('classrooms').select('*').eq('school_id', schoolId).order('name'),
       supabase
@@ -52,15 +60,41 @@ export default function Departments() {
         .eq('role', 'educator')
         .eq('is_active', true)
         .order('full_name'),
+      supabase
+        .from('educator_classrooms')
+        .select('classroom_id, educator_id, role, profiles!educator_classrooms_educator_id_fkey(full_name)')
+        .eq('school_id', schoolId),
     ])
 
     const depts = (deptRes.data ?? []) as Department[]
     const classrooms = (classroomRes.data ?? []) as Classroom[]
 
-    // Group classrooms by department
+    // Group educators by classroom_id with their role
+    const educatorsByClassroom = new Map<string, ClassroomEducator[]>()
+    for (const row of (ecRes.data ?? []) as unknown as {
+      classroom_id: string
+      educator_id: string
+      role: 'lead' | 'support'
+      profiles: { full_name: string } | null
+    }[]) {
+      if (!row.profiles) continue
+      const list = educatorsByClassroom.get(row.classroom_id) ?? []
+      list.push({
+        educator_id: row.educator_id,
+        full_name: row.profiles.full_name,
+        role: row.role,
+      })
+      educatorsByClassroom.set(row.classroom_id, list)
+    }
+
+    // Group classrooms by department, attaching their educator list
+    const enrich = (c: Classroom): ClassroomWithEducators => ({
+      ...c,
+      educators: educatorsByClassroom.get(c.id) ?? [],
+    })
     const deptWithClassrooms = depts.map((d) => ({
       ...d,
-      classrooms: classrooms.filter((c) => c.department_id === d.id),
+      classrooms: classrooms.filter((c) => c.department_id === d.id).map(enrich),
     }))
 
     // Group admins by department
@@ -81,7 +115,7 @@ export default function Departments() {
     }
 
     setDepartments(deptWithClassrooms)
-    setUnassignedClassrooms(classrooms.filter((c) => !c.department_id))
+    setUnassignedClassrooms(classrooms.filter((c) => !c.department_id).map(enrich))
     setDeptAdmins(adminMap)
     setAllEducators((educatorsRes.data ?? []) as Pick<Profile, 'id' | 'full_name' | 'email'>[])
     setLoading(false)
@@ -340,26 +374,54 @@ export default function Departments() {
                   <p className="text-sm text-text-light">No classrooms assigned</p>
                 ) : (
                   <div className="space-y-2">
-                    {dept.classrooms.map((c) => (
-                      <div key={c.id} className="flex items-center justify-between rounded-lg bg-bg px-3 py-2 transition-colors hover:bg-bg-muted">
-                        <Link
-                          to={`/classroom/${c.id}`}
-                          className="flex flex-1 items-center gap-2 text-text hover:text-primary-600"
-                        >
-                          <School className="h-4 w-4 text-text-light" />
-                          <span className="text-sm font-medium">{c.name}</span>
-                          {c.grade_level && (
-                            <span className="text-xs text-text-light">({c.grade_level})</span>
+                    {dept.classrooms.map((c) => {
+                      const leads = c.educators.filter((e) => e.role === 'lead')
+                      const supports = c.educators.filter((e) => e.role === 'support')
+                      return (
+                        <div key={c.id} className="rounded-lg bg-bg px-3 py-2 transition-colors hover:bg-bg-muted">
+                          <div className="flex items-center justify-between">
+                            <Link
+                              to={`/classroom/${c.id}`}
+                              className="flex flex-1 items-center gap-2 text-text hover:text-primary-600"
+                            >
+                              <School className="h-4 w-4 text-text-light" />
+                              <span className="text-sm font-medium">{c.name}</span>
+                              {c.grade_level && (
+                                <span className="text-xs text-text-light">({c.grade_level})</span>
+                              )}
+                            </Link>
+                            <button
+                              onClick={() => handleAssignClassroom(c.id, null)}
+                              className="text-xs text-text-light hover:text-alert-500"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                          {(leads.length > 0 || supports.length > 0) && (
+                            <div className="mt-1.5 flex flex-wrap gap-1.5 pl-6">
+                              {leads.map((ed) => (
+                                <span
+                                  key={ed.educator_id}
+                                  className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-[11px] text-primary-700"
+                                >
+                                  <span className="font-semibold uppercase tracking-wide text-[9px]">Lead</span>
+                                  <span>{ed.full_name}</span>
+                                </span>
+                              ))}
+                              {supports.map((ed) => (
+                                <span
+                                  key={ed.educator_id}
+                                  className="inline-flex items-center gap-1 rounded-full bg-bg-muted px-2 py-0.5 text-[11px] text-text-muted"
+                                >
+                                  <span className="font-semibold uppercase tracking-wide text-[9px]">Support</span>
+                                  <span>{ed.full_name}</span>
+                                </span>
+                              ))}
+                            </div>
                           )}
-                        </Link>
-                        <button
-                          onClick={() => handleAssignClassroom(c.id, null)}
-                          className="text-xs text-text-light hover:text-alert-500"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))}
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
 

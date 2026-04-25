@@ -28,7 +28,7 @@ interface ClassroomRow extends Classroom {
 // ============================================================
 
 export default function Classrooms() {
-  const { profile } = useAuth()
+  const { profile, viewAsUserId } = useAuth()
   const { role, canEditClassrooms, isDepartmentAdmin, departmentAdminIds, isReadOnly } = useAccessControl()
   const navigate = useNavigate()
   const { toast } = useToast()
@@ -91,12 +91,17 @@ export default function Classrooms() {
           .order('name')
 
         rooms = (classroomData ?? []) as Classroom[]
-      } else if (role === 'educator' && !canEditClassrooms) {
-        // Educators see only their assigned classrooms
+      } else if (role === 'educator' && !isDepartmentAdmin) {
+        // Educators (and sys/school admin viewing as educator) see only the
+        // assigned classrooms of the impersonated user, falling back to the
+        // logged-in user when not impersonating. canEditClassrooms isn't
+        // view-as aware (it reads from the actual viewer's accessLevel),
+        // which is why we rely on the catalog-aware role + dept admin check.
+        const educatorId = viewAsUserId ?? profile.id
         const { data: ecData } = await supabase
           .from('educator_classrooms')
           .select('classroom_id')
-          .eq('educator_id', profile.id)
+          .eq('educator_id', educatorId)
 
         const assignedIds = (ecData ?? []).map((r) => (r as { classroom_id: string }).classroom_id)
 
