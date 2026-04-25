@@ -9,6 +9,7 @@ import {
   Search,
   Filter,
   ShieldAlert,
+  AtSign,
 } from 'lucide-react'
 import { useAuth } from '../../lib/auth'
 import { useIncidentReports, type IncidentFilters } from '../../lib/incident-data'
@@ -60,6 +61,8 @@ export default function IncidentsPage() {
   const [filterStatus, setFilterStatus] = useState('')
   const [filterType, setFilterType] = useState('')
   const [filterSeverity, setFilterSeverity] = useState('')
+  const [filterLocation, setFilterLocation] = useState('')
+  const [filterMineOnly, setFilterMineOnly] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
 
@@ -67,8 +70,10 @@ export default function IncidentsPage() {
     status: filterStatus || undefined,
     incident_type: filterType || undefined,
     severity: filterSeverity || undefined,
+    location: filterLocation || undefined,
+    involved_user_id: filterMineOnly ? profile?.id : undefined,
     search: searchQuery || undefined,
-  }), [filterStatus, filterType, filterSeverity, searchQuery])
+  }), [filterStatus, filterType, filterSeverity, filterLocation, filterMineOnly, profile?.id, searchQuery])
 
   const { incidents, loading, error } = useIncidentReports(schoolId ?? undefined, filters)
 
@@ -145,6 +150,19 @@ export default function IncidentsPage() {
             />
           </div>
           <button
+            onClick={() => setFilterMineOnly((v) => !v)}
+            title="Show only incidents I'm assigned to or tagged in"
+            className={clsx(
+              'flex items-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors',
+              filterMineOnly
+                ? 'border-primary-200 bg-primary-50 text-primary-700'
+                : 'border-bg-muted bg-bg text-text-muted hover:bg-bg-muted'
+            )}
+          >
+            <AtSign className="h-4 w-4" />
+            Tagged me
+          </button>
+          <button
             onClick={() => setShowFilters((v) => !v)}
             className={clsx(
               'flex items-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors',
@@ -195,9 +213,17 @@ export default function IncidentsPage() {
               <option value="critical">Critical</option>
             </select>
 
-            {(filterStatus || filterType || filterSeverity) && (
+            <input
+              type="text"
+              value={filterLocation}
+              onChange={(e) => setFilterLocation(e.target.value)}
+              placeholder="Location contains…"
+              className="rounded-lg border border-bg-muted bg-bg px-3 py-1.5 text-xs text-text placeholder:text-text-light focus:outline-none"
+            />
+
+            {(filterStatus || filterType || filterSeverity || filterLocation) && (
               <button
-                onClick={() => { setFilterStatus(''); setFilterType(''); setFilterSeverity('') }}
+                onClick={() => { setFilterStatus(''); setFilterType(''); setFilterSeverity(''); setFilterLocation('') }}
                 className="text-xs text-alert-500 hover:underline"
               >
                 Clear filters
@@ -220,12 +246,27 @@ export default function IncidentsPage() {
             const sevStyle = SEVERITY_STYLES[incident.severity] ?? SEVERITY_STYLES.low
             const statusStyle = STATUS_STYLES[incident.status] ?? STATUS_STYLES.open
 
+            const unread = !!incident.has_unread
+            const tagged = !!incident.is_tagged
             return (
               <button
                 key={incident.id}
                 onClick={() => navigate(`/incident/${incident.id}`)}
-                className="flex w-full items-start gap-3 rounded-xl border border-bg-muted bg-bg-card p-4 text-left transition-colors hover:bg-bg-muted/30"
+                className={clsx(
+                  'relative flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-bg-muted/30',
+                  unread
+                    ? 'border-primary-200 bg-primary-50/30'
+                    : 'border-bg-muted bg-bg-card'
+                )}
               >
+                {/* Tag indicator dot */}
+                {tagged && (
+                  <span
+                    title="You are tagged on this incident"
+                    className="absolute right-3 top-3 h-2 w-2 rounded-full bg-accent-500"
+                  />
+                )}
+
                 {/* Severity indicator */}
                 <div className={clsx('mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', sevStyle.bg)}>
                   <AlertTriangle className={clsx('h-4 w-4', sevStyle.text)} />
@@ -244,8 +285,13 @@ export default function IncidentsPage() {
                       {format(new Date(incident.incident_date), 'MMM d, yyyy')}
                     </span>
                   </div>
-                  <p className="mt-1 line-clamp-2 text-sm text-text-muted">{incident.description}</p>
+                  <p className={clsx('mt-1 line-clamp-2 text-sm', unread ? 'font-semibold text-text' : 'text-text-muted')}>
+                    {incident.description}
+                  </p>
                   <div className="mt-1.5 flex flex-wrap items-center gap-3 text-[11px] text-text-light">
+                    {incident.location && (
+                      <span>📍 {incident.location}</span>
+                    )}
                     {incident.student_names && incident.student_names.length > 0 && (
                       <span>
                         {incident.student_names.slice(0, 3).join(', ')}
