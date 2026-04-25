@@ -27,6 +27,11 @@ export default function Departments() {
   const [formDescription, setFormDescription] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  /** Department id for which the inline "create classroom" form is open. */
+  const [createClassroomFor, setCreateClassroomFor] = useState<string | null>(null)
+  const [newRoomName, setNewRoomName] = useState('')
+  const [newRoomGrade, setNewRoomGrade] = useState('')
+  const [creatingRoom, setCreatingRoom] = useState(false)
 
   const loadData = useCallback(async () => {
     if (!schoolId) return
@@ -118,6 +123,24 @@ export default function Departments() {
 
   async function handleAssignClassroom(classroomId: string, departmentId: string | null) {
     await supabase.from('classrooms').update({ department_id: departmentId }).eq('id', classroomId)
+    loadData()
+  }
+
+  async function handleCreateClassroomInDept(e: React.FormEvent, departmentId: string) {
+    e.preventDefault()
+    if (!schoolId || !newRoomName.trim()) return
+    setCreatingRoom(true)
+    const { error: err } = await supabase.from('classrooms').insert({
+      school_id: schoolId,
+      department_id: departmentId,
+      name: newRoomName.trim(),
+      grade_level: newRoomGrade.trim() || null,
+    })
+    setCreatingRoom(false)
+    if (err) { setError(err.message); return }
+    setNewRoomName('')
+    setNewRoomGrade('')
+    setCreateClassroomFor(null)
     loadData()
   }
 
@@ -336,23 +359,76 @@ export default function Departments() {
                   </div>
                 )}
 
-                {/* Assign unassigned classrooms */}
-                {unassignedClassrooms.length > 0 && (
-                  <div className="mt-3">
+                {/* Add classroom: assign existing or create new */}
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  {unassignedClassrooms.length > 0 && (
                     <select
                       onChange={(e) => {
                         if (e.target.value) handleAssignClassroom(e.target.value, dept.id)
                         e.target.value = ''
                       }}
-                      className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-1.5 text-sm text-text-muted"
+                      className="flex-1 rounded-lg border border-bg-muted bg-bg px-3 py-1.5 text-sm text-text-muted"
                       defaultValue=""
                     >
-                      <option value="" disabled>+ Add classroom to this {singular.toLowerCase()}</option>
+                      <option value="" disabled>+ Assign existing classroom</option>
                       {unassignedClassrooms.map((c) => (
                         <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
                     </select>
-                  </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCreateClassroomFor(createClassroomFor === dept.id ? null : dept.id)
+                      setNewRoomName('')
+                      setNewRoomGrade('')
+                    }}
+                    className="flex items-center justify-center gap-1 rounded-lg border border-bg-muted bg-bg px-3 py-1.5 text-sm text-primary-600 hover:bg-primary-50"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Create classroom in this {singular.toLowerCase()}
+                  </button>
+                </div>
+
+                {createClassroomFor === dept.id && (
+                  <form
+                    onSubmit={(e) => handleCreateClassroomInDept(e, dept.id)}
+                    className="mt-3 rounded-lg border border-bg-muted bg-bg p-3"
+                  >
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <input
+                        autoFocus
+                        value={newRoomName}
+                        onChange={(e) => setNewRoomName(e.target.value)}
+                        placeholder="Classroom name *"
+                        required
+                        className="rounded-lg border border-bg-muted bg-bg-card px-3 py-1.5 text-sm text-text placeholder:text-text-light focus:border-primary-500 focus:outline-none"
+                      />
+                      <input
+                        value={newRoomGrade}
+                        onChange={(e) => setNewRoomGrade(e.target.value)}
+                        placeholder="Grade level (optional)"
+                        className="rounded-lg border border-bg-muted bg-bg-card px-3 py-1.5 text-sm text-text placeholder:text-text-light focus:border-primary-500 focus:outline-none"
+                      />
+                    </div>
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        type="submit"
+                        disabled={creatingRoom || !newRoomName.trim()}
+                        className="flex items-center gap-1.5 rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-600 disabled:opacity-50"
+                      >
+                        {creatingRoom && <Loader2 className="h-3 w-3 animate-spin" />}
+                        Create
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCreateClassroomFor(null)}
+                        className="rounded-lg px-3 py-1.5 text-xs text-text-muted hover:bg-bg-muted"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
                 )}
               </div>
             </div>
