@@ -42,7 +42,7 @@ import NotificationBell from './incident/NotificationBell'
 import { useEducatorList } from '../lib/educator-data'
 import { useFamilyList } from '../lib/family-data'
 import { useDepartmentLabel } from '../lib/department-label'
-import { SIDEBAR_ITEMS, SIDEBAR_BY_KEY, type SidebarItem } from '../lib/sidebar-catalog'
+import { SIDEBAR_ITEMS, SIDEBAR_BY_KEY, effectiveRoleFor, type EffectiveRole, type SidebarItem } from '../lib/sidebar-catalog'
 import { useRolePermissions, resolveAccess, type RolePermissionMap } from '../lib/role-permissions'
 
 // ============================================================
@@ -64,16 +64,17 @@ function renderIcon(name: string) {
 // Per-role label/route overrides — keeps the catalog generic and
 // lets each role get its preferred terminology / target route.
 // ============================================================
-function labelFor(item: SidebarItem, role: UserRole, deptLabel: { singular: string; plural: string }): string {
+function labelFor(item: SidebarItem, role: EffectiveRole, deptLabel: { singular: string; plural: string }): string {
   if (item.key === 'departments') return deptLabel.plural
-  if (item.key === 'classrooms' && role === 'educator') return 'My Classrooms'
+  if (item.key === 'department-dashboard') return deptLabel.singular
+  if (item.key === 'classrooms' && (role === 'educator' || role === 'dept_admin')) return 'My Classrooms'
   if (item.key === 'students' && role === 'parent') return 'My Children'
   if (item.key === 'school-profile' && role === 'parent') return 'School Info'
   if (item.key === 'profile' && role === 'learner') return 'My Profile'
   return item.label
 }
 
-function routeFor(item: SidebarItem, role: UserRole): string | undefined {
+function routeFor(item: SidebarItem, role: EffectiveRole): string | undefined {
   if (item.key === 'profile' && role === 'learner') return '/learner/profile'
   return item.to
 }
@@ -94,7 +95,7 @@ interface NavItem {
  * hidden.
  */
 function buildNavFromCatalog(
-  role: UserRole,
+  role: EffectiveRole,
   perms: RolePermissionMap,
   deptLabel: { singular: string; plural: string }
 ): NavItem[] {
@@ -137,10 +138,9 @@ function buildNavFromCatalog(
 }
 
 function getNavItems(
-  role: UserRole,
+  effectiveRole: EffectiveRole,
   isSystemAdmin: boolean,
   isAllSchoolsView: boolean,
-  isDepartmentAdmin: boolean,
   perms: RolePermissionMap,
   deptLabel: { singular: string; plural: string }
 ): NavItem[] {
@@ -155,25 +155,7 @@ function getNavItems(
     ]
   }
 
-  // System admin viewing into a school is rendered as the school admin nav,
-  // since the catalog defines the per-school items.
-  const effectiveRole: UserRole = isSystemAdmin ? 'admin' : role
-
-  const nav = buildNavFromCatalog(effectiveRole, perms, deptLabel)
-
-  // Department admin keeps access to the curated /department dashboard,
-  // which isn't in the catalog (it's a different page from the admin's
-  // /admin/departments management view). Splice it in just after Dashboard.
-  if (isDepartmentAdmin && !isSystemAdmin) {
-    const insertAt = Math.min(1, nav.length)
-    nav.splice(insertAt, 0, {
-      to: '/department',
-      label: deptLabel.singular,
-      icon: <MapPin className="h-5 w-5" />,
-    })
-  }
-
-  return nav
+  return buildNavFromCatalog(effectiveRole, perms, deptLabel)
 }
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -321,10 +303,15 @@ export default function Layout() {
 
   const deptLabel = useDepartmentLabel()
   const role = profile?.role ?? 'educator'
-  // System admin viewing into a school renders nav as the admin role
-  const navRole: UserRole = isSystemAdmin && !isAllSchoolsView ? 'admin' : role
-  const { permissions } = useRolePermissions(navRole)
-  const navItems = getNavItems(role, isSystemAdmin, isAllSchoolsView, isDepartmentAdmin, permissions, deptLabel)
+  // System admin viewing into a school renders nav as the admin role.
+  // Otherwise, dept admins resolve to the 'dept_admin' effective role so the
+  // catalog grants them their elevated items (Educators/Families/Users/dept dashboard).
+  const effectiveRole: EffectiveRole =
+    isSystemAdmin && !isAllSchoolsView
+      ? 'admin'
+      : effectiveRoleFor(role, isDepartmentAdmin)
+  const { permissions } = useRolePermissions(effectiveRole)
+  const navItems = getNavItems(effectiveRole, isSystemAdmin, isAllSchoolsView, permissions, deptLabel)
   // Hide FAB when impersonating (read-only context) or in All Schools view
   const showFab = (role === 'educator' || role === 'admin' || isSystemAdmin) && !isAllSchoolsView && !viewAsUserId
   // System admins can switch roles when viewing a specific school, but not in the "All Schools" view

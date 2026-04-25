@@ -5,19 +5,23 @@ import { supabase } from '../../lib/supabase'
 import { useToast } from '../../components/Toast'
 import {
   CONFIGURABLE_ITEMS,
+  type EffectiveRole,
   type ItemAccess,
   type SidebarKey,
   type SidebarItem,
 } from '../../lib/sidebar-catalog'
 import { invalidateRolePermissions } from '../../lib/role-permissions'
-import type { UserRole } from '../../types/database'
+import { useDepartmentLabel } from '../../lib/department-label'
 
-const ROLES: { key: UserRole; label: string }[] = [
-  { key: 'admin', label: 'Admin' },
-  { key: 'educator', label: 'Educator' },
-  { key: 'parent', label: 'Family' },
-  { key: 'learner', label: 'Learner' },
-]
+function buildRoles(deptSingular: string): { key: EffectiveRole; label: string }[] {
+  return [
+    { key: 'admin', label: 'Admin' },
+    { key: 'dept_admin', label: `${deptSingular} Admin` },
+    { key: 'educator', label: 'Educator' },
+    { key: 'parent', label: 'Family' },
+    { key: 'learner', label: 'Learner' },
+  ]
+}
 
 const ACCESS_OPTIONS: ItemAccess[] = ['hidden', 'view', 'edit']
 
@@ -29,11 +33,13 @@ const ACCESS_STYLES: Record<ItemAccess, string> = {
 
 /** A flat (role, key) → access map for both the loaded state and the draft. */
 type Matrix = Record<string, ItemAccess>
-const cellKey = (role: UserRole, key: SidebarKey) => `${role}:${key}`
+const cellKey = (role: EffectiveRole, key: SidebarKey) => `${role}:${key}`
 
 export default function Permissions() {
   const { profile } = useAuth()
   const { toast } = useToast()
+  const { singular: deptSingular } = useDepartmentLabel()
+  const ROLES = useMemo(() => buildRoles(deptSingular), [deptSingular])
   const [loaded, setLoaded] = useState<Matrix>({})
   const [draft, setDraft] = useState<Matrix>({})
   const [loading, setLoading] = useState(true)
@@ -53,7 +59,7 @@ export default function Permissions() {
       .then(({ data }) => {
         if (cancelled) return
         const map: Matrix = {}
-        for (const row of (data ?? []) as { role: UserRole; sidebar_key: SidebarKey; access: ItemAccess }[]) {
+        for (const row of (data ?? []) as { role: EffectiveRole; sidebar_key: SidebarKey; access: ItemAccess }[]) {
           map[cellKey(row.role, row.sidebar_key)] = row.access
         }
         setLoaded(map)
@@ -71,7 +77,7 @@ export default function Permissions() {
     return false
   }, [loaded, draft])
 
-  function setCell(role: UserRole, key: SidebarKey, access: ItemAccess) {
+  function setCell(role: EffectiveRole, key: SidebarKey, access: ItemAccess) {
     setDraft((d) => ({ ...d, [cellKey(role, key)]: access }))
   }
 
@@ -85,14 +91,14 @@ export default function Permissions() {
     try {
       // Compute upserts (cells changed) and deletes (cells cleared back to default)
       const allKeys = new Set([...Object.keys(loaded), ...Object.keys(draft)])
-      const upserts: { school_id: string; role: UserRole; sidebar_key: SidebarKey; access: ItemAccess; updated_by: string }[] = []
-      const deletes: { role: UserRole; sidebar_key: SidebarKey }[] = []
+      const upserts: { school_id: string; role: EffectiveRole; sidebar_key: SidebarKey; access: ItemAccess; updated_by: string }[] = []
+      const deletes: { role: EffectiveRole; sidebar_key: SidebarKey }[] = []
 
       for (const k of allKeys) {
         const next = draft[k]
         const prev = loaded[k]
         if (next === prev) continue
-        const [role, sidebar_key] = k.split(':') as [UserRole, SidebarKey]
+        const [role, sidebar_key] = k.split(':') as [EffectiveRole, SidebarKey]
         if (next == null) {
           deletes.push({ role, sidebar_key })
         } else {
@@ -201,6 +207,7 @@ export default function Permissions() {
               <PermissionRow
                 key={item.key}
                 item={item}
+                roles={ROLES}
                 draft={draft}
                 onChange={setCell}
               />
@@ -214,12 +221,14 @@ export default function Permissions() {
 
 function PermissionRow({
   item,
+  roles,
   draft,
   onChange,
 }: {
   item: SidebarItem
+  roles: { key: EffectiveRole; label: string }[]
   draft: Matrix
-  onChange: (role: UserRole, key: SidebarKey, access: ItemAccess) => void
+  onChange: (role: EffectiveRole, key: SidebarKey, access: ItemAccess) => void
 }) {
   return (
     <tr className="border-b border-bg-muted last:border-b-0">
@@ -227,7 +236,7 @@ function PermissionRow({
         <div className="font-medium text-text">{item.label}</div>
         {item.to && <div className="text-xs text-text-light">{item.to}</div>}
       </td>
-      {ROLES.map((r) => {
+      {roles.map((r) => {
         const cur = draft[cellKey(r.key, item.key)] ?? item.defaultAccess[r.key]
         const explicit = draft[cellKey(r.key, item.key)] != null
         return (

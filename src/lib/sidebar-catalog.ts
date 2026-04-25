@@ -12,6 +12,19 @@
  */
 import type { UserRole } from '../types/database'
 
+/**
+ * Role keys used in the permissions matrix. Differs from the DB-level
+ * UserRole because Department/Location admins are role='educator' +
+ * department_admins row — they show up here as a distinct effective role.
+ */
+export type EffectiveRole = 'admin' | 'dept_admin' | 'educator' | 'parent' | 'learner'
+
+/** Convert a DB role + isDepartmentAdmin flag into the effective role. */
+export function effectiveRoleFor(role: UserRole, isDepartmentAdmin: boolean): EffectiveRole {
+  if (role === 'educator' && isDepartmentAdmin) return 'dept_admin'
+  return role as EffectiveRole
+}
+
 /** What a role can do with a given sidebar item. */
 export type ItemAccess = 'hidden' | 'view' | 'edit'
 
@@ -27,6 +40,7 @@ export type SidebarKey =
   | 'messages'
   | 'incidents'
   | 'departments'
+  | 'department-dashboard'
   | 'school-profile'
   | 'profile'
   | 'observe'
@@ -55,10 +69,10 @@ export interface SidebarItem {
   /** Children for folder items. */
   children?: SidebarKey[]
   /**
-   * Default access level for each role when no explicit row exists in
-   * `role_permissions`. Preserves today's hardcoded UI behavior.
+   * Default access level for each effective role when no explicit row exists
+   * in `role_permissions`. Preserves today's hardcoded UI behavior.
    */
-  defaultAccess: Record<UserRole, ItemAccess>
+  defaultAccess: Record<EffectiveRole, ItemAccess>
   /**
    * If true, the item is meaningless to gate (e.g. Profile, Dashboard).
    * The permissions matrix hides it. The sidebar still renders it for
@@ -68,22 +82,16 @@ export interface SidebarItem {
 }
 
 // Convenience builders so role default tables stay readable
-const allEdit: Record<UserRole, ItemAccess> = {
-  admin: 'edit', educator: 'edit', parent: 'edit', learner: 'edit',
+const allEdit: Record<EffectiveRole, ItemAccess> = {
+  admin: 'edit', dept_admin: 'edit', educator: 'edit', parent: 'edit', learner: 'edit',
 }
-const allView: Record<UserRole, ItemAccess> = {
-  admin: 'view', educator: 'view', parent: 'view', learner: 'view',
+const adminOnly: Record<EffectiveRole, ItemAccess> = {
+  admin: 'edit', dept_admin: 'hidden', educator: 'hidden', parent: 'hidden', learner: 'hidden',
 }
-const adminOnly: Record<UserRole, ItemAccess> = {
-  admin: 'edit', educator: 'hidden', parent: 'hidden', learner: 'hidden',
+/** Admin sees + edit, dept admin sees + edit, regular educator hidden. */
+const deptAdminElevated: Record<EffectiveRole, ItemAccess> = {
+  admin: 'edit', dept_admin: 'edit', educator: 'hidden', parent: 'hidden', learner: 'hidden',
 }
-const adminEducator: Record<UserRole, ItemAccess> = {
-  admin: 'edit', educator: 'view', parent: 'hidden', learner: 'hidden',
-}
-const adminEducatorEdit: Record<UserRole, ItemAccess> = {
-  admin: 'edit', educator: 'edit', parent: 'hidden', learner: 'hidden',
-}
-
 /**
  * The catalog. Order matters — sidebar renders top-to-bottom from this list.
  */
@@ -101,7 +109,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     label: 'Classrooms',
     icon: 'School',
     to: '/classrooms',
-    defaultAccess: { admin: 'edit', educator: 'edit', parent: 'view', learner: 'hidden' },
+    defaultAccess: { admin: 'edit', dept_admin: 'edit', educator: 'edit', parent: 'view', learner: 'hidden' },
   },
   {
     key: 'messages',
@@ -115,35 +123,44 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     label: 'Incidents',
     icon: 'ShieldAlert',
     to: '/admin/incidents',
-    defaultAccess: { admin: 'edit', educator: 'hidden', parent: 'hidden', learner: 'hidden' },
+    defaultAccess: adminOnly,
   },
   {
     key: 'departments',
     label: 'Departments', // overridden at render via useDepartmentLabel().plural
     icon: 'MapPin',
     to: '/admin/departments',
-    defaultAccess: { admin: 'edit', educator: 'hidden', parent: 'hidden', learner: 'hidden' },
+    defaultAccess: adminOnly,
+  },
+  {
+    key: 'department-dashboard',
+    // Dept admin's curated dashboard (different page from /admin/departments
+    // management). Label rendered via useDepartmentLabel().singular.
+    label: 'Department',
+    icon: 'MapPin',
+    to: '/department',
+    defaultAccess: { admin: 'hidden', dept_admin: 'edit', educator: 'hidden', parent: 'hidden', learner: 'hidden' },
   },
   {
     key: 'school-profile',
     label: 'School Profile',
     icon: 'Building2',
     to: '/settings',
-    defaultAccess: { admin: 'edit', educator: 'view', parent: 'view', learner: 'hidden' },
+    defaultAccess: { admin: 'edit', dept_admin: 'view', educator: 'view', parent: 'view', learner: 'hidden' },
   },
   {
     key: 'observe',
     label: 'Quick Observe',
     icon: 'PlusCircle',
     to: '/observe',
-    defaultAccess: { admin: 'hidden', educator: 'edit', parent: 'hidden', learner: 'hidden' },
+    defaultAccess: { admin: 'hidden', dept_admin: 'edit', educator: 'edit', parent: 'hidden', learner: 'hidden' },
   },
   {
     key: 'profile',
     label: 'Profile',
     icon: 'User',
     to: '/profile',
-    defaultAccess: { admin: 'hidden', educator: 'edit', parent: 'edit', learner: 'edit' },
+    defaultAccess: { admin: 'hidden', dept_admin: 'edit', educator: 'edit', parent: 'edit', learner: 'edit' },
     alwaysVisible: true,
   },
   // ---- Utilities folder ----
@@ -163,7 +180,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
       'users',
       'permissions',
     ],
-    defaultAccess: { admin: 'edit', educator: 'view', parent: 'hidden', learner: 'hidden' },
+    defaultAccess: { admin: 'edit', dept_admin: 'view', educator: 'view', parent: 'hidden', learner: 'hidden' },
   },
   {
     key: 'dimensions',
@@ -198,35 +215,35 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     label: 'Assignments',
     icon: 'ClipboardList',
     to: '/assignments',
-    defaultAccess: { admin: 'edit', educator: 'edit', parent: 'view', learner: 'view' },
+    defaultAccess: { admin: 'edit', dept_admin: 'edit', educator: 'edit', parent: 'view', learner: 'view' },
   },
   {
     key: 'students',
     label: 'Learners',
     icon: 'Users',
     to: '/students',
-    defaultAccess: adminEducatorEdit,
+    defaultAccess: { admin: 'edit', dept_admin: 'edit', educator: 'edit', parent: 'hidden', learner: 'hidden' },
   },
   {
     key: 'educators',
     label: 'Educators',
     icon: 'UserCheck',
     to: '/admin/educators',
-    defaultAccess: adminEducator,
+    defaultAccess: deptAdminElevated,
   },
   {
     key: 'families',
     label: 'Families',
     icon: 'UsersRound',
     to: '/admin/families',
-    defaultAccess: adminEducator,
+    defaultAccess: deptAdminElevated,
   },
   {
     key: 'users',
     label: 'Users',
     icon: 'Users',
     to: '/admin/users',
-    defaultAccess: adminEducator,
+    defaultAccess: deptAdminElevated,
   },
   {
     key: 'permissions',
@@ -251,6 +268,3 @@ export const SIDEBAR_BY_KEY: Record<SidebarKey, SidebarItem> = SIDEBAR_ITEMS.red
 export const CONFIGURABLE_ITEMS: SidebarItem[] = SIDEBAR_ITEMS.filter(
   (i) => !i.alwaysVisible && !i.children
 )
-
-// Suppress unused warnings for builders that may be used as defaults elsewhere
-void allView

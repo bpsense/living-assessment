@@ -9,12 +9,14 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from './supabase'
 import { useAuth } from './auth'
+import { useAccessControl } from './access-control'
 import {
   SIDEBAR_BY_KEY,
+  effectiveRoleFor,
+  type EffectiveRole,
   type ItemAccess,
   type SidebarKey,
 } from './sidebar-catalog'
-import type { UserRole } from '../types/database'
 
 /** Map of sidebar_key → access for a single (school, role) tuple. */
 export type RolePermissionMap = Partial<Record<SidebarKey, ItemAccess>>
@@ -29,11 +31,11 @@ const cache = new Map<string, RolePermissionMap>()
 const inflight = new Map<string, Promise<RolePermissionMap>>()
 const subscribers = new Set<() => void>()
 
-function cacheKey(schoolId: string, role: UserRole): string {
+function cacheKey(schoolId: string, role: EffectiveRole): string {
   return `${schoolId}:${role}`
 }
 
-async function loadFor(schoolId: string, role: UserRole): Promise<RolePermissionMap> {
+async function loadFor(schoolId: string, role: EffectiveRole): Promise<RolePermissionMap> {
   const key = cacheKey(schoolId, role)
   const hit = cache.get(key)
   if (hit) return hit
@@ -63,7 +65,7 @@ async function loadFor(schoolId: string, role: UserRole): Promise<RolePermission
  * Invalidate the cache for a (school, role) — called after the permissions
  * page saves changes so all live hooks re-fetch.
  */
-export function invalidateRolePermissions(schoolId: string, role?: UserRole) {
+export function invalidateRolePermissions(schoolId: string, role?: EffectiveRole) {
   if (role) {
     cache.delete(cacheKey(schoolId, role))
   } else {
@@ -77,7 +79,7 @@ export function invalidateRolePermissions(schoolId: string, role?: UserRole) {
 /** Resolve the effective access for a single sidebar item. */
 export function resolveAccess(
   key: SidebarKey,
-  role: UserRole,
+  role: EffectiveRole,
   overrides: RolePermissionMap
 ): ItemAccess {
   const explicit = overrides[key]
@@ -87,10 +89,11 @@ export function resolveAccess(
 }
 
 /**
- * Reactive hook returning the override map for a given role. Components
- * can call `resolveAccess(key, role, map)` to materialize per-item access.
+ * Reactive hook returning the override map for a given effective role.
+ * Components can call `resolveAccess(key, role, map)` to materialize
+ * per-item access.
  */
-export function useRolePermissions(role: UserRole | undefined): {
+export function useRolePermissions(role: EffectiveRole | undefined): {
   permissions: RolePermissionMap
   loading: boolean
 } {
@@ -128,7 +131,8 @@ export function useRolePermissions(role: UserRole | undefined): {
 
 /**
  * Hook for page-level gating. Returns the effective access for a sidebar key
- * for the currently-viewing role, plus convenience booleans.
+ * for the currently-viewing role, plus convenience booleans. Department/
+ * Location admins resolve as the 'dept_admin' effective role.
  */
 export function usePageAccess(key: SidebarKey): {
   access: ItemAccess
@@ -136,9 +140,10 @@ export function usePageAccess(key: SidebarKey): {
   canEdit: boolean
 } {
   const { profile } = useAuth()
-  const role = profile?.role
-  const { permissions } = useRolePermissions(role)
-  const access = role ? resolveAccess(key, role, permissions) : 'hidden'
+  const { isDepartmentAdmin } = useAccessControl()
+  const effective = profile ? effectiveRoleFor(profile.role, isDepartmentAdmin) : undefined
+  const { permissions } = useRolePermissions(effective)
+  const access = effective ? resolveAccess(key, effective, permissions) : 'hidden'
   return {
     access,
     canView: access !== 'hidden',
