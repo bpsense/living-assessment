@@ -1,22 +1,26 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../lib/auth'
-import { Loader2, ArrowLeft, MessageCircle } from 'lucide-react'
+import { Loader2, ArrowLeft, MessageCircle, Inbox, X } from 'lucide-react'
 import ConversationList from '../components/messaging/ConversationList'
 import ConversationView from '../components/messaging/ConversationView'
 import NewConversationModal from '../components/messaging/NewConversationModal'
 import {
   fetchConversations,
   fetchConversation,
+  createAdminInboxThread,
   type ConversationWithDetails,
 } from '../lib/messaging-data'
+import { useToast } from '../components/Toast'
 
 export default function Messages() {
   const { profile } = useAuth()
+  const { toast } = useToast()
   const [conversations, setConversations] = useState<ConversationWithDetails[]>([])
   const [activeConversation, setActiveConversation] = useState<ConversationWithDetails | null>(null)
   const [activeConvId, setActiveConvId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [showNewMessage, setShowNewMessage] = useState(false)
+  const [showContactAdmin, setShowContactAdmin] = useState(false)
   const [mobileShowChat, setMobileShowChat] = useState(false)
 
   // Load conversations
@@ -82,8 +86,22 @@ export default function Messages() {
     activeConversation &&
     !activeConversation.participants.some((p) => p.user_id === profile.id)
 
+  const canContactAdmin = profile.role !== 'admin'
+
   return (
     <div className="mx-auto max-w-6xl">
+      {canContactAdmin && (
+        <div className="mb-3 flex justify-end">
+          <button
+            onClick={() => setShowContactAdmin(true)}
+            className="flex items-center gap-1.5 rounded-lg bg-accent-50 px-3 py-1.5 text-xs font-medium text-accent-700 hover:bg-accent-100"
+          >
+            <Inbox className="h-3.5 w-3.5" />
+            Contact admin
+          </button>
+        </div>
+      )}
+
       <div className="glass-card overflow-hidden" style={{ height: 'calc(100vh - 140px)' }}>
         {/* Desktop: two-panel layout */}
         <div className="hidden h-full md:flex">
@@ -173,6 +191,105 @@ export default function Messages() {
           onCreated={handleConversationCreated}
         />
       )}
+
+      {/* Contact admin modal */}
+      {showContactAdmin && (
+        <ContactAdminModal
+          schoolId={profile.school_id}
+          currentUserId={profile.id}
+          onClose={() => setShowContactAdmin(false)}
+          onCreated={(convId) => {
+            setShowContactAdmin(false)
+            handleConversationCreated(convId)
+            toast('Sent to admin team', 'success')
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+function ContactAdminModal({
+  schoolId,
+  currentUserId,
+  onClose,
+  onCreated,
+}: {
+  schoolId: string
+  currentUserId: string
+  onClose: () => void
+  onCreated: (convId: string) => void
+}) {
+  const [subject, setSubject] = useState('')
+  const [body, setBody] = useState('')
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSend(e: React.FormEvent) {
+    e.preventDefault()
+    if (!subject.trim() || !body.trim()) return
+    setSending(true)
+    setError(null)
+    try {
+      const id = await createAdminInboxThread(schoolId, currentUserId, subject.trim(), body.trim())
+      onCreated(id)
+    } catch (err) {
+      setError((err as Error).message)
+      setSending(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-md rounded-2xl bg-bg-card p-5 shadow-xl">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Inbox className="h-5 w-5 text-accent-600" />
+            <h2 className="text-base font-semibold text-text">Contact your school admin team</h2>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-1 text-text-light hover:bg-bg-muted">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="mb-3 text-xs text-text-muted">
+          Your message goes to the shared admin inbox. Any school admin can read and respond.
+        </p>
+        <form onSubmit={handleSend} className="space-y-3">
+          <input
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            placeholder="Subject"
+            required
+            className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none"
+          />
+          <textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder="What can the admin team help with?"
+            required
+            rows={5}
+            className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none"
+          />
+          {error && <p className="text-xs text-alert-500">{error}</p>}
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg px-3 py-2 text-sm text-text-muted hover:bg-bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={sending || !subject.trim() || !body.trim()}
+              className="flex items-center gap-1.5 rounded-lg bg-accent-500 px-3 py-2 text-sm font-medium text-white hover:bg-accent-600 disabled:opacity-50"
+            >
+              {sending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              Send
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }

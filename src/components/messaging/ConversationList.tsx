@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { formatDistanceToNow } from 'date-fns'
-import { Search, Plus, Users, User, MessageCircle, Hash, Eye } from 'lucide-react'
+import { Search, Plus, Users, User, MessageCircle, Hash, Eye, Inbox } from 'lucide-react'
 import type { ConversationWithDetails } from '../../lib/messaging-data'
 
 interface Props {
@@ -174,9 +174,13 @@ function ConversationRow({
       <Hash className="h-4 w-4" />
     ) : conversation.conversation_type === 'group' ? (
       <Users className="h-4 w-4" />
+    ) : conversation.conversation_type === 'admin_inbox' ? (
+      <Inbox className="h-4 w-4" />
     ) : (
       <User className="h-4 w-4" />
     )
+
+  const isAdminInbox = conversation.conversation_type === 'admin_inbox'
 
   return (
     <button
@@ -199,9 +203,16 @@ function ConversationRow({
       {/* Content */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between">
-          <span className={`text-sm font-medium truncate ${unread > 0 ? 'text-text-primary' : 'text-text-secondary'}`}>
-            {label}
-          </span>
+          <div className="flex min-w-0 flex-1 items-center gap-1.5">
+            {isAdminInbox && (
+              <span className="rounded-full bg-accent-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-accent-700">
+                Inbox
+              </span>
+            )}
+            <span className={`text-sm font-medium truncate ${unread > 0 ? 'text-text-primary' : 'text-text-secondary'}`}>
+              {label}
+            </span>
+          </div>
           <div className="ml-2 flex shrink-0 items-center gap-1">
             {isReadOnly && (
               <Eye className="h-3 w-3 text-blue-400" aria-label="Read-only — learner messages" />

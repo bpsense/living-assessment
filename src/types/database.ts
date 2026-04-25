@@ -795,7 +795,7 @@ export type StudentAssignmentUpdate = Partial<Omit<StudentAssignment, 'id' | 'as
 // Community Messaging
 // ============================================================
 
-export type ConversationType = 'direct' | 'class' | 'group'
+export type ConversationType = 'direct' | 'class' | 'group' | 'admin_inbox'
 
 export interface Conversation {
   id: string
@@ -803,6 +803,8 @@ export interface Conversation {
   conversation_type: ConversationType
   title: string | null
   classroom_id: string | null
+  /** Set when an admin "claims" an admin_inbox thread; null otherwise. */
+  admin_assigned_to: string | null
   created_by: string
   created_at: string
   updated_at: string
@@ -812,6 +814,7 @@ export type ConversationInsert = Pick<Conversation, 'school_id' | 'conversation_
   id?: string
   title?: string | null
   classroom_id?: string | null
+  admin_assigned_to?: string | null
 }
 
 export interface ConversationParticipant {
