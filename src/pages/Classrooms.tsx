@@ -18,9 +18,16 @@ import type { Classroom, Department } from '../types/database'
 // Types
 // ============================================================
 
+interface ClassroomEducator {
+  id: string
+  full_name: string
+  role: 'lead' | 'support'
+}
+
 interface ClassroomRow extends Classroom {
   student_count: number
   observation_count: number
+  educators: ClassroomEducator[]
 }
 
 // ============================================================
@@ -154,9 +161,9 @@ export default function Classrooms() {
         return
       }
 
-      // Student counts (via junction table) + observation counts
+      // Student counts (via junction table) + observation counts + educators
       const roomIds = rooms.map((r) => r.id)
-      const [scRes, obsRes] = await Promise.all([
+      const [scRes, obsRes, ecRes] = await Promise.all([
         supabase
           .from('student_classrooms')
           .select('student_id, classroom_id')
@@ -165,6 +172,10 @@ export default function Classrooms() {
           .from('observations')
           .select('id, student_id')
           .eq('school_id', profile.school_id),
+        supabase
+          .from('educator_classrooms')
+          .select('classroom_id, educator_id, role, profiles!educator_classrooms_educator_id_fkey(full_name)')
+          .in('classroom_id', roomIds),
       ])
 
       const scRows = (scRes.data ?? []) as { student_id: string; classroom_id: string }[]
@@ -181,6 +192,20 @@ export default function Classrooms() {
         obsByStudent.set(o.student_id, (obsByStudent.get(o.student_id) ?? 0) + 1)
       }
 
+      // Educators per classroom
+      const educatorsByRoom = new Map<string, ClassroomEducator[]>()
+      for (const row of (ecRes.data ?? []) as unknown as {
+        classroom_id: string
+        educator_id: string
+        role: 'lead' | 'support'
+        profiles: { full_name: string } | null
+      }[]) {
+        if (!row.profiles) continue
+        const list = educatorsByRoom.get(row.classroom_id) ?? []
+        list.push({ id: row.educator_id, full_name: row.profiles.full_name, role: row.role })
+        educatorsByRoom.set(row.classroom_id, list)
+      }
+
       const rows: ClassroomRow[] = rooms.map((room) => {
         const roomStudentIds = studentsByRoom.get(room.id) ?? []
         const obsCount = roomStudentIds.reduce(
@@ -191,6 +216,7 @@ export default function Classrooms() {
           ...room,
           student_count: roomStudentIds.length,
           observation_count: obsCount,
+          educators: educatorsByRoom.get(room.id) ?? [],
         }
       })
 
@@ -436,6 +462,29 @@ function ClassroomCard({
             {room.observation_count} obs
           </span>
         </div>
+
+        {room.educators.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {room.educators
+              .slice()
+              .sort((a, b) => (a.role === b.role ? 0 : a.role === 'lead' ? -1 : 1))
+              .map((ed) => (
+                <span
+                  key={ed.id}
+                  className={
+                    ed.role === 'lead'
+                      ? 'inline-flex items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-[11px] text-primary-700'
+                      : 'inline-flex items-center gap-1 rounded-full bg-bg-muted px-2 py-0.5 text-[11px] text-text-muted'
+                  }
+                >
+                  <span className="font-semibold uppercase tracking-wide text-[9px]">
+                    {ed.role === 'lead' ? 'Lead' : 'Support'}
+                  </span>
+                  <span>{ed.full_name}</span>
+                </span>
+              ))}
+          </div>
+        )}
       </div>
 
       <div className="flex border-t border-bg-muted">
