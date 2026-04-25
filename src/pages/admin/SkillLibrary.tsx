@@ -37,6 +37,7 @@ import {
   X,
   Database,
 } from 'lucide-react'
+import { usePageAccess } from '../../lib/role-permissions'
 import { clsx } from 'clsx'
 
 // ============================================================
@@ -56,6 +57,7 @@ const SEED_FRAMEWORKS: { id: 'ccss_math' | 'ccss_ela' | 'casel'; label: string; 
 export default function SkillLibrary() {
   const schoolId = useActiveSchoolId()
   const { toast } = useToast()
+  const { canEdit } = usePageAccess('skill-library')
 
   // Data
   const [skills, setSkills] = useState<SkillWithProgression[]>([])
@@ -310,22 +312,24 @@ export default function SkillLibrary() {
             Manage assessable skills with grade-level progression steps.
           </p>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowSeedDialog(true)}
-            className="flex items-center gap-2 rounded-xl border border-bg-muted bg-bg-card px-4 py-2.5 text-sm font-medium text-text transition-colors hover:bg-bg-muted"
-          >
-            <Database className="h-4 w-4" />
-            Populate Library
-          </button>
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="flex items-center gap-2 rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-600"
-          >
-            <Plus className="h-4 w-4" />
-            New Skill
-          </button>
-        </div>
+        {canEdit && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowSeedDialog(true)}
+              className="flex items-center gap-2 rounded-xl border border-bg-muted bg-bg-card px-4 py-2.5 text-sm font-medium text-text transition-colors hover:bg-bg-muted"
+            >
+              <Database className="h-4 w-4" />
+              Populate Library
+            </button>
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="flex items-center gap-2 rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-600"
+            >
+              <Plus className="h-4 w-4" />
+              New Skill
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Filters */}

@@ -30,6 +30,7 @@ import {
   Activity,
   Wrench,
   ChevronRight,
+  Lock,
 } from 'lucide-react'
 import type { UserRole } from '../types/database'
 import QuickObserveModal from './QuickObserveModal'
@@ -41,6 +42,41 @@ import NotificationBell from './incident/NotificationBell'
 import { useEducatorList } from '../lib/educator-data'
 import { useFamilyList } from '../lib/family-data'
 import { useDepartmentLabel } from '../lib/department-label'
+import { SIDEBAR_ITEMS, SIDEBAR_BY_KEY, type SidebarItem } from '../lib/sidebar-catalog'
+import { useRolePermissions, resolveAccess, type RolePermissionMap } from '../lib/role-permissions'
+
+// ============================================================
+// Icon registry — catalog stores icon names as strings; we resolve
+// them here so the catalog stays React-free.
+// ============================================================
+const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  LayoutDashboard, School, Users, UserCheck, UsersRound, Layers, BookOpen,
+  Building2, PlusCircle, User, MapPin, ClipboardList, MessageCircle, Target,
+  ShieldAlert, Languages, Wrench, Lock,
+}
+
+function renderIcon(name: string) {
+  const Cmp = ICONS[name] ?? LayoutDashboard
+  return <Cmp className="h-5 w-5" />
+}
+
+// ============================================================
+// Per-role label/route overrides — keeps the catalog generic and
+// lets each role get its preferred terminology / target route.
+// ============================================================
+function labelFor(item: SidebarItem, role: UserRole, deptLabel: { singular: string; plural: string }): string {
+  if (item.key === 'departments') return deptLabel.plural
+  if (item.key === 'classrooms' && role === 'educator') return 'My Classrooms'
+  if (item.key === 'students' && role === 'parent') return 'My Children'
+  if (item.key === 'school-profile' && role === 'parent') return 'School Info'
+  if (item.key === 'profile' && role === 'learner') return 'My Profile'
+  return item.label
+}
+
+function routeFor(item: SidebarItem, role: UserRole): string | undefined {
+  if (item.key === 'profile' && role === 'learner') return '/learner/profile'
+  return item.to
+}
 
 interface NavItem {
   to?: string
@@ -51,31 +87,53 @@ interface NavItem {
   folderKey?: string
 }
 
-function buildSchoolAdminNav(deptLabel: { singular: string; plural: string }): NavItem[] {
-  return [
-    { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-    { to: '/classrooms', label: 'Classrooms', icon: <School className="h-5 w-5" /> },
-    { to: '/messages', label: 'Messages', icon: <MessageCircle className="h-5 w-5" /> },
-    { to: '/admin/incidents', label: 'Incidents', icon: <ShieldAlert className="h-5 w-5" /> },
-    { to: '/admin/departments', label: deptLabel.plural, icon: <MapPin className="h-5 w-5" /> },
-    { to: '/settings', label: 'School Profile', icon: <Building2 className="h-5 w-5" /> },
-    {
-      label: 'Utilities',
-      icon: <Wrench className="h-5 w-5" />,
-      folderKey: 'utilities-admin',
-      children: [
-        { to: '/admin/dimensions', label: 'Dimensions', icon: <Layers className="h-5 w-5" /> },
-        { to: '/standards', label: 'Standards', icon: <BookOpen className="h-5 w-5" /> },
-        { to: '/translate', label: 'Translate', icon: <Languages className="h-5 w-5" /> },
-        { to: '/admin/skill-library', label: 'Skill Library', icon: <Target className="h-5 w-5" /> },
-        { to: '/assignments', label: 'Assignments', icon: <ClipboardList className="h-5 w-5" /> },
-        { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
-        { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
-        { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
-        { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
-      ],
-    },
-  ]
+/**
+ * Build the role's sidebar from the central catalog + role_permissions
+ * overrides. Items resolve to 'hidden' / 'view' / 'edit' for the role; only
+ * non-hidden items are rendered. Folders disappear when all children are
+ * hidden.
+ */
+function buildNavFromCatalog(
+  role: UserRole,
+  perms: RolePermissionMap,
+  deptLabel: { singular: string; plural: string }
+): NavItem[] {
+  const nav: NavItem[] = []
+  for (const item of SIDEBAR_ITEMS) {
+    if (resolveAccess(item.key, role, perms) === 'hidden') continue
+
+    if (item.children) {
+      const children: NavItem[] = []
+      for (const childKey of item.children) {
+        const child = SIDEBAR_BY_KEY[childKey]
+        if (!child) continue
+        if (resolveAccess(child.key, role, perms) === 'hidden') continue
+        const to = routeFor(child, role)
+        if (!to) continue
+        children.push({
+          to,
+          label: labelFor(child, role, deptLabel),
+          icon: renderIcon(child.icon),
+        })
+      }
+      if (children.length === 0) continue
+      nav.push({
+        label: labelFor(item, role, deptLabel),
+        icon: renderIcon(item.icon),
+        folderKey: `folder-${item.key}-${role}`,
+        children,
+      })
+    } else {
+      const to = routeFor(item, role)
+      if (!to) continue
+      nav.push({
+        to,
+        label: labelFor(item, role, deptLabel),
+        icon: renderIcon(item.icon),
+      })
+    }
+  }
+  return nav
 }
 
 function getNavItems(
@@ -83,9 +141,11 @@ function getNavItems(
   isSystemAdmin: boolean,
   isAllSchoolsView: boolean,
   isDepartmentAdmin: boolean,
+  perms: RolePermissionMap,
   deptLabel: { singular: string; plural: string }
 ): NavItem[] {
-  // System admin viewing "All Schools" gets the system nav
+  // System admin viewing "All Schools" gets a hardcoded system nav (these
+  // routes aren't in the per-school catalog).
   if (isSystemAdmin && isAllSchoolsView) {
     return [
       { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
@@ -95,58 +155,25 @@ function getNavItems(
     ]
   }
 
-  // System admin viewing a specific school gets the school admin nav
-  if (isSystemAdmin) {
-    return buildSchoolAdminNav(deptLabel)
+  // System admin viewing into a school is rendered as the school admin nav,
+  // since the catalog defines the per-school items.
+  const effectiveRole: UserRole = isSystemAdmin ? 'admin' : role
+
+  const nav = buildNavFromCatalog(effectiveRole, perms, deptLabel)
+
+  // Department admin keeps access to the curated /department dashboard,
+  // which isn't in the catalog (it's a different page from the admin's
+  // /admin/departments management view). Splice it in just after Dashboard.
+  if (isDepartmentAdmin && !isSystemAdmin) {
+    const insertAt = Math.min(1, nav.length)
+    nav.splice(insertAt, 0, {
+      to: '/department',
+      label: deptLabel.singular,
+      icon: <MapPin className="h-5 w-5" />,
+    })
   }
 
-  switch (role) {
-    case 'educator': {
-      const items: NavItem[] = [
-        { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-        { to: '/classrooms', label: 'My Classrooms', icon: <School className="h-5 w-5" /> },
-        { to: '/assignments', label: 'Assignments', icon: <ClipboardList className="h-5 w-5" /> },
-        { to: '/messages', label: 'Messages', icon: <MessageCircle className="h-5 w-5" /> },
-        { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
-        { to: '/observe', label: 'Quick Observe', icon: <PlusCircle className="h-5 w-5" /> },
-      ]
-      // Department admins get extra nav items
-      if (isDepartmentAdmin) {
-        items.push(
-          { to: '/department', label: deptLabel.singular, icon: <MapPin className="h-5 w-5" /> },
-          { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
-          { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
-          { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
-        )
-      }
-      items.push(
-        { to: '/settings', label: 'School Profile', icon: <Building2 className="h-5 w-5" /> },
-        { to: '/profile', label: 'Profile', icon: <User className="h-5 w-5" /> },
-      )
-      return items
-    }
-    case 'admin':
-      return buildSchoolAdminNav(deptLabel)
-    case 'parent':
-      return [
-        { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-        { to: '/messages', label: 'Messages', icon: <MessageCircle className="h-5 w-5" /> },
-        { to: '/students', label: 'My Children', icon: <Users className="h-5 w-5" /> },
-        { to: '/classrooms', label: 'Classrooms', icon: <School className="h-5 w-5" /> },
-        { to: '/settings', label: 'School Info', icon: <Building2 className="h-5 w-5" /> },
-        { to: '/profile', label: 'Profile', icon: <User className="h-5 w-5" /> },
-      ]
-    case 'learner':
-      return [
-        { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-        { to: '/messages', label: 'Messages', icon: <MessageCircle className="h-5 w-5" /> },
-        { to: '/learner/profile', label: 'My Profile', icon: <User className="h-5 w-5" /> },
-      ]
-    default:
-      return [
-        { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-      ]
-  }
+  return nav
 }
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -294,7 +321,10 @@ export default function Layout() {
 
   const deptLabel = useDepartmentLabel()
   const role = profile?.role ?? 'educator'
-  const navItems = getNavItems(role, isSystemAdmin, isAllSchoolsView, isDepartmentAdmin, deptLabel)
+  // System admin viewing into a school renders nav as the admin role
+  const navRole: UserRole = isSystemAdmin && !isAllSchoolsView ? 'admin' : role
+  const { permissions } = useRolePermissions(navRole)
+  const navItems = getNavItems(role, isSystemAdmin, isAllSchoolsView, isDepartmentAdmin, permissions, deptLabel)
   // Hide FAB when impersonating (read-only context) or in All Schools view
   const showFab = (role === 'educator' || role === 'admin' || isSystemAdmin) && !isAllSchoolsView && !viewAsUserId
   // System admins can switch roles when viewing a specific school, but not in the "All Schools" view

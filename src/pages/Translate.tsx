@@ -19,6 +19,7 @@ import {
   Sparkles,
   ClipboardCheck,
 } from 'lucide-react'
+import { usePageAccess } from '../lib/role-permissions'
 import { clsx } from 'clsx'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
@@ -107,6 +108,7 @@ export default function TranslatePage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { profile } = useAuth()
+  const { canEdit } = usePageAccess('translate')
 
   const [step, setStep] = useState(0)
   const [error, setError] = useState<string | null>(null)
@@ -512,7 +514,8 @@ export default function TranslatePage() {
             </button>
             <button
               onClick={handleGenerate}
-              disabled={generating}
+              disabled={generating || !canEdit}
+              title={!canEdit ? 'View-only' : undefined}
               className="flex items-center gap-2 rounded-lg bg-primary-500 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-600 disabled:opacity-50"
             >
               {generating ? (

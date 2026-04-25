@@ -34,6 +34,7 @@ import {
   Save,
   Target,
 } from 'lucide-react'
+import { usePageAccess } from '../lib/role-permissions'
 import { clsx } from 'clsx'
 import { format } from 'date-fns'
 
@@ -48,6 +49,7 @@ type Tab = 'active' | 'skills' | 'library'
 export default function Assignments() {
   const { profile } = useAuth()
   const { toast } = useToast()
+  const { canEdit } = usePageAccess('assignments')
 
   const [activeTab, setActiveTab] = useState<Tab>('active')
   const [assignments, setAssignments] = useState<AssignmentWithDetails[]>([])
@@ -242,13 +244,15 @@ export default function Assignments() {
             Create, manage, and reuse competency-linked assignments.
           </p>
         </div>
-        <button
-          onClick={() => setShowChooser(true)}
-          className="flex items-center gap-2 rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-600"
-        >
-          <Plus className="h-4 w-4" />
-          New Assignment
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => setShowChooser(true)}
+            className="flex items-center gap-2 rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-600"
+          >
+            <Plus className="h-4 w-4" />
+            New Assignment
+          </button>
+        )}
       </div>
 
       {/* Tab bar */}

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { clsx } from 'clsx'
 import { Plus, RotateCcw, Loader2, ChevronDown, AlertCircle, Eye } from 'lucide-react'
+import { usePageAccess } from '../../lib/role-permissions'
 import {
   DndContext,
   closestCenter,
@@ -112,6 +113,7 @@ const MAX_DIMENSIONS = 15
 export default function Dimensions() {
   const { profile } = useAuth()
   const { toast } = useToast()
+  const { canEdit } = usePageAccess('dimensions')
 
   // ---- State ----
   const [dimensions, setDimensions] = useState<DimensionWithCount[]>([])
@@ -425,23 +427,25 @@ export default function Dimensions() {
             dimensions families can see.
           </p>
         </div>
-        <div className="flex shrink-0 gap-2">
-          <button
-            onClick={requestReset}
-            className="flex items-center gap-1.5 rounded-xl border border-bg-muted px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-bg-muted"
-          >
-            <RotateCcw className="h-4 w-4" />
-            Reset to Defaults
-          </button>
-          <button
-            onClick={handleAddNew}
-            disabled={activeCount >= MAX_DIMENSIONS}
-            className="flex items-center gap-1.5 rounded-xl bg-primary-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Plus className="h-4 w-4" />
-            Add Dimension
-          </button>
-        </div>
+        {canEdit && (
+          <div className="flex shrink-0 gap-2">
+            <button
+              onClick={requestReset}
+              className="flex items-center gap-1.5 rounded-xl border border-bg-muted px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-bg-muted"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Reset to Defaults
+            </button>
+            <button
+              onClick={handleAddNew}
+              disabled={activeCount >= MAX_DIMENSIONS}
+              className="flex items-center gap-1.5 rounded-xl bg-primary-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Plus className="h-4 w-4" />
+              Add Dimension
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ---- Active count bar ---- */}

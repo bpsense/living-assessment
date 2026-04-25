@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Loader2, Users, ClipboardPen, School, Plus, Mail, Send, UserX, MoreVertical } from 'lucide-react'
+import { usePageAccess } from '../../lib/role-permissions'
 import { useAuth } from '../../lib/auth'
 import { useAccessControl } from '../../lib/access-control'
 import { useToast } from '../../components/Toast'
@@ -12,6 +13,7 @@ export default function Educators() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const { canDeactivateUsers } = useAccessControl()
+  const { canEdit } = usePageAccess('educators')
   const { educators, loading, error, refetch } = useEducatorList(profile?.school_id)
   const [actionMenu, setActionMenu] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
@@ -94,13 +96,15 @@ export default function Educators() {
             {totalObs} total
           </p>
         </div>
-        <button
-          onClick={() => setShowInvite((v) => !v)}
-          className="flex items-center gap-2 rounded-lg bg-primary-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-600"
-        >
-          <Plus className="h-4 w-4" />
-          Invite Educator
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => setShowInvite((v) => !v)}
+            className="flex items-center gap-2 rounded-lg bg-primary-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-600"
+          >
+            <Plus className="h-4 w-4" />
+            Invite Educator
+          </button>
+        )}
       </div>
 
       {/* Invite form */}

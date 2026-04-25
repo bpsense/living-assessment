@@ -29,6 +29,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../lib/auth'
 import { useAccessControl } from '../../lib/access-control'
+import { usePageAccess } from '../../lib/role-permissions'
 import { useUserManagement, type ManagedUser } from '../../lib/user-management'
 import { useActiveSchoolId } from '../../lib/school-context'
 import { useDepartmentLabel } from '../../lib/department-label'
@@ -71,6 +72,7 @@ function minLevelToInvite(role: UserRole): number {
 export default function UsersPage() {
   const { isSystemAdmin, allSchools, departmentAdminIds, accessLevel: authAccessLevel } = useAuth()
   const { accessLevel, canInviteUsers, canChangeRoles, canDeactivateUsers, canManageUser } = useAccessControl()
+  const { canEdit } = usePageAccess('users')
   const activeSchoolId = useActiveSchoolId() ?? null
   const { singular: deptSingular } = useDepartmentLabel()
   const ACCESS_LEVEL_LABELS: Record<number, string> = { ...BASE_ACCESS_LEVEL_LABELS, 4: `${deptSingular} Admin` }
@@ -341,7 +343,7 @@ export default function UsersPage() {
               : 'Manage users in this school'}
           </p>
         </div>
-        {(canInviteUsers && activeSchoolId) || isAllSchoolsInvite ? (
+        {canEdit && ((canInviteUsers && activeSchoolId) || isAllSchoolsInvite) ? (
           <button
             onClick={() => { setShowInvite(v => !v); setInviteSuccess(null); setActionError(null) }}
             className="flex items-center gap-2 rounded-lg bg-primary-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-600"
