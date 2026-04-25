@@ -7,3 +7,4 @@ dist/
 .netlify/
 .claude/worktrees/
 .patches/
+supabase/.temp/
