@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { useAccessControl } from '../lib/access-control'
 import { supabase } from '../lib/supabase'
@@ -28,6 +28,8 @@ import {
   ShieldAlert,
   Languages,
   Activity,
+  Wrench,
+  ChevronRight,
 } from 'lucide-react'
 import type { UserRole } from '../types/database'
 import QuickObserveModal from './QuickObserveModal'
@@ -41,9 +43,39 @@ import { useFamilyList } from '../lib/family-data'
 import { useDepartmentLabel } from '../lib/department-label'
 
 interface NavItem {
-  to: string
+  to?: string
   label: string
   icon: React.ReactNode
+  children?: NavItem[]
+  /** Stable key for folders, used to persist expand state. */
+  folderKey?: string
+}
+
+function buildSchoolAdminNav(deptLabel: { singular: string; plural: string }): NavItem[] {
+  return [
+    { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { to: '/classrooms', label: 'Classrooms', icon: <School className="h-5 w-5" /> },
+    { to: '/messages', label: 'Messages', icon: <MessageCircle className="h-5 w-5" /> },
+    { to: '/admin/incidents', label: 'Incidents', icon: <ShieldAlert className="h-5 w-5" /> },
+    { to: '/admin/departments', label: deptLabel.plural, icon: <MapPin className="h-5 w-5" /> },
+    { to: '/settings', label: 'School Profile', icon: <Building2 className="h-5 w-5" /> },
+    {
+      label: 'Utilities',
+      icon: <Wrench className="h-5 w-5" />,
+      folderKey: 'utilities-admin',
+      children: [
+        { to: '/admin/dimensions', label: 'Dimensions', icon: <Layers className="h-5 w-5" /> },
+        { to: '/standards', label: 'Standards', icon: <BookOpen className="h-5 w-5" /> },
+        { to: '/translate', label: 'Translate', icon: <Languages className="h-5 w-5" /> },
+        { to: '/admin/skill-library', label: 'Skill Library', icon: <Target className="h-5 w-5" /> },
+        { to: '/assignments', label: 'Assignments', icon: <ClipboardList className="h-5 w-5" /> },
+        { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
+        { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
+        { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
+        { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
+      ],
+    },
+  ]
 }
 
 function getNavItems(
@@ -63,25 +95,9 @@ function getNavItems(
     ]
   }
 
-  // System admin viewing a specific school gets school admin nav + Users
+  // System admin viewing a specific school gets the school admin nav
   if (isSystemAdmin) {
-    return [
-      { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-      { to: '/classrooms', label: 'Classrooms', icon: <School className="h-5 w-5" /> },
-      { to: '/assignments', label: 'Assignments', icon: <ClipboardList className="h-5 w-5" /> },
-      { to: '/messages', label: 'Messages', icon: <MessageCircle className="h-5 w-5" /> },
-      { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
-      { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
-      { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
-      { to: '/admin/incidents', label: 'Incidents', icon: <ShieldAlert className="h-5 w-5" /> },
-      { to: '/admin/departments', label: deptLabel.plural, icon: <MapPin className="h-5 w-5" /> },
-      { to: '/admin/dimensions', label: 'Dimensions', icon: <Layers className="h-5 w-5" /> },
-      { to: '/standards', label: 'Standards', icon: <BookOpen className="h-5 w-5" /> },
-      { to: '/translate', label: 'Translate', icon: <Languages className="h-5 w-5" /> },
-      { to: '/admin/skill-library', label: 'Skill Library', icon: <Target className="h-5 w-5" /> },
-      { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
-      { to: '/settings', label: 'School Profile', icon: <Building2 className="h-5 w-5" /> },
-    ]
+    return buildSchoolAdminNav(deptLabel)
   }
 
   switch (role) {
@@ -110,23 +126,7 @@ function getNavItems(
       return items
     }
     case 'admin':
-      return [
-        { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-        { to: '/classrooms', label: 'Classrooms', icon: <School className="h-5 w-5" /> },
-        { to: '/assignments', label: 'Assignments', icon: <ClipboardList className="h-5 w-5" /> },
-        { to: '/messages', label: 'Messages', icon: <MessageCircle className="h-5 w-5" /> },
-        { to: '/students', label: 'Learners', icon: <Users className="h-5 w-5" /> },
-        { to: '/admin/educators', label: 'Educators', icon: <UserCheck className="h-5 w-5" /> },
-        { to: '/admin/families', label: 'Families', icon: <UsersRound className="h-5 w-5" /> },
-        { to: '/admin/incidents', label: 'Incidents', icon: <ShieldAlert className="h-5 w-5" /> },
-        { to: '/admin/departments', label: deptLabel.plural, icon: <MapPin className="h-5 w-5" /> },
-        { to: '/admin/dimensions', label: 'Dimensions', icon: <Layers className="h-5 w-5" /> },
-        { to: '/standards', label: 'Standards', icon: <BookOpen className="h-5 w-5" /> },
-        { to: '/translate', label: 'Translate', icon: <Languages className="h-5 w-5" /> },
-        { to: '/admin/skill-library', label: 'Skill Library', icon: <Target className="h-5 w-5" /> },
-        { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
-        { to: '/settings', label: 'School Profile', icon: <Building2 className="h-5 w-5" /> },
-      ]
+      return buildSchoolAdminNav(deptLabel)
     case 'parent':
       return [
         { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
@@ -156,6 +156,82 @@ const ROLE_LABELS: Record<UserRole, string> = {
   learner: 'Learner',
 }
 
+function flattenLeafItems(items: NavItem[]): NavItem[] {
+  return items.flatMap((i) => (i.children ? flattenLeafItems(i.children) : i.to ? [i] : []))
+}
+
+function NavLeaf({ item }: { item: NavItem }) {
+  if (!item.to) return null
+  return (
+    <NavLink
+      to={item.to}
+      end={item.to === '/'}
+      className={({ isActive }) =>
+        clsx(
+          'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+          isActive
+            ? 'border-l-[3px] border-primary-500 bg-primary-50 text-primary-700'
+            : 'border-l-[3px] border-transparent text-text-muted hover:bg-bg-muted hover:text-text'
+        )
+      }
+    >
+      {item.icon}
+      {item.label}
+    </NavLink>
+  )
+}
+
+function NavFolder({ item, currentPath }: { item: NavItem; currentPath: string }) {
+  const storageKey = `sidebar-folder:${item.folderKey ?? item.label}`
+  const childRoutes = (item.children ?? []).map((c) => c.to).filter(Boolean) as string[]
+  const containsActive = childRoutes.some((r) => currentPath === r || currentPath.startsWith(r + '/'))
+
+  const [open, setOpen] = useState<boolean>(() => {
+    const stored = localStorage.getItem(storageKey)
+    if (stored !== null) return stored === '1'
+    return containsActive
+  })
+
+  // Auto-open when navigating into a child route
+  useEffect(() => {
+    if (containsActive && !open) setOpen(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [containsActive])
+
+  function toggle() {
+    const next = !open
+    setOpen(next)
+    localStorage.setItem(storageKey, next ? '1' : '0')
+  }
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={open}
+        className={clsx(
+          'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors border-l-[3px]',
+          containsActive
+            ? 'border-primary-500 bg-primary-50/60 text-primary-700'
+            : 'border-transparent text-text-muted hover:bg-bg-muted hover:text-text'
+        )}
+      >
+        {item.icon}
+        <span className="flex-1 text-left">{item.label}</span>
+        <ChevronRight className={clsx('h-4 w-4 transition-transform', open && 'rotate-90')} />
+      </button>
+      {open && (
+        <div className="mt-1 space-y-1 pl-4">
+          {(item.children ?? []).map((child) => (
+            <NavLeaf key={child.to} item={child} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 /** Which roles can the current user's actual role switch to? */
 function getSwitchableRoles(actualRole: UserRole): UserRole[] {
   switch (actualRole) {
@@ -173,6 +249,7 @@ export default function Layout() {
   const { profile, actualRole, signOut, viewAsRole, setViewAs, viewAsUserId, viewAsUserName, isSystemAdmin, activeSchoolId, setActiveSchool } = useAuth()
   const { isDepartmentAdmin, accessLevel } = useAccessControl()
   const navigate = useNavigate()
+  const location = useLocation()
   const [quickObserveOpen, setQuickObserveOpen] = useState(false)
   const [showCreateAssignment, setShowCreateAssignment] = useState(false)
   const [incidentReportOpen, setIncidentReportOpen] = useState(false)
@@ -247,25 +324,14 @@ export default function Layout() {
         </div>
 
         {/* Nav links */}
-        <nav className="flex-1 space-y-1 px-3 py-4">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === '/'}
-              className={({ isActive }) =>
-                clsx(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                  isActive
-                    ? 'border-l-[3px] border-primary-500 bg-primary-50 text-primary-700'
-                    : 'border-l-[3px] border-transparent text-text-muted hover:bg-bg-muted hover:text-text'
-                )
-              }
-            >
-              {item.icon}
-              {item.label}
-            </NavLink>
-          ))}
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+          {navItems.map((item) =>
+            item.children ? (
+              <NavFolder key={item.folderKey ?? item.label} item={item} currentPath={location.pathname} />
+            ) : (
+              <NavLeaf key={item.to} item={item} />
+            )
+          )}
         </nav>
 
         {/* User footer */}
@@ -530,10 +596,10 @@ export default function Layout() {
 
       {/* ============ Mobile bottom nav ============ */}
       <nav className="glass-chrome fixed inset-x-0 bottom-0 z-30 flex border-t border-white/30 md:hidden print:!hidden">
-        {navItems.slice(0, 5).map((item) => (
+        {flattenLeafItems(navItems).slice(0, 5).map((item) => (
           <NavLink
             key={item.to}
-            to={item.to}
+            to={item.to!}
             end={item.to === '/'}
             className={({ isActive }) =>
               clsx(
