@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { clsx } from 'clsx'
 import {
   School,
   Users,
@@ -8,7 +9,25 @@ import {
   Loader2,
   Pencil,
   Trash2,
+  GripVertical,
 } from 'lucide-react'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+  arrayMove,
+  useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import EditClassroomModal from '../components/classroom/EditClassroomModal'
 import DeleteClassroomConfirm from '../components/classroom/DeleteClassroomConfirm'
 import { supabase } from '../lib/supabase'
@@ -57,6 +76,12 @@ export default function Classrooms() {
   const [creating, setCreating] = useState(false)
   const [editingRoom, setEditingRoom] = useState<ClassroomRow | null>(null)
   const [deletingRoom, setDeletingRoom] = useState<ClassroomRow | null>(null)
+
+  const canReorder = canEditClassrooms && !isReadOnly
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
 
   useEffect(() => {
     if (!profile) return
@@ -298,6 +323,38 @@ export default function Classrooms() {
     fetchClassrooms()
   }
 
+  async function handleDragEnd(event: DragEndEvent, groupRooms: ClassroomRow[]) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIndex = groupRooms.findIndex((r) => r.id === active.id)
+    const newIndex = groupRooms.findIndex((r) => r.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const reordered = arrayMove(groupRooms, oldIndex, newIndex)
+    const groupIds = new Set(reordered.map((r) => r.id))
+
+    // Optimistic update — keep all classrooms but reassign display_order on
+    // the moved group only.
+    const previous = classrooms
+    const orderById = new Map(reordered.map((r, i) => [r.id, i + 1]))
+    setClassrooms((prev) =>
+      prev.map((r) =>
+        groupIds.has(r.id) ? { ...r, display_order: orderById.get(r.id) ?? r.display_order } : r
+      )
+    )
+
+    const results = await Promise.all(
+      reordered.map((r, i) =>
+        supabase.from('classrooms').update({ display_order: i + 1 }).eq('id', r.id)
+      )
+    )
+    if (results.some((res) => res.error)) {
+      setClassrooms(previous)
+      toast('Failed to save new order', 'error')
+    }
+  }
+
   // ---------- Loading ----------
   if (loading) {
     return (
@@ -451,18 +508,30 @@ export default function Classrooms() {
                   {group.rooms.length} classroom{group.rooms.length !== 1 ? 's' : ''}
                 </span>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {group.rooms.map((room) => (
-                  <ClassroomCard
-                    key={room.id}
-                    room={room}
-                    onClick={() => navigate(`/classroom/${room.id}`)}
-                    canEdit={canEditClassrooms && !isReadOnly}
-                    onEdit={() => setEditingRoom(room)}
-                    onDelete={() => setDeletingRoom(room)}
-                  />
-                ))}
-              </div>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={(e) => handleDragEnd(e, group.rooms)}
+              >
+                <SortableContext
+                  items={group.rooms.map((r) => r.id)}
+                  strategy={rectSortingStrategy}
+                >
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {group.rooms.map((room) => (
+                      <ClassroomCard
+                        key={room.id}
+                        room={room}
+                        onClick={() => navigate(`/classroom/${room.id}`)}
+                        canEdit={canReorder}
+                        canReorder={canReorder}
+                        onEdit={() => setEditingRoom(room)}
+                        onDelete={() => setDeletingRoom(room)}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             </section>
           ))}
         </div>
@@ -514,6 +583,16 @@ function groupClassroomsByDepartment(
     const group = (r.department_id && byId.get(r.department_id)) || unassigned
     group.rooms.push(r)
   }
+  // Sort within each group by admin-controlled display_order, falling back to
+  // name for legacy rooms with no order set.
+  const cmp = (a: ClassroomRow, b: ClassroomRow) => {
+    const ao = a.display_order ?? Number.POSITIVE_INFINITY
+    const bo = b.display_order ?? Number.POSITIVE_INFINITY
+    if (ao !== bo) return ao - bo
+    return a.name.localeCompare(b.name)
+  }
+  for (const g of byId.values()) g.rooms.sort(cmp)
+  unassigned.rooms.sort(cmp)
   const groups = [...byId.values()].filter((g) => g.rooms.length > 0)
   if (unassigned.rooms.length > 0) groups.push(unassigned)
   return groups
@@ -523,19 +602,50 @@ function ClassroomCard({
   room,
   onClick,
   canEdit,
+  canReorder,
   onEdit,
   onDelete,
 }: {
   room: ClassroomRow
   onClick: () => void
   canEdit?: boolean
+  canReorder?: boolean
   onEdit?: () => void
   onDelete?: () => void
 }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: room.id,
+    disabled: !canReorder,
+  })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
   return (
-    <div onClick={onClick} className="glass-card glass-card-interactive group relative">
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={onClick}
+      className={clsx(
+        'glass-card glass-card-interactive group relative',
+        isDragging && 'z-10 shadow-xl ring-2 ring-primary-300'
+      )}
+    >
       {canEdit && (
         <div className="absolute right-3 top-3 z-10 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+          {canReorder && (
+            <button
+              {...attributes}
+              {...listeners}
+              onClick={(e) => e.stopPropagation()}
+              title="Drag to reorder"
+              aria-label="Drag to reorder"
+              className="cursor-grab rounded-md bg-bg-card/90 p-1 text-text-muted shadow-sm transition-colors hover:bg-bg-muted hover:text-text active:cursor-grabbing"
+            >
+              <GripVertical className="h-3.5 w-3.5" />
+            </button>
+          )}
           <button
             onClick={(e) => {
               e.stopPropagation()

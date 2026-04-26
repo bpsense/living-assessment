@@ -1,9 +1,28 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
+import { clsx } from 'clsx'
 import { useActiveSchoolId } from '../../lib/school-context'
 import { supabase } from '../../lib/supabase'
 import { useDepartmentLabel } from '../../lib/department-label'
-import { MapPin, Plus, Loader2, Pencil, Trash2, School, X } from 'lucide-react'
+import { MapPin, Plus, Loader2, Pencil, Trash2, School, X, GripVertical } from 'lucide-react'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  arrayMove,
+  useSortable,
+} from '@dnd-kit/sortable'
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
+import { CSS } from '@dnd-kit/utilities'
 import type { Department, Classroom, Profile } from '../../types/database'
 
 interface DeptAdmin {
@@ -44,13 +63,62 @@ export default function Departments() {
   const [newRoomAgeMax, setNewRoomAgeMax] = useState('')
   const [creatingRoom, setCreatingRoom] = useState(false)
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
+  async function handleClassroomDragEnd(
+    event: DragEndEvent,
+    departmentId: string | null
+  ) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    // Find the matching list (one of the department's classrooms or unassigned).
+    const list =
+      departmentId === null
+        ? unassignedClassrooms
+        : departments.find((d) => d.id === departmentId)?.classrooms ?? []
+
+    const oldIndex = list.findIndex((c) => c.id === active.id)
+    const newIndex = list.findIndex((c) => c.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const reordered = arrayMove(list, oldIndex, newIndex)
+    const orderById = new Map(reordered.map((c, i) => [c.id, i + 1]))
+
+    // Optimistic update
+    if (departmentId === null) {
+      setUnassignedClassrooms(reordered.map((c) => ({ ...c, display_order: orderById.get(c.id) ?? c.display_order })))
+    } else {
+      setDepartments((prev) =>
+        prev.map((d) =>
+          d.id === departmentId
+            ? { ...d, classrooms: reordered.map((c) => ({ ...c, display_order: orderById.get(c.id) ?? c.display_order })) }
+            : d
+        )
+      )
+    }
+
+    const results = await Promise.all(
+      reordered.map((c, i) =>
+        supabase.from('classrooms').update({ display_order: i + 1 }).eq('id', c.id)
+      )
+    )
+    if (results.some((r) => r.error)) {
+      setError('Failed to save new order')
+      loadData()
+    }
+  }
+
   const loadData = useCallback(async () => {
     if (!schoolId) return
     setLoading(true)
 
     const [deptRes, classroomRes, adminsRes, educatorsRes, ecRes] = await Promise.all([
       supabase.from('departments').select('*').eq('school_id', schoolId).order('name'),
-      supabase.from('classrooms').select('*').eq('school_id', schoolId).order('name'),
+      supabase.from('classrooms').select('*').eq('school_id', schoolId).order('display_order', { nullsFirst: false }).order('name'),
       supabase
         .from('department_admins')
         .select('id, user_id, department_id, profiles(full_name, email)')
@@ -394,56 +462,27 @@ export default function Departments() {
                 {dept.classrooms.length === 0 ? (
                   <p className="text-sm text-text-light">No classrooms assigned</p>
                 ) : (
-                  <div className="space-y-2">
-                    {dept.classrooms.map((c) => {
-                      const leads = c.educators.filter((e) => e.role === 'lead')
-                      const supports = c.educators.filter((e) => e.role === 'support')
-                      return (
-                        <div key={c.id} className="rounded-lg bg-bg px-3 py-2 transition-colors hover:bg-bg-muted">
-                          <div className="flex items-center justify-between">
-                            <Link
-                              to={`/classroom/${c.id}`}
-                              className="flex flex-1 items-center gap-2 text-text hover:text-primary-600"
-                            >
-                              <School className="h-4 w-4 text-text-light" />
-                              <span className="text-sm font-medium">{c.name}</span>
-                              {c.grade_level && (
-                                <span className="text-xs text-text-light">({c.grade_level})</span>
-                              )}
-                            </Link>
-                            <button
-                              onClick={() => handleAssignClassroom(c.id, null)}
-                              className="text-xs text-text-light hover:text-alert-500"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                          {(leads.length > 0 || supports.length > 0) && (
-                            <div className="mt-1.5 flex flex-wrap gap-1.5 pl-6">
-                              {leads.map((ed) => (
-                                <span
-                                  key={ed.educator_id}
-                                  className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-[11px] text-primary-700"
-                                >
-                                  <span className="font-semibold uppercase tracking-wide text-[9px]">Lead</span>
-                                  <span>{ed.full_name}</span>
-                                </span>
-                              ))}
-                              {supports.map((ed) => (
-                                <span
-                                  key={ed.educator_id}
-                                  className="inline-flex items-center gap-1 rounded-full bg-bg-muted px-2 py-0.5 text-[11px] text-text-muted"
-                                >
-                                  <span className="font-semibold uppercase tracking-wide text-[9px]">Support</span>
-                                  <span>{ed.full_name}</span>
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    modifiers={[restrictToVerticalAxis]}
+                    onDragEnd={(e) => handleClassroomDragEnd(e, dept.id)}
+                  >
+                    <SortableContext
+                      items={dept.classrooms.map((c) => c.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="space-y-2">
+                        {dept.classrooms.map((c) => (
+                          <SortableClassroomRow
+                            key={c.id}
+                            classroom={c}
+                            onUnassign={() => handleAssignClassroom(c.id, null)}
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
                 )}
 
                 {/* Add classroom: assign existing or create new */}
@@ -567,6 +606,91 @@ export default function Departments() {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+// ============================================================
+// Sortable classroom row
+// ============================================================
+
+function SortableClassroomRow({
+  classroom,
+  onUnassign,
+}: {
+  classroom: ClassroomWithEducators
+  onUnassign: () => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: classroom.id,
+  })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  const leads = classroom.educators.filter((e) => e.role === 'lead')
+  const supports = classroom.educators.filter((e) => e.role === 'support')
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={clsx(
+        'rounded-lg bg-bg px-3 py-2 transition-colors hover:bg-bg-muted',
+        isDragging && 'z-10 shadow-lg ring-2 ring-primary-300'
+      )}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <button
+          {...attributes}
+          {...listeners}
+          type="button"
+          aria-label="Drag to reorder"
+          title="Drag to reorder"
+          className="cursor-grab rounded p-0.5 text-text-light transition-colors hover:bg-bg-muted hover:text-text active:cursor-grabbing"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+        <Link
+          to={`/classroom/${classroom.id}`}
+          className="flex flex-1 items-center gap-2 text-text hover:text-primary-600"
+        >
+          <School className="h-4 w-4 text-text-light" />
+          <span className="text-sm font-medium">{classroom.name}</span>
+          {classroom.grade_level && (
+            <span className="text-xs text-text-light">({classroom.grade_level})</span>
+          )}
+        </Link>
+        <button
+          onClick={onUnassign}
+          className="text-xs text-text-light hover:text-alert-500"
+        >
+          Remove
+        </button>
+      </div>
+      {(leads.length > 0 || supports.length > 0) && (
+        <div className="mt-1.5 flex flex-wrap gap-1.5 pl-6">
+          {leads.map((ed) => (
+            <span
+              key={ed.educator_id}
+              className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-[11px] text-primary-700"
+            >
+              <span className="font-semibold uppercase tracking-wide text-[9px]">Lead</span>
+              <span>{ed.full_name}</span>
+            </span>
+          ))}
+          {supports.map((ed) => (
+            <span
+              key={ed.educator_id}
+              className="inline-flex items-center gap-1 rounded-full bg-bg-muted px-2 py-0.5 text-[11px] text-text-muted"
+            >
+              <span className="font-semibold uppercase tracking-wide text-[9px]">Support</span>
+              <span>{ed.full_name}</span>
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
