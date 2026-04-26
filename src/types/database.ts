@@ -901,7 +901,8 @@ export type CompetencyDimensionMappingInsert = Omit<CompetencyDimensionMapping, 
 
 export interface Skill {
   id: string
-  school_id: string
+  /** NULL = system/baseline skill visible to all schools (read-only to non-system-admins). */
+  school_id: string | null
   name: string
   description: string | null
   category: string | null
@@ -914,12 +915,22 @@ export interface Skill {
   source_standard_code: string | null
   progression_domain: string | null
   progression_strand: string | null
+  /** V2: FK to learner_profile_domains.id. NULLABLE during migration; new skills should set this. */
+  domain_id: string | null
+  /** V2: optional age-band start (inclusive), e.g. 6. */
+  age_band_start: number | null
+  /** V2: optional age-band end (inclusive), e.g. 8. */
+  age_band_end: number | null
+  /** V2: free-text upstream provenance (e.g. "CCSS-Math K.CC", "NGSS Practices 1-3"). */
+  source_reference: string | null
   created_at: string
   updated_at: string
 }
 
-export type SkillInsert = Pick<Skill, 'school_id' | 'name'> & {
+export type SkillInsert = Pick<Skill, 'name'> & {
   id?: string
+  /** Required for school-owned skills; pass `null` only as a system admin to create a baseline skill. */
+  school_id: string | null
   description?: string | null
   category?: string | null
   min_grade?: string | null
@@ -931,6 +942,10 @@ export type SkillInsert = Pick<Skill, 'school_id' | 'name'> & {
   source_standard_code?: string | null
   progression_domain?: string | null
   progression_strand?: string | null
+  domain_id?: string | null
+  age_band_start?: number | null
+  age_band_end?: number | null
+  source_reference?: string | null
 }
 
 export type SkillUpdate = Partial<Omit<Skill, 'id' | 'school_id' | 'created_at' | 'updated_at'>>
@@ -1365,8 +1380,12 @@ export type TranslationRecordUpdate = Partial<Omit<TranslationRecord, 'id' | 'st
 export interface TranslationMapping {
   id: string
   translation_id: string
+  /** V1 source: a graded competency score. */
   competency_score_id: string | null
+  /** V1 legacy source: row in legacy_student_skill_assignments. */
   student_skill_assignment_id: string | null
+  /** V2 source: row in skill_assessments (Phase 4). Preferred for new translations. */
+  skill_assessment_id: string | null
   standard_id: string
   confidence: number
   level_in_standard: string | null
@@ -1379,6 +1398,7 @@ export type TranslationMappingInsert = Omit<TranslationMapping, 'id' | 'created_
   id?: string
   competency_score_id?: string | null
   student_skill_assignment_id?: string | null
+  skill_assessment_id?: string | null
   confidence?: number
   level_in_standard?: string | null
   human_override?: boolean

@@ -11,6 +11,8 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  AlertCircle,
+  Lock,
 } from 'lucide-react'
 import { useToast } from '../Toast'
 import { useAuth } from '../../lib/auth'
@@ -19,13 +21,18 @@ import {
   fetchSkillCategories,
   fetchDimensions,
   fetchSkillDomains,
+  fetchLearnerProfileDomainsForSchool,
+  attachDomainsToSkills,
+  bulkAssignDomain,
   createSkill,
   updateSkill,
   deleteSkill,
   GRADE_OPTIONS,
   AGE_BAND_PRESETS,
   type SkillWithCompetencies,
+  type SkillWithDomain,
 } from '../../lib/skills-data'
+import type { LearnerProfileDomain } from '../../types/learner-profile'
 import {
   fetchCompetencyTree,
   type CompetencyTreeNode,
@@ -52,6 +59,7 @@ function SkillEditModal({
   skill,
   competencyTree,
   dimensions,
+  learnerProfileDomains,
   categoryOptions,
   domainOptions,
   onClose,
@@ -61,6 +69,7 @@ function SkillEditModal({
   skill: SkillWithCompetencies | null // null = create mode
   competencyTree: CompetencyTreeNode[]
   dimensions: Dimension[]
+  learnerProfileDomains: LearnerProfileDomain[]
   categoryOptions: SmartSelectOption[]
   domainOptions: SmartSelectOption[]
   onClose: () => void
@@ -73,6 +82,10 @@ function SkillEditModal({
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
   const [domain, setDomain] = useState('')
+  /** V2: Learner Profile domain id (separate from the legacy `progression_domain` string). */
+  const [domainId, setDomainId] = useState<string>('')
+  const [ageBandStart, setAgeBandStart] = useState<string>('')
+  const [ageBandEnd, setAgeBandEnd] = useState<string>('')
   const [ageBandPreset, setAgeBandPreset] = useState('')
   const [minGrade, setMinGrade] = useState('')
   const [maxGrade, setMaxGrade] = useState('')
@@ -86,6 +99,9 @@ function SkillEditModal({
       setDescription(skill.description || '')
       setCategory(skill.category || '')
       setDomain(skill.progression_domain || '')
+      setDomainId(skill.domain_id || '')
+      setAgeBandStart(skill.age_band_start !== null ? String(skill.age_band_start) : '')
+      setAgeBandEnd(skill.age_band_end !== null ? String(skill.age_band_end) : '')
       setMinGrade(skill.min_grade || '')
       setMaxGrade(skill.max_grade || '')
       setSelectedCompetencies(new Set(skill.competencies.map((c) => c.id)))
@@ -99,6 +115,9 @@ function SkillEditModal({
       setDescription('')
       setCategory('')
       setDomain('')
+      setDomainId('')
+      setAgeBandStart('')
+      setAgeBandEnd('')
       setAgeBandPreset('')
       setMinGrade('')
       setMaxGrade('')
@@ -162,6 +181,20 @@ function SkillEditModal({
   async function handleSave() {
     if (!name.trim() || !profile?.school_id) return
 
+    const parsedAgeStart = ageBandStart.trim() === '' ? null : Number(ageBandStart)
+    const parsedAgeEnd = ageBandEnd.trim() === '' ? null : Number(ageBandEnd)
+    if (
+      (parsedAgeStart !== null && Number.isNaN(parsedAgeStart)) ||
+      (parsedAgeEnd !== null && Number.isNaN(parsedAgeEnd))
+    ) {
+      toast('Age band values must be numbers', 'error')
+      return
+    }
+    if (parsedAgeStart !== null && parsedAgeEnd !== null && parsedAgeStart > parsedAgeEnd) {
+      toast('Age band start must be ≤ end', 'error')
+      return
+    }
+
     setSaving(true)
     try {
       const compIds = Array.from(selectedCompetencies)
@@ -173,6 +206,9 @@ function SkillEditModal({
             description: description.trim() || null,
             category: category.trim() || null,
             progression_domain: domain.trim() || null,
+            domain_id: domainId || null,
+            age_band_start: parsedAgeStart,
+            age_band_end: parsedAgeEnd,
             min_grade: minGrade || null,
             max_grade: maxGrade || null,
           },
@@ -187,6 +223,9 @@ function SkillEditModal({
             description: description.trim() || null,
             category: category.trim() || null,
             progression_domain: domain.trim() || null,
+            domain_id: domainId || null,
+            age_band_start: parsedAgeStart,
+            age_band_end: parsedAgeEnd,
             min_grade: minGrade || null,
             max_grade: maxGrade || null,
             is_default: false,
@@ -257,14 +296,68 @@ function SkillEditModal({
             />
           </div>
 
-          {/* Domain (Learner Profile dimension) */}
+          {/* V2: Learner Profile Domain (FK to learner_profile_domains) */}
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-text-light">
+              Learner Profile Domain
+              {!domainId && (
+                <span className="ml-1 font-normal text-amber-600">— unmapped</span>
+              )}
+            </label>
+            <select
+              value={domainId}
+              onChange={(e) => setDomainId(e.target.value)}
+              className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+            >
+              <option value="">— Not mapped —</option>
+              {learnerProfileDomains.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-[11px] text-text-light">
+              Tags this skill to a domain on the school&apos;s active Learner Profile.
+            </p>
+          </div>
+
+          {/* V2: Age band */}
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-text-light">
+              Expected for ages <span className="font-normal text-text-light">(optional)</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={0}
+                max={25}
+                value={ageBandStart}
+                onChange={(e) => setAgeBandStart(e.target.value)}
+                placeholder="from"
+                className="w-24 rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+              />
+              <span className="text-xs text-text-muted">to</span>
+              <input
+                type="number"
+                min={0}
+                max={25}
+                value={ageBandEnd}
+                onChange={(e) => setAgeBandEnd(e.target.value)}
+                placeholder="to"
+                className="w-24 rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+              />
+              <span className="text-xs text-text-muted">years old</span>
+            </div>
+          </div>
+
+          {/* Legacy free-text domain (kept for backwards compatibility with existing data) */}
           <SmartSelect
             value={domain}
             onChange={setDomain}
             options={domainOptions}
-            label="Domain"
+            label="Legacy domain (free text)"
             optional
-            placeholder="Select a learner profile domain…"
+            placeholder="Select a domain…"
             allowCreate
             onCreateNew={handleCreateDomain}
             createPlaceholder="New domain name…"
@@ -422,37 +515,49 @@ function SkillEditModal({
 // ============================================================
 
 export default function SkillsLibrarySection() {
-  const { profile } = useAuth()
+  const { profile, isSystemAdmin } = useAuth()
   const { toast } = useToast()
 
-  const [skills, setSkills] = useState<SkillWithCompetencies[]>([])
+  const [skills, setSkills] = useState<SkillWithDomain[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [dims, setDims] = useState<Dimension[]>([])
   const [skillDomains, setSkillDomains] = useState<string[]>([])
+  const [learnerProfileDomains, setLearnerProfileDomains] = useState<LearnerProfileDomain[]>([])
   const [competencyTree, setCompetencyTree] = useState<CompetencyTreeNode[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [domainFilter, setDomainFilter] = useState('')
+  const [ageFilter, setAgeFilter] = useState<string>('')
   const [deleting, setDeleting] = useState<string | null>(null)
   const [editSkill, setEditSkill] = useState<SkillWithCompetencies | null>(null)
   const [showCreate, setShowCreate] = useState(false)
+
+  // Bulk-assign UI state for the unmapped-skills banner
+  const [bulkOpen, setBulkOpen] = useState(false)
+  const [bulkDomainId, setBulkDomainId] = useState<string>('')
+  const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set())
+  const [bulkSaving, setBulkSaving] = useState(false)
 
   const loadData = useCallback(async () => {
     if (!profile?.school_id) return
     setLoading(true)
     try {
-      const [skillsData, cats, tree, dimsData, domainsData] = await Promise.all([
+      const [skillsData, cats, tree, dimsData, domainsData, lpDomains] = await Promise.all([
         fetchSkills(profile.school_id),
         fetchSkillCategories(profile.school_id),
         fetchCompetencyTree(profile.school_id),
         fetchDimensions(profile.school_id),
         fetchSkillDomains(profile.school_id),
+        fetchLearnerProfileDomainsForSchool(profile.school_id),
       ])
-      setSkills(skillsData)
+      const enriched = await attachDomainsToSkills(skillsData)
+      setSkills(enriched)
       setCategories(cats)
       setCompetencyTree(tree)
       setDims(dimsData)
       setSkillDomains(domainsData)
+      setLearnerProfileDomains(lpDomains)
     } catch {
       toast('Failed to load skills', 'error')
     } finally {
@@ -502,6 +607,21 @@ export default function SkillsLibrarySection() {
   // Filter skills
   const filtered = skills.filter((s) => {
     if (categoryFilter && s.category !== categoryFilter) return false
+    if (domainFilter) {
+      if (domainFilter === '__unmapped__') {
+        if (s.domain_id) return false
+      } else if (s.domain_id !== domainFilter) {
+        return false
+      }
+    }
+    if (ageFilter !== '') {
+      const age = Number(ageFilter)
+      if (!Number.isNaN(age)) {
+        const start = s.age_band_start ?? Number.NEGATIVE_INFINITY
+        const end = s.age_band_end ?? Number.POSITIVE_INFINITY
+        if (age < start || age > end) return false
+      }
+    }
     if (search) {
       const lower = search.toLowerCase()
       return (
@@ -513,8 +633,44 @@ export default function SkillsLibrarySection() {
     return true
   })
 
+  // Skills with no Learner Profile domain — surfaced via the admin banner.
+  const unmappedSkills = skills.filter((s) => !s.domain_id)
+
+  function toggleBulkSelected(id: string) {
+    setBulkSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function selectAllUnmapped() {
+    setBulkSelected(new Set(unmappedSkills.map((s) => s.id)))
+  }
+
+  async function handleBulkAssign() {
+    if (bulkSelected.size === 0 || !bulkDomainId) {
+      toast('Pick a domain and at least one skill', 'error')
+      return
+    }
+    setBulkSaving(true)
+    try {
+      await bulkAssignDomain([...bulkSelected], bulkDomainId)
+      toast(`Mapped ${bulkSelected.size} skill${bulkSelected.size === 1 ? '' : 's'}`, 'success')
+      setBulkOpen(false)
+      setBulkSelected(new Set())
+      setBulkDomainId('')
+      loadData()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Bulk assign failed', 'error')
+    } finally {
+      setBulkSaving(false)
+    }
+  }
+
   // Group by category
-  const grouped = filtered.reduce<Record<string, SkillWithCompetencies[]>>((acc, s) => {
+  const grouped = filtered.reduce<Record<string, SkillWithDomain[]>>((acc, s) => {
     const cat = s.category || 'Uncategorized'
     if (!acc[cat]) acc[cat] = []
     acc[cat].push(s)
@@ -526,8 +682,8 @@ export default function SkillsLibrarySection() {
   return (
     <div>
       {/* Toolbar */}
-      <div className="mb-4 flex items-center gap-3">
-        <div className="relative flex-1">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="relative min-w-[220px] flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
           <input
             type="text"
@@ -537,6 +693,27 @@ export default function SkillsLibrarySection() {
             className="w-full rounded-lg border border-bg-muted bg-bg py-2 pl-9 pr-3 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
           />
         </div>
+        <select
+          value={domainFilter}
+          onChange={(e) => setDomainFilter(e.target.value)}
+          className="rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+        >
+          <option value="">All domains</option>
+          <option value="__unmapped__">Unmapped</option>
+          {learnerProfileDomains.map((d) => (
+            <option key={d.id} value={d.id}>{d.name}</option>
+          ))}
+        </select>
+        <input
+          type="number"
+          min={0}
+          max={25}
+          value={ageFilter}
+          onChange={(e) => setAgeFilter(e.target.value)}
+          placeholder="Age"
+          aria-label="Filter by learner age"
+          className="w-20 rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+        />
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
@@ -555,6 +732,94 @@ export default function SkillsLibrarySection() {
           Add Skill
         </button>
       </div>
+
+      {/* Unmapped skills admin banner */}
+      {unmappedSkills.length > 0 && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-amber-900">
+                {unmappedSkills.length} skill{unmappedSkills.length === 1 ? ' is' : 's are'} not yet mapped to a Learner Profile domain
+              </p>
+              <p className="mt-0.5 text-xs text-amber-800">
+                Map them so they show up on the amoeba and in domain-filtered views.
+              </p>
+              {!bulkOpen ? (
+                <button
+                  onClick={() => {
+                    setBulkOpen(true)
+                    selectAllUnmapped()
+                  }}
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-amber-700"
+                >
+                  Bulk-assign domain
+                </button>
+              ) : (
+                <div className="mt-3 space-y-2 rounded-lg border border-amber-200 bg-white p-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-medium text-text-muted">Assign to:</span>
+                    <select
+                      value={bulkDomainId}
+                      onChange={(e) => setBulkDomainId(e.target.value)}
+                      className="rounded-lg border border-bg-muted bg-bg px-3 py-1.5 text-xs text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+                    >
+                      <option value="">— Pick a domain —</option>
+                      {learnerProfileDomains.map((d) => (
+                        <option key={d.id} value={d.id}>{d.name}</option>
+                      ))}
+                    </select>
+                    <span className="ml-auto text-[11px] text-text-light">
+                      {bulkSelected.size} selected
+                    </span>
+                  </div>
+                  <div className="max-h-48 space-y-1 overflow-y-auto">
+                    {unmappedSkills.map((s) => (
+                      <label
+                        key={s.id}
+                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-xs hover:bg-bg-muted"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={bulkSelected.has(s.id)}
+                          onChange={() => toggleBulkSelected(s.id)}
+                        />
+                        <span className="flex-1 truncate text-text">{s.name}</span>
+                        {s.is_baseline && (
+                          <span className="rounded bg-bg-muted px-1.5 py-0.5 text-[9px] font-medium text-text-light">
+                            Baseline
+                          </span>
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                  <div className="flex justify-end gap-2 pt-1">
+                    <button
+                      onClick={() => {
+                        setBulkOpen(false)
+                        setBulkSelected(new Set())
+                        setBulkDomainId('')
+                      }}
+                      disabled={bulkSaving}
+                      className="rounded-lg px-3 py-1.5 text-xs font-medium text-text-muted hover:bg-bg-muted disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleBulkAssign}
+                      disabled={bulkSaving || !bulkDomainId || bulkSelected.size === 0}
+                      className="flex items-center gap-1.5 rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {bulkSaving && <Loader2 className="h-3 w-3 animate-spin" />}
+                      Assign
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Loading */}
       {loading && (
@@ -600,7 +865,9 @@ export default function SkillsLibrarySection() {
                 {cat} ({grouped[cat].length})
               </h3>
               <div className="space-y-2">
-                {grouped[cat].map((skill) => (
+                {grouped[cat].map((skill) => {
+                  const canMutate = !skill.is_baseline || isSystemAdmin
+                  return (
                   <div
                     key={skill.id}
                     className="flex items-center gap-4 rounded-xl border border-bg-muted bg-bg-card px-4 py-3 transition-colors hover:border-primary-200"
@@ -610,9 +877,27 @@ export default function SkillsLibrarySection() {
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <p className="text-sm font-semibold text-text">{skill.name}</p>
-                        {skill.is_default && (
+                        {skill.domain ? (
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
+                            style={{ backgroundColor: skill.domain.color ?? '#94A3B8' }}
+                          >
+                            {skill.domain.name}
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
+                            Unmapped
+                          </span>
+                        )}
+                        {skill.is_baseline && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-medium text-white">
+                            <Lock className="h-2.5 w-2.5" />
+                            Baseline
+                          </span>
+                        )}
+                        {skill.is_default && !skill.is_baseline && (
                           <span className="rounded-full bg-bg-muted px-2 py-0.5 text-[10px] text-text-light">
                             Default
                           </span>
@@ -632,6 +917,11 @@ export default function SkillsLibrarySection() {
                             {c.code}
                           </span>
                         ))}
+                        {(skill.age_band_start !== null || skill.age_band_end !== null) && (
+                          <span className="rounded-full bg-bg-muted px-1.5 py-0.5 text-[9px] text-text-light">
+                            ages {skill.age_band_start ?? '?'}–{skill.age_band_end ?? '?'}
+                          </span>
+                        )}
                         {(skill.min_grade || skill.max_grade) && (
                           <span className="rounded-full bg-bg-muted px-1.5 py-0.5 text-[9px] text-text-light">
                             {skill.min_grade || '?'}–{skill.max_grade || '?'}
@@ -641,26 +931,38 @@ export default function SkillsLibrarySection() {
                     </div>
 
                     <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => { setEditSkill(skill); setShowCreate(true) }}
-                        className="rounded-lg p-2 text-text-light transition-colors hover:bg-bg-muted hover:text-text"
-                        title="Edit skill"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(skill)}
-                        disabled={deleting === skill.id}
-                        className="rounded-lg p-2 text-text-light transition-colors hover:bg-alert-50 hover:text-alert-600 disabled:opacity-50"
-                        title="Delete skill"
-                      >
-                        {deleting === skill.id
-                          ? <Loader2 className="h-4 w-4 animate-spin" />
-                          : <Trash2 className="h-4 w-4" />}
-                      </button>
+                      {canMutate ? (
+                        <>
+                          <button
+                            onClick={() => { setEditSkill(skill); setShowCreate(true) }}
+                            className="rounded-lg p-2 text-text-light transition-colors hover:bg-bg-muted hover:text-text"
+                            title="Edit skill"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(skill)}
+                            disabled={deleting === skill.id}
+                            className="rounded-lg p-2 text-text-light transition-colors hover:bg-alert-50 hover:text-alert-600 disabled:opacity-50"
+                            title="Delete skill"
+                          >
+                            {deleting === skill.id
+                              ? <Loader2 className="h-4 w-4 animate-spin" />
+                              : <Trash2 className="h-4 w-4" />}
+                          </button>
+                        </>
+                      ) : (
+                        <span
+                          className="rounded-lg p-2 text-text-light"
+                          title="Baseline skills are managed by system admins"
+                        >
+                          <Lock className="h-4 w-4" />
+                        </span>
+                      )}
                     </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           ))}
@@ -673,6 +975,7 @@ export default function SkillsLibrarySection() {
         skill={editSkill}
         competencyTree={competencyTree}
         dimensions={dims}
+        learnerProfileDomains={learnerProfileDomains}
         categoryOptions={categoryOptions}
         domainOptions={domainOptions}
         onClose={() => { setShowCreate(false); setEditSkill(null) }}

@@ -30,6 +30,7 @@ import SchoolsPage from './pages/system/Schools'
 import SystemActivity from './pages/system/SystemActivity'
 import UsersPage from './pages/admin/Users'
 import LearnerProfile from './pages/LearnerProfile'
+import LearnerProfileAdmin from './pages/admin/LearnerProfile'
 import CompetencyFrameworks from './pages/admin/CompetencyFrameworks'
 import SkillLibrary from './pages/admin/SkillLibrary'
 import Permissions from './pages/admin/Permissions'
@@ -156,6 +157,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute requiredRole="admin">
               <Dimensions />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/learner-profile"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <LearnerProfileAdmin />
             </ProtectedRoute>
           }
         />
