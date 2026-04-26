@@ -6,7 +6,11 @@ import {
   ClipboardPen,
   Plus,
   Loader2,
+  Pencil,
+  Trash2,
 } from 'lucide-react'
+import EditClassroomModal from '../components/classroom/EditClassroomModal'
+import DeleteClassroomConfirm from '../components/classroom/DeleteClassroomConfirm'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { useAccessControl } from '../lib/access-control'
@@ -51,6 +55,8 @@ export default function Classrooms() {
   const [newAgeMax, setNewAgeMax] = useState('')
   const [newDeptId, setNewDeptId] = useState<string>('')
   const [creating, setCreating] = useState(false)
+  const [editingRoom, setEditingRoom] = useState<ClassroomRow | null>(null)
+  const [deletingRoom, setDeletingRoom] = useState<ClassroomRow | null>(null)
 
   useEffect(() => {
     if (!profile) return
@@ -451,12 +457,39 @@ export default function Classrooms() {
                     key={room.id}
                     room={room}
                     onClick={() => navigate(`/classroom/${room.id}`)}
+                    canEdit={canEditClassrooms && !isReadOnly}
+                    onEdit={() => setEditingRoom(room)}
+                    onDelete={() => setDeletingRoom(room)}
                   />
                 ))}
               </div>
             </section>
           ))}
         </div>
+      )}
+
+      {editingRoom && (
+        <EditClassroomModal
+          classroom={editingRoom}
+          onClose={() => setEditingRoom(null)}
+          onSaved={() => {
+            setEditingRoom(null)
+            fetchClassrooms()
+          }}
+        />
+      )}
+
+      {deletingRoom && (
+        <DeleteClassroomConfirm
+          classroomId={deletingRoom.id}
+          classroomName={deletingRoom.name}
+          studentCount={deletingRoom.student_count}
+          onClose={() => setDeletingRoom(null)}
+          onDeleted={() => {
+            setDeletingRoom(null)
+            fetchClassrooms()
+          }}
+        />
       )}
     </div>
   )
@@ -489,12 +522,42 @@ function groupClassroomsByDepartment(
 function ClassroomCard({
   room,
   onClick,
+  canEdit,
+  onEdit,
+  onDelete,
 }: {
   room: ClassroomRow
   onClick: () => void
+  canEdit?: boolean
+  onEdit?: () => void
+  onDelete?: () => void
 }) {
   return (
-    <div onClick={onClick} className="glass-card glass-card-interactive group">
+    <div onClick={onClick} className="glass-card glass-card-interactive group relative">
+      {canEdit && (
+        <div className="absolute right-3 top-3 z-10 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onEdit?.()
+            }}
+            title="Edit classroom"
+            className="rounded-md bg-bg-card/90 p-1 text-text-muted shadow-sm transition-colors hover:bg-bg-muted hover:text-text"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete?.()
+            }}
+            title="Delete classroom"
+            className="rounded-md bg-bg-card/90 p-1 text-text-muted shadow-sm transition-colors hover:bg-alert-50 hover:text-alert-600"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
       <div className="p-5">
         <div className="flex items-start justify-between">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-50">
