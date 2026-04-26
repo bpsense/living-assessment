@@ -51,6 +51,8 @@ export interface Classroom {
   /** Inclusive upper bound of the classroom's expected age range. */
   age_max: number | null
   department_id: string | null
+  /** Admin-controlled sort position within its (school, department) group. */
+  display_order: number | null
   created_at: string
   updated_at: string
 }
