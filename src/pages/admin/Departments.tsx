@@ -40,6 +40,8 @@ export default function Departments() {
   const [createClassroomFor, setCreateClassroomFor] = useState<string | null>(null)
   const [newRoomName, setNewRoomName] = useState('')
   const [newRoomGrade, setNewRoomGrade] = useState('')
+  const [newRoomAgeMin, setNewRoomAgeMin] = useState('')
+  const [newRoomAgeMax, setNewRoomAgeMax] = useState('')
   const [creatingRoom, setCreatingRoom] = useState(false)
 
   const loadData = useCallback(async () => {
@@ -164,17 +166,36 @@ export default function Departments() {
   async function handleCreateClassroomInDept(e: React.FormEvent, departmentId: string) {
     e.preventDefault()
     if (!schoolId || !newRoomName.trim()) return
+    if (!newRoomAgeMin.trim() || !newRoomAgeMax.trim()) {
+      setError('Set the age range for this classroom.')
+      return
+    }
+    const ageMin = Number(newRoomAgeMin)
+    const ageMax = Number(newRoomAgeMax)
+    if (!Number.isFinite(ageMin) || !Number.isFinite(ageMax)) {
+      setError('Age range must be numbers.')
+      return
+    }
+    if (ageMin > ageMax) {
+      setError('Min age must be less than or equal to max age.')
+      return
+    }
+    setError(null)
     setCreatingRoom(true)
     const { error: err } = await supabase.from('classrooms').insert({
       school_id: schoolId,
       department_id: departmentId,
       name: newRoomName.trim(),
       grade_level: newRoomGrade.trim() || null,
+      age_min: ageMin,
+      age_max: ageMax,
     })
     setCreatingRoom(false)
     if (err) { setError(err.message); return }
     setNewRoomName('')
     setNewRoomGrade('')
+    setNewRoomAgeMin('')
+    setNewRoomAgeMax('')
     setCreateClassroomFor(null)
     loadData()
   }
@@ -448,6 +469,8 @@ export default function Departments() {
                       setCreateClassroomFor(createClassroomFor === dept.id ? null : dept.id)
                       setNewRoomName('')
                       setNewRoomGrade('')
+                      setNewRoomAgeMin('')
+                      setNewRoomAgeMax('')
                     }}
                     className="flex items-center justify-center gap-1 rounded-lg border border-bg-muted bg-bg px-3 py-1.5 text-sm text-primary-600 hover:bg-primary-50"
                   >
@@ -476,6 +499,33 @@ export default function Departments() {
                         placeholder="Grade level (optional)"
                         className="rounded-lg border border-bg-muted bg-bg-card px-3 py-1.5 text-sm text-text placeholder:text-text-light focus:border-primary-500 focus:outline-none"
                       />
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="text-xs font-medium text-text-muted">Age range *</span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        max={25}
+                        required
+                        value={newRoomAgeMin}
+                        onChange={(e) => setNewRoomAgeMin(e.target.value)}
+                        placeholder="Min"
+                        className="w-20 rounded-lg border border-bg-muted bg-bg-card px-2 py-1.5 text-sm text-text placeholder:text-text-light focus:border-primary-500 focus:outline-none"
+                      />
+                      <span className="text-xs text-text-light">to</span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        max={25}
+                        required
+                        value={newRoomAgeMax}
+                        onChange={(e) => setNewRoomAgeMax(e.target.value)}
+                        placeholder="Max"
+                        className="w-20 rounded-lg border border-bg-muted bg-bg-card px-2 py-1.5 text-sm text-text placeholder:text-text-light focus:border-primary-500 focus:outline-none"
+                      />
+                      <span className="text-xs text-text-light">years</span>
                     </div>
                     <div className="mt-2 flex gap-2">
                       <button
