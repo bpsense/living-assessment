@@ -8,7 +8,7 @@ import { useAccessControl } from '../lib/access-control'
 import { useToast } from '../components/Toast'
 import { supabase } from '../lib/supabase'
 import { buildSnapshots, getSnapshotObservationDate, smoothSnapshots, applyGradeTransitionDecay } from '../lib/living-data'
-import LearnerProfileVisualization from '../components/student/LearnerProfileVisualization'
+import LivingVisualization from '../components/student/LivingVisualization'
 import ZoneMatrix from '../components/student/ZoneMatrix'
 import AILearningGuide from '../components/student/AILearningGuide'
 import FamilySupportGuide from '../components/student/FamilySupportGuide'
@@ -80,6 +80,7 @@ export default function StudentProfile() {
     timeline,
     observations,
     surveys,
+    observers,
     competencyData,
     loading,
     error,
@@ -101,13 +102,8 @@ export default function StudentProfile() {
   // ── Timeline / snapshot state (lifted from LivingVisualization) ──
   // Timeline is shown by default for educators so they can always rewind
   const [snapshotIdx, setSnapshotIdx] = useState<number | null>(null)
-  // showTimeline is hardcoded true — V1 timeline UI still drives the
-  // dimension-card historical scrub below; toggle was only on the (removed)
-  // LivingVisualization mount.
-  const [showTimeline] = useState(true)
-  // The playing flag itself was only read by the V1 LivingVisualization;
-  // the back-date observation flow still needs setPlaying to halt playback.
-  const [, setPlaying] = useState(false)
+  const [showTimeline, setShowTimeline] = useState(true)
+  const [playing, setPlaying] = useState(false)
 
   // Build snapshots with forward-looking smoothing so growth ramps
   // gradually toward each change rather than jumping in a single step.
@@ -129,6 +125,15 @@ export default function StudentProfile() {
       setSnapshotIdx(snapshots.length - 1)
     }
   }, [snapshots.length, snapshotIdx])
+
+  // Toggle timeline visibility
+  const handleToggleTimeline = useCallback(() => {
+    if (!showTimeline) {
+      // Opening — start at latest snapshot
+      setSnapshotIdx(snapshots.length - 1)
+    }
+    setShowTimeline((v) => !v)
+  }, [showTimeline, snapshots.length])
 
   // Derive the active snapshot (if any)
   const activeSnapshot = useMemo(() => {
@@ -356,12 +361,26 @@ export default function StudentProfile() {
         </div>
       </section>
 
-      {/* ========== LEARNER PROFILE AMOEBA (V2) ========== */}
+      {/* ========== LIVING BLOB VISUALIZATION ==========
+          V1 amoeba is the live experience. The V2 LearnerProfileVisualization
+          component remains in the codebase for the next iteration but is not
+          mounted here yet — it needs the student's V2 skill_assessments to
+          have populated before it produces a meaningful contour. */}
       <section>
         <div className="glass-card p-5">
-          <LearnerProfileVisualization
-            studentId={student.id}
-            schoolId={student.school_id}
+          <LivingVisualization
+            dimensionScores={filteredDimensionScores}
+            snapshots={snapshots}
+            snapshotIdx={snapshotIdx}
+            onSnapshotChange={setSnapshotIdx}
+            showTimeline={showTimeline}
+            onToggleTimeline={handleToggleTimeline}
+            playing={playing}
+            onPlayingChange={setPlaying}
+            onDimensionClick={scrollToDimension}
+            familyView={isFamilyView}
+            observations={observations}
+            observers={observers}
           />
         </div>
       </section>
