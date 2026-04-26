@@ -14,7 +14,9 @@ import {
   Tag,
   Plus,
   Library,
+  Cake,
 } from 'lucide-react'
+import { ageBandOverlaps, formatAgeBand } from '../../lib/age-utils'
 import { useToast } from '../Toast'
 import { useAuth } from '../../lib/auth'
 import { useIsAllSchoolsView } from '../../lib/school-context'
@@ -184,6 +186,11 @@ function CompetencyPicker({
                                     <span className="truncate text-[11px] text-text">
                                       {comp.name}
                                     </span>
+                                    {formatAgeBand(comp.age_band_start, comp.age_band_end) && (
+                                      <span className="ml-auto shrink-0 rounded-full bg-bg-muted px-1.5 py-0.5 text-[9px] font-medium text-text-muted">
+                                        {formatAgeBand(comp.age_band_start, comp.age_band_end)}
+                                      </span>
+                                    )}
                                   </div>
                                   {comp.objective && (
                                     <p className="mt-0.5 text-[10px] leading-relaxed text-text-light line-clamp-2">
@@ -349,11 +356,16 @@ function SkillPicker({
                     >
                       {isSelected && <Check className="h-3 w-3 text-white" />}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[11px] font-medium text-text">{skill.name}</span>
+                    <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                      <span className="truncate text-[11px] font-medium text-text">{skill.name}</span>
                       {skill.competencies.length > 0 && (
-                        <span className="ml-1.5 text-[9px] text-text-light">
+                        <span className="text-[9px] text-text-light">
                           ({skill.competencies.map((c) => c.code).join(', ')})
+                        </span>
+                      )}
+                      {formatAgeBand(skill.age_band_start, skill.age_band_end) && (
+                        <span className="ml-auto shrink-0 rounded-full bg-bg-muted px-1.5 py-0.5 text-[9px] font-medium text-text-muted">
+                          {formatAgeBand(skill.age_band_start, skill.age_band_end)}
                         </span>
                       )}
                     </div>
@@ -432,6 +444,11 @@ export default function CreateAssignmentModal({
   const [selectedSkills, setSelectedSkills] = useState<Set<string>>(new Set())
   const [skillSearch, setSkillSearch] = useState('')
   const [skillsExpanded, setSkillsExpanded] = useState(false)
+  // Age-band expansion: when a classroom has an age range, only items overlapping
+  // that range show by default. These toggles let educators reach below- or
+  // above-band content for differentiation.
+  const [expandBelow, setExpandBelow] = useState(false)
+  const [expandAbove, setExpandAbove] = useState(false)
 
   // Data state
   const [classrooms, setClassrooms] = useState<Classroom[]>([])
@@ -470,6 +487,8 @@ export default function CreateAssignmentModal({
       setSkillSearch('')
       setSkillsExpanded(!!template?.skill_ids?.length)
       setSuggestedSkillIds(new Set())
+      setExpandBelow(false)
+      setExpandAbove(false)
     }
   }, [open, defaultClassroomId, defaultStudentId, template])
 
@@ -612,6 +631,47 @@ export default function CreateAssignmentModal({
     if (mode === 'class') return students.map((s) => s.id)
     return Array.from(selectedStudents)
   }, [mode, students, selectedStudents])
+
+  // Resolve the selected classroom's age range, then expand it per toggles.
+  const selectedClassroom = useMemo(
+    () => classrooms.find((c) => c.id === classroomId) ?? null,
+    [classrooms, classroomId]
+  )
+  const classroomAgeMin = selectedClassroom?.age_min ?? null
+  const classroomAgeMax = selectedClassroom?.age_max ?? null
+  const ageFilterActive = mode !== 'template' && classroomAgeMin !== null && classroomAgeMax !== null
+  const effectiveAgeMin = ageFilterActive && !expandBelow ? classroomAgeMin : null
+  const effectiveAgeMax = ageFilterActive && !expandAbove ? classroomAgeMax : null
+
+  // Filter the competency tree by age band, but always keep currently-selected
+  // competencies visible (so toggling the filter never hides a selection).
+  const visibleCompetencyTree = useMemo<CompetencyTreeNode[]>(() => {
+    if (!ageFilterActive) return competencyTree
+    return competencyTree
+      .map(({ domain, subdomains }) => ({
+        domain,
+        subdomains: subdomains
+          .map(({ subdomain, competencies }) => ({
+            subdomain,
+            competencies: competencies.filter(
+              (c) =>
+                selectedCompetencies.has(c.id) ||
+                ageBandOverlaps(c.age_band_start, c.age_band_end, effectiveAgeMin, effectiveAgeMax)
+            ),
+          }))
+          .filter((sd) => sd.competencies.length > 0),
+      }))
+      .filter((d) => d.subdomains.length > 0)
+  }, [competencyTree, ageFilterActive, effectiveAgeMin, effectiveAgeMax, selectedCompetencies])
+
+  const visibleSkills = useMemo<SkillWithCompetencies[]>(() => {
+    if (!ageFilterActive) return allSkills
+    return allSkills.filter(
+      (s) =>
+        selectedSkills.has(s.id) ||
+        ageBandOverlaps(s.age_band_start, s.age_band_end, effectiveAgeMin, effectiveAgeMax)
+    )
+  }, [allSkills, ageFilterActive, effectiveAgeMin, effectiveAgeMax, selectedSkills])
 
   const canSubmit = mode === 'template'
     ? !!(title.trim()) && !submitting
@@ -895,6 +955,50 @@ export default function CreateAssignmentModal({
                 </>
               )}
 
+              {/* Age-band filter banner (when classroom has an age range) */}
+              {ageFilterActive && (
+                <div className="rounded-lg border border-primary-200 bg-primary-50/60 px-3 py-2.5">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                    <div className="flex items-center gap-1.5 text-xs text-primary-800">
+                      <Cake className="h-3.5 w-3.5" />
+                      <span className="font-medium">
+                        Showing items for {formatAgeBand(classroomAgeMin, classroomAgeMax)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setExpandBelow((v) => !v)}
+                        className={clsx(
+                          'rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors',
+                          expandBelow
+                            ? 'border-amber-400 bg-amber-100 text-amber-800'
+                            : 'border-bg-muted bg-bg-card text-text-muted hover:border-amber-300 hover:text-amber-700'
+                        )}
+                      >
+                        {expandBelow ? '✓ ' : '+ '}Show younger
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setExpandAbove((v) => !v)}
+                        className={clsx(
+                          'rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors',
+                          expandAbove
+                            ? 'border-purple-400 bg-purple-100 text-purple-800'
+                            : 'border-bg-muted bg-bg-card text-text-muted hover:border-purple-300 hover:text-purple-700'
+                        )}
+                      >
+                        {expandAbove ? '✓ ' : '+ '}Show older
+                      </button>
+                    </div>
+                  </div>
+                  <p className="mt-1 text-[10px] leading-relaxed text-primary-700/80">
+                    Expand to attach competencies or skills outside the classroom&rsquo;s age range
+                    for exceptional or stretch work.
+                  </p>
+                </div>
+              )}
+
               {/* Competency picker */}
               <div>
                 <div className="mb-1.5 flex items-center justify-between">
@@ -949,12 +1053,18 @@ export default function CreateAssignmentModal({
                     {/* Tree */}
                     <div className="max-h-60 overflow-y-auto">
                       <CompetencyPicker
-                        tree={competencyTree}
+                        tree={visibleCompetencyTree}
                         selected={selectedCompetencies}
                         onToggle={toggleCompetency}
                         search={competencySearch}
                       />
                     </div>
+                    {ageFilterActive && visibleCompetencyTree.length === 0 && (
+                      <p className="mt-1.5 text-[11px] text-text-light">
+                        No competencies tagged for this age range. Use &ldquo;Show younger&rdquo; or
+                        &ldquo;Show older&rdquo; above to expand.
+                      </p>
+                    )}
                   </>
                 )}
               </div>
@@ -983,17 +1093,25 @@ export default function CreateAssignmentModal({
                         No skills in the library yet. Use quick-add below or ask your admin to set them up.
                       </p>
                     ) : (
-                      <SkillPicker
-                        skills={allSkills}
-                        selected={selectedSkills}
-                        onToggle={toggleSkill}
-                        suggestedIds={suggestedSkillIds}
-                        onAddAll={addAllSuggestedSkills}
-                        search={skillSearch}
-                        onSearch={setSkillSearch}
-                        onQuickCreate={handleQuickCreateSkill}
-                        creating={creatingSkill}
-                      />
+                      <>
+                        <SkillPicker
+                          skills={visibleSkills}
+                          selected={selectedSkills}
+                          onToggle={toggleSkill}
+                          suggestedIds={suggestedSkillIds}
+                          onAddAll={addAllSuggestedSkills}
+                          search={skillSearch}
+                          onSearch={setSkillSearch}
+                          onQuickCreate={handleQuickCreateSkill}
+                          creating={creatingSkill}
+                        />
+                        {ageFilterActive && visibleSkills.length === 0 && (
+                          <p className="mt-1.5 text-[11px] text-text-light">
+                            No skills tagged for this age range. Use &ldquo;Show younger&rdquo; or
+                            &ldquo;Show older&rdquo; above to expand.
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
                 )}

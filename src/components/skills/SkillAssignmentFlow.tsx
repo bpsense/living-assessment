@@ -11,6 +11,7 @@ import { useToast } from '../Toast'
 import { supabase } from '../../lib/supabase'
 import { createSkillAssignment } from '../../lib/skill-assignment-data'
 import { getProgressionLadder, isAboveGrade, getGradeZone } from '../../lib/skill-progression-data'
+import { getAgeFromDob, formatAgeBand } from '../../lib/age-utils'
 import type {
   Skill,
   SkillProgressionStep,
@@ -50,6 +51,7 @@ interface StudentRow {
   first_name: string
   last_name: string
   grade_level: string | null
+  date_of_birth: string | null
   selected: boolean
   /** The step this student will work on (may differ from default) */
   overrideStepId: string | null
@@ -59,6 +61,8 @@ interface ClassroomOption {
   id: string
   name: string
   grade_level: string | null
+  age_min: number | null
+  age_max: number | null
 }
 
 type Step = 1 | 2 | 3 | 4
@@ -159,7 +163,7 @@ export default function SkillAssignmentFlow({
 
       const { data } = await supabase
         .from('classrooms')
-        .select('id, name, grade_level')
+        .select('id, name, grade_level, age_min, age_max')
         .in('id', classroomIds)
         .order('name')
 
@@ -191,16 +195,18 @@ export default function SkillAssignmentFlow({
 
       const { data } = await supabase
         .from('students')
-        .select('id, first_name, last_name, grade_level')
+        .select('id, first_name, last_name, grade_level, date_of_birth')
         .in('id', studentIds)
         .order('last_name')
 
       setStudents(
-        (data ?? []).map((s: { id: string; first_name: string; last_name: string; grade_level: string | null }) => ({
-          ...s,
-          selected: assignmentType === 'class',
-          overrideStepId: null,
-        }))
+        (data ?? []).map(
+          (s: { id: string; first_name: string; last_name: string; grade_level: string | null; date_of_birth: string | null }) => ({
+            ...s,
+            selected: assignmentType === 'class',
+            overrideStepId: null,
+          })
+        )
       )
     } catch {
       toast('Failed to load students', 'error')
@@ -325,6 +331,11 @@ export default function SkillAssignmentFlow({
               <div>
                 <h3 className="text-sm font-semibold text-text">Selected Skill</h3>
                 <p className="mt-1 text-sm text-text-muted">{selectedSkill?.name ?? 'No skill selected'}</p>
+                {selectedSkill && formatAgeBand(selectedSkill.age_band_start, selectedSkill.age_band_end) && (
+                  <p className="mt-0.5 text-[11px] text-text-light">
+                    Targeted at {formatAgeBand(selectedSkill.age_band_start, selectedSkill.age_band_end)}
+                  </p>
+                )}
               </div>
 
               {ladderLoading ? (
@@ -409,11 +420,18 @@ export default function SkillAssignmentFlow({
                   className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
                 >
                   <option value="">Select classroom...</option>
-                  {classrooms.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} {c.grade_level ? `(Grade ${c.grade_level})` : ''}
-                    </option>
-                  ))}
+                  {classrooms.map((c) => {
+                    const ageBand = formatAgeBand(c.age_min, c.age_max)
+                    const meta = [c.grade_level ? `Grade ${c.grade_level}` : null, ageBand]
+                      .filter(Boolean)
+                      .join(' · ')
+                    return (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                        {meta ? ` (${meta})` : ''}
+                      </option>
+                    )
+                  })}
                 </select>
               </div>
 
@@ -466,6 +484,12 @@ export default function SkillAssignmentFlow({
                             <span className="ml-2 text-xs text-text-light">
                               Grade {student.grade_level ?? '?'}
                             </span>
+                            {(() => {
+                              const age = getAgeFromDob(student.date_of_birth)
+                              return age !== null ? (
+                                <span className="ml-1.5 text-[11px] text-text-light">· age {age}</span>
+                              ) : null
+                            })()}
                           </div>
                           {/* Zone badge */}
                           {student.selected && (

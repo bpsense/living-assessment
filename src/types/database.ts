@@ -46,6 +46,10 @@ export interface Classroom {
   school_id: string
   name: string
   grade_level: string | null
+  /** Inclusive lower bound of the classroom's expected age range. */
+  age_min: number | null
+  /** Inclusive upper bound of the classroom's expected age range. */
+  age_max: number | null
   department_id: string | null
   created_at: string
   updated_at: string
@@ -701,12 +705,18 @@ export interface Competency {
   name: string
   objective: string | null
   step_descriptors: StepDescriptors
+  /** Inclusive lower bound of the typical age this competency targets. */
+  age_band_start: number | null
+  /** Inclusive upper bound of the typical age this competency targets. */
+  age_band_end: number | null
   created_at: string
 }
 
-export type CompetencyInsert = Omit<Competency, 'id' | 'created_at'> & {
+export type CompetencyInsert = Omit<Competency, 'id' | 'created_at' | 'age_band_start' | 'age_band_end'> & {
   id?: string
   objective?: string | null
+  age_band_start?: number | null
+  age_band_end?: number | null
 }
 
 // ============================================================

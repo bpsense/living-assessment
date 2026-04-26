@@ -12,6 +12,7 @@ import { useAuth } from '../lib/auth'
 import { useAccessControl } from '../lib/access-control'
 import { useToast } from '../components/Toast'
 import { useDepartmentLabel } from '../lib/department-label'
+import { formatAgeBand } from '../lib/age-utils'
 import type { Classroom, Department } from '../types/database'
 
 // ============================================================
@@ -46,6 +47,8 @@ export default function Classrooms() {
   const [showCreate, setShowCreate] = useState(false)
   const [newName, setNewName] = useState('')
   const [newGrade, setNewGrade] = useState('')
+  const [newAgeMin, setNewAgeMin] = useState('')
+  const [newAgeMax, setNewAgeMax] = useState('')
   const [newDeptId, setNewDeptId] = useState<string>('')
   const [creating, setCreating] = useState(false)
 
@@ -232,6 +235,22 @@ export default function Classrooms() {
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
     if (!profile || !newName.trim()) return
+
+    if (!newAgeMin.trim() || !newAgeMax.trim()) {
+      toast('Set the age range for this classroom.', 'error')
+      return
+    }
+    const ageMin = Number(newAgeMin)
+    const ageMax = Number(newAgeMax)
+    if (!Number.isFinite(ageMin) || !Number.isFinite(ageMax)) {
+      toast('Age range must be numbers.', 'error')
+      return
+    }
+    if (ageMin > ageMax) {
+      toast('Min age must be less than or equal to max age.', 'error')
+      return
+    }
+
     setCreating(true)
 
     const { data, error } = await supabase
@@ -240,6 +259,8 @@ export default function Classrooms() {
         school_id: profile.school_id,
         name: newName.trim(),
         grade_level: newGrade.trim() || null,
+        age_min: ageMin,
+        age_max: ageMax,
         department_id: newDeptId || null,
       })
       .select()
@@ -263,6 +284,8 @@ export default function Classrooms() {
     toast('Classroom created!', 'success')
     setNewName('')
     setNewGrade('')
+    setNewAgeMin('')
+    setNewAgeMax('')
     setNewDeptId('')
     setShowCreate(false)
     setCreating(false)
@@ -308,8 +331,8 @@ export default function Classrooms() {
           className="glass-card p-5"
         >
           <h3 className="mb-4 text-sm font-semibold text-text">Create Classroom</h3>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="lg:col-span-2">
               <label className="mb-1 block text-xs font-medium text-text-muted">
                 Classroom Name *
               </label>
@@ -346,6 +369,40 @@ export default function Classrooms() {
                   <option key={d.id} value={d.id}>{d.name}</option>
                 ))}
               </select>
+            </div>
+            <div className="sm:col-span-2 lg:col-span-4">
+              <label className="mb-1 block text-xs font-medium text-text-muted">
+                Age Range *
+                <span className="ml-1 text-[10px] font-normal text-text-light">
+                  (defaults the competencies and skills shown when assigning work)
+                </span>
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={25}
+                  required
+                  value={newAgeMin}
+                  onChange={(e) => setNewAgeMin(e.target.value)}
+                  placeholder="Min age"
+                  className="w-28 rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                />
+                <span className="text-xs text-text-light">to</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={25}
+                  required
+                  value={newAgeMax}
+                  onChange={(e) => setNewAgeMax(e.target.value)}
+                  placeholder="Max age"
+                  className="w-28 rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                />
+                <span className="text-xs text-text-light">years</span>
+              </div>
             </div>
           </div>
           <div className="mt-4 flex gap-2">
@@ -443,11 +500,18 @@ function ClassroomCard({
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-50">
             <School className="h-5 w-5 text-primary-600" />
           </div>
-          {room.grade_level && (
-            <span className="rounded-full bg-bg-muted px-2 py-0.5 text-[10px] font-medium text-text-muted">
-              Grade {room.grade_level}
-            </span>
-          )}
+          <div className="flex flex-col items-end gap-1">
+            {room.grade_level && (
+              <span className="rounded-full bg-bg-muted px-2 py-0.5 text-[10px] font-medium text-text-muted">
+                Grade {room.grade_level}
+              </span>
+            )}
+            {formatAgeBand(room.age_min, room.age_max) && (
+              <span className="rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-medium text-primary-700">
+                {formatAgeBand(room.age_min, room.age_max)}
+              </span>
+            )}
+          </div>
         </div>
 
         <h3 className="mt-3 text-base font-bold text-text">{room.name}</h3>
