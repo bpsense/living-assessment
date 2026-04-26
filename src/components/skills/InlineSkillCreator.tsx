@@ -7,10 +7,12 @@ import {
   fetchSkillCategories,
   fetchDimensions,
   fetchSkillDomains,
+  fetchLearnerProfileDomainsForSchool,
 } from '../../lib/skills-data'
 import { supabase } from '../../lib/supabase'
 import SmartSelect, { type SmartSelectOption } from '../SmartSelect'
 import type { Skill, SkillProgressionStep, Dimension } from '../../types/database'
+import type { LearnerProfileDomain } from '../../types/learner-profile'
 
 // ============================================================
 // Types
@@ -55,6 +57,10 @@ export default function InlineSkillCreator({ open, onClose, onCreated }: Props) 
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
   const [domain, setDomain] = useState('')
+  /** V2: FK to learner_profile_domains. */
+  const [domainId, setDomainId] = useState('')
+  const [ageBandStart, setAgeBandStart] = useState('')
+  const [ageBandEnd, setAgeBandEnd] = useState('')
   const [steps, setSteps] = useState<ProgressionEntry[]>([
     { id: crypto.randomUUID(), grade_level: '3', expectation: '' },
   ])
@@ -64,6 +70,7 @@ export default function InlineSkillCreator({ open, onClose, onCreated }: Props) 
   const [dimensions, setDimensions] = useState<Dimension[]>([])
   const [categoryList, setCategoryList] = useState<string[]>([])
   const [skillDomainList, setSkillDomainList] = useState<string[]>([])
+  const [lpDomains, setLpDomains] = useState<LearnerProfileDomain[]>([])
 
   // Load dropdown data when modal opens
   useEffect(() => {
@@ -73,10 +80,12 @@ export default function InlineSkillCreator({ open, onClose, onCreated }: Props) 
       fetchDimensions(sid),
       fetchSkillCategories(sid),
       fetchSkillDomains(sid),
-    ]).then(([dims, cats, doms]) => {
+      fetchLearnerProfileDomainsForSchool(sid),
+    ]).then(([dims, cats, doms, lpDoms]) => {
       setDimensions(dims)
       setCategoryList(cats)
       setSkillDomainList(doms)
+      setLpDomains(lpDoms)
     }).catch(() => {
       // Non-critical — dropdowns just won't be pre-populated
     })
@@ -89,6 +98,9 @@ export default function InlineSkillCreator({ open, onClose, onCreated }: Props) 
       setDescription('')
       setCategory('')
       setDomain('')
+      setDomainId('')
+      setAgeBandStart('')
+      setAgeBandEnd('')
       setSteps([{ id: crypto.randomUUID(), grade_level: '3', expectation: '' }])
     }
   }, [open])
@@ -188,6 +200,9 @@ export default function InlineSkillCreator({ open, onClose, onCreated }: Props) 
 
     setSaving(true)
     try {
+      const parsedAgeStart = ageBandStart.trim() === '' ? null : Number(ageBandStart)
+      const parsedAgeEnd = ageBandEnd.trim() === '' ? null : Number(ageBandEnd)
+
       const skillId = await createSkillWithProgression(
         {
           school_id: profile.school_id,
@@ -197,6 +212,9 @@ export default function InlineSkillCreator({ open, onClose, onCreated }: Props) 
           is_assessable: true,
           source_framework: 'custom',
           progression_domain: domain.trim() || null,
+          domain_id: domainId || null,
+          age_band_start: Number.isNaN(parsedAgeStart as number) ? null : parsedAgeStart,
+          age_band_end: Number.isNaN(parsedAgeEnd as number) ? null : parsedAgeEnd,
           created_by: profile.id,
         },
         validSteps.map(s => ({
@@ -279,15 +297,57 @@ export default function InlineSkillCreator({ open, onClose, onCreated }: Props) 
             />
           </div>
 
-          {/* Domain & Category — smart dropdowns */}
+          {/* V2: Learner Profile domain */}
+          <div>
+            <label className={labelCls}>Learner Profile Domain</label>
+            <select
+              value={domainId}
+              onChange={(e) => setDomainId(e.target.value)}
+              className={inputCls}
+            >
+              <option value="">— Not mapped —</option>
+              {lpDomains.map((d) => (
+                <option key={d.id} value={d.id}>{d.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* V2: Age band */}
+          <div>
+            <label className={labelCls}>Expected for ages (optional)</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={0}
+                max={25}
+                value={ageBandStart}
+                onChange={(e) => setAgeBandStart(e.target.value)}
+                placeholder="from"
+                className={inputCls + ' w-24'}
+              />
+              <span className="text-xs text-text-muted">to</span>
+              <input
+                type="number"
+                min={0}
+                max={25}
+                value={ageBandEnd}
+                onChange={(e) => setAgeBandEnd(e.target.value)}
+                placeholder="to"
+                className={inputCls + ' w-24'}
+              />
+              <span className="text-xs text-text-muted">years old</span>
+            </div>
+          </div>
+
+          {/* Legacy Domain & Category — smart dropdowns */}
           <div className="grid grid-cols-2 gap-3">
             <SmartSelect
               value={domain}
               onChange={setDomain}
               options={domainOptions}
-              label="Domain"
+              label="Legacy domain"
               optional
-              placeholder="Select domain…"
+              placeholder="Select…"
               allowCreate
               onCreateNew={handleCreateDomain}
               createPlaceholder="New domain…"

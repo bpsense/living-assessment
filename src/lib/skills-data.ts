@@ -7,6 +7,8 @@
 
 import { supabase } from './supabase'
 import type { Skill, SkillInsert, SkillUpdate, Dimension } from '../types/database'
+import type { LearnerProfileDomain } from '../types/learner-profile'
+import { fetchActiveProfile } from './learner-profile-data'
 
 // ============================================================
 // Composite types
@@ -14,6 +16,13 @@ import type { Skill, SkillInsert, SkillUpdate, Dimension } from '../types/databa
 
 export interface SkillWithCompetencies extends Skill {
   competencies: { id: string; code: string; name: string }[]
+}
+
+/** A skill paired with its resolved Learner Profile domain (when mapped). */
+export interface SkillWithDomain extends SkillWithCompetencies {
+  domain: LearnerProfileDomain | null
+  /** Convenience: true when school_id is NULL (system-owned baseline skill). */
+  is_baseline: boolean
 }
 
 // ============================================================
@@ -55,23 +64,46 @@ export const AGE_BAND_PRESETS = [
 // ============================================================
 
 /**
- * Fetch all skills for a school, with linked competency codes.
- * Supports optional search and category filtering.
+ * Fetch all skills available to a school, with linked competency codes.
+ *
+ * "Available" = school-owned (school_id = schoolId) UNION baseline
+ * (school_id IS NULL). RLS already enforces visibility, but we filter
+ * server-side too so we don't pull other schools' rows for a system admin
+ * that happens to be looking at one specific school.
  */
 export async function fetchSkills(
   schoolId: string,
-  filters?: { search?: string; category?: string }
+  filters?: {
+    search?: string
+    category?: string
+    domainId?: string
+    /** Only include skills whose age band overlaps with this range. */
+    ageBandStart?: number
+    ageBandEnd?: number
+    /** Set to true to exclude baseline skills (school_id IS NULL). Default: false. */
+    excludeBaseline?: boolean
+  }
 ): Promise<SkillWithCompetencies[]> {
-  const { data, error } = await supabase
+  let query = supabase
     .from('skills')
     .select(`
       *,
       skill_competencies(competency_id, competencies:competencies(id, code, name))
     `)
-    .eq('school_id', schoolId)
     .order('category')
     .order('name')
 
+  if (filters?.excludeBaseline) {
+    query = query.eq('school_id', schoolId)
+  } else {
+    query = query.or(`school_id.eq.${schoolId},school_id.is.null`)
+  }
+
+  if (filters?.domainId) {
+    query = query.eq('domain_id', filters.domainId)
+  }
+
+  const { data, error } = await query
   if (error) throw error
 
   let skills = (data || []).map((s: any) => ({
@@ -94,8 +126,98 @@ export async function fetchSkills(
   if (filters?.category) {
     skills = skills.filter((s) => s.category === filters.category)
   }
+  if (filters?.ageBandStart !== undefined || filters?.ageBandEnd !== undefined) {
+    const start = filters.ageBandStart
+    const end = filters.ageBandEnd
+    skills = skills.filter((s) => ageBandOverlaps(s, start, end))
+  }
 
   return skills
+}
+
+/**
+ * True when a skill's age band overlaps the requested range. Skills with no
+ * declared age band are treated as "any" and always overlap.
+ */
+function ageBandOverlaps(
+  skill: Pick<Skill, 'age_band_start' | 'age_band_end'>,
+  start: number | undefined,
+  end: number | undefined
+): boolean {
+  // Skill spans all ages — always matches.
+  if (skill.age_band_start === null && skill.age_band_end === null) return true
+  // No filter on either side — always matches.
+  if (start === undefined && end === undefined) return true
+  const skillStart = skill.age_band_start ?? Number.NEGATIVE_INFINITY
+  const skillEnd = skill.age_band_end ?? Number.POSITIVE_INFINITY
+  const filterStart = start ?? Number.NEGATIVE_INFINITY
+  const filterEnd = end ?? Number.POSITIVE_INFINITY
+  return skillStart <= filterEnd && skillEnd >= filterStart
+}
+
+/**
+ * Fetch all skills tagged to a specific Learner Profile domain.
+ * Includes baseline (school_id IS NULL) skills so a school can see
+ * cross-school content tagged to the same domain.
+ */
+export async function getSkillsByDomain(
+  domainId: string,
+  schoolId: string
+): Promise<SkillWithCompetencies[]> {
+  return fetchSkills(schoolId, { domainId })
+}
+
+/**
+ * Fetch skills whose age band overlaps the given range, optionally
+ * restricted to a single domain.
+ */
+export async function getSkillsByAgeBand(
+  schoolId: string,
+  ageBandStart: number,
+  ageBandEnd: number,
+  domainId?: string
+): Promise<SkillWithCompetencies[]> {
+  return fetchSkills(schoolId, { ageBandStart, ageBandEnd, domainId })
+}
+
+/**
+ * Resolve domain rows for a list of skills. Returns a parallel list of
+ * `SkillWithDomain` enriched with the matching learner_profile_domains row
+ * (or null when domain_id is unset / unresolvable).
+ */
+export async function attachDomainsToSkills(
+  skills: SkillWithCompetencies[]
+): Promise<SkillWithDomain[]> {
+  const domainIds = [
+    ...new Set(skills.map((s) => s.domain_id).filter((id): id is string => !!id)),
+  ]
+  let domainsById = new Map<string, LearnerProfileDomain>()
+  if (domainIds.length > 0) {
+    const { data, error } = await supabase
+      .from('learner_profile_domains')
+      .select('*')
+      .in('id', domainIds)
+    if (error) throw error
+    for (const d of (data ?? []) as LearnerProfileDomain[]) {
+      domainsById.set(d.id, d)
+    }
+  }
+  return skills.map((s) => ({
+    ...s,
+    domain: s.domain_id ? (domainsById.get(s.domain_id) ?? null) : null,
+    is_baseline: s.school_id === null,
+  }))
+}
+
+/**
+ * Fetch the active Learner Profile's domains for a school. Convenience
+ * wrapper used by skill forms that need to populate the domain dropdown.
+ */
+export async function fetchLearnerProfileDomainsForSchool(
+  schoolId: string
+): Promise<LearnerProfileDomain[]> {
+  const profile = await fetchActiveProfile(schoolId)
+  return profile?.domains ?? []
 }
 
 /**
@@ -116,12 +238,14 @@ export async function fetchSkillsByCompetencies(
 
   if (error) throw error
 
-  // Deduplicate by skill ID and filter by school
+  // Deduplicate by skill ID and filter to skills visible to this school
+  // (own school OR baseline / system-owned).
   const seen = new Set<string>()
   const skills: Skill[] = []
   for (const row of data || []) {
     const skill = (row as any).skills as Skill
-    if (skill.school_id === schoolId && !seen.has(skill.id)) {
+    const visible = skill.school_id === schoolId || skill.school_id === null
+    if (visible && !seen.has(skill.id)) {
       seen.add(skill.id)
       skills.push(skill)
     }
@@ -175,7 +299,7 @@ export async function fetchSkillDomains(schoolId: string): Promise<string[]> {
   const { data, error } = await supabase
     .from('skills')
     .select('progression_domain')
-    .eq('school_id', schoolId)
+    .or(`school_id.eq.${schoolId},school_id.is.null`)
     .not('progression_domain', 'is', null)
     .order('progression_domain')
 
@@ -191,7 +315,7 @@ export async function fetchSkillCategories(schoolId: string): Promise<string[]> 
   const { data, error } = await supabase
     .from('skills')
     .select('category')
-    .eq('school_id', schoolId)
+    .or(`school_id.eq.${schoolId},school_id.is.null`)
     .not('category', 'is', null)
     .order('category')
 
@@ -275,5 +399,21 @@ export async function deleteSkill(id: string): Promise<void> {
     .delete()
     .eq('id', id)
 
+  if (error) throw error
+}
+
+/**
+ * Assign the same Learner Profile domain to many skills in one call.
+ * Used by the "unmapped skills" admin banner's bulk-assign action.
+ */
+export async function bulkAssignDomain(
+  skillIds: string[],
+  domainId: string | null
+): Promise<void> {
+  if (skillIds.length === 0) return
+  const { error } = await supabase
+    .from('skills')
+    .update({ domain_id: domainId })
+    .in('id', skillIds)
   if (error) throw error
 }

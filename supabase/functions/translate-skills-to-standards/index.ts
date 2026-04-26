@@ -115,19 +115,33 @@ Deno.serve(async (req: Request) => {
       .eq('school_id', school_id)
       .order('scored_at', { ascending: false })
 
-    // 3. Fetch the student's graded skill assignments
-    const { data: skillAssignments } = await sb
-      .from('student_skill_assignments')
+    // 3. Fetch V2 skill_assessments (Phase 4 unified pipeline) with skill +
+    //    Learner Profile domain context.
+    //    NOTE: the legacy V1 student_skill_assignments table was renamed to
+    //    legacy_student_skill_assignments in migration 066 — its rows are
+    //    intentionally not consumed here. competency_scores (V1 graded
+    //    competencies) is still read above for backward compatibility.
+    const { data: skillAssessments } = await sb
+      .from('skill_assessments')
       .select(`
-        id, score, status, notes,
-        skill_assignment:skill_assignments(
-          skill:skills(name, description, category, progression_domain, progression_strand),
-          assigned_step:skill_progression_steps(grade_level, expectation_description)
+        id, level, notes, assessed_at,
+        skill:skills(
+          id, name, description, age_band_start, age_band_end,
+          domain:learner_profile_domains(id, name)
         )
       `)
       .eq('student_id', student_id)
-      .eq('status', 'graded')
-      .not('score', 'is', null)
+      .order('assessed_at', { ascending: false })
+      .limit(200)
+
+    // Collapse to the latest assessment per skill — one mapping per skill
+    // is what the AI prompt expects, and what the Translate UI renders.
+    const latestAssessmentBySkill = new Map<string, any>()
+    for (const a of (skillAssessments ?? []) as any[]) {
+      const skillId = a.skill?.id
+      if (!skillId) continue
+      if (!latestAssessmentBySkill.has(skillId)) latestAssessmentBySkill.set(skillId, a)
+    }
 
     // Build assessment list
     const assessments: AssessmentInfo[] = []
@@ -150,23 +164,29 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // From skill assignments
-    if (skillAssignments) {
-      for (const sa of skillAssignments as any[]) {
-        const skill = sa.skill_assignment?.skill
-        const step = sa.skill_assignment?.assigned_step
-        if (!skill || sa.score === null) continue
-        assessments.push({
-          id: sa.id,
-          source_type: 'skill_assessment',
-          skill_name: skill.name,
-          domain_name: skill.progression_domain || skill.category || 'General',
-          score: sa.score,
-          level: scoreToLevel(sa.score),
-          grade_level: step?.grade_level || student.grade_level,
-          description: skill.description || skill.name,
-        })
-      }
+    // From V2 skill_assessments — convert the named level (emerging /
+    // developing / achieving / exceeding) to a 0–4 score so the existing
+    // prompt vocabulary stays consistent.
+    const LEVEL_RANK: Record<string, number> = {
+      emerging: 1,
+      developing: 2,
+      achieving: 3,
+      exceeding: 4,
+    }
+    for (const a of latestAssessmentBySkill.values()) {
+      const skill = a.skill
+      if (!skill) continue
+      const score = LEVEL_RANK[a.level] ?? 2
+      assessments.push({
+        id: a.id,                                    // → mapping.source_id (FK to skill_assessments.id)
+        source_type: 'skill_assessment',
+        skill_name: skill.name,
+        domain_name: skill.domain?.name ?? 'Unknown',
+        score,
+        level: scoreToLevel(score),
+        grade_level: student.grade_level,
+        description: skill.description || skill.name,
+      })
     }
 
     if (assessments.length === 0) {
@@ -255,7 +275,7 @@ Map each assessment to relevant standards. Return ONLY a JSON array with objects
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 8192,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }],

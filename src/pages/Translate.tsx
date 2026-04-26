@@ -39,7 +39,22 @@ import type {
   TranslationMappingInsert,
   Standard,
 } from '../types/database'
+import type { LearnerProfileDomain } from '../types/learner-profile'
 import type { TranslationAIResult } from '../lib/ai-mapping'
+import { formatLevel } from '../lib/skill-assessment-data'
+
+// ============================================================
+// Source-side context per mapping (left column of Review step).
+// Resolved client-side from skill_assessment_id → skills + LP domain.
+// ============================================================
+
+interface MappingSource {
+  skillName: string
+  domain: LearnerProfileDomain | null
+  level: string | null
+  /** ISO date — assessment timestamp. */
+  date: string | null
+}
 
 // ============================================================
 // Step indicator
@@ -131,6 +146,8 @@ export default function TranslatePage() {
 
   // Step 4: Review
   const [mappings, setMappings] = useState<(TranslationMapping & { standard?: Standard })[]>([])
+  /** Source-side context resolved from skill_assessment_id, keyed by mapping id. */
+  const [mappingSources, setMappingSources] = useState<Map<string, MappingSource>>(new Map())
   const [editingMapping, setEditingMapping] = useState<string | null>(null)
   const [editNotes, setEditNotes] = useState('')
   const [approvedMappings, setApprovedMappings] = useState<Set<string>>(new Set())
@@ -215,11 +232,13 @@ export default function TranslatePage() {
       })
       setTranslationRecord(record)
 
-      // 3. Save mappings
+      // 3. Save mappings — V2 skill assessments use the dedicated FK column
+      // added in migration 067; V1 graded competencies still use competency_score_id.
       const mappingInserts: TranslationMappingInsert[] = result.mappings.map((m) => ({
         translation_id: record.id,
         competency_score_id: m.source_type === 'competency_score' ? m.source_id : null,
-        student_skill_assignment_id: m.source_type === 'skill_assessment' ? m.source_id : null,
+        skill_assessment_id: m.source_type === 'skill_assessment' ? m.source_id : null,
+        student_skill_assignment_id: null,
         standard_id: m.standard_id,
         confidence: m.confidence,
         level_in_standard: m.level_in_standard,
@@ -243,6 +262,40 @@ export default function TranslatePage() {
       }))
 
       setMappings(mappingsWithStandards)
+
+      // Resolve source-side context per mapping (skill name, domain, level, date).
+      // Only V2 skill_assessment-sourced mappings have rich context; V1 sources
+      // get a placeholder.
+      const sources = new Map<string, MappingSource>()
+      const assessmentIds = saved
+        .map((m) => m.skill_assessment_id)
+        .filter((id): id is string => !!id)
+
+      if (assessmentIds.length > 0) {
+        const { data: assessments } = await supabase
+          .from('skill_assessments')
+          .select(
+            'id, level, assessed_at, skill:skills(id, name, domain_id, domain:learner_profile_domains(id, profile_id, name, description, color, sort_order, created_at))'
+          )
+          .in('id', assessmentIds)
+
+        const byAssessment = new Map<string, any>(
+          (assessments ?? []).map((a: any) => [a.id, a])
+        )
+        for (const m of saved) {
+          if (!m.skill_assessment_id) continue
+          const a = byAssessment.get(m.skill_assessment_id)
+          if (!a) continue
+          sources.set(m.id, {
+            skillName: a.skill?.name ?? '(unknown skill)',
+            domain: a.skill?.domain ?? null,
+            level: a.level,
+            date: a.assessed_at ?? null,
+          })
+        }
+      }
+      setMappingSources(sources)
+
       setStep(3) // Move to review
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Translation failed')
@@ -572,7 +625,9 @@ export default function TranslatePage() {
               </div>
             ) : (
               <div className="divide-y divide-bg-muted">
-                {mappings.map((m) => (
+                {mappings.map((m) => {
+                  const source = mappingSources.get(m.id) ?? null
+                  return (
                   <div
                     key={m.id}
                     className={clsx(
@@ -594,57 +649,101 @@ export default function TranslatePage() {
                         {approvedMappings.has(m.id) && <Check className="h-3 w-3" />}
                       </button>
 
-                      {/* Mapping content */}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-primary-700">
-                            {m.standard?.code || 'Unknown'}
-                          </span>
-                          <ConfidenceBadge value={m.confidence} />
-                          {m.level_in_standard && (
-                            <span className="rounded bg-bg-muted px-1.5 py-0.5 text-[10px] font-medium text-text-muted">
-                              {m.level_in_standard}
-                            </span>
-                          )}
-                          {m.human_override && (
-                            <span className="rounded bg-accent-100 px-1.5 py-0.5 text-[10px] font-medium text-accent-700">
-                              Edited
-                            </span>
+                      {/* Two-column source / standard layout */}
+                      <div className="grid min-w-0 flex-1 gap-3 md:grid-cols-2">
+                        {/* LEFT: source skill assessment */}
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-text-light">
+                            Skill assessment
+                          </p>
+                          {source ? (
+                            <>
+                              <p className="mt-1 truncate text-sm font-medium text-text">
+                                {source.skillName}
+                              </p>
+                              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                                {source.domain && (
+                                  <span
+                                    className="rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
+                                    style={{ backgroundColor: source.domain.color ?? '#94A3B8' }}
+                                  >
+                                    {source.domain.name}
+                                  </span>
+                                )}
+                                {source.level && (
+                                  <span className="rounded-full bg-bg-muted px-2 py-0.5 text-[10px] font-medium text-text-muted">
+                                    {formatLevel(source.level as 'emerging' | 'developing' | 'achieving' | 'exceeding')}
+                                  </span>
+                                )}
+                                {source.date && (
+                                  <span className="text-[10px] text-text-light">
+                                    {format(new Date(source.date), 'MMM d, yyyy')}
+                                  </span>
+                                )}
+                              </div>
+                            </>
+                          ) : (
+                            <p className="mt-1 text-xs italic text-text-light">
+                              Legacy source — context unavailable.
+                            </p>
                           )}
                         </div>
-                        <p className="mt-0.5 text-xs text-text-muted">
-                          {m.standard?.description || ''}
-                        </p>
 
-                        {/* Notes / reasoning */}
-                        {editingMapping === m.id ? (
-                          <div className="mt-2 flex gap-2">
-                            <input
-                              value={editNotes}
-                              onChange={(e) => setEditNotes(e.target.value)}
-                              className="flex-1 rounded border border-bg-muted bg-bg px-2 py-1 text-xs text-text focus:border-primary-400 focus:outline-none"
-                              placeholder="Add notes..."
-                            />
-                            <button
-                              onClick={() => handleEditSave(m.id)}
-                              className="rounded bg-primary-500 px-2 py-1 text-xs text-white hover:bg-primary-600"
-                            >
-                              Save
-                            </button>
-                            <button
-                              onClick={() => setEditingMapping(null)}
-                              className="rounded bg-bg-muted px-2 py-1 text-xs text-text-muted hover:bg-bg"
-                            >
-                              Cancel
-                            </button>
+                        {/* RIGHT: target standard */}
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-text-light">
+                            Standard
+                          </p>
+                          <div className="mt-1 flex flex-wrap items-center gap-2">
+                            <span className="text-sm font-semibold text-primary-700">
+                              {m.standard?.code || 'Unknown'}
+                            </span>
+                            <ConfidenceBadge value={m.confidence} />
+                            {m.level_in_standard && (
+                              <span className="rounded bg-bg-muted px-1.5 py-0.5 text-[10px] font-medium text-text-muted">
+                                {m.level_in_standard}
+                              </span>
+                            )}
+                            {m.human_override && (
+                              <span className="rounded bg-accent-100 px-1.5 py-0.5 text-[10px] font-medium text-accent-700">
+                                Edited
+                              </span>
+                            )}
                           </div>
-                        ) : (
-                          m.notes && (
-                            <p className="mt-1 text-[11px] italic text-text-light">
-                              {m.notes}
-                            </p>
-                          )
-                        )}
+                          <p className="mt-1 text-xs text-text-muted">
+                            {m.standard?.description || ''}
+                          </p>
+
+                          {/* Notes / reasoning */}
+                          {editingMapping === m.id ? (
+                            <div className="mt-2 flex gap-2">
+                              <input
+                                value={editNotes}
+                                onChange={(e) => setEditNotes(e.target.value)}
+                                className="flex-1 rounded border border-bg-muted bg-bg px-2 py-1 text-xs text-text focus:border-primary-400 focus:outline-none"
+                                placeholder="Add notes..."
+                              />
+                              <button
+                                onClick={() => handleEditSave(m.id)}
+                                className="rounded bg-primary-500 px-2 py-1 text-xs text-white hover:bg-primary-600"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={() => setEditingMapping(null)}
+                                className="rounded bg-bg-muted px-2 py-1 text-xs text-text-muted hover:bg-bg"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            m.notes && (
+                              <p className="mt-1 text-[11px] italic text-text-light">
+                                {m.notes}
+                              </p>
+                            )
+                          )}
+                        </div>
                       </div>
 
                       {/* Edit button */}
@@ -662,7 +761,8 @@ export default function TranslatePage() {
                       )}
                     </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>

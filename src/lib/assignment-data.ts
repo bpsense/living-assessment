@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { assignProjectSkillsToStudents } from './student-skill-assignment-data'
 import type {
   Assignment,
   AssignmentInsert,
@@ -58,13 +59,24 @@ export async function createAssignment(
     if (saErr) throw new Error(`Failed to assign students: ${saErr.message}`)
   }
 
-  // 4. Link skills
+  // 4. Link skills (and fan out to per-student skill assignments).
   if (skillIds && skillIds.length > 0) {
     const { error: skErr } = await supabase
       .from('assignment_skills')
       .insert(skillIds.map((sid) => ({ assignment_id: assignmentId, skill_id: sid })))
 
     if (skErr) throw new Error(`Failed to link skills: ${skErr.message}`)
+
+    // Auto-create student_skill_assignments rows for each (student × skill).
+    // Source = 'project'; teacher attribution comes from the assignment's
+    // teacher_id (assigned via createAssignment's `data.teacher_id`).
+    if (studentIds.length > 0 && data.teacher_id) {
+      await assignProjectSkillsToStudents({
+        projectId: assignmentId,
+        studentIds,
+        assignedBy: data.teacher_id,
+      })
+    }
   }
 
   return assignmentId

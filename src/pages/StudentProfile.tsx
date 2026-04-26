@@ -8,7 +8,7 @@ import { useAccessControl } from '../lib/access-control'
 import { useToast } from '../components/Toast'
 import { supabase } from '../lib/supabase'
 import { buildSnapshots, getSnapshotObservationDate, smoothSnapshots, applyGradeTransitionDecay } from '../lib/living-data'
-import LivingVisualization from '../components/student/LivingVisualization'
+import LearnerProfileVisualization from '../components/student/LearnerProfileVisualization'
 import ZoneMatrix from '../components/student/ZoneMatrix'
 import AILearningGuide from '../components/student/AILearningGuide'
 import FamilySupportGuide from '../components/student/FamilySupportGuide'
@@ -23,6 +23,8 @@ import LearnerMessagesSection from '../components/student/LearnerMessagesSection
 import StudentContextDoc from '../components/student/StudentContextDoc'
 import StudentClassroomsManager from '../components/student/StudentClassroomsManager'
 import StudentSkillsSection from '../components/skills/StudentSkillsSection'
+import QuickAssess from '../components/skills/QuickAssess'
+import AssignSkillModal from '../components/skills/AssignSkillModal'
 import TranslationHistory from '../components/student/TranslationHistory'
 
 // ============================================================
@@ -65,6 +67,8 @@ export default function StudentProfile() {
   const { toast } = useToast()
   const [launchingSurvey, setLaunchingSurvey] = useState(false)
   const [showSISEdit, setShowSISEdit] = useState(false)
+  const [showAssignSkill, setShowAssignSkill] = useState(false)
+  const [assignReloadTick, setAssignReloadTick] = useState(0)
   const [showStudentNumber, setShowStudentNumber] = useState(false)
   const [copiedNumber, setCopiedNumber] = useState(false)
   const {
@@ -76,7 +80,6 @@ export default function StudentProfile() {
     timeline,
     observations,
     surveys,
-    observers,
     competencyData,
     loading,
     error,
@@ -98,8 +101,13 @@ export default function StudentProfile() {
   // ── Timeline / snapshot state (lifted from LivingVisualization) ──
   // Timeline is shown by default for educators so they can always rewind
   const [snapshotIdx, setSnapshotIdx] = useState<number | null>(null)
-  const [showTimeline, setShowTimeline] = useState(true)
-  const [playing, setPlaying] = useState(false)
+  // showTimeline is hardcoded true — V1 timeline UI still drives the
+  // dimension-card historical scrub below; toggle was only on the (removed)
+  // LivingVisualization mount.
+  const [showTimeline] = useState(true)
+  // The playing flag itself was only read by the V1 LivingVisualization;
+  // the back-date observation flow still needs setPlaying to halt playback.
+  const [, setPlaying] = useState(false)
 
   // Build snapshots with forward-looking smoothing so growth ramps
   // gradually toward each change rather than jumping in a single step.
@@ -121,15 +129,6 @@ export default function StudentProfile() {
       setSnapshotIdx(snapshots.length - 1)
     }
   }, [snapshots.length, snapshotIdx])
-
-  // Toggle timeline visibility
-  const handleToggleTimeline = useCallback(() => {
-    if (!showTimeline) {
-      // Opening — start at latest snapshot
-      setSnapshotIdx(snapshots.length - 1)
-    }
-    setShowTimeline((v) => !v)
-  }, [showTimeline, snapshots.length])
 
   // Derive the active snapshot (if any)
   const activeSnapshot = useMemo(() => {
@@ -357,22 +356,12 @@ export default function StudentProfile() {
         </div>
       </section>
 
-      {/* ========== LIVING BLOB VISUALIZATION ========== */}
+      {/* ========== LEARNER PROFILE AMOEBA (V2) ========== */}
       <section>
         <div className="glass-card p-5">
-          <LivingVisualization
-            dimensionScores={filteredDimensionScores}
-            snapshots={snapshots}
-            snapshotIdx={snapshotIdx}
-            onSnapshotChange={setSnapshotIdx}
-            showTimeline={showTimeline}
-            onToggleTimeline={handleToggleTimeline}
-            playing={playing}
-            onPlayingChange={setPlaying}
-            onDimensionClick={scrollToDimension}
-            familyView={isFamilyView}
-            observations={observations}
-            observers={observers}
+          <LearnerProfileVisualization
+            studentId={student.id}
+            schoolId={student.school_id}
           />
         </div>
       </section>
@@ -400,6 +389,28 @@ export default function StudentProfile() {
           <StudentSkillsSection
             studentId={student.id}
             studentGrade={student.grade_level}
+          />
+        </section>
+      )}
+
+      {/* ========== V2 SKILL ASSESSMENTS (educator/admin only) ========== */}
+      {!isFamilyView && (
+        <section className="glass-card p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-base font-semibold text-text">Skill Assessments</h2>
+            <button
+              onClick={() => setShowAssignSkill(true)}
+              className="rounded-xl bg-primary-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-primary-600"
+            >
+              Assign Skill
+            </button>
+          </div>
+          <QuickAssess key={assignReloadTick} studentId={student.id} embedded />
+          <AssignSkillModal
+            open={showAssignSkill}
+            onClose={() => setShowAssignSkill(false)}
+            studentId={student.id}
+            onAssigned={() => setAssignReloadTick((t) => t + 1)}
           />
         </section>
       )}

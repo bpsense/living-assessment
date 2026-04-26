@@ -37,7 +37,7 @@ export async function createSkillAssignment(
 ): Promise<string> {
   // 1. Create the skill_assignment row
   const { data: row, error } = await supabase
-    .from('skill_assignments')
+    .from('legacy_skill_assignments')
     .insert(data)
     .select('id')
     .single()
@@ -87,7 +87,7 @@ export async function createSkillAssignment(
   }))
 
   const { error: ssaErr } = await supabase
-    .from('student_skill_assignments')
+    .from('legacy_student_skill_assignments')
     .insert(ssaRows)
 
   if (ssaErr) {
@@ -122,7 +122,7 @@ export async function differentiateStudentStep(
   }
 
   const { error } = await supabase
-    .from('student_skill_assignments')
+    .from('legacy_student_skill_assignments')
     .update({
       student_step_id: newStepId,
       is_above_grade: isAboveGrade(stepData.grade_level, studentGradeLevel),
@@ -153,7 +153,7 @@ export async function gradeSkillAssignment(
   try {
     // 1. Fetch the student_skill_assignment with its step's competency_ids
     const { data: ssa, error: ssaErr } = await supabase
-      .from('student_skill_assignments')
+      .from('legacy_student_skill_assignments')
       .select('*, step:skill_progression_steps!student_skill_assignments_student_step_id_fkey(*), parent:skill_assignments!student_skill_assignments_skill_assignment_id_fkey(school_id)')
       .eq('id', studentSkillAssignmentId)
       .single()
@@ -166,7 +166,7 @@ export async function gradeSkillAssignment(
 
     // 2. Update student_skill_assignment
     const { error: updateErr } = await supabase
-      .from('student_skill_assignments')
+      .from('legacy_student_skill_assignments')
       .update({
         score,
         scored_by: scoredBy,
@@ -227,7 +227,7 @@ export async function fetchSkillAssignments(
   filters?: { status?: SkillAssignmentStatus; skillId?: string }
 ): Promise<SkillAssignmentWithDetails[]> {
   let query = supabase
-    .from('skill_assignments')
+    .from('legacy_skill_assignments')
     .select(`
       *,
       skill:skills(*),
@@ -261,7 +261,7 @@ export async function fetchSkillAssignment(
   assignmentId: string
 ): Promise<SkillAssignmentWithDetails> {
   const { data, error } = await supabase
-    .from('skill_assignments')
+    .from('legacy_skill_assignments')
     .select(`
       *,
       skill:skills(*),
@@ -293,7 +293,7 @@ export async function fetchStudentSkillAssignments(
   filters?: { status?: StudentSkillAssignmentStatus }
 ): Promise<StudentSkillAssignmentWithStudent[]> {
   let query = supabase
-    .from('student_skill_assignments')
+    .from('legacy_student_skill_assignments')
     .select(`
       *,
       student:students!student_skill_assignments_student_id_fkey(id, first_name, last_name, grade_level),
@@ -326,7 +326,7 @@ export async function updateSkillAssignment(
   data: SkillAssignmentUpdate
 ): Promise<void> {
   const { error } = await supabase
-    .from('skill_assignments')
+    .from('legacy_skill_assignments')
     .update(data)
     .eq('id', id)
 
