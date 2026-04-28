@@ -40,6 +40,12 @@ interface UserFilters {
   includeInactive?: boolean
   /** When provided, scope results to only users within these department IDs (for dept admins) */
   departmentIds?: string[]
+  /**
+   * When provided, scope results to a single department: department admins for
+   * that dept, educators in classrooms in that dept, and parents/learners
+   * linked to students in those classrooms. Combined with departmentIds via AND.
+   */
+  departmentId?: string | null
 }
 
 export function useUserManagement(filters: UserFilters = {}) {
@@ -53,43 +59,63 @@ export function useUserManagement(filters: UserFilters = {}) {
     setError(null)
 
     try {
-      // ── Department scoping: compute visible user IDs when dept admin ──
+      // Resolve effective department scope: union of departmentIds (auto-scope
+      // for dept admins) and the explicit single-department filter.
+      const scopeDeptIds: string[] = [
+        ...(filters.departmentIds ?? []),
+        ...(filters.departmentId ? [filters.departmentId] : []),
+      ]
+
+      // ── Department scoping: compute visible user IDs when scope is set ──
       let scopedUserIds: string[] | null = null
-      if (filters.departmentIds && filters.departmentIds.length > 0) {
-        // 1. Get classrooms in the caller's departments
+      if (scopeDeptIds.length > 0) {
+        // 1. Get classrooms in the scoped departments
         const { data: deptClassrooms } = await supabase
           .from('classrooms')
           .select('id')
-          .in('department_id', filters.departmentIds)
+          .in('department_id', scopeDeptIds)
+
+        // Also pull department admins assigned to these departments —
+        // they should appear in the scoped list even though they're not
+        // tied to a classroom.
+        const { data: scopedDeptAdmins } = await supabase
+          .from('department_admins')
+          .select('user_id')
+          .in('department_id', scopeDeptIds)
+        const scopedDeptAdminIds = (scopedDeptAdmins ?? []).map(
+          (r: { user_id: string }) => r.user_id
+        )
 
         const classroomIds = (deptClassrooms ?? []).map((c: { id: string }) => c.id)
 
-        if (classroomIds.length === 0) {
-          // No classrooms in these departments — show empty list
+        if (classroomIds.length === 0 && scopedDeptAdminIds.length === 0) {
+          // No classrooms or department admins in these departments — empty
           setUsers([])
           setLoading(false)
           return
         }
 
         // 2. Get educators assigned to those classrooms
-        const { data: educatorRows } = await supabase
-          .from('educator_classrooms')
-          .select('educator_id')
-          .in('classroom_id', classroomIds)
+        let educatorIds: string[] = []
+        let studentIds: string[] = []
+        if (classroomIds.length > 0) {
+          const { data: educatorRows } = await supabase
+            .from('educator_classrooms')
+            .select('educator_id')
+            .in('classroom_id', classroomIds)
 
-        const educatorIds = [...new Set((educatorRows ?? []).map(
-          (e: { educator_id: string }) => e.educator_id
-        ))]
+          educatorIds = [...new Set((educatorRows ?? []).map(
+            (e: { educator_id: string }) => e.educator_id
+          ))]
 
-        // 3. Get students in those classrooms (via junction table)
-        const { data: scRows } = await supabase
-          .from('student_classrooms')
-          .select('student_id')
-          .in('classroom_id', classroomIds)
+          // 3. Get students in those classrooms (via junction table)
+          const { data: scRows } = await supabase
+            .from('student_classrooms')
+            .select('student_id')
+            .in('classroom_id', classroomIds)
 
-        const studentRows = (scRows ?? []).map((r) => ({ id: r.student_id }))
-
-        const studentIds = (studentRows ?? []).map((s: { id: string }) => s.id)
+          studentIds = (scRows ?? []).map((r: { student_id: string }) => r.student_id)
+        }
 
         // 4. Get parents linked to those students
         let parentIds: string[] = []
@@ -115,8 +141,14 @@ export function useUserManagement(filters: UserFilters = {}) {
           learnerProfileIds = (learnerProfiles ?? []).map((l: { id: string }) => l.id)
         }
 
-        // Combine all visible user IDs (include the caller themselves)
-        const allVisibleIds = new Set([...educatorIds, ...parentIds, ...learnerProfileIds])
+        // Combine all visible user IDs (include the caller themselves +
+        // department admins assigned directly to the scoped departments)
+        const allVisibleIds = new Set([
+          ...educatorIds,
+          ...parentIds,
+          ...learnerProfileIds,
+          ...scopedDeptAdminIds,
+        ])
         if (profile?.id) allVisibleIds.add(profile.id)
         scopedUserIds = [...allVisibleIds]
 
@@ -246,7 +278,7 @@ export function useUserManagement(filters: UserFilters = {}) {
     } finally {
       setLoading(false)
     }
-  }, [filters.schoolId, filters.role, filters.search, filters.includeInactive, filters.departmentIds, isSystemAdmin, profile?.school_id, profile?.id])
+  }, [filters.schoolId, filters.role, filters.search, filters.includeInactive, filters.departmentIds, filters.departmentId, isSystemAdmin, profile?.school_id, profile?.id])
 
   useEffect(() => {
     fetchUsers()

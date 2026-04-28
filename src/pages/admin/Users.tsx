@@ -70,7 +70,7 @@ function minLevelToInvite(role: UserRole): number {
 }
 
 export default function UsersPage() {
-  const { isSystemAdmin, allSchools, departmentAdminIds, accessLevel: authAccessLevel } = useAuth()
+  const { isSystemAdmin, allSchools } = useAuth()
   const { accessLevel, canInviteUsers, canChangeRoles, canDeactivateUsers, canManageUser } = useAccessControl()
   const { canEdit } = usePageAccess('users')
   const activeSchoolId = useActiveSchoolId() ?? null
@@ -81,6 +81,14 @@ export default function UsersPage() {
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<UserRole | null>(null)
   const [showInactive, setShowInactive] = useState(false)
+  // System admin "All Schools" view: optional school filter
+  const [schoolFilter, setSchoolFilter] = useState<string>('')
+  // School/Department/Location filter — visible whenever a school is in scope
+  const [departmentFilter, setDepartmentFilter] = useState<string>('')
+
+  // Effective school id for queries: explicit per-page filter overrides global
+  // active school context when system admin is on "All Schools".
+  const effectiveSchoolId = activeSchoolId ?? (schoolFilter || null)
 
   // ── Action state ─────────────────────────────────────────
   const [actionLoading, setActionLoading] = useState<string | null>(null)
@@ -128,16 +136,22 @@ export default function UsersPage() {
     assignToDepartment,
     removeFromDepartment,
   } = useUserManagement({
-    schoolId: activeSchoolId,
+    schoolId: effectiveSchoolId,
     role: roleFilter,
     search: search || undefined,
     includeInactive: showInactive,
-    departmentIds: authAccessLevel === 4 ? departmentAdminIds : undefined,
+    // Auto-scoping by department admin assignment is intentionally OFF —
+    // per the access hierarchy, location/dept admins see ALL educators and
+    // families in their school. The dropdown below provides explicit filtering.
+    departmentId: departmentFilter || null,
   })
 
-  // Fetch departments for the current school
+  // Fetch departments for the in-scope school (for filter dropdown + invite/assign UI).
+  // Also resets the department filter when school context changes so a stale
+  // dept id doesn't persist across schools.
   useEffect(() => {
-    const schoolId = activeSchoolId
+    const schoolId = effectiveSchoolId
+    setDepartmentFilter('')
     if (!schoolId) { setDepartments([]); return }
     supabase
       .from('departments')
@@ -145,7 +159,7 @@ export default function UsersPage() {
       .eq('school_id', schoolId)
       .order('name')
       .then(({ data }) => setDepartments(data ?? []))
-  }, [activeSchoolId])
+  }, [effectiveSchoolId])
 
   // Fetch classrooms + unlinked students when learner role is selected
   useEffect(() => {
@@ -255,8 +269,8 @@ export default function UsersPage() {
 
   const handleInvite = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
-    const effectiveSchoolId = activeSchoolId || inviteSchoolId
-    if (!effectiveSchoolId || !inviteName.trim() || !inviteEmail.trim()) return
+    const inviteEffectiveSchoolId = activeSchoolId || inviteSchoolId
+    if (!inviteEffectiveSchoolId || !inviteName.trim() || !inviteEmail.trim()) return
 
     setInviting(true)
     setActionError(null)
@@ -265,7 +279,7 @@ export default function UsersPage() {
     const { error: err } = await inviteUser({
       email: inviteEmail.trim(),
       fullName: inviteName.trim(),
-      schoolId: effectiveSchoolId,
+      schoolId: inviteEffectiveSchoolId,
       role: isAllSchoolsInvite ? 'admin' : inviteRole,
       departmentId: !isAllSchoolsInvite && inviteRole === 'admin' && inviteDeptId ? inviteDeptId : undefined,
       isSystemAdmin: isAllSchoolsInvite || undefined,
@@ -617,6 +631,42 @@ export default function UsersPage() {
           </select>
           <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
         </div>
+
+        {/* School filter — system admins only, when viewing All Schools */}
+        {isSystemAdmin && !activeSchoolId && allSchools.length > 0 && (
+          <div className="relative">
+            <select
+              value={schoolFilter}
+              onChange={(e) => setSchoolFilter(e.target.value)}
+              className="appearance-none rounded-lg border border-bg-muted bg-bg-card py-2 pl-3 pr-8 text-sm text-text focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-300"
+              title="Filter by school"
+            >
+              <option value="">All Schools</option>
+              {allSchools.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
+          </div>
+        )}
+
+        {/* Department / Location filter — visible whenever a school is in scope */}
+        {effectiveSchoolId && departments.length > 0 && (
+          <div className="relative">
+            <select
+              value={departmentFilter}
+              onChange={(e) => setDepartmentFilter(e.target.value)}
+              className="appearance-none rounded-lg border border-bg-muted bg-bg-card py-2 pl-3 pr-8 text-sm text-text focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-300"
+              title={`Filter by ${deptSingular.toLowerCase()}`}
+            >
+              <option value="">All {deptSingular}s</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>{d.name}</option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
+          </div>
+        )}
 
         <label className="flex items-center gap-2 text-sm text-text-muted">
           <input
