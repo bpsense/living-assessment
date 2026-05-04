@@ -122,10 +122,11 @@ export function useAuthProvider(): AuthState {
       setDepartmentAdminIds(deptIds)
 
       if (isSysAdmin) {
-        // Fetch all schools for the switcher
+        // Fetch active (non-archived) schools for the switcher
         const { data: schools } = await supabase
           .from('schools')
           .select('*')
+          .is('archived_at', null)
           .order('name')
         setAllSchools((schools as School[]) ?? [])
         // Default to "All Schools" view — system admins start at the platform overview

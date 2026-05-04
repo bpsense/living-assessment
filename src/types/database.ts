@@ -22,6 +22,8 @@ export interface School {
   name: string
   slug: string
   settings: Record<string, unknown>
+  archived_at: string | null
+  archived_by: string | null
   created_at: string
   updated_at: string
 }

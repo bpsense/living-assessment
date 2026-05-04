@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
-import { Building2, Plus, Users, School, UserCheck, Loader2 } from 'lucide-react'
+import { Building2, Plus, Users, School, UserCheck, Loader2, Archive, ArchiveRestore } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { School as SchoolType } from '../../types/database'
 
@@ -13,22 +13,42 @@ interface SchoolStats {
 }
 
 export default function Schools() {
-  const { allSchools, setActiveSchool } = useAuth()
+  const { setActiveSchool } = useAuth()
   const navigate = useNavigate()
+  const [schools, setSchools] = useState<SchoolType[]>([])
   const [stats, setStats] = useState<Record<string, SchoolStats>>({})
+  const [loadingSchools, setLoadingSchools] = useState(true)
   const [loadingStats, setLoadingStats] = useState(false)
+  const [showArchived, setShowArchived] = useState(false)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [newSchoolName, setNewSchoolName] = useState('')
   const [newSchoolSlug, setNewSchoolSlug] = useState('')
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
 
-  // Load stats for all schools on mount
-  useState(() => {
+  async function loadSchools() {
+    setLoadingSchools(true)
+    const { data, error } = await supabase
+      .from('schools')
+      .select('*')
+      .order('archived_at', { ascending: true, nullsFirst: true })
+      .order('name')
+    if (!error) setSchools((data as SchoolType[]) ?? [])
+    setLoadingSchools(false)
+  }
+
+  useEffect(() => {
+    loadSchools()
+  }, [])
+
+  useEffect(() => {
     async function loadStats() {
+      if (schools.length === 0) return
       setLoadingStats(true)
       const result: Record<string, SchoolStats> = {}
-      for (const school of allSchools) {
+      for (const school of schools) {
         const [students, classrooms, educators] = await Promise.all([
           supabase.from('students').select('id', { count: 'exact', head: true }).eq('school_id', school.id),
           supabase.from('classrooms').select('id', { count: 'exact', head: true }).eq('school_id', school.id),
@@ -45,10 +65,11 @@ export default function Schools() {
       setLoadingStats(false)
     }
     loadStats()
-  })
+  }, [schools])
 
-  function handleSchoolClick(schoolId: string) {
-    setActiveSchool(schoolId)
+  function handleSchoolClick(school: SchoolType) {
+    if (school.archived_at) return
+    setActiveSchool(school.id)
     navigate('/')
   }
 
@@ -74,13 +95,54 @@ export default function Schools() {
     window.location.reload()
   }
 
+  async function handleArchive(school: SchoolType) {
+    const confirmed = window.confirm(
+      `Archive "${school.name}"? It will be hidden from the school switcher and rosters, but no data will be deleted. You can restore it later.`,
+    )
+    if (!confirmed) return
+    setBusyId(school.id)
+    setActionError(null)
+    const { data: userRes } = await supabase.auth.getUser()
+    const { error } = await supabase
+      .from('schools')
+      .update({ archived_at: new Date().toISOString(), archived_by: userRes.user?.id ?? null })
+      .eq('id', school.id)
+    setBusyId(null)
+    if (error) {
+      setActionError(error.message)
+      return
+    }
+    // Reload so the auth context's allSchools (used by the switcher) refreshes too
+    window.location.reload()
+  }
+
+  async function handleUnarchive(school: SchoolType) {
+    setBusyId(school.id)
+    setActionError(null)
+    const { error } = await supabase
+      .from('schools')
+      .update({ archived_at: null, archived_by: null })
+      .eq('id', school.id)
+    setBusyId(null)
+    if (error) {
+      setActionError(error.message)
+      return
+    }
+    window.location.reload()
+  }
+
+  const activeSchools = schools.filter((s) => !s.archived_at)
+  const archivedSchools = schools.filter((s) => s.archived_at)
+  const visibleSchools = showArchived ? archivedSchools : activeSchools
+
   return (
     <div className="mx-auto max-w-5xl">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-text">Schools</h1>
           <p className="mt-1 text-sm text-text-muted">
-            {allSchools.length} school{allSchools.length !== 1 ? 's' : ''} in the platform
+            {activeSchools.length} active
+            {archivedSchools.length > 0 && ` · ${archivedSchools.length} archived`}
           </p>
         </div>
         <button
@@ -91,6 +153,34 @@ export default function Schools() {
           Add School
         </button>
       </div>
+
+      {/* Active / Archived tabs */}
+      {archivedSchools.length > 0 && (
+        <div className="mb-4 flex gap-2 border-b border-bg-muted">
+          <button
+            onClick={() => setShowArchived(false)}
+            className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${
+              !showArchived ? 'border-primary-500 text-text' : 'border-transparent text-text-muted hover:text-text'
+            }`}
+          >
+            Active ({activeSchools.length})
+          </button>
+          <button
+            onClick={() => setShowArchived(true)}
+            className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${
+              showArchived ? 'border-primary-500 text-text' : 'border-transparent text-text-muted hover:text-text'
+            }`}
+          >
+            Archived ({archivedSchools.length})
+          </button>
+        </div>
+      )}
+
+      {actionError && (
+        <div className="mb-4 rounded-lg border border-alert-500/30 bg-alert-500/10 px-4 py-2 text-sm text-alert-500">
+          {actionError}
+        </div>
+      )}
 
       {/* Create school form */}
       {showCreateForm && (
@@ -142,47 +232,94 @@ export default function Schools() {
         </div>
       )}
 
-      {/* School cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {allSchools.map((school) => {
-          const s = stats[school.id]
-          return (
-            <button
-              key={school.id}
-              onClick={() => handleSchoolClick(school.id)}
-              className="glass-card glass-card-interactive p-5 text-left"
-            >
-              <div className="mb-3 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-100">
-                  <Building2 className="h-5 w-5 text-primary-600" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="truncate font-semibold text-text">{school.name}</h3>
-                  <p className="text-xs text-text-light">{school.slug}</p>
+      {loadingSchools ? (
+        <div className="flex items-center gap-2 text-sm text-text-muted">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading schools...
+        </div>
+      ) : visibleSchools.length === 0 ? (
+        <div className="glass-card p-8 text-center text-sm text-text-muted">
+          {showArchived ? 'No archived schools.' : 'No schools yet.'}
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {visibleSchools.map((school) => {
+            const s = stats[school.id]
+            const isArchived = !!school.archived_at
+            return (
+              <div key={school.id} className={`glass-card p-5 ${isArchived ? 'opacity-75' : ''}`}>
+                <button
+                  onClick={() => handleSchoolClick(school)}
+                  disabled={isArchived}
+                  className={`block w-full text-left ${isArchived ? 'cursor-default' : ''}`}
+                >
+                  <div className="mb-3 flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-100">
+                      <Building2 className="h-5 w-5 text-primary-600" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="truncate font-semibold text-text">{school.name}</h3>
+                      <p className="text-xs text-text-light">{school.slug}</p>
+                    </div>
+                    {isArchived && (
+                      <span className="rounded-full bg-bg-muted px-2 py-0.5 text-xs font-medium text-text-muted">
+                        Archived
+                      </span>
+                    )}
+                  </div>
+
+                  {loadingStats ? (
+                    <div className="flex items-center gap-2 text-xs text-text-light">
+                      <Loader2 className="h-3 w-3 animate-spin" /> Loading stats...
+                    </div>
+                  ) : s ? (
+                    <div className="flex gap-4 text-xs text-text-muted">
+                      <span className="flex items-center gap-1">
+                        <Users className="h-3.5 w-3.5" /> {s.studentCount} learners
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <School className="h-3.5 w-3.5" /> {s.classroomCount}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <UserCheck className="h-3.5 w-3.5" /> {s.educatorCount}
+                      </span>
+                    </div>
+                  ) : null}
+                </button>
+
+                <div className="mt-4 border-t border-bg-muted pt-3">
+                  {isArchived ? (
+                    <button
+                      onClick={() => handleUnarchive(school)}
+                      disabled={busyId === school.id}
+                      className="flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:text-primary-700 disabled:opacity-50"
+                    >
+                      {busyId === school.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <ArchiveRestore className="h-3.5 w-3.5" />
+                      )}
+                      Restore
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleArchive(school)}
+                      disabled={busyId === school.id}
+                      className="flex items-center gap-1.5 text-xs font-medium text-text-muted hover:text-alert-500 disabled:opacity-50"
+                    >
+                      {busyId === school.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Archive className="h-3.5 w-3.5" />
+                      )}
+                      Archive
+                    </button>
+                  )}
                 </div>
               </div>
-
-              {loadingStats ? (
-                <div className="flex items-center gap-2 text-xs text-text-light">
-                  <Loader2 className="h-3 w-3 animate-spin" /> Loading stats...
-                </div>
-              ) : s ? (
-                <div className="flex gap-4 text-xs text-text-muted">
-                  <span className="flex items-center gap-1">
-                    <Users className="h-3.5 w-3.5" /> {s.studentCount} learners
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <School className="h-3.5 w-3.5" /> {s.classroomCount}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <UserCheck className="h-3.5 w-3.5" /> {s.educatorCount}
-                  </span>
-                </div>
-              ) : null}
-            </button>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
