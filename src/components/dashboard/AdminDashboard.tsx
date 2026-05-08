@@ -19,7 +19,6 @@ import {
   Layers,
   BookOpen,
   Settings,
-  ArrowRight,
 } from 'lucide-react'
 import type { AdminDashboardData } from '../../lib/dashboard-data'
 
@@ -48,24 +47,39 @@ function StatCard({
   label,
   value,
   accent,
+  sublabel,
 }: {
   icon: React.ReactNode
   label: string
   value: number
   accent: string
+  sublabel?: string
 }) {
   return (
-    <div className="glass-card p-5">
-      <div className="mb-3 flex items-center justify-between">
+    <div
+      className="kpi-card p-5"
+      style={{ ['--kpi-accent' as string]: accent }}
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+          {label}
+        </p>
         <div
-          className="flex h-10 w-10 items-center justify-center rounded-lg"
+          className="flex h-7 w-7 items-center justify-center rounded-md"
           style={{ backgroundColor: accent + '18' }}
         >
           {icon}
         </div>
       </div>
-      <p className="text-3xl font-semibold tracking-tight tabular-nums text-text">{value.toLocaleString()}</p>
-      <p className="mt-1 text-xs text-text-muted">{label}</p>
+      <p
+        className="text-4xl font-semibold leading-none tracking-tight tabular-nums"
+        style={{ color: accent }}
+      >
+        {value.toLocaleString()}
+      </p>
+      {sublabel && (
+        <p className="mt-2 text-xs text-text-muted">{sublabel}</p>
+      )}
     </div>
   )
 }
@@ -155,28 +169,32 @@ export default function AdminDashboard({ data }: Props) {
       {/* ---- Stat cards ---- */}
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
-          icon={<Users className="h-5 w-5 text-primary-600" />}
-          label="Total Learners"
+          icon={<Users className="h-4 w-4 text-primary-600" />}
+          label="Learners"
           value={data.stats.totalStudents}
           accent="#0D7377"
+          sublabel="enrolled across school"
         />
         <StatCard
-          icon={<School className="h-5 w-5 text-accent-600" />}
+          icon={<School className="h-4 w-4 text-accent-600" />}
           label="Classrooms"
           value={data.stats.totalClassrooms}
           accent="#D4943A"
+          sublabel="active this period"
         />
         <StatCard
-          icon={<GraduationCap className="h-5 w-5 text-success-600" />}
+          icon={<GraduationCap className="h-4 w-4 text-success-600" />}
           label="Educators"
           value={data.stats.totalEducators}
           accent="#10B981"
+          sublabel="teaching at school"
         />
         <StatCard
-          icon={<ClipboardPen className="h-5 w-5 text-primary-600" />}
-          label={`Observations (${new Date().toLocaleDateString('en-US', { month: 'short' })})`}
+          icon={<ClipboardPen className="h-4 w-4 text-primary-600" />}
+          label="Observations"
           value={data.stats.observationsThisPeriod}
           accent="#0D7377"
+          sublabel={`recorded in ${new Date().toLocaleDateString('en-US', { month: 'long' })}`}
         />
       </section>
 
@@ -292,7 +310,10 @@ export default function AdminDashboard({ data }: Props) {
 
       {/* ---- Quick Links ---- */}
       <section>
-        <h2 className="mb-3 text-lg font-semibold tracking-tight text-text">Quick Links</h2>
+        <div className="mb-3 flex items-center gap-2">
+          <h2 className="text-lg font-semibold tracking-tight text-text">Quick Links</h2>
+          <span className="count-pill">4</span>
+        </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <QuickLink
             icon={<School className="h-5 w-5 text-primary-600" />}
@@ -338,13 +359,15 @@ function QuickLink({
   return (
     <button
       onClick={() => navigate(to)}
-      className="glass-card glass-card-interactive group flex items-center gap-3 px-4 py-3.5 text-left"
+      className="glass-card glass-card-interactive group flex items-center gap-3 p-3 text-left"
     >
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50">
         {icon}
       </div>
       <span className="flex-1 text-sm font-medium text-text">{label}</span>
-      <ArrowRight className="h-4 w-4 text-text-light opacity-0 transition-opacity group-hover:opacity-100" />
+      <span className="btn-soft px-3 py-1.5 text-xs">
+        Open
+      </span>
     </button>
   )
 }

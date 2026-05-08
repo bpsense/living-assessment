@@ -130,6 +130,64 @@ body {
   border: 1px solid var(--glass-border-color);
 }
 
+/* KPI card with colored top-accent strip
+   Inspired by ops dashboards — gives a stat card a clear identity color
+   without the icon-bubble heaviness of a regular glass-card. Pair with
+   --accent CSS var on the element to color the strip. */
+.kpi-card {
+  background: var(--glass-tint-neutral);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid var(--glass-border-color);
+  border-radius: var(--glass-radius);
+  box-shadow: var(--glass-shadow);
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--kpi-accent, var(--color-primary-500));
+}
+
+/* Soft pastel CTA — light tinted background, primary-toned label.
+   For low-emphasis or list-row "open" actions. The strong CTA is still
+   bg-primary-500. */
+.btn-soft {
+  background: var(--color-primary-50);
+  color: var(--color-primary-700);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+.btn-soft:hover {
+  background: var(--color-primary-100);
+  border-color: rgba(13, 115, 119, 0.18);
+}
+.btn-soft:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Count pill — small number badge for section headers
+   ("Priority view · 6 open" pattern). */
+.count-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--color-text);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Fallback for browsers without backdrop-filter (~3% of users) */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass-card,
