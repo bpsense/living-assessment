@@ -323,9 +323,9 @@ export default function TimelinePlayback({
             {filteredSnapshots.map((snap, i) => {
               const left = total > 1 ? (i / (total - 1)) * 100 : 50
               const isActive = i === filteredIndex
-              const isGradeTransition = snap.isGradeTransition
-              const transitionTitle = isGradeTransition && snap.prevGradeYear && snap.gradeYear
-                ? `Grade ${snap.prevGradeYear} → Grade ${snap.gradeYear}`
+              const isGradeTransition = snap.isAgeRollover
+              const transitionTitle = isGradeTransition && snap.prevAgeYears != null
+                ? `${snap.prevAgeYears}y → ${snap.ageYears}y`
                 : snap.label
               return (
                 <button

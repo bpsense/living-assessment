@@ -51,7 +51,7 @@ const LEVEL_META = [
   { label: 'Emerging', stroke: '#B4AFA0', fill: 'rgba(180,175,160,0.30)' },
   { label: 'Developing', stroke: '#C0BBAD', fill: 'rgba(200,196,184,0.20)' },
   { label: 'Achieving', stroke: '#CCC8BA', fill: 'rgba(220,216,206,0.12)' },
-  { label: 'Mastery', stroke: '#D8D4CA', fill: 'none' },
+  { label: 'Exceeding', stroke: '#D8D4CA', fill: 'none' },
 ]
 
 // ── Geometry helpers ───────────────────────────────────────────

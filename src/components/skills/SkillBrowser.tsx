@@ -16,7 +16,6 @@ import {
 import {
   gradeToOrdinal,
   GRADE_OPTIONS,
-  fetchLearnerProfileDomainsForSchool,
 } from '../../lib/skills-data'
 import type {
   SkillWithProgression,
@@ -24,7 +23,6 @@ import type {
   GradeZone,
   Skill,
 } from '../../types/database'
-import type { LearnerProfileDomain } from '../../types/learner-profile'
 import { Lock } from 'lucide-react'
 import {
   Search,
@@ -106,8 +104,6 @@ export default function SkillBrowser({
   const [search, setSearch] = useState('')
   const [framework, setFramework] = useState('')
   const [domain, setDomain] = useState('')
-  /** V2: filter by Learner Profile domain id (separate from legacy `domain` string). */
-  const [lpDomainId, setLpDomainId] = useState('')
   /** V2: filter to skills whose age band includes this age. */
   const [age, setAge] = useState('')
   const [gradeLevel, setGradeLevel] = useState(defaultGrade ?? '')
@@ -115,15 +111,7 @@ export default function SkillBrowser({
   // Data
   const [skills, setSkills] = useState<SkillWithProgression[]>([])
   const [gradeResults, setGradeResults] = useState<{ zone: GradeZone; step: SkillProgressionStep; skill: Skill }[]>([])
-  const [lpDomains, setLpDomains] = useState<LearnerProfileDomain[]>([])
   const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (!schoolId) return
-    fetchLearnerProfileDomainsForSchool(schoolId)
-      .then(setLpDomains)
-      .catch(() => {/* non-critical */})
-  }, [schoolId])
 
   // UI state
   const [expandedZones, setExpandedZones] = useState<Set<GradeZone>>(new Set(['current']))
@@ -164,12 +152,6 @@ export default function SkillBrowser({
     loadSkills()
   }, [loadSkills])
 
-  const lpDomainsById = useMemo(() => {
-    const map = new Map<string, LearnerProfileDomain>()
-    for (const d of lpDomains) map.set(d.id, d)
-    return map
-  }, [lpDomains])
-
   // Compute available domains from loaded data
   const domains = useMemo(() => {
     const domainSet = new Set<string>()
@@ -203,9 +185,6 @@ export default function SkillBrowser({
     if (framework) {
       filtered = filtered.filter((r) => r.skill.source_framework === framework)
     }
-    if (lpDomainId) {
-      filtered = filtered.filter((r) => r.skill.domain_id === lpDomainId)
-    }
     const ageNum = age === '' ? null : Number(age)
     if (ageNum !== null && !Number.isNaN(ageNum)) {
       filtered = filtered.filter((r) => skillMatchesAge(r.skill, ageNum))
@@ -232,14 +211,13 @@ export default function SkillBrowser({
       if (zo !== 0) return zo
       return gradeToOrdinal(a.grade) - gradeToOrdinal(b.grade)
     })
-  }, [gradeResults, gradeLevel, search, framework, lpDomainId, age])
+  }, [gradeResults, gradeLevel, search, framework, age])
 
   // Non-grade-filtered view: group by domain
   const domainGroups = useMemo(() => {
     if (gradeLevel) return new Map<string, SkillWithProgression[]>()
     const ageNum = age === '' ? null : Number(age)
     const filtered = skills.filter((s) => {
-      if (lpDomainId && s.domain_id !== lpDomainId) return false
       if (ageNum !== null && !Number.isNaN(ageNum) && !skillMatchesAge(s, ageNum)) return false
       return true
     })
@@ -250,7 +228,7 @@ export default function SkillBrowser({
       grouped.get(dom)!.push(skill)
     }
     return grouped
-  }, [skills, gradeLevel, lpDomainId, age])
+  }, [skills, gradeLevel, age])
 
   // Toggle zone expansion
   function toggleZone(zone: GradeZone) {
@@ -301,17 +279,6 @@ export default function SkillBrowser({
             className="w-full rounded-lg border border-bg-muted bg-bg py-2 pl-9 pr-3 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
           />
         </div>
-
-        <select
-          value={lpDomainId}
-          onChange={(e) => setLpDomainId(e.target.value)}
-          className="rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
-        >
-          <option value="">All Profile Domains</option>
-          {lpDomains.map((d) => (
-            <option key={d.id} value={d.id}>{d.name}</option>
-          ))}
-        </select>
 
         <input
           type="number"
@@ -433,7 +400,6 @@ export default function SkillBrowser({
                             ladderLoading={expandedSkill === skill.id && ladderLoading}
                             onExpand={() => handleExpandSkill(skill.id)}
                             onAssign={onAssign}
-                            lpDomain={skill.domain_id ? lpDomainsById.get(skill.domain_id) ?? null : null}
                           />
                         ))}
                       </div>
@@ -471,7 +437,6 @@ export default function SkillBrowser({
                       ladderLoading={expandedSkill === skill.id && ladderLoading}
                       onExpand={() => handleExpandSkill(skill.id)}
                       onAssign={onAssign}
-                      lpDomain={skill.domain_id ? lpDomainsById.get(skill.domain_id) ?? null : null}
                     />
                   )
                 })}
@@ -509,7 +474,6 @@ function SkillCard({
   ladderLoading,
   onExpand,
   onAssign,
-  lpDomain,
 }: {
   skill: Skill
   step: SkillProgressionStep | null
@@ -520,7 +484,6 @@ function SkillCard({
   ladderLoading: boolean
   onExpand: () => void
   onAssign?: (skill: Skill, step: SkillProgressionStep) => void
-  lpDomain?: LearnerProfileDomain | null
 }) {
   const isBaseline = skill.school_id === null
   return (
@@ -542,14 +505,6 @@ function SkillCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-medium text-text">{skill.name}</span>
-            {lpDomain && (
-              <span
-                className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
-                style={{ backgroundColor: lpDomain.color ?? '#94A3B8' }}
-              >
-                {lpDomain.name}
-              </span>
-            )}
             {isBaseline && (
               <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-medium text-white">
                 <Lock className="h-2.5 w-2.5" />

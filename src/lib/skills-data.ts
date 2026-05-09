@@ -7,8 +7,6 @@
 
 import { supabase } from './supabase'
 import type { Skill, SkillInsert, SkillUpdate, Dimension } from '../types/database'
-import type { LearnerProfileDomain } from '../types/learner-profile'
-import { fetchActiveProfile } from './learner-profile-data'
 
 // ============================================================
 // Composite types
@@ -16,13 +14,6 @@ import { fetchActiveProfile } from './learner-profile-data'
 
 export interface SkillWithCompetencies extends Skill {
   competencies: { id: string; code: string; name: string }[]
-}
-
-/** A skill paired with its resolved Learner Profile domain (when mapped). */
-export interface SkillWithDomain extends SkillWithCompetencies {
-  domain: LearnerProfileDomain | null
-  /** Convenience: true when school_id is NULL (system-owned baseline skill). */
-  is_baseline: boolean
 }
 
 // ============================================================
@@ -76,7 +67,6 @@ export async function fetchSkills(
   filters?: {
     search?: string
     category?: string
-    domainId?: string
     /** Only include skills whose age band overlaps with this range. */
     ageBandStart?: number
     ageBandEnd?: number
@@ -97,10 +87,6 @@ export async function fetchSkills(
     query = query.eq('school_id', schoolId)
   } else {
     query = query.or(`school_id.eq.${schoolId},school_id.is.null`)
-  }
-
-  if (filters?.domainId) {
-    query = query.eq('domain_id', filters.domainId)
   }
 
   const { data, error } = await query
@@ -156,68 +142,14 @@ function ageBandOverlaps(
 }
 
 /**
- * Fetch all skills tagged to a specific Learner Profile domain.
- * Includes baseline (school_id IS NULL) skills so a school can see
- * cross-school content tagged to the same domain.
- */
-export async function getSkillsByDomain(
-  domainId: string,
-  schoolId: string
-): Promise<SkillWithCompetencies[]> {
-  return fetchSkills(schoolId, { domainId })
-}
-
-/**
- * Fetch skills whose age band overlaps the given range, optionally
- * restricted to a single domain.
+ * Fetch skills whose age band overlaps the given range.
  */
 export async function getSkillsByAgeBand(
   schoolId: string,
   ageBandStart: number,
-  ageBandEnd: number,
-  domainId?: string
+  ageBandEnd: number
 ): Promise<SkillWithCompetencies[]> {
-  return fetchSkills(schoolId, { ageBandStart, ageBandEnd, domainId })
-}
-
-/**
- * Resolve domain rows for a list of skills. Returns a parallel list of
- * `SkillWithDomain` enriched with the matching learner_profile_domains row
- * (or null when domain_id is unset / unresolvable).
- */
-export async function attachDomainsToSkills(
-  skills: SkillWithCompetencies[]
-): Promise<SkillWithDomain[]> {
-  const domainIds = [
-    ...new Set(skills.map((s) => s.domain_id).filter((id): id is string => !!id)),
-  ]
-  let domainsById = new Map<string, LearnerProfileDomain>()
-  if (domainIds.length > 0) {
-    const { data, error } = await supabase
-      .from('learner_profile_domains')
-      .select('*')
-      .in('id', domainIds)
-    if (error) throw error
-    for (const d of (data ?? []) as LearnerProfileDomain[]) {
-      domainsById.set(d.id, d)
-    }
-  }
-  return skills.map((s) => ({
-    ...s,
-    domain: s.domain_id ? (domainsById.get(s.domain_id) ?? null) : null,
-    is_baseline: s.school_id === null,
-  }))
-}
-
-/**
- * Fetch the active Learner Profile's domains for a school. Convenience
- * wrapper used by skill forms that need to populate the domain dropdown.
- */
-export async function fetchLearnerProfileDomainsForSchool(
-  schoolId: string
-): Promise<LearnerProfileDomain[]> {
-  const profile = await fetchActiveProfile(schoolId)
-  return profile?.domains ?? []
+  return fetchSkills(schoolId, { ageBandStart, ageBandEnd })
 }
 
 /**
@@ -402,18 +334,3 @@ export async function deleteSkill(id: string): Promise<void> {
   if (error) throw error
 }
 
-/**
- * Assign the same Learner Profile domain to many skills in one call.
- * Used by the "unmapped skills" admin banner's bulk-assign action.
- */
-export async function bulkAssignDomain(
-  skillIds: string[],
-  domainId: string | null
-): Promise<void> {
-  if (skillIds.length === 0) return
-  const { error } = await supabase
-    .from('skills')
-    .update({ domain_id: domainId })
-    .in('id', skillIds)
-  if (error) throw error
-}

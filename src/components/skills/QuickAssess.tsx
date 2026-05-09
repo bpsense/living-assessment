@@ -170,7 +170,6 @@ export default function QuickAssess({ studentId, embedded = false }: Props) {
         <ul className="space-y-2">
           {rows.map((r) => {
             const last = latest.get(r.assignment.skill_id)
-            const dom = r.assignment.domain
             return (
               <li
                 key={r.assignment.id}
@@ -180,14 +179,6 @@ export default function QuickAssess({ studentId, embedded = false }: Props) {
                   <span className="text-sm font-medium text-text">
                     {r.assignment.skill.name}
                   </span>
-                  {dom && (
-                    <span
-                      className="rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
-                      style={{ backgroundColor: dom.color ?? '#94A3B8' }}
-                    >
-                      {dom.name}
-                    </span>
-                  )}
                   {last && (
                     <span className="ml-auto text-[11px] text-text-light">
                       latest: <span className="font-medium text-text-muted">{formatLevel(last.level)}</span>

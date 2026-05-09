@@ -39,18 +39,16 @@ import type {
   TranslationMappingInsert,
   Standard,
 } from '../types/database'
-import type { LearnerProfileDomain } from '../types/learner-profile'
 import type { TranslationAIResult } from '../lib/ai-mapping'
 import { formatLevel } from '../lib/skill-assessment-data'
 
 // ============================================================
 // Source-side context per mapping (left column of Review step).
-// Resolved client-side from skill_assessment_id → skills + LP domain.
+// Resolved client-side from skill_assessment_id → skills.
 // ============================================================
 
 interface MappingSource {
   skillName: string
-  domain: LearnerProfileDomain | null
   level: string | null
   /** ISO date — assessment timestamp. */
   date: string | null
@@ -275,7 +273,7 @@ export default function TranslatePage() {
         const { data: assessments } = await supabase
           .from('skill_assessments')
           .select(
-            'id, level, assessed_at, skill:skills(id, name, domain_id, domain:learner_profile_domains(id, profile_id, name, description, color, sort_order, created_at))'
+            'id, level, assessed_at, skill:skills(id, name)'
           )
           .in('id', assessmentIds)
 
@@ -288,7 +286,6 @@ export default function TranslatePage() {
           if (!a) continue
           sources.set(m.id, {
             skillName: a.skill?.name ?? '(unknown skill)',
-            domain: a.skill?.domain ?? null,
             level: a.level,
             date: a.assessed_at ?? null,
           })
@@ -662,14 +659,6 @@ export default function TranslatePage() {
                                 {source.skillName}
                               </p>
                               <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                                {source.domain && (
-                                  <span
-                                    className="rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
-                                    style={{ backgroundColor: source.domain.color ?? '#94A3B8' }}
-                                  >
-                                    {source.domain.name}
-                                  </span>
-                                )}
                                 {source.level && (
                                   <span className="rounded-full bg-bg-muted px-2 py-0.5 text-[10px] font-medium text-text-muted">
                                     {formatLevel(source.level as 'emerging' | 'developing' | 'achieving' | 'exceeding')}

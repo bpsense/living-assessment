@@ -7,12 +7,10 @@ import {
   fetchSkillCategories,
   fetchDimensions,
   fetchSkillDomains,
-  fetchLearnerProfileDomainsForSchool,
 } from '../../lib/skills-data'
 import { supabase } from '../../lib/supabase'
 import SmartSelect, { type SmartSelectOption } from '../SmartSelect'
 import type { Skill, SkillProgressionStep, Dimension } from '../../types/database'
-import type { LearnerProfileDomain } from '../../types/learner-profile'
 
 // ============================================================
 // Types
@@ -57,8 +55,6 @@ export default function InlineSkillCreator({ open, onClose, onCreated }: Props) 
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
   const [domain, setDomain] = useState('')
-  /** V2: FK to learner_profile_domains. */
-  const [domainId, setDomainId] = useState('')
   const [ageBandStart, setAgeBandStart] = useState('')
   const [ageBandEnd, setAgeBandEnd] = useState('')
   const [steps, setSteps] = useState<ProgressionEntry[]>([
@@ -70,7 +66,6 @@ export default function InlineSkillCreator({ open, onClose, onCreated }: Props) 
   const [dimensions, setDimensions] = useState<Dimension[]>([])
   const [categoryList, setCategoryList] = useState<string[]>([])
   const [skillDomainList, setSkillDomainList] = useState<string[]>([])
-  const [lpDomains, setLpDomains] = useState<LearnerProfileDomain[]>([])
 
   // Load dropdown data when modal opens
   useEffect(() => {
@@ -80,12 +75,10 @@ export default function InlineSkillCreator({ open, onClose, onCreated }: Props) 
       fetchDimensions(sid),
       fetchSkillCategories(sid),
       fetchSkillDomains(sid),
-      fetchLearnerProfileDomainsForSchool(sid),
-    ]).then(([dims, cats, doms, lpDoms]) => {
+    ]).then(([dims, cats, doms]) => {
       setDimensions(dims)
       setCategoryList(cats)
       setSkillDomainList(doms)
-      setLpDomains(lpDoms)
     }).catch(() => {
       // Non-critical — dropdowns just won't be pre-populated
     })
@@ -98,7 +91,6 @@ export default function InlineSkillCreator({ open, onClose, onCreated }: Props) 
       setDescription('')
       setCategory('')
       setDomain('')
-      setDomainId('')
       setAgeBandStart('')
       setAgeBandEnd('')
       setSteps([{ id: crypto.randomUUID(), grade_level: '3', expectation: '' }])
@@ -212,7 +204,6 @@ export default function InlineSkillCreator({ open, onClose, onCreated }: Props) 
           is_assessable: true,
           source_framework: 'custom',
           progression_domain: domain.trim() || null,
-          domain_id: domainId || null,
           age_band_start: Number.isNaN(parsedAgeStart as number) ? null : parsedAgeStart,
           age_band_end: Number.isNaN(parsedAgeEnd as number) ? null : parsedAgeEnd,
           created_by: profile.id,
@@ -295,21 +286,6 @@ export default function InlineSkillCreator({ open, onClose, onCreated }: Props) 
               rows={2}
               className={inputCls + ' resize-none'}
             />
-          </div>
-
-          {/* V2: Learner Profile domain */}
-          <div>
-            <label className={labelCls}>Learner Profile Domain</label>
-            <select
-              value={domainId}
-              onChange={(e) => setDomainId(e.target.value)}
-              className={inputCls}
-            >
-              <option value="">— Not mapped —</option>
-              {lpDomains.map((d) => (
-                <option key={d.id} value={d.id}>{d.name}</option>
-              ))}
-            </select>
           </div>
 
           {/* V2: Age band */}

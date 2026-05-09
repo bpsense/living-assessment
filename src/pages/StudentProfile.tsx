@@ -1,14 +1,15 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { differenceInYears } from 'date-fns'
-import { Loader2, AlertCircle, ClipboardPen, ClipboardList, ArrowLeft, TrendingUp, FileDown, Eye, EyeOff, Copy, Check } from 'lucide-react'
+import { Loader2, AlertCircle, ClipboardPen, ClipboardList, ArrowLeft, FileDown, Eye, EyeOff, Copy, Check } from 'lucide-react'
 import { useStudentProfile } from '../lib/student-data'
 import { useAuth } from '../lib/auth'
 import { useAccessControl } from '../lib/access-control'
 import { useToast } from '../components/Toast'
 import { supabase } from '../lib/supabase'
-import { buildSnapshots, getSnapshotObservationDate, smoothSnapshots, applyGradeTransitionDecay } from '../lib/living-data'
+import { buildSnapshots, smoothSnapshots, snapshotToDimensionScores } from '../lib/living-data'
 import LivingVisualization from '../components/student/LivingVisualization'
+import AmoebaEmptyState from '../components/student/AmoebaEmptyState'
 import ZoneMatrix from '../components/student/ZoneMatrix'
 import AILearningGuide from '../components/student/AILearningGuide'
 import FamilySupportGuide from '../components/student/FamilySupportGuide'
@@ -81,7 +82,11 @@ export default function StudentProfile() {
     observations,
     surveys,
     observers,
-    competencyData,
+    skillAssessments,
+    skillCompetencies,
+    amoebaCompetencies,
+    amoebaSubdomains,
+    domainDimensionMap,
     loading,
     error,
     refetch,
@@ -105,18 +110,52 @@ export default function StudentProfile() {
   const [showTimeline, setShowTimeline] = useState(true)
   const [playing, setPlaying] = useState(false)
 
-  // Build snapshots with forward-looking smoothing so growth ramps
-  // gradually toward each change rather than jumping in a single step.
-  // (Experiment — remove smoothSnapshots() wrapper to revert to raw steps)
-  const snapshots = useMemo(
-    () => {
-      const s = applyGradeTransitionDecay(smoothSnapshots(buildSnapshots(observations, surveys, visibleDimensions, competencyData, student?.grade_level)));
-      // Debug: expose snapshots for inspection
-      if (typeof window !== 'undefined') (window as any).__snapshots = s;
-      return s;
-    },
-    [observations, surveys, visibleDimensions, competencyData, student?.grade_level]
-  )
+  // ── Determine amoeba empty-state variant ──
+  const amoebaEmptyVariant = useMemo<
+    'no_dob' | 'no_assessments' | 'no_mappings' | null
+  >(() => {
+    if (!student) return null
+    if (!student.date_of_birth) return 'no_dob'
+    if (skillAssessments.length === 0) return 'no_assessments'
+    if (domainDimensionMap.length === 0) return 'no_mappings'
+    return null
+  }, [student, skillAssessments.length, domainDimensionMap.length])
+
+  // Build amoeba snapshots from V2 skill assessments rolled up through the
+  // standards framework into Learner Profile dimensions, then converted to
+  // the DimensionScore[] shape the LivingBlob consumes (with interest dots
+  // merged in from the latest interest survey at each cutoff).
+  const snapshots = useMemo(() => {
+    if (!student?.date_of_birth || amoebaEmptyVariant !== null) return []
+    const raw = buildSnapshots({
+      dateOfBirth: student.date_of_birth,
+      schoolId: student.school_id,
+      dimensions: visibleDimensions,
+      assessments: skillAssessments,
+      surveys,
+      skillCompetencies,
+      competencies: amoebaCompetencies,
+      subdomains: amoebaSubdomains,
+      domainDimensionMap,
+    })
+    const smoothed = smoothSnapshots(raw)
+    const withScores = smoothed.map((s) => ({
+      ...s,
+      dimensionScores: snapshotToDimensionScores(s, visibleDimensions, surveys),
+    }))
+    return withScores
+  }, [
+    student?.date_of_birth,
+    student?.school_id,
+    amoebaEmptyVariant,
+    visibleDimensions,
+    skillAssessments,
+    surveys,
+    skillCompetencies,
+    amoebaCompetencies,
+    amoebaSubdomains,
+    domainDimensionMap,
+  ])
 
   // Initialize snapshotIdx to latest when snapshots become available
   // (covers the default showTimeline=true case)
@@ -135,40 +174,15 @@ export default function StudentProfile() {
     setShowTimeline((v) => !v)
   }, [showTimeline, snapshots.length])
 
-  // Derive the active snapshot (if any)
-  const activeSnapshot = useMemo(() => {
-    if (!showTimeline || snapshotIdx === null || snapshots.length === 0) return null
-    const idx = Math.min(snapshotIdx, snapshots.length - 1)
-    return snapshots[idx] ?? null
-  }, [showTimeline, snapshotIdx, snapshots])
-
-  const isHistorical = activeSnapshot !== null && snapshotIdx !== null && snapshotIdx < snapshots.length - 1
-
   // Filter dimension scores for family view
   const filteredDimensionScores = useMemo(
     () => (isFamilyView ? dimensionScores.filter((s) => visibleDimensionIds.has(s.dimension_id)) : dimensionScores),
     [dimensionScores, isFamilyView, visibleDimensionIds]
   )
 
-  // Scores to show in dimension cards — historical or current
-  const displayScoresForCards = useMemo(() => {
-    if (activeSnapshot && isHistorical) {
-      const snapshotScores = activeSnapshot.dimensionScores
-      return isFamilyView ? snapshotScores.filter((s) => visibleDimensionIds.has(s.dimension_id)) : snapshotScores
-    }
-    return filteredDimensionScores
-  }, [activeSnapshot, isHistorical, filteredDimensionScores, isFamilyView, visibleDimensionIds])
-
-  // Observation date for back-dating (null means "now")
-  const observationDate = useMemo(() => {
-    if (activeSnapshot && isHistorical) {
-      return getSnapshotObservationDate(activeSnapshot)
-    }
-    return null
-  }, [activeSnapshot, isHistorical])
-
-  // Label for the active period
-  const observationPeriodLabel = isHistorical ? activeSnapshot?.label ?? null : null
+  // Dimension cards always render the *current* scores — historical scrubbing
+  // only affects the amoeba blob, not the rest of the profile.
+  const displayScoresForCards = filteredDimensionScores
 
   // Callback after a quick-rate observation is created
   const handleObservationCreated = useCallback(() => {
@@ -368,20 +382,24 @@ export default function StudentProfile() {
           have populated before it produces a meaningful contour. */}
       <section>
         <div className="glass-card p-5">
-          <LivingVisualization
-            dimensionScores={filteredDimensionScores}
-            snapshots={snapshots}
-            snapshotIdx={snapshotIdx}
-            onSnapshotChange={setSnapshotIdx}
-            showTimeline={showTimeline}
-            onToggleTimeline={handleToggleTimeline}
-            playing={playing}
-            onPlayingChange={setPlaying}
-            onDimensionClick={scrollToDimension}
-            familyView={isFamilyView}
-            observations={observations}
-            observers={observers}
-          />
+          {amoebaEmptyVariant !== null ? (
+            <AmoebaEmptyState variant={amoebaEmptyVariant} />
+          ) : (
+            <LivingVisualization
+              dimensionScores={filteredDimensionScores}
+              snapshots={snapshots}
+              snapshotIdx={snapshotIdx}
+              onSnapshotChange={setSnapshotIdx}
+              showTimeline={showTimeline}
+              onToggleTimeline={handleToggleTimeline}
+              playing={playing}
+              onPlayingChange={setPlaying}
+              onDimensionClick={scrollToDimension}
+              familyView={isFamilyView}
+              observations={observations}
+              observers={observers}
+            />
+          )}
         </div>
       </section>
 
@@ -551,25 +569,6 @@ export default function StudentProfile() {
             </p>
           </div>
 
-          {/* Historical period banner for dimension cards */}
-          {isHistorical && (
-            <div className="mb-4 flex items-center gap-2 rounded-lg bg-accent-50 px-4 py-2">
-              <TrendingUp className="h-4 w-4 text-accent-600" />
-              <span className="text-xs font-medium text-accent-700">
-                Viewing {observationPeriodLabel} — click a competency level to back-date an observation
-              </span>
-              <button
-                onClick={() => {
-                  setPlaying(false)
-                  setSnapshotIdx(snapshots.length - 1)
-                }}
-                className="ml-auto text-xs font-semibold text-accent-600 hover:text-accent-700"
-              >
-                Jump to now →
-              </button>
-            </div>
-          )}
-
           <div className="grid gap-4 md:grid-cols-2">
             {displayScoresForCards.map((score) => (
               <DimensionCard
@@ -577,8 +576,8 @@ export default function StudentProfile() {
                 score={score}
                 studentId={student.id}
                 schoolId={student.school_id}
-                observationDate={observationDate}
-                observationPeriodLabel={observationPeriodLabel}
+                observationDate={null}
+                observationPeriodLabel={null}
                 onObservationCreated={handleObservationCreated}
               />
             ))}

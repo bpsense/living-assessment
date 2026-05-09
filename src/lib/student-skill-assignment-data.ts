@@ -15,8 +15,6 @@ import type {
   StudentSkillAssignmentStatus,
 } from '../types/skill-assessment'
 import type { Skill } from '../types/database'
-import type { LearnerProfileDomain } from '../types/learner-profile'
-import { attachDomainsToSkills } from './skills-data'
 
 // ============================================================
 // Composite types
@@ -24,7 +22,6 @@ import { attachDomainsToSkills } from './skills-data'
 
 export interface StudentSkillAssignmentWithSkill extends StudentSkillAssignment {
   skill: Skill
-  domain: LearnerProfileDomain | null
 }
 
 // ============================================================
@@ -156,8 +153,6 @@ export async function assignProjectSkillsToStudents(args: {
 // ============================================================
 
 export interface StudentSkillAssignmentFilters {
-  /** Filter by Learner Profile domain id. */
-  domainId?: string
   /** Inclusive age window — filters skills whose age band overlaps. */
   ageBandStart?: number
   ageBandEnd?: number
@@ -168,9 +163,8 @@ export interface StudentSkillAssignmentFilters {
 }
 
 /**
- * Fetch a student's skill assignments, joined with the skill row and resolved
- * Learner Profile domain. Domain / age-band filters apply client-side because
- * they require joining through `skills` and `learner_profile_domains`.
+ * Fetch a student's skill assignments, joined with the skill row.
+ * Age-band filter applies client-side.
  */
 export async function getAssignmentsForStudent(
   studentId: string,
@@ -197,11 +191,7 @@ export async function getAssignmentsForStudent(
   type Row = StudentSkillAssignment & { skill: Skill | null }
   const rows = ((data ?? []) as Row[]).filter((r): r is Row & { skill: Skill } => !!r.skill)
 
-  // Domain filter — server-side via skill.domain_id.
   let filtered = rows
-  if (filters.domainId) {
-    filtered = filtered.filter((r) => r.skill.domain_id === filters.domainId)
-  }
   // Age-band overlap filter.
   if (filters.ageBandStart !== undefined || filters.ageBandEnd !== undefined) {
     const start = filters.ageBandStart
@@ -209,16 +199,9 @@ export async function getAssignmentsForStudent(
     filtered = filtered.filter((r) => ageBandOverlaps(r.skill, start, end))
   }
 
-  // Resolve LP domains in one batched call so the UI doesn't have to.
-  const skillsWithDom = await attachDomainsToSkills(
-    filtered.map((r) => ({ ...r.skill, competencies: [] }))
-  )
-  const domainBySkill = new Map(skillsWithDom.map((s) => [s.id, s.domain]))
-
   return filtered.map((r) => ({
     ...r,
     skill: r.skill,
-    domain: domainBySkill.get(r.skill.id) ?? null,
   }))
 }
 
