@@ -35,7 +35,7 @@ import {
 } from 'lucide-react'
 import type { UserRole } from '../types/database'
 import QuickObserveModal from './QuickObserveModal'
-import CreateAssignmentModal from './assignment/CreateAssignmentModal'
+import NewAssignmentFlow from './assignment/NewAssignmentFlow'
 import IncidentReportModal from './incident/IncidentReportModal'
 import SpeedDial from './SpeedDial'
 import SchoolSwitcher from './SchoolSwitcher'
@@ -744,11 +744,10 @@ export default function Layout() {
         onClose={() => setQuickObserveOpen(false)}
       />
 
-      {/* ============ Create Assignment Modal (from FAB) ============ */}
-      <CreateAssignmentModal
+      {/* ============ New Assignment Flow (from FAB) ============ */}
+      <NewAssignmentFlow
         open={showCreateAssignment}
         onClose={() => setShowCreateAssignment(false)}
-        onCreated={() => setShowCreateAssignment(false)}
       />
 
       {/* ============ Incident Report Modal ============ */}
