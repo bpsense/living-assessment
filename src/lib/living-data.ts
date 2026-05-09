@@ -1,412 +1,353 @@
 /**
  * living-data.ts
- * Builds historical snapshots from observations and surveys for timeline playback.
- * Each snapshot represents the state of a student's competency & interest at a point in time.
+ *
+ * Builds monthly amoeba snapshots for a student by rolling up the V2
+ * skill_assessments table through the standards framework into the
+ * school's Learner Profile dimensions.
+ *
+ * Pipeline at each snapshot date M:
+ *   skill_assessments (level → 1-4 score, age-relative cap applied)
+ *     → competencies (via skill_competencies)
+ *     → competency_subdomain → competency_domain
+ *     → competency_domain_dimension_map (school-scoped)
+ *     → average per dimension
+ *
+ * Interest dots layer in separately from interest_surveys.
  */
 
-import type { Observation, InterestSurvey, Dimension } from '../types/database'
-import type { DimensionScore, CompetencyBasedData } from './student-data'
-import { computeCompetencyBasedScores } from './scoring'
+import type { Dimension, InterestSurvey, SkillCompetency } from '../types/database'
+import type { SkillAssessment, AssessmentLevel } from '../types/skill-assessment'
+import { ASSESSMENT_LEVEL_RANK } from '../types/skill-assessment'
+import type { DimensionScore } from './scoring'
 
 // ============================================================
 // Types
 // ============================================================
 
-export interface Snapshot {
-  /** ISO date string */
+export interface CompetencyDomainDimensionMap {
+  id: string
+  school_id: string
+  competency_domain_id: string
+  dimension_id: string
+}
+
+/** Subset of CompetencySubdomain we actually need for the rollup. */
+export interface SubdomainLite {
+  id: string
+  domain_id: string
+}
+
+/** Subset of Competency we need: id, subdomain, age band. */
+export interface CompetencyLite {
+  id: string
+  subdomain_id: string
+  age_band_start: number | null
+  age_band_end: number | null
+}
+
+export interface AmoebaSnapshot {
+  /** ISO date string (first of the month) */
   date: string
-  /** Human-readable label, e.g. "Mar 2024" */
+  /** Human-readable label, e.g. "Mar 2026" */
   label: string
-  /** Scores at this point in time */
-  dimensionScores: DimensionScore[]
-  /** Which grade level this snapshot belongs to (e.g. "3", "K") */
-  gradeYear?: string
-  /** True on September snapshots where the grade increments */
-  isGradeTransition?: boolean
-  /** The grade that just ended (only on transition snapshots) */
-  prevGradeYear?: string
+  /** Student age years at end-of-month cutoff */
+  ageYears: number
+  /** Remaining months past ageYears */
+  ageMonths: number
+  /** dimension_id → average 1-4 (or null when no contributing assessments) */
+  dimensions: Record<string, number | null>
+  /** True on the snapshot for the student's birthday month (rollover) */
+  isAgeRollover?: boolean
+  /** Previous snapshot's ageYears (only on rollover) */
+  prevAgeYears?: number
+}
+
+export interface BuildSnapshotsInput {
+  dateOfBirth: string
+  schoolId: string
+  dimensions: Dimension[]
+  assessments: SkillAssessment[]
+  surveys: InterestSurvey[]
+  skillCompetencies: SkillCompetency[]
+  competencies: CompetencyLite[]
+  subdomains: SubdomainLite[]
+  domainDimensionMap: CompetencyDomainDimensionMap[]
 }
 
 // ============================================================
-// Grade-level ordering & transition helpers
+// Age helpers
 // ============================================================
 
-/** Ordered list of grade levels from youngest to oldest */
-const GRADE_ORDER = ['Pre-K', 'TK', 'K', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+/** Last day of the given month at 23:59:59.999. */
+function endOfMonth(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999)
+}
 
-/**
- * Count how many September 1st boundaries fall between a date and today.
- * A September boundary is crossed when moving from before Sep 1 of a year
- * to on/after Sep 1 of that year.
- */
-function countSeptembersBetween(fromDate: Date, toDate: Date): number {
-  let count = 0
-  const startYear = fromDate.getFullYear()
-  const endYear = toDate.getFullYear()
-
-  for (let y = startYear; y <= endYear; y++) {
-    const sep1 = new Date(y, 8, 1) // September 1
-    if (sep1 > fromDate && sep1 <= toDate) {
-      count++
-    }
+/** Years between dob and at, ignoring time-of-day. */
+export function ageAt(dob: Date, at: Date): { years: number; months: number } {
+  let years = at.getFullYear() - dob.getFullYear()
+  let months = at.getMonth() - dob.getMonth()
+  if (at.getDate() < dob.getDate()) months -= 1
+  if (months < 0) {
+    years -= 1
+    months += 12
   }
-  return count
+  return { years: Math.max(0, years), months: Math.max(0, months) }
 }
-
-/**
- * Given a student's current grade level and a snapshot date,
- * determine what grade the student was in at that time.
- * Returns undefined if grade_level is null or not in the ordered list.
- */
-function gradeAtDate(
-  currentGrade: string,
-  snapshotDate: Date,
-  now: Date
-): string | undefined {
-  const idx = GRADE_ORDER.indexOf(currentGrade)
-  if (idx < 0) return undefined
-
-  const sepsBetween = countSeptembersBetween(snapshotDate, now)
-  const historicalIdx = idx - sepsBetween
-  if (historicalIdx < 0) return GRADE_ORDER[0]
-  return GRADE_ORDER[historicalIdx]
-}
-
-/** Competency decay factor applied at grade transitions */
-const GRADE_TRANSITION_COMPETENCY_FACTOR = 0.35
-/** Interest decay factor at grade transitions (interest persists more) */
-const GRADE_TRANSITION_INTEREST_FACTOR = 0.85
-/** Minimum competency to maintain presence in the Emerging ring */
-const GRADE_TRANSITION_MIN_COMPETENCY = 0.25
 
 // ============================================================
-// Build time-series snapshots
+// Score conversion
+// ============================================================
+
+function levelScore(level: AssessmentLevel): number {
+  return ASSESSMENT_LEVEL_RANK[level]
+}
+
+// ============================================================
+// Snapshot computation
 // ============================================================
 
 /**
- * Create monthly snapshots of dimension scores covering at least the last
- * 12 months (back to the start of the school year) through to the present.
- * This ensures the timeline is always available for educators to rewind
- * and add observations to past months, even when no historical data exists.
- *
- * For each snapshot date, competency is the latest observation rating up
- * to that date and interest is the latest survey response up to that date.
+ * Build monthly snapshots from earliest assessment (or 12mo ago) through now.
+ * Returns [] if no dimensions / dob is null — caller should render empty state
+ * before invoking this.
  */
-export function buildSnapshots(
-  observations: Observation[],
-  surveys: InterestSurvey[],
-  dimensions: Dimension[],
-  competencyData?: CompetencyBasedData | null,
-  gradeLevel?: string | null
-): Snapshot[] {
-  if (dimensions.length === 0) return []
+export function buildSnapshots(input: BuildSnapshotsInput): AmoebaSnapshot[] {
+  const {
+    dateOfBirth,
+    schoolId,
+    dimensions,
+    assessments,
+    skillCompetencies,
+    competencies,
+    subdomains,
+    domainDimensionMap,
+  } = input
 
-  const hasCompData =
-    competencyData &&
-    competencyData.competencyScores.length > 0 &&
-    competencyData.mappings.length > 0
+  if (!dateOfBirth || dimensions.length === 0) return []
 
-  // Sort chronologically (oldest first)
-  const sortedObs = [...observations].sort(
-    (a, b) => new Date(a.observed_at).getTime() - new Date(b.observed_at).getTime()
+  const dob = new Date(dateOfBirth)
+
+  // ── Lookup tables ─────────────────────────────────────────
+  // skill_id → competency_ids
+  const skillToComps = new Map<string, string[]>()
+  for (const sc of skillCompetencies) {
+    const arr = skillToComps.get(sc.skill_id) ?? []
+    arr.push(sc.competency_id)
+    skillToComps.set(sc.skill_id, arr)
+  }
+  // competency_id → CompetencyLite
+  const compById = new Map(competencies.map((c) => [c.id, c]))
+  // subdomain_id → domain_id
+  const subToDomain = new Map(subdomains.map((s) => [s.id, s.domain_id]))
+  // domain_id → dimension_id (school-scoped)
+  const domainToDimension = new Map<string, string>()
+  for (const m of domainDimensionMap) {
+    if (m.school_id !== schoolId) continue
+    domainToDimension.set(m.competency_domain_id, m.dimension_id)
+  }
+
+  // ── Determine snapshot range ──────────────────────────────
+  const sortedAssessments = [...assessments].sort(
+    (a, b) => new Date(a.assessed_at).getTime() - new Date(b.assessed_at).getTime()
   )
-  const sortedSurveys = [...surveys].sort(
-    (a, b) => new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime()
-  )
-
-  // Sort competency scores chronologically for time-based filtering
-  const sortedCompScores = hasCompData
-    ? [...competencyData.competencyScores].sort(
-        (a, b) => new Date(a.scored_at).getTime() - new Date(b.scored_at).getTime()
-      )
-    : []
-
-  // Determine the start date: the earlier of 12 months ago or the first
-  // observation/survey/score. This ensures we always have a full year of months
-  // to scrub through.
   const now = new Date()
   const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1)
+  const earliestAssessment = sortedAssessments[0]
+    ? new Date(sortedAssessments[0].assessed_at).getTime()
+    : now.getTime()
+  const startTime = Math.min(twelveMonthsAgo.getTime(), earliestAssessment)
 
-  const allDates = [
-    ...sortedObs.map((o) => new Date(o.observed_at).getTime()),
-    ...sortedSurveys.map((s) => new Date(s.submitted_at).getTime()),
-    ...sortedCompScores.map((s) => new Date(s.scored_at).getTime()),
-  ]
-  const earliestData = allDates.length > 0 ? Math.min(...allDates) : now.getTime()
-  const startTime = Math.min(twelveMonthsAgo.getTime(), earliestData)
-
-  // Generate monthly snapshot dates from start through to now
   const snapshotDates: Date[] = []
-  const start = new Date(startTime)
-  const cursor = new Date(start.getFullYear(), start.getMonth(), 1)
-
+  const cursor = new Date(new Date(startTime).getFullYear(), new Date(startTime).getMonth(), 1)
   while (cursor.getTime() <= now.getTime()) {
     snapshotDates.push(new Date(cursor))
     cursor.setMonth(cursor.getMonth() + 1)
   }
-
-  // Always include current month as the final snapshot
-  const lastSnapshot = snapshotDates[snapshotDates.length - 1]
-  if (
-    !lastSnapshot ||
-    lastSnapshot.getFullYear() !== now.getFullYear() ||
-    lastSnapshot.getMonth() !== now.getMonth()
-  ) {
+  const last = snapshotDates[snapshotDates.length - 1]
+  if (!last || last.getMonth() !== now.getMonth() || last.getFullYear() !== now.getFullYear()) {
     snapshotDates.push(new Date(now.getFullYear(), now.getMonth(), 1))
   }
 
-  // Build each snapshot
-  const snapshots: Snapshot[] = snapshotDates.map((snapshotDate) => {
-    // Use end of month as cutoff (last millisecond)
-    const cutoff = new Date(
-      snapshotDate.getFullYear(),
-      snapshotDate.getMonth() + 1,
-      0,
-      23,
-      59,
-      59,
-      999
-    ).getTime()
+  // ── Build each snapshot ───────────────────────────────────
+  const snapshots: AmoebaSnapshot[] = snapshotDates.map((monthStart) => {
+    const cutoff = endOfMonth(monthStart).getTime()
+    const { years: ageYears, months: ageMonths } = ageAt(dob, endOfMonth(monthStart))
 
-    // Observations up to this date
-    const obsUpToDate = sortedObs.filter(
-      (o) => new Date(o.observed_at).getTime() <= cutoff
-    )
-    // Only unlinked observations when we have competency data
-    const unlinkedObs = hasCompData
-      ? obsUpToDate.filter((o) => !o.assignment_id)
-      : obsUpToDate
+    // Per-dimension accumulators
+    const sums = new Map<string, { sum: number; count: number }>()
+    for (const d of dimensions) sums.set(d.id, { sum: 0, count: 0 })
 
-    // Competency scores up to this date
-    const compScoresUpToDate = hasCompData
-      ? sortedCompScores.filter(
-          (s) => new Date(s.scored_at).getTime() <= cutoff
-        )
-      : []
+    for (const a of sortedAssessments) {
+      if (new Date(a.assessed_at).getTime() > cutoff) break // sorted ascending
+      const baseScore = levelScore(a.level)
+      const compIds = skillToComps.get(a.skill_id)
+      if (!compIds || compIds.length === 0) continue
 
-    // Compute competency-based dimension scores for this snapshot
-    const compBasedMap =
-      hasCompData && compScoresUpToDate.length > 0
-        ? computeCompetencyBasedScores(
-            compScoresUpToDate,
-            competencyData.mappings,
-            competencyData.competencies,
-            dimensions,
-            competencyData.gradeLevel
-          )
-        : null
+      for (const cid of compIds) {
+        const comp = compById.get(cid)
+        if (!comp) continue
 
-    // Latest survey up to this date
-    const surveysUpToDate = sortedSurveys.filter(
-      (s) => new Date(s.submitted_at).getTime() <= cutoff
-    )
-    const latestSurvey = surveysUpToDate[surveysUpToDate.length - 1] ?? null
-
-    // Is this snapshot for the current month?
-    const isCurrentMonth =
-      snapshotDate.getFullYear() === now.getFullYear() &&
-      snapshotDate.getMonth() === now.getMonth()
-
-    const monthStart = new Date(
-      snapshotDate.getFullYear(),
-      snapshotDate.getMonth(),
-      1
-    ).getTime()
-
-    // Compute scores per dimension
-    const dimensionScores: DimensionScore[] = dimensions.map((dim) => {
-      // All observations for this dimension up to cutoff (for counts/latest), newest first
-      const allDimObs = obsUpToDate
-        .filter((o) => o.dimension_id === dim.id)
-        .sort(
-          (a, b) =>
-            new Date(b.observed_at).getTime() - new Date(a.observed_at).getTime()
-        )
-
-      // Unlinked observations for observation-based scoring
-      const dimObs = unlinkedObs
-        .filter((o) => o.dimension_id === dim.id)
-        .sort(
-          (a, b) =>
-            new Date(b.observed_at).getTime() - new Date(a.observed_at).getTime()
-        )
-
-      let obsCompetency: number
-      let currentMonthCount = 0
-
-      if (isCurrentMonth) {
-        const thisMonthObs = dimObs.filter(
-          (o) => new Date(o.observed_at).getTime() >= monthStart
-        )
-        currentMonthCount = thisMonthObs.length
-
-        if (thisMonthObs.length > 0) {
-          obsCompetency =
-            thisMonthObs.reduce((sum, o) => sum + Number(o.rating), 0) /
-            thisMonthObs.length
-        } else {
-          obsCompetency = dimObs.length > 0 ? Number(dimObs[0].rating) : 0
+        // Age cap: above band → emerging (1)
+        let effective = baseScore
+        if (
+          comp.age_band_start != null &&
+          comp.age_band_end != null &&
+          ageYears > comp.age_band_end
+        ) {
+          effective = 1
         }
-      } else {
-        obsCompetency = dimObs.length > 0 ? Number(dimObs[0].rating) : 0
+
+        const domainId = subToDomain.get(comp.subdomain_id)
+        if (!domainId) continue
+        const dimensionId = domainToDimension.get(domainId)
+        if (!dimensionId) continue
+
+        const acc = sums.get(dimensionId)
+        if (!acc) continue
+        acc.sum += effective
+        acc.count += 1
       }
+    }
 
-      // Blend observation + competency-based scores
-      const compBased = compBasedMap?.get(dim.id)
-      const hasCompScores = compBased && compBased.breakdown.length > 0
-
-      let competency: number
-      if (hasCompScores && obsCompetency > 0) {
-        competency = (compBased.score + obsCompetency) / 2
-      } else if (hasCompScores) {
-        competency = compBased.score
-      } else {
-        competency = obsCompetency
-      }
-
-      // Interest from latest survey
-      let interest = 0
-      if (latestSurvey?.responses && typeof latestSurvey.responses === 'object') {
-        const val = (latestSurvey.responses as Record<string, number>)[dim.id]
-        interest = typeof val === 'number' ? val : 0
-      }
-
-      return {
-        dimension_id: dim.id,
-        dimension_name: dim.name,
-        icon: dim.icon,
-        display_order: dim.display_order,
-        competency,
-        interest,
-        observation_count: allDimObs.length,
-        current_month_observation_count: currentMonthCount,
-        latest_observation: allDimObs[0] ?? null,
-        competency_breakdown: hasCompScores ? compBased.breakdown : undefined,
-      }
-    })
-
-    // Determine grade metadata for this snapshot
-    const snapshotGrade = gradeLevel
-      ? gradeAtDate(gradeLevel, snapshotDate, now)
-      : undefined
+    const dimResult: Record<string, number | null> = {}
+    for (const d of dimensions) {
+      const acc = sums.get(d.id)!
+      dimResult[d.id] = acc.count > 0 ? acc.sum / acc.count : null
+    }
 
     return {
-      date: snapshotDate.toISOString(),
-      label: snapshotDate.toLocaleDateString('en-US', {
-        month: 'short',
-        year: 'numeric',
-      }),
-      dimensionScores,
-      gradeYear: snapshotGrade,
+      date: monthStart.toISOString(),
+      label: monthStart.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+      ageYears,
+      ageMonths,
+      dimensions: dimResult,
     }
   })
 
-  // ── Grade transition: mark September boundaries ──────────────
-  // Score decay is applied separately AFTER smoothing (see applyGradeTransitionDecay).
-  // Here we just annotate which snapshots are transitions.
-  if (gradeLevel && GRADE_ORDER.indexOf(gradeLevel) >= 0) {
-    for (let i = 1; i < snapshots.length; i++) {
-      const prev = snapshots[i - 1]
-      const curr = snapshots[i]
-      const currDate = new Date(curr.date)
-
-      if (
-        currDate.getMonth() === 8 &&
-        curr.gradeYear &&
-        prev.gradeYear &&
-        curr.gradeYear !== prev.gradeYear
-      ) {
-        curr.isGradeTransition = true
-        curr.prevGradeYear = prev.gradeYear
-      }
+  // ── Mark age-rollover snapshots (birthday month) ──────────
+  for (let i = 1; i < snapshots.length; i++) {
+    if (snapshots[i].ageYears !== snapshots[i - 1].ageYears) {
+      snapshots[i].isAgeRollover = true
+      snapshots[i].prevAgeYears = snapshots[i - 1].ageYears
     }
   }
 
   return snapshots
 }
 
+// ============================================================
+// Dimension score mapping (snapshot → DimensionScore[])
+// ============================================================
+
 /**
- * Apply grade-transition score decay to snapshots.
- *
- * Must be called AFTER smoothSnapshots() so that forward-looking smoothing
- * doesn't interfere with the decay logic.
- *
- * For each September transition, scores from the PREVIOUS school year are
- * decayed forward: the September snapshot and all subsequent months within
- * that school year get their competency multiplied by the decay factor.
- * This makes the blob shrink at September and only grow back when new
- * observations at the higher grade level produce higher scores.
- *
- * Prior school years are NOT decayed — they display at full scale during
- * playback, creating the "full blob → squeeze → grow" story each year.
+ * Convert a snapshot + interest survey into the DimensionScore[] shape that
+ * LivingBlob consumes. competency = avg level (1-4) or 0 if null. interest =
+ * latest survey response for the dimension or 0.
  */
-export function applyGradeTransitionDecay(snapshots: Snapshot[]): Snapshot[] {
-  if (snapshots.length === 0) return snapshots
+export function snapshotToDimensionScores(
+  snapshot: AmoebaSnapshot,
+  dimensions: Dimension[],
+  surveys: InterestSurvey[]
+): DimensionScore[] {
+  const cutoff = endOfMonth(new Date(snapshot.date)).getTime()
+  const survey = [...surveys]
+    .filter((s) => new Date(s.submitted_at).getTime() <= cutoff)
+    .sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime())[0]
+  const responses = (survey?.responses ?? {}) as Record<string, number>
 
-  // Find transition indices
-  const transitionIndices: number[] = []
+  return dimensions.map((d) => {
+    const competency = snapshot.dimensions[d.id]
+    const interest = typeof responses[d.id] === 'number' ? responses[d.id] : 0
+    return {
+      dimension_id: d.id,
+      dimension_name: d.name,
+      icon: d.icon,
+      display_order: d.display_order,
+      competency: competency ?? 0,
+      interest,
+      observation_count: 0,
+      current_month_observation_count: 0,
+      latest_observation: null,
+      competency_breakdown: undefined,
+    }
+  })
+}
+
+// ============================================================
+// Smoothing
+// ============================================================
+
+/**
+ * Forward-looking smoothing on the per-dimension competency time series.
+ * Doesn't ramp across age-rollover snapshots — each year stands alone.
+ */
+export function smoothSnapshots(
+  snapshots: AmoebaSnapshot[],
+  lookahead: number = 3
+): AmoebaSnapshot[] {
+  if (snapshots.length <= 1) return snapshots
+  // Collect dimension ids from first snapshot
+  const dimIds = Object.keys(snapshots[0].dimensions)
+  if (dimIds.length === 0) return snapshots
+
+  const rolloverIdxs = new Set<number>()
   for (let i = 0; i < snapshots.length; i++) {
-    if (snapshots[i].isGradeTransition) transitionIndices.push(i)
+    if (snapshots[i].isAgeRollover) rolloverIdxs.add(i)
   }
-  if (transitionIndices.length === 0) return snapshots
 
-  // Deep-copy so we don't mutate the smoothed input
-  const result = snapshots.map((s) => ({
+  // Build smoothed per-dimension series
+  const smoothed: Record<string, (number | null)[]> = {}
+  for (const id of dimIds) {
+    const raw = snapshots.map((s) => s.dimensions[id])
+    smoothed[id] = forwardSmooth(raw, lookahead, rolloverIdxs)
+  }
+
+  return snapshots.map((s, i) => ({
     ...s,
-    dimensionScores: s.dimensionScores.map((ds) => ({ ...ds })),
+    dimensions: Object.fromEntries(dimIds.map((id) => [id, smoothed[id][i]])),
   }))
+}
 
-  // For each transition, decay ONLY the September snapshot itself.
-  // Subsequent months keep their natural scores — they represent the
-  // student's competency as observed at the new grade level.
-  // This creates a sharp "reset" at September that the blob grows out of.
-  for (const tIdx of transitionIndices) {
-    result[tIdx].dimensionScores = result[tIdx].dimensionScores.map((ds) => ({
-      ...ds,
-      competency:
-        ds.competency > 0
-          ? Math.max(ds.competency * GRADE_TRANSITION_COMPETENCY_FACTOR, GRADE_TRANSITION_MIN_COMPETENCY)
-          : 0,
-      interest: ds.interest * GRADE_TRANSITION_INTEREST_FACTOR,
-    }))
+function forwardSmooth(
+  values: (number | null)[],
+  lookahead: number,
+  rolloverIdxs: Set<number>
+): (number | null)[] {
+  const n = values.length
+  const result: (number | null)[] = [...values]
+
+  for (let i = 1; i < n; i++) {
+    const cur = values[i]
+    const prev = values[i - 1]
+    if (cur == null || prev == null || cur === prev) continue
+    if (rolloverIdxs.has(i)) continue // never ramp across age boundary
+
+    // Find the start of the flat "from" region (don't cross rollovers)
+    let flatStart = i - 1
+    while (flatStart > 0 && values[flatStart - 1] === prev) {
+      if (rolloverIdxs.has(flatStart)) break
+      flatStart--
+    }
+
+    const rampStart = Math.max(flatStart, i - lookahead)
+    const rampLength = i - rampStart
+    if (rampLength <= 0) continue
+
+    for (let j = rampStart; j < i; j++) {
+      const t = (j - rampStart + 1) / (rampLength + 1)
+      const eased = t * t // quadratic ease-in
+      result[j] = prev + (cur - prev) * eased
+    }
   }
 
   return result
 }
 
-/**
- * Get an ISO date string to use for back-dating observations to a snapshot's period.
- * Uses the middle of the snapshot's month (15th at noon).
- * If the snapshot is in the current month, returns "now" instead.
- */
-export function getSnapshotObservationDate(snapshot: Snapshot): string {
-  const snapshotDate = new Date(snapshot.date)
-  const now = new Date()
+// ============================================================
+// Interpolation (used by LivingVisualization for fluid morphing)
+// ============================================================
 
-  // If the snapshot is the current month, return now
-  if (
-    snapshotDate.getFullYear() === now.getFullYear() &&
-    snapshotDate.getMonth() === now.getMonth()
-  ) {
-    return now.toISOString()
-  }
-
-  // Otherwise, use the 15th of the snapshot's month at noon
-  const midMonth = new Date(
-    snapshotDate.getFullYear(),
-    snapshotDate.getMonth(),
-    15,
-    12,
-    0,
-    0
-  )
-  return midMonth.toISOString()
-}
-
-/**
- * Interpolate between two DimensionScore arrays for smooth animation.
- * `t` ranges from 0 (fully `from`) to 1 (fully `to`).
- */
 export function interpolateScores(
   from: DimensionScore[],
   to: DimensionScore[],
@@ -423,114 +364,14 @@ export function interpolateScores(
 }
 
 // ============================================================
-// Forward-looking smoothing for timeline playback
+// Enriched snapshot for the visualization layer
 // ============================================================
 
 /**
- * Apply forward-looking smoothing to snapshot time series.
- *
- * Raw snapshots have staircase-shaped data — a dimension stays at
- * "Emerging" for months then suddenly jumps to "Developing." This
- * function creates a gradual ramp in the months leading up to each
- * change, as if the student's growth was gradually building toward
- * the new level.
- *
- * - Only smooths transitions between non-zero values (the 0→first
- *   observation transition stays sharp since 0 means "no data").
- * - The actual change-point value is preserved — the ramp leads
- *   up to it, never overshoots past it.
- * - Uses a quadratic ease-in so growth starts slowly and accelerates.
- *
- * @param lookahead How many months before a change the ramp begins (default 3)
+ * Snapshot enriched with the DimensionScore[] derived from {@link snapshotToDimensionScores}.
+ * This is what LivingVisualization / LivingBlob consume.
  */
-export function smoothSnapshots(
-  snapshots: Snapshot[],
-  lookahead: number = 3
-): Snapshot[] {
-  if (snapshots.length <= 1) return snapshots
-
-  const dimCount = snapshots[0].dimensionScores.length
-  if (dimCount === 0) return snapshots
-
-  // Identify grade boundary indices so smoothing doesn't ramp across them
-  const gradeBoundaries = new Set<number>()
-  for (let i = 0; i < snapshots.length; i++) {
-    if (snapshots[i].isGradeTransition) gradeBoundaries.add(i)
-  }
-
-  // Extract and smooth each dimension's time series independently
-  const smoothedComp: number[][] = []
-  const smoothedInt: number[][] = []
-
-  for (let d = 0; d < dimCount; d++) {
-    const rawComp = snapshots.map((s) => s.dimensionScores[d].competency)
-    const rawInt = snapshots.map((s) => s.dimensionScores[d].interest)
-    smoothedComp.push(forwardSmooth(rawComp, lookahead, gradeBoundaries))
-    smoothedInt.push(forwardSmooth(rawInt, lookahead, gradeBoundaries))
-  }
-
-  // Rebuild snapshots with smoothed values
-  return snapshots.map((snap, i) => ({
-    ...snap,
-    dimensionScores: snap.dimensionScores.map((ds, d) => ({
-      ...ds,
-      competency: smoothedComp[d][i],
-      interest: smoothedInt[d][i],
-    })),
-  }))
+export interface Snapshot extends AmoebaSnapshot {
+  dimensionScores: DimensionScore[]
 }
 
-/**
- * Forward-looking smoothing for a single value series.
- *
- * For each transition (e.g. 1→2), creates a gradual ramp over the
- * `lookahead` months preceding the change. The change-point itself
- * keeps its exact value.
- *
- * Example with lookahead=3:
- *   Raw:      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2]
- *   Smoothed: [1, 1, 1, 1, 1, 1, 1, 1, 1.06, 1.25, 1.56, 2]
- */
-function forwardSmooth(values: number[], lookahead: number, gradeBoundaries?: Set<number>): number[] {
-  const n = values.length
-  const result = [...values]
-
-  for (let i = 1; i < n; i++) {
-    // Only smooth transitions between non-zero values.
-    // 0 means "no data" — don't ramp into or out of it.
-    // Also skip smoothing if this index crosses a grade boundary.
-    if (values[i] === values[i - 1] || values[i] === 0 || values[i - 1] === 0) {
-      continue
-    }
-    if (gradeBoundaries && gradeBoundaries.has(i)) {
-      continue
-    }
-
-    const fromVal = values[i - 1]
-    const toVal = values[i]
-
-    // Find where the flat "from" region starts (don't ramp past it or past grade boundaries)
-    let flatStart = i - 1
-    while (flatStart > 0 && values[flatStart - 1] === fromVal) {
-      if (gradeBoundaries && gradeBoundaries.has(flatStart)) break
-      flatStart--
-    }
-
-    // Ramp starts at most `lookahead` months before the change,
-    // but never before the start of the flat region
-    const rampStart = Math.max(flatStart, i - lookahead)
-    const rampLength = i - rampStart
-
-    if (rampLength <= 0) continue
-
-    for (let j = rampStart; j < i; j++) {
-      // t goes from ~0 at rampStart to ~1 at the change point
-      const t = (j - rampStart + 1) / (rampLength + 1)
-      // Quadratic ease-in: starts slow, accelerates toward the new level
-      const eased = t * t
-      result[j] = fromVal + (toVal - fromVal) * eased
-    }
-  }
-
-  return result
-}

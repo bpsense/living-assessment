@@ -929,8 +929,6 @@ export interface Skill {
   source_standard_code: string | null
   progression_domain: string | null
   progression_strand: string | null
-  /** V2: FK to learner_profile_domains.id. NULLABLE during migration; new skills should set this. */
-  domain_id: string | null
   /** V2: optional age-band start (inclusive), e.g. 6. */
   age_band_start: number | null
   /** V2: optional age-band end (inclusive), e.g. 8. */
@@ -956,7 +954,6 @@ export type SkillInsert = Pick<Skill, 'name'> & {
   source_standard_code?: string | null
   progression_domain?: string | null
   progression_strand?: string | null
-  domain_id?: string | null
   age_band_start?: number | null
   age_band_end?: number | null
   source_reference?: string | null

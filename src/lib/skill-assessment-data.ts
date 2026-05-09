@@ -2,11 +2,6 @@
 //
 // V2 skill assessment helpers. The `skill_assessments` table is append-only;
 // "current level" for a student+skill is derived from the latest row.
-//
-// Domain-level aggregation: take the **mode** (most common level) of the
-// latest assessment per skill in that domain, with ties broken toward the
-// higher level. This produces the per-domain assessment level the amoeba
-// uses (Phase 5 will wire it in).
 
 import { supabase } from './supabase'
 import type {
@@ -14,7 +9,7 @@ import type {
   SkillAssessment,
   SkillAssessmentInsert,
 } from '../types/skill-assessment'
-import { ASSESSMENT_LEVEL_RANK, ASSESSMENT_LEVELS } from '../types/skill-assessment'
+import { ASSESSMENT_LEVELS } from '../types/skill-assessment'
 
 // ============================================================
 // Recording
@@ -114,92 +109,6 @@ export async function getLatestAssessmentsByStudent(
     if (!latest.has(a.skill_id)) latest.set(a.skill_id, a)
   }
   return latest
-}
-
-// ============================================================
-// Domain-level aggregation
-// ============================================================
-
-export interface DomainAssessment {
-  domainId: string
-  /** The mode level. Null when no skills in that domain have assessments. */
-  level: AssessmentLevel | null
-  /** Counts feeding the mode, useful for UI ("3 achieving / 1 developing"). */
-  counts: Record<AssessmentLevel, number>
-  /** Skills considered (those in this domain that have at least one assessment). */
-  assessedSkillCount: number
-}
-
-/**
- * Aggregate latest assessments to the domain level for a student.
- *
- * Algorithm:
- *   1. Pull every skill (with `domain_id`) the student has any assessment for.
- *   2. Take the latest assessment per skill (delegates to
- *      getLatestAssessmentsByStudent).
- *   3. For each domain, count assessments by level.
- *   4. The domain's level is the **mode**; ties break toward the higher level
- *      (so "2 emerging / 2 developing" → developing).
- *
- * Returns one entry per domain that has at least one assessed skill. Domains
- * with no assessed skills are intentionally absent — callers (e.g. the amoeba)
- * decide how to render "no data".
- */
-export async function aggregateAssessmentsByDomain(
-  studentId: string
-): Promise<DomainAssessment[]> {
-  const latest = await getLatestAssessmentsByStudent(studentId)
-  if (latest.size === 0) return []
-
-  const skillIds = [...latest.keys()]
-  const { data: skills, error } = await supabase
-    .from('skills')
-    .select('id, domain_id')
-    .in('id', skillIds)
-  if (error) throw error
-
-  // Group by domain.
-  const buckets = new Map<string, AssessmentLevel[]>()
-  for (const s of (skills ?? []) as { id: string; domain_id: string | null }[]) {
-    if (!s.domain_id) continue
-    const a = latest.get(s.id)
-    if (!a) continue
-    const arr = buckets.get(s.domain_id) ?? []
-    arr.push(a.level)
-    buckets.set(s.domain_id, arr)
-  }
-
-  const out: DomainAssessment[] = []
-  for (const [domainId, levels] of buckets) {
-    const counts: Record<AssessmentLevel, number> = {
-      emerging: 0, developing: 0, achieving: 0, exceeding: 0,
-    }
-    for (const lvl of levels) counts[lvl]++
-
-    let bestLevel: AssessmentLevel | null = null
-    let bestCount = -1
-    for (const lvl of ASSESSMENT_LEVELS) {
-      const c = counts[lvl]
-      if (c === 0) continue
-      // Tie-break toward the higher rank (later in ASSESSMENT_LEVELS).
-      if (
-        c > bestCount ||
-        (c === bestCount && bestLevel !== null && ASSESSMENT_LEVEL_RANK[lvl] > ASSESSMENT_LEVEL_RANK[bestLevel])
-      ) {
-        bestCount = c
-        bestLevel = lvl
-      }
-    }
-
-    out.push({
-      domainId,
-      level: bestLevel,
-      counts,
-      assessedSkillCount: levels.length,
-    })
-  }
-
-  return out
 }
 
 // ============================================================

@@ -80,11 +80,11 @@ function useAnimatedScores(
   return displayed
 }
 
-// ── Grade transition squeeze hook ───────────────────────────────
-// Detects when playback crosses a September grade boundary and
-// drives a 1→0 animation of the ring squeeze effect.
+// ── Age-rollover squeeze hook ───────────────────────────────────
+// Detects when playback crosses an age boundary (the snapshot for the
+// student's birthday month) and drives a 1→0 animation of the ring squeeze.
 
-function useGradeTransition(
+function useAgeTransition(
   snapshots: Snapshot[],
   snapshotIdx: number | null,
   playing: boolean
@@ -106,9 +106,9 @@ function useGradeTransition(
     const prevIdx = prevIdxRef.current
     prevIdxRef.current = snapshotIdx
 
-    // Only trigger when advancing forward to a grade transition snapshot
+    // Only trigger when advancing forward to an age-rollover snapshot
     if (
-      !snap?.isGradeTransition ||
+      !snap?.isAgeRollover ||
       prevIdx === null ||
       snapshotIdx <= prevIdx
     ) {
@@ -123,9 +123,7 @@ function useGradeTransition(
     }
 
     // Start the squeeze animation
-    const label = snap.gradeYear
-      ? `Grade ${snap.gradeYear}`
-      : 'New School Year'
+    const label = `${snap.ageYears}y ${snap.ageMonths}m`
     setTransitionLabel(label)
     setSqueezeProgress(1)
 
@@ -227,19 +225,20 @@ export default function LivingVisualization({
   // the hook seamlessly redirects from wherever it is, eliminating any gap.
   const animatedScores = useAnimatedScores(displayScores, 1400)
 
-  // Grade transition squeeze animation
-  const { squeezeProgress, transitionLabel } = useGradeTransition(
+  // Age-rollover squeeze animation
+  const { squeezeProgress, transitionLabel } = useAgeTransition(
     snapshots,
     snapshotIdx,
     playing ?? false
   )
 
-  // Current grade label — always shows during timeline playback
+  // Current age label — always shows during timeline playback (e.g. "7y 4m")
   const currentGradeLabel = useMemo(() => {
     if (!showTimeline || snapshotIdx === null || snapshots.length === 0) return undefined
     const idx = Math.min(snapshotIdx, snapshots.length - 1)
-    const grade = snapshots[idx]?.gradeYear
-    return grade ? `Grade ${grade}` : undefined
+    const snap = snapshots[idx]
+    if (!snap) return undefined
+    return `${snap.ageYears}y ${snap.ageMonths}m`
   }, [showTimeline, snapshotIdx, snapshots])
 
   // Filter observations to those visible at the current snapshot date
@@ -414,9 +413,9 @@ export default function LivingVisualization({
           </div>
           <div className="mt-1 border-t border-bg-muted pt-4 space-y-2.5">
             <p className="text-[11px] font-medium uppercase tracking-wider text-text-light">Levels</p>
-            {(['Emerging', 'Developing', 'Achieving', 'Mastery'] as const).map((level, i) => (
+            {(['Emerging', 'Developing', 'Achieving', 'Exceeding'] as const).map((level, i) => (
               <div key={level} className="flex items-center gap-2">
-                {level === 'Mastery' ? (
+                {level === 'Exceeding' ? (
                   <span
                     className="inline-block h-2 w-5 rounded-sm border border-[#D8D4CA]"
                     style={{ background: 'transparent' }}
@@ -591,9 +590,9 @@ function ExpandedBlobModal({
           </div>
           <div className="mt-1 border-t border-bg-muted pt-4 space-y-2.5">
             <p className="text-[11px] font-medium uppercase tracking-wider text-text-light">Levels</p>
-            {(['Emerging', 'Developing', 'Achieving', 'Mastery'] as const).map((level, i) => (
+            {(['Emerging', 'Developing', 'Achieving', 'Exceeding'] as const).map((level, i) => (
               <div key={level} className="flex items-center gap-2">
-                {level === 'Mastery' ? (
+                {level === 'Exceeding' ? (
                   <span
                     className="inline-block h-2.5 w-6 rounded-sm border border-[#D8D4CA]"
                     style={{ background: 'transparent' }}

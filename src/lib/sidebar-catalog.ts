@@ -46,7 +46,6 @@ export type SidebarKey =
   | 'observe'
   // Utilities folder children
   | 'learner-profile'
-  | 'dimensions'
   | 'standards'
   | 'translate'
   | 'skill-library'
@@ -171,7 +170,6 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     icon: 'Wrench',
     children: [
       'learner-profile',
-      'dimensions',
       'standards',
       'translate',
       'skill-library',
@@ -189,13 +187,6 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     label: 'Learner Profile',
     icon: 'Sprout',
     to: '/admin/learner-profile',
-    defaultAccess: adminOnly,
-  },
-  {
-    key: 'dimensions',
-    label: 'Dimensions',
-    icon: 'Layers',
-    to: '/admin/dimensions',
     defaultAccess: adminOnly,
   },
   {

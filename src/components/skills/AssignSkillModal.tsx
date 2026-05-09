@@ -5,13 +5,10 @@ import { Loader2, Search, X } from 'lucide-react'
 import { useAuth } from '../../lib/auth'
 import { useToast } from '../Toast'
 import {
-  fetchLearnerProfileDomainsForSchool,
   fetchSkills,
-  attachDomainsToSkills,
-  type SkillWithDomain,
+  type SkillWithCompetencies,
 } from '../../lib/skills-data'
 import { assignSkillsStandalone } from '../../lib/student-skill-assignment-data'
-import type { LearnerProfileDomain } from '../../types/learner-profile'
 
 interface Props {
   open: boolean
@@ -32,13 +29,11 @@ export default function AssignSkillModal({ open, onClose, studentId, onAssigned 
   const schoolId = profile?.school_id ?? null
 
   const [loading, setLoading] = useState(true)
-  const [skills, setSkills] = useState<SkillWithDomain[]>([])
-  const [domains, setDomains] = useState<LearnerProfileDomain[]>([])
+  const [skills, setSkills] = useState<SkillWithCompetencies[]>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [saving, setSaving] = useState(false)
 
   const [search, setSearch] = useState('')
-  const [domainFilter, setDomainFilter] = useState('')
   const [ageFilter, setAgeFilter] = useState('')
 
   useEffect(() => {
@@ -46,17 +41,9 @@ export default function AssignSkillModal({ open, onClose, studentId, onAssigned 
     setLoading(true)
     setSelected(new Set())
     setSearch('')
-    setDomainFilter('')
     setAgeFilter('')
-    Promise.all([
-      fetchSkills(schoolId),
-      fetchLearnerProfileDomainsForSchool(schoolId),
-    ])
-      .then(async ([raw, doms]) => {
-        const enriched = await attachDomainsToSkills(raw)
-        setSkills(enriched)
-        setDomains(doms)
-      })
+    fetchSkills(schoolId)
+      .then(setSkills)
       .catch((e) => toast(e instanceof Error ? e.message : 'Failed to load skills', 'error'))
       .finally(() => setLoading(false))
   }, [open, schoolId, toast])
@@ -65,7 +52,6 @@ export default function AssignSkillModal({ open, onClose, studentId, onAssigned 
     const lower = search.trim().toLowerCase()
     const ageNum = ageFilter === '' ? null : Number(ageFilter)
     return skills.filter((s) => {
-      if (domainFilter && s.domain_id !== domainFilter) return false
       if (lower) {
         const inName = s.name.toLowerCase().includes(lower)
         const inDesc = (s.description ?? '').toLowerCase().includes(lower)
@@ -78,7 +64,7 @@ export default function AssignSkillModal({ open, onClose, studentId, onAssigned 
       }
       return true
     })
-  }, [skills, search, domainFilter, ageFilter])
+  }, [skills, search, ageFilter])
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -137,7 +123,7 @@ export default function AssignSkillModal({ open, onClose, studentId, onAssigned 
 
         <div className="space-y-3 border-b border-bg-muted px-5 py-3">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <div className="relative sm:col-span-1">
+            <div className="relative sm:col-span-2">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
               <input
                 type="text"
@@ -147,16 +133,6 @@ export default function AssignSkillModal({ open, onClose, studentId, onAssigned 
                 className="w-full rounded-lg border border-bg-muted bg-bg py-2 pl-9 pr-3 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
               />
             </div>
-            <select
-              value={domainFilter}
-              onChange={(e) => setDomainFilter(e.target.value)}
-              className="rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
-            >
-              <option value="">All domains</option>
-              {domains.map((d) => (
-                <option key={d.id} value={d.id}>{d.name}</option>
-              ))}
-            </select>
             <input
               type="number"
               min={0}
@@ -202,15 +178,7 @@ export default function AssignSkillModal({ open, onClose, studentId, onAssigned 
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-sm font-medium text-text">{s.name}</span>
-                          {s.domain && (
-                            <span
-                              className="rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
-                              style={{ backgroundColor: s.domain.color ?? '#94A3B8' }}
-                            >
-                              {s.domain.name}
-                            </span>
-                          )}
-                          {s.is_baseline && (
+                          {s.school_id === null && (
                             <span className="rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-medium text-white">
                               Baseline
                             </span>
