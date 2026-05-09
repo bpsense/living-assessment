@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { BookOpen, X } from 'lucide-react'
 import type {
   Skill,
@@ -46,6 +46,10 @@ export default function NewAssignmentFlow({
   const [selectedTemplate, setSelectedTemplate] = useState<AssignmentTemplate | null>(null)
   const [postSaveTemplate, setPostSaveTemplate] = useState<AssignmentTemplate | null>(null)
 
+  // Set when transitioning from the chooser to a downstream modal so the
+  // chooser's auto-onClose() after onChoice() doesn't tear down the whole flow.
+  const transitioningRef = useRef(false)
+
   useEffect(() => {
     if (open) {
       setShowChooser(true)
@@ -63,6 +67,7 @@ export default function NewAssignmentFlow({
   }, [open])
 
   function handleAssignmentChoice(choice: AssignmentChoice) {
+    transitioningRef.current = true
     setShowChooser(false)
     switch (choice) {
       case 'skill-library':
@@ -114,7 +119,16 @@ export default function NewAssignmentFlow({
     <>
       <NewAssignmentChooser
         open={showChooser}
-        onClose={onClose}
+        onClose={() => {
+          // Chooser fires onClose() right after onChoice(). When that fires
+          // because the user picked an option, we're transitioning to the
+          // next modal — don't tear down the parent flow.
+          if (transitioningRef.current) {
+            transitioningRef.current = false
+            return
+          }
+          onClose()
+        }}
         onChoice={handleAssignmentChoice}
       />
 
