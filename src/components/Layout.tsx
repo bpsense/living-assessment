@@ -35,7 +35,6 @@ import {
 } from 'lucide-react'
 import type { UserRole } from '../types/database'
 import QuickObserveModal from './QuickObserveModal'
-import NewAssignmentFlow from './assignment/NewAssignmentFlow'
 import AssignProjectModal from './assignment/AssignProjectModal'
 import IncidentReportModal from './incident/IncidentReportModal'
 import SpeedDial from './SpeedDial'
@@ -286,7 +285,6 @@ export default function Layout() {
   const navigate = useNavigate()
   const location = useLocation()
   const [quickObserveOpen, setQuickObserveOpen] = useState(false)
-  const [showCreateAssignment, setShowCreateAssignment] = useState(false)
   const [showAssignProject, setShowAssignProject] = useState(false)
   const [incidentReportOpen, setIncidentReportOpen] = useState(false)
   const [schoolName, setSchoolName] = useState<string>('')
@@ -731,12 +729,6 @@ export default function Layout() {
               color: 'bg-primary-500 hover:bg-primary-600',
             },
             {
-              icon: <ClipboardList className="h-4 w-4" />,
-              label: 'New Assignment (legacy)',
-              onClick: () => setShowCreateAssignment(true),
-              color: 'bg-primary-400 hover:bg-primary-500',
-            },
-            {
               icon: <AlertTriangle className="h-4 w-4" />,
               label: 'Incident Report',
               onClick: () => setIncidentReportOpen(true),
@@ -756,12 +748,6 @@ export default function Layout() {
       <AssignProjectModal
         open={showAssignProject}
         onClose={() => setShowAssignProject(false)}
-      />
-
-      {/* ============ New Assignment Flow (legacy, from FAB) ============ */}
-      <NewAssignmentFlow
-        open={showCreateAssignment}
-        onClose={() => setShowCreateAssignment(false)}
       />
 
       {/* ============ Incident Report Modal ============ */}

@@ -46,7 +46,7 @@ import { DimensionIcon } from '../components/student/DimensionIcon'
 import MiniRadar from '../components/dashboard/MiniRadar'
 import AddStudentModal from '../components/classroom/AddStudentModal'
 import CsvImportModal from '../components/classroom/CsvImportModal'
-import NewAssignmentFlow from '../components/assignment/NewAssignmentFlow'
+import AssignProjectModal from '../components/assignment/AssignProjectModal'
 import ClassroomActiveAssignments from '../components/classroom/ClassroomActiveAssignments'
 import { createClassConversation } from '../lib/messaging-data'
 import type { DimensionScore } from '../lib/student-data'
@@ -626,10 +626,10 @@ export default function ClassroomPage() {
       )}
 
       {classroom && (
-        <NewAssignmentFlow
+        <AssignProjectModal
           open={showCreateAssignment}
           onClose={() => setShowCreateAssignment(false)}
-          defaultClassroomId={classroom.id}
+          prefilledClassroom={{ id: classroom.id, name: classroom.name }}
         />
       )}
 
