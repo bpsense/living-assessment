@@ -47,6 +47,7 @@ import MiniRadar from '../components/dashboard/MiniRadar'
 import AddStudentModal from '../components/classroom/AddStudentModal'
 import CsvImportModal from '../components/classroom/CsvImportModal'
 import NewAssignmentFlow from '../components/assignment/NewAssignmentFlow'
+import ClassroomActiveAssignments from '../components/classroom/ClassroomActiveAssignments'
 import { createClassConversation } from '../lib/messaging-data'
 import type { DimensionScore } from '../lib/student-data'
 import type { Student, Dimension, StudentContact } from '../types/database'
@@ -556,6 +557,14 @@ export default function ClassroomPage() {
           />
         )}
       </section>
+
+      {/* ================================================================
+          2.5. ACTIVE ASSIGNMENTS (standards-driven)
+          ================================================================ */}
+      <ClassroomActiveAssignments
+        classroomId={classroom.id}
+        classroomName={classroom.name}
+      />
 
       {/* ================================================================
           3. CLASS-LEVEL ANALYTICS (collapsible)
