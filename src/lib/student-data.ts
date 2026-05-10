@@ -10,16 +10,11 @@ import type {
   CompetencyScoreRow,
   CompetencyDimensionMapping,
   Competency,
-  SkillCompetency,
+  DimensionStandard,
 } from '../types/database'
-import type { SkillAssessment } from '../types/skill-assessment'
 import { buildDimensionScores } from './scoring'
 import type { DimensionScore, CompetencyBasedData } from './scoring'
-import type {
-  CompetencyDomainDimensionMap,
-  CompetencyLite,
-  SubdomainLite,
-} from './living-data'
+import type { StandardAssessment } from './standards-assignment-data'
 
 // Re-export scoring types so existing imports from student-data continue to work
 export type { DimensionScore, Zone, ZoneClassification } from './scoring'
@@ -96,16 +91,10 @@ export interface StudentProfileData {
   observers: Map<string, string>
   /** Competency-based scoring data (from assignments). null when no assignment data exists. */
   competencyData: CompetencyBasedData | null
-  /** V2 skill assessments for this student (drives the amoeba pipeline). */
-  skillAssessments: SkillAssessment[]
-  /** skill_id → competency_id rows, scoped to skills referenced by this student's assessments. */
-  skillCompetencies: SkillCompetency[]
-  /** competency rollup metadata for the school's framework. */
-  amoebaCompetencies: CompetencyLite[]
-  /** subdomain → domain mapping for the school's framework. */
-  amoebaSubdomains: SubdomainLite[]
-  /** competency_domain → dimension mapping for this school. */
-  domainDimensionMap: CompetencyDomainDimensionMap[]
+  /** Standards-driven assessments for this student (append-only history that feeds the amoeba). */
+  standardAssessments: StandardAssessment[]
+  /** standard_id → dimension_id mapping for this school (rollup bridge). */
+  dimensionStandards: DimensionStandard[]
   loading: boolean
   error: string | null
   refetch: () => void
@@ -120,11 +109,8 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
   const [surveys, setSurveys] = useState<InterestSurvey[]>([])
   const [observers, setObservers] = useState<Map<string, string>>(new Map())
   const [competencyData, setCompetencyData] = useState<CompetencyBasedData | null>(null)
-  const [skillAssessments, setSkillAssessments] = useState<SkillAssessment[]>([])
-  const [skillCompetencies, setSkillCompetencies] = useState<SkillCompetency[]>([])
-  const [amoebaCompetencies, setAmoebaCompetencies] = useState<CompetencyLite[]>([])
-  const [amoebaSubdomains, setAmoebaSubdomains] = useState<SubdomainLite[]>([])
-  const [domainDimensionMap, setDomainDimensionMap] = useState<CompetencyDomainDimensionMap[]>([])
+  const [standardAssessments, setStandardAssessments] = useState<StandardAssessment[]>([])
+  const [dimensionStandards, setDimensionStandards] = useState<DimensionStandard[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [fetchCount, setFetchCount] = useState(0)
@@ -176,7 +162,7 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
         if (cancelled) return
 
         // Fetch classrooms, dimensions, observations, surveys, competency data,
-        // V2 skill assessments + amoeba rollup metadata in parallel
+        // and the standards-driven amoeba pipeline (assessments + dimension bridges) in parallel
         const [
           classroomsRes,
           dimensionsRes,
@@ -185,8 +171,8 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
           compScoresRes,
           mappingsRes,
           competenciesRes,
-          skillAssessmentsRes,
-          domainDimensionMapRes,
+          standardAssessmentsRes,
+          dimensionStandardsRes,
         ] = await Promise.all([
           classroomIds.length > 0
             ? supabase.from('classrooms').select('*').in('id', classroomIds)
@@ -233,16 +219,16 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
                   .eq('school_id', stu.school_id)
               ).data?.map((f) => f.id) || []
             ),
-          // V2 skill assessments for the amoeba pipeline
+          // Standards-driven assessments — append-only history that feeds the amoeba
           supabase
-            .from('skill_assessments')
+            .from('assignment_standard_assessments')
             .select('*')
             .eq('student_id', studentId)
             .order('assessed_at', { ascending: true }),
-          // Domain → dimension mapping for this school
+          // standard_id ↔ dimension_id bridges for this school's amoeba rollup
           supabase
-            .from('competency_domain_dimension_map')
-            .select('id, school_id, competency_domain_id, dimension_id')
+            .from('dimension_standards')
+            .select('id, dimension_id, standard_id, school_id, created_at')
             .eq('school_id', stu.school_id),
         ])
 
@@ -261,60 +247,16 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
         const compScoresData = (compScoresRes.data ?? []) as CompetencyScoreRow[]
         const mappingsData = (mappingsRes.data ?? []) as CompetencyDimensionMapping[]
         const competenciesData = (competenciesRes.data ?? []) as Competency[]
-        const skillAssessmentsData = (skillAssessmentsRes.data ?? []) as SkillAssessment[]
-        const ddmData = (domainDimensionMapRes.data ?? []) as CompetencyDomainDimensionMap[]
+        const standardAssessmentsData = (standardAssessmentsRes.data ?? []) as StandardAssessment[]
+        const dimensionStandardsData = (dimensionStandardsRes.data ?? []) as DimensionStandard[]
 
         setClassroom(classroomData ? { ...classroomData } : null)
         setClassrooms(classroomsList)
         setDimensions(dimensionsData)
         setObservations(observationsData)
         setSurveys(surveysData)
-        setSkillAssessments(skillAssessmentsData)
-        setDomainDimensionMap(ddmData)
-
-        // ── Amoeba rollup metadata (skill_competencies + competencies + subdomains) ──
-        // Only the slice referenced by this student's assessments matters; pulling
-        // wider would waste rows. If there are no assessments yet, all three are [].
-        const skillIds = [...new Set(skillAssessmentsData.map((a) => a.skill_id))]
-        if (skillIds.length > 0) {
-          const { data: scData } = await supabase
-            .from('skill_competencies')
-            .select('id, skill_id, competency_id, created_at')
-            .in('skill_id', skillIds)
-          if (cancelled) return
-          const scRows = (scData ?? []) as SkillCompetency[]
-          setSkillCompetencies(scRows)
-
-          const compIds = [...new Set(scRows.map((r) => r.competency_id))]
-          if (compIds.length > 0) {
-            const { data: ampCompData } = await supabase
-              .from('competencies')
-              .select('id, subdomain_id, age_band_start, age_band_end')
-              .in('id', compIds)
-            if (cancelled) return
-            const ampComps = (ampCompData ?? []) as CompetencyLite[]
-            setAmoebaCompetencies(ampComps)
-
-            const subIds = [...new Set(ampComps.map((c) => c.subdomain_id))]
-            if (subIds.length > 0) {
-              const { data: subData } = await supabase
-                .from('competency_subdomains')
-                .select('id, domain_id')
-                .in('id', subIds)
-              if (cancelled) return
-              setAmoebaSubdomains((subData ?? []) as SubdomainLite[])
-            } else {
-              setAmoebaSubdomains([])
-            }
-          } else {
-            setAmoebaCompetencies([])
-            setAmoebaSubdomains([])
-          }
-        } else {
-          setSkillCompetencies([])
-          setAmoebaCompetencies([])
-          setAmoebaSubdomains([])
-        }
+        setStandardAssessments(standardAssessmentsData)
+        setDimensionStandards(dimensionStandardsData)
 
         // Build competency-based data if we have scores and mappings
         if (compScoresData.length > 0 && mappingsData.length > 0) {
@@ -380,11 +322,8 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
     surveys,
     observers,
     competencyData,
-    skillAssessments,
-    skillCompetencies,
-    amoebaCompetencies,
-    amoebaSubdomains,
-    domainDimensionMap,
+    standardAssessments,
+    dimensionStandards,
     loading,
     error,
     refetch,

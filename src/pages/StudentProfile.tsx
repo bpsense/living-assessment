@@ -7,13 +7,13 @@ import { useAuth } from '../lib/auth'
 import { useAccessControl } from '../lib/access-control'
 import { useToast } from '../components/Toast'
 import { supabase } from '../lib/supabase'
-import { buildSnapshots, smoothSnapshots, snapshotToDimensionScores } from '../lib/living-data'
+import { smoothSnapshots, snapshotToDimensionScores } from '../lib/living-data'
+import { buildSnapshotsFromStandards } from '../lib/standards-snapshots'
 import LivingVisualization from '../components/student/LivingVisualization'
 import AmoebaEmptyState from '../components/student/AmoebaEmptyState'
 import ZoneMatrix from '../components/student/ZoneMatrix'
 import AILearningGuide from '../components/student/AILearningGuide'
 import FamilySupportGuide from '../components/student/FamilySupportGuide'
-import DimensionCard from '../components/student/DimensionCard'
 import Timeline from '../components/student/Timeline'
 import SISSection from '../components/student/SISSection'
 import SISEditModal from '../components/student/SISEditModal'
@@ -24,15 +24,7 @@ import LearnerMessagesSection from '../components/student/LearnerMessagesSection
 import LearnerAssignmentsSection from '../components/student/LearnerAssignmentsSection'
 import StudentContextDoc from '../components/student/StudentContextDoc'
 import StudentClassroomsManager from '../components/student/StudentClassroomsManager'
-import StudentSkillsSection from '../components/skills/StudentSkillsSection'
-import QuickAssess from '../components/skills/QuickAssess'
-import AssignSkillModal from '../components/skills/AssignSkillModal'
 import TranslationHistory from '../components/student/TranslationHistory'
-
-// Feature flag — Track A "Dimension cards + observations" path is being
-// retired in favor of the standards-driven assignment pipeline. Flip this
-// to true to bring the section back without restoring code.
-const SHOW_DIMENSION_CARDS = false
 
 // ============================================================
 // Student avatar with fallback initials
@@ -74,8 +66,6 @@ export default function StudentProfile() {
   const { toast } = useToast()
   const [launchingSurvey, setLaunchingSurvey] = useState(false)
   const [showSISEdit, setShowSISEdit] = useState(false)
-  const [showAssignSkill, setShowAssignSkill] = useState(false)
-  const [assignReloadTick, setAssignReloadTick] = useState(0)
   const [showStudentNumber, setShowStudentNumber] = useState(false)
   const [copiedNumber, setCopiedNumber] = useState(false)
   const {
@@ -88,11 +78,8 @@ export default function StudentProfile() {
     observations,
     surveys,
     observers,
-    skillAssessments,
-    skillCompetencies,
-    amoebaCompetencies,
-    amoebaSubdomains,
-    domainDimensionMap,
+    standardAssessments,
+    dimensionStandards,
     loading,
     error,
     refetch,
@@ -122,27 +109,23 @@ export default function StudentProfile() {
   >(() => {
     if (!student) return null
     if (!student.date_of_birth) return 'no_dob'
-    if (skillAssessments.length === 0) return 'no_assessments'
-    if (domainDimensionMap.length === 0) return 'no_mappings'
+    if (standardAssessments.length === 0) return 'no_assessments'
+    if (dimensionStandards.length === 0) return 'no_mappings'
     return null
-  }, [student, skillAssessments.length, domainDimensionMap.length])
+  }, [student, standardAssessments.length, dimensionStandards.length])
 
-  // Build amoeba snapshots from V2 skill assessments rolled up through the
-  // standards framework into Learner Profile dimensions, then converted to
-  // the DimensionScore[] shape the LivingBlob consumes (with interest dots
+  // Build amoeba snapshots from per-(student × standard) assessments rolled up
+  // through `dimension_standards` into Learner Profile dimensions, then converted
+  // to the DimensionScore[] shape the LivingBlob consumes (with interest dots
   // merged in from the latest interest survey at each cutoff).
   const snapshots = useMemo(() => {
     if (!student?.date_of_birth || amoebaEmptyVariant !== null) return []
-    const raw = buildSnapshots({
+    const raw = buildSnapshotsFromStandards({
       dateOfBirth: student.date_of_birth,
       schoolId: student.school_id,
       dimensions: visibleDimensions,
-      assessments: skillAssessments,
-      surveys,
-      skillCompetencies,
-      competencies: amoebaCompetencies,
-      subdomains: amoebaSubdomains,
-      domainDimensionMap,
+      assessments: standardAssessments,
+      dimensionStandards,
     })
     const smoothed = smoothSnapshots(raw)
     const withScores = smoothed.map((s) => ({
@@ -155,12 +138,9 @@ export default function StudentProfile() {
     student?.school_id,
     amoebaEmptyVariant,
     visibleDimensions,
-    skillAssessments,
+    standardAssessments,
     surveys,
-    skillCompetencies,
-    amoebaCompetencies,
-    amoebaSubdomains,
-    domainDimensionMap,
+    dimensionStandards,
   ])
 
   // Initialize snapshotIdx to latest when snapshots become available
@@ -185,15 +165,6 @@ export default function StudentProfile() {
     () => (isFamilyView ? dimensionScores.filter((s) => visibleDimensionIds.has(s.dimension_id)) : dimensionScores),
     [dimensionScores, isFamilyView, visibleDimensionIds]
   )
-
-  // Dimension cards always render the *current* scores — historical scrubbing
-  // only affects the amoeba blob, not the rest of the profile.
-  const displayScoresForCards = filteredDimensionScores
-
-  // Callback after a quick-rate observation is created
-  const handleObservationCreated = useCallback(() => {
-    refetch()
-  }, [refetch])
 
   async function launchInterestSurvey() {
     if (!student) return
@@ -438,38 +409,6 @@ export default function StudentProfile() {
         <SISSection student={student} onEdit={() => setShowSISEdit(true)} role={role} onRefetch={refetch} />
       )}
 
-      {/* ========== SKILLS (educator/admin only) ========== */}
-      {!isFamilyView && (
-        <section>
-          <StudentSkillsSection
-            studentId={student.id}
-            studentGrade={student.grade_level}
-          />
-        </section>
-      )}
-
-      {/* ========== V2 SKILL ASSESSMENTS (educator/admin only) ========== */}
-      {!isFamilyView && (
-        <section className="glass-card p-5">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-text">Skill Assessments</h2>
-            <button
-              onClick={() => setShowAssignSkill(true)}
-              className="rounded-xl bg-primary-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-primary-600"
-            >
-              Assign Skill
-            </button>
-          </div>
-          <QuickAssess key={assignReloadTick} studentId={student.id} embedded />
-          <AssignSkillModal
-            open={showAssignSkill}
-            onClose={() => setShowAssignSkill(false)}
-            studentId={student.id}
-            onAssigned={() => setAssignReloadTick((t) => t + 1)}
-          />
-        </section>
-      )}
-
       {/* ========== TRANSLATION HISTORY (educator/admin only) ========== */}
       {!isFamilyView && (
         <TranslationHistory studentId={student.id} />
@@ -575,35 +514,6 @@ export default function StudentProfile() {
       {/* ========== STUDENT CONTEXT DOCUMENT (educator/admin only) ========== */}
       {!isFamilyView && student && (
         <StudentContextDoc studentId={student.id} schoolId={student.school_id} />
-      )}
-
-      {/* ========== DIMENSION CARDS (HIDDEN — preserved for possible future revival) ==========
-          Hidden during the standards-driven assignment refactor. The cards write to
-          `observations` (Track A), which we're retiring. Component is still imported
-          and used below behind a feature flag so the whole code path stays alive. */}
-      {SHOW_DIMENSION_CARDS && !isFamilyView && (
-        <section>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-text">Dimensions</h2>
-            <p className="text-xs text-text-muted">
-              Click a competency level to quick-rate
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            {displayScoresForCards.map((score) => (
-              <DimensionCard
-                key={score.dimension_id}
-                score={score}
-                studentId={student.id}
-                schoolId={student.school_id}
-                observationDate={null}
-                observationPeriodLabel={null}
-                onObservationCreated={handleObservationCreated}
-              />
-            ))}
-          </div>
-        </section>
       )}
 
       {/* ========== TIMELINE (educator/admin only) ========== */}

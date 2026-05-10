@@ -204,20 +204,6 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     defaultAccess: adminOnly,
   },
   {
-    key: 'skill-library',
-    label: 'Skill Library',
-    icon: 'Target',
-    to: '/admin/skill-library',
-    defaultAccess: adminOnly,
-  },
-  {
-    key: 'assignments',
-    label: 'Assignments',
-    icon: 'ClipboardList',
-    to: '/assignments',
-    defaultAccess: { admin: 'edit', dept_admin: 'edit', educator: 'edit', parent: 'view', learner: 'view' },
-  },
-  {
     key: 'students',
     label: 'Learners',
     icon: 'Users',

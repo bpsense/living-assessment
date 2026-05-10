@@ -1,49 +1,22 @@
 /**
  * living-data.ts
  *
- * Builds monthly amoeba snapshots for a student by rolling up the V2
- * skill_assessments table through the standards framework into the
- * school's Learner Profile dimensions.
+ * Shared helpers for the amoeba pipeline (post-cutover):
+ *  - `AmoebaSnapshot` shape
+ *  - `ageAt` / `endOfMonth` time utilities
+ *  - `snapshotToDimensionScores` (snapshot → DimensionScore[] for LivingBlob)
+ *  - `smoothSnapshots` / `interpolateScores` (rendering smoothing)
  *
- * Pipeline at each snapshot date M:
- *   skill_assessments (level → 1-4 score, age-relative cap applied)
- *     → competencies (via skill_competencies)
- *     → competency_subdomain → competency_domain
- *     → competency_domain_dimension_map (school-scoped)
- *     → average per dimension
- *
- * Interest dots layer in separately from interest_surveys.
+ * The actual snapshot builder lives in `standards-snapshots.ts` and reads
+ * from `assignment_standard_assessments` + `dimension_standards`.
  */
 
-import type { Dimension, InterestSurvey, SkillCompetency } from '../types/database'
-import type { SkillAssessment, AssessmentLevel } from '../types/skill-assessment'
-import { ASSESSMENT_LEVEL_RANK } from '../types/skill-assessment'
+import type { Dimension, InterestSurvey } from '../types/database'
 import type { DimensionScore } from './scoring'
 
 // ============================================================
 // Types
 // ============================================================
-
-export interface CompetencyDomainDimensionMap {
-  id: string
-  school_id: string
-  competency_domain_id: string
-  dimension_id: string
-}
-
-/** Subset of CompetencySubdomain we actually need for the rollup. */
-export interface SubdomainLite {
-  id: string
-  domain_id: string
-}
-
-/** Subset of Competency we need: id, subdomain, age band. */
-export interface CompetencyLite {
-  id: string
-  subdomain_id: string
-  age_band_start: number | null
-  age_band_end: number | null
-}
 
 export interface AmoebaSnapshot {
   /** ISO date string (first of the month) */
@@ -60,18 +33,6 @@ export interface AmoebaSnapshot {
   isAgeRollover?: boolean
   /** Previous snapshot's ageYears (only on rollover) */
   prevAgeYears?: number
-}
-
-export interface BuildSnapshotsInput {
-  dateOfBirth: string
-  schoolId: string
-  dimensions: Dimension[]
-  assessments: SkillAssessment[]
-  surveys: InterestSurvey[]
-  skillCompetencies: SkillCompetency[]
-  competencies: CompetencyLite[]
-  subdomains: SubdomainLite[]
-  domainDimensionMap: CompetencyDomainDimensionMap[]
 }
 
 // ============================================================
@@ -93,147 +54,6 @@ export function ageAt(dob: Date, at: Date): { years: number; months: number } {
     months += 12
   }
   return { years: Math.max(0, years), months: Math.max(0, months) }
-}
-
-// ============================================================
-// Score conversion
-// ============================================================
-
-function levelScore(level: AssessmentLevel): number {
-  return ASSESSMENT_LEVEL_RANK[level]
-}
-
-// ============================================================
-// Snapshot computation
-// ============================================================
-
-/**
- * Build monthly snapshots from earliest assessment (or 12mo ago) through now.
- * Returns [] if no dimensions / dob is null — caller should render empty state
- * before invoking this.
- */
-export function buildSnapshots(input: BuildSnapshotsInput): AmoebaSnapshot[] {
-  const {
-    dateOfBirth,
-    schoolId,
-    dimensions,
-    assessments,
-    skillCompetencies,
-    competencies,
-    subdomains,
-    domainDimensionMap,
-  } = input
-
-  if (!dateOfBirth || dimensions.length === 0) return []
-
-  const dob = new Date(dateOfBirth)
-
-  // ── Lookup tables ─────────────────────────────────────────
-  // skill_id → competency_ids
-  const skillToComps = new Map<string, string[]>()
-  for (const sc of skillCompetencies) {
-    const arr = skillToComps.get(sc.skill_id) ?? []
-    arr.push(sc.competency_id)
-    skillToComps.set(sc.skill_id, arr)
-  }
-  // competency_id → CompetencyLite
-  const compById = new Map(competencies.map((c) => [c.id, c]))
-  // subdomain_id → domain_id
-  const subToDomain = new Map(subdomains.map((s) => [s.id, s.domain_id]))
-  // domain_id → dimension_id (school-scoped)
-  const domainToDimension = new Map<string, string>()
-  for (const m of domainDimensionMap) {
-    if (m.school_id !== schoolId) continue
-    domainToDimension.set(m.competency_domain_id, m.dimension_id)
-  }
-
-  // ── Determine snapshot range ──────────────────────────────
-  const sortedAssessments = [...assessments].sort(
-    (a, b) => new Date(a.assessed_at).getTime() - new Date(b.assessed_at).getTime()
-  )
-  const now = new Date()
-  const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1)
-  const earliestAssessment = sortedAssessments[0]
-    ? new Date(sortedAssessments[0].assessed_at).getTime()
-    : now.getTime()
-  const startTime = Math.min(twelveMonthsAgo.getTime(), earliestAssessment)
-
-  const snapshotDates: Date[] = []
-  const cursor = new Date(new Date(startTime).getFullYear(), new Date(startTime).getMonth(), 1)
-  while (cursor.getTime() <= now.getTime()) {
-    snapshotDates.push(new Date(cursor))
-    cursor.setMonth(cursor.getMonth() + 1)
-  }
-  const last = snapshotDates[snapshotDates.length - 1]
-  if (!last || last.getMonth() !== now.getMonth() || last.getFullYear() !== now.getFullYear()) {
-    snapshotDates.push(new Date(now.getFullYear(), now.getMonth(), 1))
-  }
-
-  // ── Build each snapshot ───────────────────────────────────
-  const snapshots: AmoebaSnapshot[] = snapshotDates.map((monthStart) => {
-    const cutoff = endOfMonth(monthStart).getTime()
-    const { years: ageYears, months: ageMonths } = ageAt(dob, endOfMonth(monthStart))
-
-    // Per-dimension accumulators
-    const sums = new Map<string, { sum: number; count: number }>()
-    for (const d of dimensions) sums.set(d.id, { sum: 0, count: 0 })
-
-    for (const a of sortedAssessments) {
-      if (new Date(a.assessed_at).getTime() > cutoff) break // sorted ascending
-      const baseScore = levelScore(a.level)
-      const compIds = skillToComps.get(a.skill_id)
-      if (!compIds || compIds.length === 0) continue
-
-      for (const cid of compIds) {
-        const comp = compById.get(cid)
-        if (!comp) continue
-
-        // Age cap: above band → emerging (1)
-        let effective = baseScore
-        if (
-          comp.age_band_start != null &&
-          comp.age_band_end != null &&
-          ageYears > comp.age_band_end
-        ) {
-          effective = 1
-        }
-
-        const domainId = subToDomain.get(comp.subdomain_id)
-        if (!domainId) continue
-        const dimensionId = domainToDimension.get(domainId)
-        if (!dimensionId) continue
-
-        const acc = sums.get(dimensionId)
-        if (!acc) continue
-        acc.sum += effective
-        acc.count += 1
-      }
-    }
-
-    const dimResult: Record<string, number | null> = {}
-    for (const d of dimensions) {
-      const acc = sums.get(d.id)!
-      dimResult[d.id] = acc.count > 0 ? acc.sum / acc.count : null
-    }
-
-    return {
-      date: monthStart.toISOString(),
-      label: monthStart.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-      ageYears,
-      ageMonths,
-      dimensions: dimResult,
-    }
-  })
-
-  // ── Mark age-rollover snapshots (birthday month) ──────────
-  for (let i = 1; i < snapshots.length; i++) {
-    if (snapshots[i].ageYears !== snapshots[i - 1].ageYears) {
-      snapshots[i].isAgeRollover = true
-      snapshots[i].prevAgeYears = snapshots[i - 1].ageYears
-    }
-  }
-
-  return snapshots
 }
 
 // ============================================================

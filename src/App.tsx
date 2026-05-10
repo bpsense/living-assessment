@@ -30,14 +30,8 @@ import SchoolsPage from './pages/system/Schools'
 import SystemActivity from './pages/system/SystemActivity'
 import UsersPage from './pages/admin/Users'
 import LearnerProfile from './pages/LearnerProfile'
-import CompetencyFrameworks from './pages/admin/CompetencyFrameworks'
-import SkillLibrary from './pages/admin/SkillLibrary'
 import Permissions from './pages/admin/Permissions'
-import Assignments from './pages/Assignments'
-import AssignmentGrading from './pages/AssignmentGrading'
-import SkillGrading from './components/skills/SkillGrading'
 import Messages from './pages/Messages'
-import TemplatePreview from './pages/TemplatePreview'
 import IncidentReportPage from './pages/IncidentReport'
 import IncidentsPage from './pages/admin/IncidentsPage'
 import TranslatePage from './pages/Translate'
@@ -58,9 +52,6 @@ function AppRoutes() {
       <Route path="/reset-password" element={<ResetPassword />} />
       {/* Student-facing survey — token-based, no auth required */}
       <Route path="/survey/:token" element={<InterestSurvey />} />
-      {/* Template system preview — no auth, remove after review */}
-      <Route path="/template-preview" element={<TemplatePreview />} />
-
       <Route
         element={
           <ProtectedRoute>
@@ -80,9 +71,6 @@ function AppRoutes() {
         <Route path="/department" element={<DepartmentDashboard />} />
         <Route path="/incident/:id" element={<IncidentReportPage />} />
         <Route path="/settings" element={<SchoolProfile />} />
-        <Route path="/assignments" element={<Assignments />} />
-        <Route path="/assignment/:id" element={<AssignmentGrading />} />
-        <Route path="/skill-assignment/:id" element={<SkillGrading />} />
         <Route path="/messages" element={<Messages />} />
 
         {/* Learner routes */}
@@ -176,22 +164,6 @@ function AppRoutes() {
           element={
             <ProtectedRoute requiredRole="admin">
               <TranslatePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/competency-frameworks"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <CompetencyFrameworks />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/skill-library"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <SkillLibrary />
             </ProtectedRoute>
           }
         />

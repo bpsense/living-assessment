@@ -40,7 +40,7 @@ import type {
   Standard,
 } from '../types/database'
 import type { TranslationAIResult } from '../lib/ai-mapping'
-import { formatLevel } from '../lib/skill-assessment-data'
+import { formatLevel } from '../lib/standards-assignment-data'
 
 // ============================================================
 // Source-side context per mapping (left column of Review step).
@@ -661,7 +661,7 @@ export default function TranslatePage() {
                               <div className="mt-1 flex flex-wrap items-center gap-1.5">
                                 {source.level && (
                                   <span className="rounded-full bg-bg-muted px-2 py-0.5 text-[10px] font-medium text-text-muted">
-                                    {formatLevel(source.level as 'emerging' | 'developing' | 'achieving' | 'exceeding')}
+                                    {formatLevel(source.level as 'emerging' | 'developing' | 'achieving' | 'mastery')}
                                   </span>
                                 )}
                                 {source.date && (
