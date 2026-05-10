@@ -21,12 +21,18 @@ import TeacherNotes from '../components/student/TeacherNotes'
 import ParentNotes from '../components/student/ParentNotes'
 import StudentIncidents from '../components/student/StudentIncidents'
 import LearnerMessagesSection from '../components/student/LearnerMessagesSection'
+import LearnerAssignmentsSection from '../components/student/LearnerAssignmentsSection'
 import StudentContextDoc from '../components/student/StudentContextDoc'
 import StudentClassroomsManager from '../components/student/StudentClassroomsManager'
 import StudentSkillsSection from '../components/skills/StudentSkillsSection'
 import QuickAssess from '../components/skills/QuickAssess'
 import AssignSkillModal from '../components/skills/AssignSkillModal'
 import TranslationHistory from '../components/student/TranslationHistory'
+
+// Feature flag — Track A "Dimension cards + observations" path is being
+// retired in favor of the standards-driven assignment pipeline. Flip this
+// to true to bring the section back without restoring code.
+const SHOW_DIMENSION_CARDS = false
 
 // ============================================================
 // Student avatar with fallback initials
@@ -403,6 +409,18 @@ export default function StudentProfile() {
         </div>
       </section>
 
+      {/* ========== ASSIGNED TO ME (standards-driven) ========== */}
+      <LearnerAssignmentsSection
+        student={{
+          id: student.id,
+          first_name: student.first_name,
+          last_name: student.last_name,
+          school_id: student.school_id,
+        }}
+        familyView={isFamilyView}
+        canAssign={!isFamilyView}
+      />
+
       {/* ========== CLASSROOM ENROLLMENTS (educator/admin only) ========== */}
       {!isFamilyView && (
         <section className="glass-card p-5">
@@ -559,8 +577,11 @@ export default function StudentProfile() {
         <StudentContextDoc studentId={student.id} schoolId={student.school_id} />
       )}
 
-      {/* ========== DIMENSION CARDS (educator/admin only) ========== */}
-      {!isFamilyView && (
+      {/* ========== DIMENSION CARDS (HIDDEN — preserved for possible future revival) ==========
+          Hidden during the standards-driven assignment refactor. The cards write to
+          `observations` (Track A), which we're retiring. Component is still imported
+          and used below behind a feature flag so the whole code path stays alive. */}
+      {SHOW_DIMENSION_CARDS && !isFamilyView && (
         <section>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-bold text-text">Dimensions</h2>
