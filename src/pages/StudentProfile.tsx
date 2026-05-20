@@ -11,6 +11,7 @@ import { smoothSnapshots, snapshotToDimensionScores } from '../lib/living-data'
 import { buildSnapshotsFromStandards } from '../lib/standards-snapshots'
 import LivingVisualization from '../components/student/LivingVisualization'
 import AmoebaEmptyState from '../components/student/AmoebaEmptyState'
+import CompetencySnapshot from '../components/student/CompetencySnapshot'
 import ZoneMatrix from '../components/student/ZoneMatrix'
 import AILearningGuide from '../components/student/AILearningGuide'
 import FamilySupportGuide from '../components/student/FamilySupportGuide'
@@ -379,6 +380,20 @@ export default function StudentProfile() {
           )}
         </div>
       </section>
+
+      {/* ========== COMPETENCY SNAPSHOT (current standing, standard by standard) ========== */}
+      <CompetencySnapshot
+        studentId={student.id}
+        schoolId={student.school_id}
+        studentFirstName={student.first_name}
+        dateOfBirth={student.date_of_birth}
+        audience={isFamilyView ? 'family' : 'educator'}
+        prefetched={{
+          dimensions: visibleDimensions,
+          dimensionStandards,
+          standardAssessments,
+        }}
+      />
 
       {/* ========== ASSIGNED TO ME (standards-driven) ========== */}
       <LearnerAssignmentsSection

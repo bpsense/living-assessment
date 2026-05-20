@@ -205,6 +205,12 @@ export interface Standard {
   grade_level: string | null
   parent_id: string | null
   display_order: number
+  /** Per-standard family-view filter (added in migration 077). */
+  visible_to_family: boolean
+  /** Inclusive lower bound of the typical age this standard targets (added in 079). */
+  age_band_start: number | null
+  /** Inclusive upper bound of the typical age this standard targets (added in 079). */
+  age_band_end: number | null
   created_at: string
   updated_at: string
 }
