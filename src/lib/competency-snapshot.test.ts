@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  adjustedLevelScore,
   ageFromDob,
-  bandOffset,
   classifyBand,
   classifyTrend,
   computeSpectrumScore,
@@ -40,15 +40,34 @@ describe('classifyBand', () => {
 })
 
 // ============================================================
-// bandOffset
+// adjustedLevelScore (asymmetric band-shift rule)
 // ============================================================
 
-describe('bandOffset', () => {
-  it('older = +1, matching = 0, younger = -1, unknown = 0', () => {
-    expect(bandOffset('older')).toBe(1)
-    expect(bandOffset('matching')).toBe(0)
-    expect(bandOffset('younger')).toBe(-1)
-    expect(bandOffset('unknown')).toBe(0)
+describe('adjustedLevelScore — per-assessment band-shifted score', () => {
+  it('matching band: identity on the 1..4 level scale', () => {
+    expect(adjustedLevelScore('emerging', 'matching')).toBe(1)
+    expect(adjustedLevelScore('developing', 'matching')).toBe(2)
+    expect(adjustedLevelScore('achieving', 'matching')).toBe(3)
+    expect(adjustedLevelScore('mastery', 'matching')).toBe(4)
+  })
+
+  it('older band: every level shifts +1 (stretch always counts)', () => {
+    expect(adjustedLevelScore('emerging', 'older')).toBe(2)
+    expect(adjustedLevelScore('developing', 'older')).toBe(3)
+    expect(adjustedLevelScore('achieving', 'older')).toBe(4)
+    expect(adjustedLevelScore('mastery', 'older')).toBe(5)
+  })
+
+  it('younger band: asymmetric. Gaps penalize, successes do not.', () => {
+    // Gap signal preserved on emerging/developing.
+    expect(adjustedLevelScore('emerging', 'younger')).toBe(0)
+    expect(adjustedLevelScore('developing', 'younger')).toBe(1)
+    // Successes on foundational material are not penalized — they sit
+    // squarely in the "at" zone instead of being pushed toward "below".
+    expect(adjustedLevelScore('achieving', 'younger')).toBe(3)
+    // Mastery still reads "at" (capped), not "above" — younger material
+    // isn't the right place to earn an "above age expectation" reading.
+    expect(adjustedLevelScore('mastery', 'younger')).toBe(3.5)
   })
 })
 
@@ -129,7 +148,7 @@ describe('weightedLevelScore', () => {
 // computeSpectrumScore (the headline)
 // ============================================================
 
-describe('computeSpectrumScore — band-shifted spectrum', () => {
+describe('computeSpectrumScore — asymmetric band-shifted spectrum', () => {
   it('returns null when band is unknown', () => {
     expect(
       computeSpectrumScore([mk('achieving', '2026-05-20')], 'unknown', NOW)
@@ -140,21 +159,23 @@ describe('computeSpectrumScore — band-shifted spectrum', () => {
     expect(computeSpectrumScore([], 'matching', NOW)).toBeNull()
   })
 
-  it('matching band: emerging=1, developing=2, achieving=3, mastery=4', () => {
+  it('matching band: 1/2/3/4 for emerging/developing/achieving/mastery', () => {
     expect(computeSpectrumScore([mk('emerging', '2026-05-20')], 'matching', NOW)).toBeCloseTo(1, 5)
     expect(computeSpectrumScore([mk('developing', '2026-05-20')], 'matching', NOW)).toBeCloseTo(2, 5)
     expect(computeSpectrumScore([mk('achieving', '2026-05-20')], 'matching', NOW)).toBeCloseTo(3, 5)
     expect(computeSpectrumScore([mk('mastery', '2026-05-20')], 'matching', NOW)).toBeCloseTo(4, 5)
   })
 
-  it('younger band raises the bar — same level reads more behind', () => {
-    // Score for younger should be one less than matching for the same level
+  it('younger band — gaps penalize, successes are flat at "at"', () => {
+    // Gap signal preserved
+    expect(computeSpectrumScore([mk('emerging', '2026-05-20')], 'younger', NOW)).toBeCloseTo(0, 5)
     expect(computeSpectrumScore([mk('developing', '2026-05-20')], 'younger', NOW)).toBeCloseTo(1, 5)
-    expect(computeSpectrumScore([mk('achieving', '2026-05-20')], 'younger', NOW)).toBeCloseTo(2, 5)
-    expect(computeSpectrumScore([mk('mastery', '2026-05-20')], 'younger', NOW)).toBeCloseTo(3, 5)
+    // Successes NOT penalized: both sit inside the "at" zone (2..4)
+    expect(computeSpectrumScore([mk('achieving', '2026-05-20')], 'younger', NOW)).toBeCloseTo(3, 5)
+    expect(computeSpectrumScore([mk('mastery', '2026-05-20')], 'younger', NOW)).toBeCloseTo(3.5, 5)
   })
 
-  it('older band lowers the bar — same level reads more ahead', () => {
+  it('older band — every level shifts +1 (stretch always counts)', () => {
     expect(computeSpectrumScore([mk('emerging', '2026-05-20')], 'older', NOW)).toBeCloseTo(2, 5)
     expect(computeSpectrumScore([mk('developing', '2026-05-20')], 'older', NOW)).toBeCloseTo(3, 5)
     expect(computeSpectrumScore([mk('achieving', '2026-05-20')], 'older', NOW)).toBeCloseTo(4, 5)
@@ -162,18 +183,34 @@ describe('computeSpectrumScore — band-shifted spectrum', () => {
   })
 
   it('clamps to [0, 5]', () => {
-    // younger + emerging would be 0; older + mastery would be 5; both clamped.
-    expect(computeSpectrumScore([mk('emerging', '2026-05-20')], 'younger', NOW)).toBe(0)
-    expect(computeSpectrumScore([mk('mastery', '2026-05-20')], 'older', NOW)).toBe(5)
+    // Younger + emerging is exactly 0; older + mastery exactly 5. No
+    // configuration overshoots the clamp under the new rule, but the
+    // safety still belongs.
+    expect(computeSpectrumScore([mk('emerging', '2026-05-20')], 'younger', NOW)).toBeCloseTo(0, 5)
+    expect(computeSpectrumScore([mk('mastery', '2026-05-20')], 'older', NOW)).toBeCloseTo(5, 5)
   })
 
-  it('blends history with decay — recent mastery pulls up an older developing', () => {
+  it('blends history with decay — recent mastery pulls up an older developing (matching)', () => {
     const score = computeSpectrumScore(
       [mk('developing', '2025-11-20'), mk('mastery', '2026-05-20')],
       'matching',
       NOW
     )!
     expect(score).toBeGreaterThan(3.5)
+    expect(score).toBeLessThan(4)
+  })
+
+  it('regression: younger-band achieving on top of older developing now lands in "at"', () => {
+    // This is the case from the Maya screenshot. Under v1 (constant -1
+    // offset) the spectrum was ~1.67 → "below". Under v2 (asymmetric),
+    // the recent achieving reads 3 (no penalty) and the older developing
+    // reads 1, so the weighted score should land in the "at" zone.
+    const score = computeSpectrumScore(
+      [mk('developing', '2026-02-14'), mk('achieving', '2026-05-15')],
+      'younger',
+      NOW
+    )!
+    expect(score).toBeGreaterThanOrEqual(2)
     expect(score).toBeLessThan(4)
   })
 })
@@ -268,10 +305,12 @@ describe('smoke scenarios — band-shift rule for a 7yo learner', () => {
     expect(spectrumToZone(computeSpectrumScore([mk('mastery', '2026-05-20')], band, NOW))).toBe('above')
   })
 
-  it('younger band (4-5): emerging/dev=below, achieving/mastery=at', () => {
+  it('younger band (4-5): emerging/dev=below (gap), achieving/mastery=at (success, capped)', () => {
     const band = classifyBand(7, 4, 5)
     expect(spectrumToZone(computeSpectrumScore([mk('emerging', '2026-05-20')], band, NOW))).toBe('below')
     expect(spectrumToZone(computeSpectrumScore([mk('developing', '2026-05-20')], band, NOW))).toBe('below')
+    // Successes on younger material no longer drag down to "below". They
+    // also do NOT promote to "above" — the bar is for harder content.
     expect(spectrumToZone(computeSpectrumScore([mk('achieving', '2026-05-20')], band, NOW))).toBe('at')
     expect(spectrumToZone(computeSpectrumScore([mk('mastery', '2026-05-20')], band, NOW))).toBe('at')
   })

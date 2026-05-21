@@ -44,19 +44,36 @@ export function classifyBand(
 }
 
 /**
- * The band offset shifts the spectrum so the band-shift rule from the design
- * brief holds: younger-band raises the bar (the same level reads as more
- * behind), older-band lowers it (the same level reads as more ahead),
- * matching is neutral.
+ * Per-assessment band-adjusted level score. This is the core of the
+ * "spectrum" rule and is asymmetric on the younger band:
  *
- *   younger:  -1   (a 7yo at "developing" on a 4-5 standard → score 1 → below)
- *   matching:  0   (a 7yo at "achieving" on a 6-7 standard → score 3 → at center)
- *   older:    +1   (a 7yo at "developing" on an 8-9 standard → score 3 → at center)
+ *   matching band:   level (1..4) — pure level on the spectrum
+ *   older band:      level + 1   — stretch always counts (engagement on
+ *                                  older material adds context, success on
+ *                                  it reads as ahead)
+ *   younger band:    asymmetric. Penalize gaps; never penalize successes.
+ *     - emerging  (1) → 0     (deep below: a 7yo not getting 4-5 work)
+ *     - developing(2) → 1     (below:      visible gap)
+ *     - achieving (3) → 3     (at:         has the foundation, no extra credit)
+ *     - mastery   (4) → 3.5   (at, right:  clearly mastered, but the bar
+ *                                          is for harder content, so this
+ *                                          does NOT bump into "above")
+ *
+ * Returns 0 for unknown band so the caller can short-circuit there.
  */
-export function bandOffset(band: BandRelation): number {
-  if (band === 'older') return 1
-  if (band === 'younger') return -1
-  return 0 // matching or unknown
+export function adjustedLevelScore(
+  level: AssessmentLevel,
+  band: BandRelation
+): number {
+  const lvl = LEVEL_SCORE[level] // 1..4
+  if (band === 'matching') return lvl
+  if (band === 'older') return lvl + 1
+  if (band === 'younger') {
+    if (lvl >= 4) return 3.5 // mastery
+    if (lvl >= 3) return 3 // achieving
+    return lvl - 1 // emerging / developing penalize gaps
+  }
+  return lvl // unknown — caller treats as untimed anyway
 }
 
 // ============================================================
@@ -79,8 +96,9 @@ export function decayWeight(
 }
 
 /**
- * Weighted-average level score of a list of assessments. Newer assessments
- * dominate (exponential decay). Returns null when history is empty.
+ * Decay-weighted average of the *raw* per-assessment level scores (1..4).
+ * Exported for unit tests + UI display; this is the value the modal shows
+ * before any band shift is applied. Returns null on empty history.
  */
 export function weightedLevelScore(
   history: StandardAssessment[],
@@ -102,10 +120,13 @@ export function weightedLevelScore(
 
 /**
  * Computes the spectrum score for a single (standard, learner) pair.
- *   - Returns null when there's no history.
- *   - Returns null when the band is unknown (no age band on standard, or
- *     no DOB on learner) — caller treats that as 'untimed'.
- *   - Otherwise: weighted level (1..4) + band offset (-1..+1), clamped to [0, 5].
+ *   - Returns null when band is unknown or history is empty.
+ *   - Otherwise: decay-weighted average of each assessment's BAND-ADJUSTED
+ *     score (see `adjustedLevelScore`). Applying the band rule per
+ *     assessment rather than as a constant offset is what implements the
+ *     asymmetric younger-band behavior: gaps still penalize, but successes
+ *     no longer drag the spectrum down.
+ *   - Clamped to [0, 5].
  */
 export function computeSpectrumScore(
   history: StandardAssessment[],
@@ -113,11 +134,18 @@ export function computeSpectrumScore(
   now: Date = new Date(),
   halfLifeDays: number = DECAY_HALF_LIFE_DAYS
 ): number | null {
-  if (band === 'unknown') return null
-  const level = weightedLevelScore(history, now, halfLifeDays)
-  if (level === null) return null
-  const score = level + bandOffset(band)
-  return Math.max(0, Math.min(5, score))
+  if (band === 'unknown' || history.length === 0) return null
+  let weightedSum = 0
+  let totalWeight = 0
+  const nowMs = now.getTime()
+  for (const a of history) {
+    const days = Math.max(0, (nowMs - new Date(a.assessed_at).getTime()) / 86_400_000)
+    const w = decayWeight(days, halfLifeDays)
+    weightedSum += adjustedLevelScore(a.level, band) * w
+    totalWeight += w
+  }
+  if (totalWeight === 0) return null
+  return Math.max(0, Math.min(5, weightedSum / totalWeight))
 }
 
 /**
