@@ -1,29 +1,32 @@
 /**
  * competency-snapshot-data.ts
  *
- * Data layer for the Competency Snapshot section. Read-only; reuses
- * existing access in standards-assignment-data.ts and standards-snapshots.ts
- * conceptually but talks to supabase directly to keep one place to optimize.
+ * Data layer for the Competency Snapshot. Read-only.
  *
- * Output shape: per-dimension groups (matching the amoeba's spokes) of
- * SnapshotRow values, each carrying the latest assessment + computed
- * position + trend, plus age-appropriate ghost rows the learner has not
- * yet been assessed on. Untimed and unassigned buckets are surfaced
- * separately so the consumer can render them without dropping anything.
+ * Output is a per-dimension grouping of `SnapshotRow`s, each carrying:
+ *   - the standard
+ *   - full assessment history (asc by assessed_at)
+ *   - latest assessment (or null for ghost rows)
+ *   - spectrum score (number in [0, 5] or null = untimed)
+ *   - barPercent (0..100 — where to draw the marker on the bar)
+ *   - zone ('below' | 'at' | 'above' | 'untimed' — for tally counts + sort)
+ *   - trend (up | down | flat)
+ *
+ * Untimed and unassigned buckets are surfaced separately so the consumer can
+ * render them without dropping anything.
  */
 import { supabase } from './supabase'
 import {
   ageFromDob,
   classifyBand,
-  classifyPosition,
   classifyTrend,
-  type Position,
+  computeSpectrumScore,
+  spectrumToBarPercent,
+  spectrumToZone,
+  type Zone,
   type Trend,
 } from './competency-snapshot'
-import {
-  type AssessmentLevel,
-  type StandardAssessment,
-} from './standards-assignment-data'
+import { type StandardAssessment } from './standards-assignment-data'
 import type {
   Dimension,
   DimensionStandard,
@@ -37,37 +40,31 @@ import type {
 
 export interface SnapshotRow {
   standard: Standard
-  /** Latest assessment for this standard, or null for ghost rows. */
   latest: StandardAssessment | null
-  /** Computed position; 'untimed' when standard has no age band. */
-  position: Position
-  /** up/down/flat. 'flat' for single or zero assessments. */
-  trend: Trend
-  /** Full assessment history for this standard, ascending by assessed_at. */
   history: StandardAssessment[]
-  /** True when the row was added because the standard is age-appropriate
-   *  but the learner has not been assessed on it yet. */
+  /** Continuous [0, 5] score or null when untimed. */
+  spectrumScore: number | null
+  /** 0..100 — where on the bar this marker sits. Untimed rows: 50 (centered). */
+  barPercent: number
+  /** Categorical bucket derived from spectrumScore. */
+  zone: Zone
+  trend: Trend
+  /** True for age-appropriate standards with no assessment history. */
   isGhost: boolean
 }
 
 export interface DomainGroup {
-  /** Amoeba dimension this group represents. */
   dimension: Dimension
   rows: SnapshotRow[]
-  counts: Record<Position, number>
-  /** Rows whose position is 'untimed' (no resolvable age band). */
+  counts: Record<Zone, number>
   untimed: SnapshotRow[]
 }
 
 export interface CompetencySnapshot {
-  /** Integer learner age, or null when DOB is missing. */
   learnerAge: number | null
-  /** Per-dimension groups in display order. Empty groups are dropped. */
   groups: DomainGroup[]
-  /** Rows whose standard does not roll up to any dimension. */
   unassigned: SnapshotRow[]
-  /** Totals across the snapshot, useful for the page header strip. */
-  totals: Record<Position, number>
+  totals: Record<Zone, number>
 }
 
 // ============================================================
@@ -81,13 +78,10 @@ interface SnapshotInputs {
   standards: Standard[]
   assessments: StandardAssessment[]
   familyView: boolean
+  /** Optional override for "now" (lets tests pin the decay clock). */
+  now?: Date
 }
 
-/**
- * Pull every input the snapshot needs in a single round-trip per table.
- * Family view filters dimensions and standards server-side respecting the
- * `visible_to_family` flags. RLS additionally clamps the rows for parents.
- */
 export async function getCompetencySnapshot(
   studentId: string,
   options: { familyView?: boolean } = {}
@@ -100,7 +94,6 @@ export async function getCompetencySnapshot(
     .eq('id', studentId)
     .single()
   if (stuErr || !student) throw new Error(`Student not found: ${stuErr?.message}`)
-
   const stu = student as Pick<Student, 'id' | 'school_id' | 'date_of_birth'>
 
   const [dimsRes, dsRes, stdsRes, asRes] = await Promise.all([
@@ -127,7 +120,6 @@ export async function getCompetencySnapshot(
       .eq('student_id', studentId)
       .order('assessed_at', { ascending: true }),
   ])
-
   if (dimsRes.error) throw dimsRes.error
   if (dsRes.error) throw dsRes.error
   if (stdsRes.error) throw stdsRes.error
@@ -144,39 +136,168 @@ export async function getCompetencySnapshot(
 }
 
 // ============================================================
+// Standard detail (for the click-through modal)
+// ============================================================
+
+export interface StandardDetail {
+  standard: Standard
+  /** All assessments for this learner on this standard, descending by date. */
+  history: StandardAssessment[]
+  /** Parent assignments that include this standard for this learner. */
+  assignments: Array<{
+    id: string
+    title: string
+    description: string | null
+    due_date: string | null
+    status: string
+  }>
+  /** Matching competency by code, if one exists. Carries `name`, `objective`,
+   *  and `step_descriptors` for the age-expectation panel. */
+  competency: {
+    code: string
+    name: string
+    objective: string | null
+    step_descriptors: Record<string, string>
+  } | null
+  /** Names of educators who recorded assessments (assessor_id → full_name). */
+  assessors: Record<string, string>
+}
+
+/**
+ * Fetch everything the click-through modal needs for a single standard.
+ * Separate from the page-load fetch because it's lazy (only on click).
+ */
+export async function getStandardDetail(args: {
+  studentId: string
+  schoolId: string
+  standardId: string
+}): Promise<StandardDetail> {
+  const { studentId, schoolId, standardId } = args
+
+  const [stdRes, histRes] = await Promise.all([
+    supabase
+      .from('standards')
+      .select(
+        'id, framework_id, school_id, code, description, grade_level, parent_id, display_order, visible_to_family, age_band_start, age_band_end, created_at, updated_at'
+      )
+      .eq('id', standardId)
+      .single(),
+    supabase
+      .from('assignment_standard_assessments')
+      .select('*')
+      .eq('student_id', studentId)
+      .eq('standard_id', standardId)
+      .order('assessed_at', { ascending: false })
+      .returns<StandardAssessment[]>(),
+  ])
+  if (stdRes.error || !stdRes.data) throw new Error(stdRes.error?.message ?? 'Standard not found')
+  if (histRes.error) throw histRes.error
+
+  const standard = stdRes.data as Standard
+  const history = histRes.data ?? []
+
+  // Pull the matching competency by code (school-scoped via framework).
+  // Boundless seeded standards + competencies share codes; for CCSS schools
+  // this returns null and the UI falls back to standard.description.
+  const { data: compRows } = await supabase
+    .from('competencies')
+    .select('code, name, objective, step_descriptors, framework_id')
+    .eq('code', standard.code)
+  const competency = (() => {
+    if (!compRows || compRows.length === 0) return null
+    // If multiple, prefer one whose framework belongs to this school. We
+    // don't have framework→school in this query; just take the first.
+    const c = compRows[0] as {
+      code: string
+      name: string
+      objective: string | null
+      step_descriptors: Record<string, string>
+    }
+    return c
+  })()
+
+  // Parent assignment(s) that include this standard for this learner.
+  const { data: saRows } = await supabase
+    .from('student_assignments')
+    .select(
+      `id,
+       assignment:assignment_id (
+         id, title, description, due_date, status, school_id
+       ),
+       student_assignment_standards!inner ( standard_id )`
+    )
+    .eq('student_id', studentId)
+    .eq('student_assignment_standards.standard_id', standardId)
+  type SaRow = {
+    id: string
+    assignment: {
+      id: string
+      title: string
+      description: string | null
+      due_date: string | null
+      status: string
+      school_id: string
+    }
+  }
+  const assignments = ((saRows ?? []) as unknown as SaRow[])
+    .filter((r) => r.assignment?.school_id === schoolId)
+    .map((r) => ({
+      id: r.assignment.id,
+      title: r.assignment.title,
+      description: r.assignment.description,
+      due_date: r.assignment.due_date,
+      status: r.assignment.status,
+    }))
+
+  // Resolve assessor names for the history rows.
+  const assessorIds = [...new Set(history.map((h) => h.assessor_id))]
+  const assessors: Record<string, string> = {}
+  if (assessorIds.length > 0) {
+    const { data: profs } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .in('id', assessorIds)
+    for (const p of (profs ?? []) as Array<{ id: string; full_name: string }>) {
+      assessors[p.id] = p.full_name
+    }
+  }
+
+  return { standard, history, assignments, competency, assessors }
+}
+
+// ============================================================
 // Pure assembly (exported for tests)
 // ============================================================
 
-/**
- * Pure function from raw inputs to the snapshot view-model. Exported so
- * tests can exercise the per-domain grouping and ghost-row logic without
- * touching supabase.
- */
 export function buildCompetencySnapshot(input: SnapshotInputs): CompetencySnapshot {
-  const { student, dimensions, dimensionStandards, standards, assessments, familyView } = input
+  const {
+    student,
+    dimensions,
+    dimensionStandards,
+    standards,
+    assessments,
+    familyView,
+    now = new Date(),
+  } = input
 
-  const learnerAge = ageFromDob(student.date_of_birth ?? null)
+  const learnerAge = ageFromDob(student.date_of_birth ?? null, now)
 
-  // Family view filters out family-hidden dimensions and standards.
   const visibleDims = familyView
     ? dimensions.filter((d) => d.visible_to_family)
     : dimensions
   const visibleDimIds = new Set(visibleDims.map((d) => d.id))
 
-  // standard_id → dimension_id (we keep only bridges to visible dims)
   const stdToDim = new Map<string, string>()
   for (const ds of dimensionStandards) {
     if (!visibleDimIds.has(ds.dimension_id)) continue
     stdToDim.set(ds.standard_id, ds.dimension_id)
   }
 
-  // Visible standards (family view also gates on standards.visible_to_family)
   const visibleStandards = standards.filter(
     (s) => !familyView || s.visible_to_family
   )
   const stdById = new Map(visibleStandards.map((s) => [s.id, s]))
 
-  // Group full assessment history by standard, asc by assessed_at.
   const historyByStd = new Map<string, StandardAssessment[]>()
   for (const a of assessments) {
     if (!stdById.has(a.standard_id)) continue
@@ -185,51 +306,52 @@ export function buildCompetencySnapshot(input: SnapshotInputs): CompetencySnapsh
     else historyByStd.set(a.standard_id, [a])
   }
 
-  // Build empty groups in dimension display order. Drop empties at the end.
   const groups: DomainGroup[] = visibleDims.map((dimension) => ({
     dimension,
     rows: [],
-    counts: emptyPositionCounts(),
+    counts: emptyZoneCounts(),
     untimed: [],
   }))
   const groupByDim = new Map(groups.map((g) => [g.dimension.id, g]))
   const unassigned: SnapshotRow[] = []
 
-  // Standards the learner has actually been assessed on.
   const assessedStdIds = new Set(historyByStd.keys())
   for (const stdId of assessedStdIds) {
     const standard = stdById.get(stdId)
     if (!standard) continue
-    const row = buildRow({ standard, history: historyByStd.get(stdId) ?? [], learnerAge, isGhost: false })
+    const row = buildRow({
+      standard,
+      history: historyByStd.get(stdId) ?? [],
+      learnerAge,
+      isGhost: false,
+      now,
+    })
     placeRow(row, stdToDim, groupByDim, unassigned)
   }
 
-  // Ghost rows: every standard whose age band overlaps the learner's age
-  // AND on which the learner has not yet been assessed.
+  // Ghost rows for matching-band standards with no history.
   if (learnerAge !== null) {
     for (const standard of visibleStandards) {
       if (assessedStdIds.has(standard.id)) continue
       const band = classifyBand(learnerAge, standard.age_band_start, standard.age_band_end)
       if (band !== 'matching') continue
-      const row = buildRow({ standard, history: [], learnerAge, isGhost: true })
+      const row = buildRow({ standard, history: [], learnerAge, isGhost: true, now })
       placeRow(row, stdToDim, groupByDim, unassigned)
     }
   }
 
-  // Sort rows within each group: needs-attention first, then by code.
   for (const group of groups) {
     group.rows.sort(rowSortFn)
     group.untimed.sort(rowSortFn)
   }
   unassigned.sort(rowSortFn)
 
-  // Totals across all visible groups + unassigned (untimed counted in 'untimed').
-  const totals = emptyPositionCounts()
+  const totals = emptyZoneCounts()
   for (const group of groups) {
-    for (const row of group.rows) totals[row.position] += 1
-    for (const row of group.untimed) totals[row.position] += 1
+    for (const row of group.rows) totals[row.zone] += 1
+    for (const row of group.untimed) totals[row.zone] += 1
   }
-  for (const row of unassigned) totals[row.position] += 1
+  for (const row of unassigned) totals[row.zone] += 1
 
   return {
     learnerAge,
@@ -248,28 +370,31 @@ function buildRow(args: {
   history: StandardAssessment[]
   learnerAge: number | null
   isGhost: boolean
+  now: Date
 }): SnapshotRow {
-  const { standard, history, learnerAge, isGhost } = args
+  const { standard, history, learnerAge, isGhost, now } = args
   const band = classifyBand(learnerAge, standard.age_band_start, standard.age_band_end)
   const latest = history.length > 0 ? history[history.length - 1] : null
-  const level: AssessmentLevel | null = latest ? latest.level : null
 
-  // Ghost rows have no level — their position is 'at' by construction
-  // (the band overlaps the learner's age), with 'untimed' falling out when
-  // the band is missing.
-  let position: Position
-  if (level === null) {
-    position = band === 'unknown' ? 'untimed' : 'at'
+  let spectrumScore: number | null
+  if (isGhost) {
+    // Age-appropriate but unassessed — center of the bar, "at" by construction.
+    spectrumScore = band === 'unknown' ? null : 3
   } else {
-    position = classifyPosition(level, band)
+    spectrumScore = computeSpectrumScore(history, band, now)
   }
+
+  const zone = spectrumToZone(spectrumScore)
+  const barPercent = spectrumScore === null ? 50 : spectrumToBarPercent(spectrumScore)
 
   return {
     standard,
     latest,
-    position,
-    trend: classifyTrend(history),
     history,
+    spectrumScore,
+    barPercent,
+    zone,
+    trend: classifyTrend(history),
     isGhost,
   }
 }
@@ -290,30 +415,25 @@ function placeRow(
     unassigned.push(row)
     return
   }
-  if (row.position === 'untimed') {
+  if (row.zone === 'untimed') {
     group.untimed.push(row)
   } else {
     group.rows.push(row)
-    group.counts[row.position] += 1
+    group.counts[row.zone] += 1
   }
 }
 
-function emptyPositionCounts(): Record<Position, number> {
-  return { ahead: 0, at: 0, building: 0, untimed: 0 }
+function emptyZoneCounts(): Record<Zone, number> {
+  return { below: 0, at: 0, above: 0, untimed: 0 }
 }
 
-const POSITION_WEIGHT: Record<Position, number> = {
-  building: 0,
-  at: 1,
-  ahead: 2,
-  untimed: 3,
-}
+const ZONE_WEIGHT: Record<Zone, number> = { below: 0, at: 1, above: 2, untimed: 3 }
 
 function rowSortFn(a: SnapshotRow, b: SnapshotRow): number {
-  // Real (assessed) rows first, ghost rows after, then by position weight,
-  // then by standard code for deterministic ordering.
   if (a.isGhost !== b.isGhost) return a.isGhost ? 1 : -1
-  const pw = POSITION_WEIGHT[a.position] - POSITION_WEIGHT[b.position]
-  if (pw !== 0) return pw
+  const zw = ZONE_WEIGHT[a.zone] - ZONE_WEIGHT[b.zone]
+  if (zw !== 0) return zw
+  // Within a zone, sort by bar position (left first).
+  if (a.barPercent !== b.barPercent) return a.barPercent - b.barPercent
   return a.standard.code.localeCompare(b.standard.code, undefined, { numeric: true })
 }

@@ -1,14 +1,17 @@
 /**
  * CompetencySnapshot.tsx
  *
- * "Where this learner stands today" — a current-position read of the
- * standards pipeline, sibling to the amoeba (which shows growth over time).
+ * Current-position view of the standards pipeline, sibling to the amoeba
+ * (which shows growth over time).
  *
- * One shared component with two audience modes:
- *   - educator: assessed dates, notes, trend arrows, dense layout
- *   - family:   plain-language labels, no notes, simplified tooltips
+ * v2 layout:
+ *  - Default: domain summary rows with stacked proportion strip.
+ *  - Expanded: a single continuous gradient bar per domain. Each assessed
+ *    standard is a marker placed at its computed spectrum percent (left =
+ *    below age expectation, center = at age, right = above). Markers are
+ *    clickable; the click opens a StandardDetailModal.
  *
- * Both modes share the same data layer and position rule. No writes.
+ * Two audience modes share one data layer + one rule.
  */
 import { useEffect, useMemo, useState } from 'react'
 import {
@@ -21,7 +24,6 @@ import {
   Loader2,
 } from 'lucide-react'
 import { clsx } from 'clsx'
-import { format, formatDistanceToNow } from 'date-fns'
 import {
   buildCompetencySnapshot,
   type CompetencySnapshot as Snapshot,
@@ -29,10 +31,10 @@ import {
   type SnapshotRow,
 } from '../../lib/competency-snapshot-data'
 import {
-  POSITION_LABEL,
-  POSITION_SHORT,
-  POSITION_TOKEN,
-  type Position,
+  ZONE_LABEL,
+  ZONE_SHORT,
+  ZONE_TOKEN,
+  type Zone,
   type Trend,
 } from '../../lib/competency-snapshot'
 import { formatLevel } from '../../lib/standards-assignment-data'
@@ -44,6 +46,7 @@ import type {
 } from '../../types/database'
 import type { StandardAssessment } from '../../lib/standards-assignment-data'
 import { DimensionIcon } from './DimensionIcon'
+import StandardDetailModal from './StandardDetailModal'
 
 export type SnapshotAudience = 'educator' | 'family'
 
@@ -53,7 +56,6 @@ interface Props {
   studentFirstName: string
   dateOfBirth: string | null
   audience: SnapshotAudience
-  /** Optional pre-loaded data (lets the parent page reuse fetches). */
   prefetched?: {
     dimensions: Dimension[]
     dimensionStandards: DimensionStandard[]
@@ -71,9 +73,9 @@ export default function CompetencySnapshot({
 }: Props) {
   const [standards, setStandards] = useState<Standard[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [openRow, setOpenRow] = useState<SnapshotRow | null>(null)
   const familyView = audience === 'family'
 
-  // Standards are framework-bounded — one school fetch is enough.
   useEffect(() => {
     let cancelled = false
     async function run() {
@@ -109,7 +111,6 @@ export default function CompetencySnapshot({
     })
   }, [standards, prefetched, studentId, schoolId, dateOfBirth, familyView])
 
-  // ---------- Loading / Error / Empty ----------
   if (snapshot === null || !prefetched) {
     return (
       <Shell title="Competency Snapshot">
@@ -135,11 +136,10 @@ export default function CompetencySnapshot({
     )
   }
 
-  // ---------- Header copy ----------
   const subtitle =
     audience === 'family'
-      ? `Where ${studentFirstName} is right now, on each standard, compared to their age. The amoeba above shows how this has changed over time.`
-      : `Latest position per standard, relative to age. Append-only data; the amoeba above is the growth view.`
+      ? `Where ${studentFirstName} stands today on each standard, weighted toward the most recent assessments. The amoeba above shows how this has changed over time.`
+      : `Spectrum position per standard. Weighted across recent assessments (90-day half-life) with a band shift applied. Click a marker for full detail.`
 
   return (
     <Shell title="Competency Snapshot" subtitle={subtitle}>
@@ -151,26 +151,40 @@ export default function CompetencySnapshot({
             key={group.dimension.id}
             group={group}
             audience={audience}
+            onRowClick={setOpenRow}
           />
         ))}
 
         {snapshot.unassigned.length > 0 && (
-          <UnassignedPanel rows={snapshot.unassigned} audience={audience} />
+          <UnassignedPanel
+            rows={snapshot.unassigned}
+            audience={audience}
+            onRowClick={setOpenRow}
+          />
         )}
       </div>
 
       {snapshot.learnerAge === null && (
         <p className="mt-3 text-xs text-text-muted">
           Add a date of birth to surface age-relative positions; current view
-          shows assessed standards without an age comparison.
+          shows assessed standards as untimed.
         </p>
       )}
+
+      <StandardDetailModal
+        open={openRow !== null}
+        onClose={() => setOpenRow(null)}
+        studentId={studentId}
+        schoolId={schoolId}
+        row={openRow}
+        audience={audience}
+      />
     </Shell>
   )
 }
 
 // ============================================================
-// Shell
+// Shell + Empty
 // ============================================================
 
 function Shell({
@@ -189,9 +203,7 @@ function Shell({
           <Layers className="h-5 w-5 text-primary-500" />
           <h2 className="text-lg font-bold text-text">{title}</h2>
         </div>
-        {subtitle && (
-          <p className="mt-1 text-sm text-text-muted">{subtitle}</p>
-        )}
+        {subtitle && <p className="mt-1 text-sm text-text-muted">{subtitle}</p>}
       </header>
       {children}
     </section>
@@ -209,16 +221,15 @@ function EmptyState({
     return (
       <p className="text-sm text-text-muted">
         {firstName} hasn't been assessed on any standards yet. Once educators
-        record assessments, this view will show where {firstName} stands today
-        on each standard.
+        record assessments, this view will show where {firstName} stands today.
       </p>
     )
   }
   return (
     <p className="text-sm text-text-muted">
       No standards assessments or age-appropriate ghost rows to display. Once
-      you assess a standard on an active assignment or the school maps standards
-      to dimensions, the snapshot will populate here.
+      you assess a standard on an active assignment or the school maps
+      standards to dimensions, the snapshot will populate here.
     </p>
   )
 }
@@ -227,21 +238,18 @@ function EmptyState({
 // Totals strip
 // ============================================================
 
-function TotalsStrip({ totals }: { totals: Record<Position, number> }) {
+function TotalsStrip({ totals }: { totals: Record<Zone, number> }) {
   return (
     <div className="flex flex-wrap items-center gap-2 text-xs">
-      {(['building', 'at', 'ahead', 'untimed'] as const).map((p) => {
-        if (totals[p] === 0) return null
+      {(['below', 'at', 'above', 'untimed'] as const).map((z) => {
+        if (totals[z] === 0) return null
         return (
           <span
-            key={p}
-            className={clsx(
-              'rounded-full px-2.5 py-1 font-medium',
-              POSITION_TOKEN[p].chip
-            )}
+            key={z}
+            className={clsx('rounded-full px-2.5 py-1 font-medium', ZONE_TOKEN[z].chip)}
           >
-            <span className="opacity-70">{POSITION_SHORT[p]}:</span>{' '}
-            <span>{totals[p]}</span>
+            <span className="opacity-70">{ZONE_SHORT[z]}:</span>{' '}
+            <span>{totals[z]}</span>
           </span>
         )
       })}
@@ -250,20 +258,21 @@ function TotalsStrip({ totals }: { totals: Record<Position, number> }) {
 }
 
 // ============================================================
-// Domain panel (summary + expand)
+// Domain panel
 // ============================================================
 
 function DomainPanel({
   group,
   audience,
+  onRowClick,
 }: {
   group: DomainGroup
   audience: SnapshotAudience
+  onRowClick: (row: SnapshotRow) => void
 }) {
   const [open, setOpen] = useState(false)
   const { dimension, rows, counts, untimed } = group
 
-  const totalAssessed = rows.filter((r) => !r.isGhost).length
   const ghostCount = rows.filter((r) => r.isGhost).length
 
   return (
@@ -288,13 +297,13 @@ function DomainPanel({
         </div>
       </button>
 
-      <ProportionBar counts={counts} ghostCount={ghostCount} totalAssessed={totalAssessed} />
+      <ProportionBar counts={counts} ghostCount={ghostCount} />
 
       {open && (
         <div className="border-t border-bg-muted p-4">
-          <PositionBar rows={rows} audience={audience} />
+          <SpectrumBar rows={rows} audience={audience} onRowClick={onRowClick} />
           {untimed.length > 0 && (
-            <UntimedRows rows={untimed} audience={audience} />
+            <UntimedRows rows={untimed} audience={audience} onRowClick={onRowClick} />
           )}
         </div>
       )}
@@ -306,14 +315,14 @@ function TallyChips({
   counts,
   ghostCount,
 }: {
-  counts: Record<Position, number>
+  counts: Record<Zone, number>
   ghostCount: number
 }) {
   return (
     <div className="flex items-center gap-2 text-xs text-text-muted">
-      <Tally n={counts.ahead} label="ahead" tone="ahead" />
-      <Tally n={counts.at} label="at age level" tone="at" />
-      <Tally n={counts.building} label="building" tone="building" />
+      <Tally n={counts.below} label="below" zone="below" />
+      <Tally n={counts.at} label="at age level" zone="at" />
+      <Tally n={counts.above} label="above" zone="above" />
       {ghostCount > 0 && (
         <span className="hidden text-text-light sm:inline">· {ghostCount} not yet assessed</span>
       )}
@@ -321,18 +330,10 @@ function TallyChips({
   )
 }
 
-function Tally({
-  n,
-  label,
-  tone,
-}: {
-  n: number
-  label: string
-  tone: Position
-}) {
+function Tally({ n, label, zone }: { n: number; label: string; zone: Zone }) {
   if (n === 0) return null
   return (
-    <span className={clsx('rounded-full px-1.5 py-0.5 font-medium', POSITION_TOKEN[tone].chip)}>
+    <span className={clsx('rounded-full px-1.5 py-0.5 font-medium', ZONE_TOKEN[zone].chip)}>
       {n} <span className="hidden sm:inline">{label}</span>
     </span>
   )
@@ -341,97 +342,138 @@ function Tally({
 function ProportionBar({
   counts,
   ghostCount,
-  totalAssessed,
 }: {
-  counts: Record<Position, number>
+  counts: Record<Zone, number>
   ghostCount: number
-  totalAssessed: number
 }) {
-  // Use only assessed rows for the proportion bar; ghost rows render as a
-  // muted trailing segment so families can see "more to come".
-  const total = Math.max(1, totalAssessed + ghostCount)
+  const total = Math.max(1, counts.below + counts.at + counts.above + ghostCount)
   const pct = (n: number) => `${(n / total) * 100}%`
   return (
     <div className="mx-4 mb-3 flex h-1.5 overflow-hidden rounded-full bg-bg-muted">
-      <div className={clsx('h-full', POSITION_TOKEN.building.bar)} style={{ width: pct(counts.building) }} />
-      <div className={clsx('h-full', POSITION_TOKEN.at.bar)} style={{ width: pct(counts.at) }} />
-      <div className={clsx('h-full', POSITION_TOKEN.ahead.bar)} style={{ width: pct(counts.ahead) }} />
+      <div className={clsx('h-full', ZONE_TOKEN.below.dot)} style={{ width: pct(counts.below) }} />
+      <div className={clsx('h-full', ZONE_TOKEN.at.dot)} style={{ width: pct(counts.at) }} />
+      <div className={clsx('h-full', ZONE_TOKEN.above.dot)} style={{ width: pct(counts.above) }} />
       <div className="h-full bg-bg-muted" style={{ width: pct(ghostCount) }} />
     </div>
   )
 }
 
 // ============================================================
-// Position bar (the visual: BUILDING ← AT → AHEAD)
+// Continuous spectrum bar
 // ============================================================
 
-function PositionBar({
+function SpectrumBar({
   rows,
   audience,
+  onRowClick,
 }: {
   rows: SnapshotRow[]
   audience: SnapshotAudience
+  onRowClick: (row: SnapshotRow) => void
 }) {
-  // Each zone gets 1/3 of the track. Markers within a zone stack vertically
-  // to avoid collisions; horizontal offset within zone is a stable hash of
-  // the standard code so the layout doesn't churn between renders.
-  const zones: { key: Position; rows: SnapshotRow[] }[] = [
-    { key: 'building', rows: rows.filter((r) => r.position === 'building') },
-    { key: 'at', rows: rows.filter((r) => r.position === 'at') },
-    { key: 'ahead', rows: rows.filter((r) => r.position === 'ahead') },
-  ]
+  // Cluster markers into vertical lanes so they don't visually overlap when
+  // their barPercent values are close. A new lane is opened whenever a marker
+  // would sit within `LANE_GAP` of an earlier marker in the same lane.
+  const lanes = useMemo(() => layoutLanes(rows), [rows])
 
   return (
     <div>
-      {/* Zone labels */}
       <div className="mb-1 grid grid-cols-3 text-[10px] font-medium uppercase tracking-wide">
-        <span className="text-left text-accent-700">{POSITION_LABEL.building}</span>
-        <span className="text-center text-sky-700">{POSITION_LABEL.at}</span>
-        <span className="text-right text-primary-700">{POSITION_LABEL.ahead}</span>
+        <span className="text-left text-accent-700">{ZONE_LABEL.below}</span>
+        <span className="text-center text-sky-700">{ZONE_LABEL.at}</span>
+        <span className="text-right text-primary-700">{ZONE_LABEL.above}</span>
       </div>
 
-      {/* The track */}
-      <div className="relative grid grid-cols-3 rounded-lg border border-bg-muted bg-gradient-to-r from-accent-50 via-sky-50 to-primary-50">
-        {zones.map((zone) => (
-          <div
-            key={zone.key}
-            className="flex flex-wrap items-center justify-center gap-1 px-2 py-3 min-h-[64px]"
-          >
-            {zone.rows.length === 0 ? (
-              <span className="text-[10px] text-text-light">—</span>
-            ) : (
-              zone.rows.map((row) => (
-                <Marker key={row.standard.id} row={row} audience={audience} />
-              ))
-            )}
-          </div>
-        ))}
+      <div
+        className="relative rounded-lg border border-bg-muted bg-gradient-to-r from-accent-50 via-sky-50 to-primary-50"
+        style={{ minHeight: 24 + lanes.length * 28, paddingBottom: 8, paddingTop: 8 }}
+      >
+        {/* Vertical guides at the zone boundaries */}
+        <div className="pointer-events-none absolute inset-0 flex">
+          <div className="h-full w-1/3 border-r border-white/70" />
+          <div className="h-full w-1/3 border-r border-white/70" />
+          <div className="h-full w-1/3" />
+        </div>
+
+        {/* Markers */}
+        {lanes.map((lane, laneIdx) =>
+          lane.map((row) => (
+            <Marker
+              key={row.standard.id}
+              row={row}
+              top={8 + laneIdx * 28}
+              audience={audience}
+              onClick={() => onRowClick(row)}
+            />
+          ))
+        )}
       </div>
     </div>
   )
 }
 
-function Marker({ row, audience }: { row: SnapshotRow; audience: SnapshotAudience }) {
-  const tone = POSITION_TOKEN[row.position]
+const LANE_GAP_PERCENT = 14 // minimum horizontal spacing between markers in a lane
+
+function layoutLanes(rows: SnapshotRow[]): SnapshotRow[][] {
+  const sorted = [...rows].sort((a, b) => a.barPercent - b.barPercent)
+  const lanes: SnapshotRow[][] = []
+  for (const row of sorted) {
+    let placed = false
+    for (const lane of lanes) {
+      const last = lane[lane.length - 1]
+      if (row.barPercent - last.barPercent >= LANE_GAP_PERCENT) {
+        lane.push(row)
+        placed = true
+        break
+      }
+    }
+    if (!placed) lanes.push([row])
+  }
+  return lanes
+}
+
+function Marker({
+  row,
+  top,
+  audience,
+  onClick,
+}: {
+  row: SnapshotRow
+  top: number
+  audience: SnapshotAudience
+  onClick: () => void
+}) {
+  const tone = ZONE_TOKEN[row.zone]
   const isGhost = row.isGhost
-  const tooltip = buildTooltip(row, audience)
   const levelLabel = row.latest ? formatLevel(row.latest.level) : 'Not assessed'
+  // Decide anchoring so markers near the edges stay inside the track.
+  const align: 'start' | 'center' | 'end' =
+    row.barPercent < 15 ? 'start' : row.barPercent > 85 ? 'end' : 'center'
+  const translate =
+    align === 'start' ? '0%' : align === 'end' ? '-100%' : '-50%'
 
   return (
-    <span
-      title={tooltip}
+    <button
+      type="button"
+      onClick={onClick}
+      title={`${row.standard.code} — ${row.standard.description}`}
       className={clsx(
-        'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium',
+        'absolute inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium transition-transform hover:scale-105',
         isGhost
-          ? 'border-dashed border-text-light bg-bg-card/40 text-text-muted'
+          ? 'border-dashed border-text-light bg-bg-card/50 text-text-muted'
           : `border-transparent ${tone.chip}`
       )}
+      style={{
+        left: `${row.barPercent}%`,
+        top,
+        transform: `translate(${translate}, 0)`,
+      }}
     >
       <span className="font-mono">{row.standard.code}</span>
-      {!isGhost && <span>·</span>}
+      {!isGhost && <span aria-hidden>·</span>}
       {!isGhost && <span>{levelLabel}</span>}
       {!isGhost && audience === 'educator' && <TrendIcon trend={row.trend} />}
-    </span>
+    </button>
   )
 }
 
@@ -441,36 +483,19 @@ function TrendIcon({ trend }: { trend: Trend }) {
   return <ArrowRight className="h-3 w-3 opacity-60" aria-label="flat" />
 }
 
-function buildTooltip(row: SnapshotRow, audience: SnapshotAudience): string {
-  const parts: string[] = []
-  parts.push(`${row.standard.code} — ${row.standard.description}`)
-  if (row.standard.age_band_start !== null && row.standard.age_band_end !== null) {
-    parts.push(
-      `Ages ${row.standard.age_band_start}–${row.standard.age_band_end}`
-    )
-  }
-  if (row.latest) {
-    parts.push(`${formatLevel(row.latest.level)}`)
-    if (audience === 'educator') {
-      parts.push(`Last assessed ${format(new Date(row.latest.assessed_at), 'PP')}`)
-      parts.push(`Trend: ${row.trend}`)
-      if (row.latest.notes) parts.push(`Notes: ${row.latest.notes}`)
-    } else {
-      parts.push(
-        `Last update ${formatDistanceToNow(new Date(row.latest.assessed_at), { addSuffix: true })}`
-      )
-    }
-  } else {
-    parts.push('Not yet assessed')
-  }
-  return parts.join('\n')
-}
-
 // ============================================================
 // Untimed + Unassigned
 // ============================================================
 
-function UntimedRows({ rows, audience }: { rows: SnapshotRow[]; audience: SnapshotAudience }) {
+function UntimedRows({
+  rows,
+  audience,
+  onRowClick,
+}: {
+  rows: SnapshotRow[]
+  audience: SnapshotAudience
+  onRowClick: (row: SnapshotRow) => void
+}) {
   return (
     <div className="mt-3">
       <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-text-light">
@@ -478,19 +503,51 @@ function UntimedRows({ rows, audience }: { rows: SnapshotRow[]; audience: Snapsh
       </p>
       <div className="flex flex-wrap gap-1">
         {rows.map((row) => (
-          <Marker key={row.standard.id} row={row} audience={audience} />
+          <UntimedChip
+            key={row.standard.id}
+            row={row}
+            audience={audience}
+            onClick={() => onRowClick(row)}
+          />
         ))}
       </div>
     </div>
   )
 }
 
+function UntimedChip({
+  row,
+  audience,
+  onClick,
+}: {
+  row: SnapshotRow
+  audience: SnapshotAudience
+  onClick: () => void
+}) {
+  const levelLabel = row.latest ? formatLevel(row.latest.level) : 'Not assessed'
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={row.standard.description}
+      className="inline-flex items-center gap-1 rounded-full bg-bg-muted px-2 py-0.5 text-[11px] font-medium text-text-muted hover:bg-bg-card"
+    >
+      <span className="font-mono">{row.standard.code}</span>
+      <span aria-hidden>·</span>
+      <span>{levelLabel}</span>
+      {audience === 'educator' && row.latest && <TrendIcon trend={row.trend} />}
+    </button>
+  )
+}
+
 function UnassignedPanel({
   rows,
   audience,
+  onRowClick,
 }: {
   rows: SnapshotRow[]
   audience: SnapshotAudience
+  onRowClick: (row: SnapshotRow) => void
 }) {
   const [open, setOpen] = useState(false)
   return (
@@ -518,7 +575,12 @@ function UnassignedPanel({
           </p>
           <div className="flex flex-wrap gap-1">
             {rows.map((row) => (
-              <Marker key={row.standard.id} row={row} audience={audience} />
+              <UntimedChip
+                key={row.standard.id}
+                row={row}
+                audience={audience}
+                onClick={() => onRowClick(row)}
+              />
             ))}
           </div>
         </div>

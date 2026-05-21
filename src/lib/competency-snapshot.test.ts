@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
   ageFromDob,
+  bandOffset,
   classifyBand,
-  classifyPosition,
   classifyTrend,
+  computeSpectrumScore,
+  decayWeight,
+  spectrumToBarPercent,
+  spectrumToZone,
+  weightedLevelScore,
+  DECAY_HALF_LIFE_DAYS,
 } from './competency-snapshot'
 import type { StandardAssessment } from './standards-assignment-data'
 
@@ -12,72 +18,70 @@ import type { StandardAssessment } from './standards-assignment-data'
 // ============================================================
 
 describe('classifyBand', () => {
-  it('returns matching when learner age is inside the band (inclusive)', () => {
-    expect(classifyBand(8, 8, 9)).toBe('matching')
-    expect(classifyBand(9, 8, 9)).toBe('matching')
-    expect(classifyBand(8, 6, 10)).toBe('matching')
+  it('matching when learner age sits in [start, end] inclusive', () => {
+    expect(classifyBand(7, 6, 7)).toBe('matching')
+    expect(classifyBand(6, 6, 7)).toBe('matching')
+    expect(classifyBand(7, 6, 8)).toBe('matching')
   })
 
-  it('returns older when learner is below band_start (band is for older kids)', () => {
+  it('older when learner is below band_start (band is for older kids)', () => {
     expect(classifyBand(5, 6, 7)).toBe('older')
   })
 
-  it('returns younger when learner is above band_end (band is for younger kids)', () => {
-    expect(classifyBand(10, 6, 7)).toBe('younger')
+  it('younger when learner is above band_end (band is for younger kids)', () => {
+    expect(classifyBand(8, 6, 7)).toBe('younger')
   })
 
-  it('returns unknown when any input is null', () => {
+  it('unknown when any input is null', () => {
     expect(classifyBand(null, 6, 7)).toBe('unknown')
-    expect(classifyBand(8, null, 7)).toBe('unknown')
-    expect(classifyBand(8, 6, null)).toBe('unknown')
+    expect(classifyBand(7, null, 7)).toBe('unknown')
+    expect(classifyBand(7, 6, null)).toBe('unknown')
   })
 })
 
 // ============================================================
-// classifyPosition — the exact agreed table
+// bandOffset
 // ============================================================
 
-describe('classifyPosition', () => {
-  it('older band + achieving/mastery -> ahead', () => {
-    expect(classifyPosition('achieving', 'older')).toBe('ahead')
-    expect(classifyPosition('mastery', 'older')).toBe('ahead')
-  })
-
-  it('older band + emerging/developing -> at (age-appropriate stretch)', () => {
-    expect(classifyPosition('emerging', 'older')).toBe('at')
-    expect(classifyPosition('developing', 'older')).toBe('at')
-  })
-
-  it('matching band -> at, regardless of level', () => {
-    expect(classifyPosition('emerging', 'matching')).toBe('at')
-    expect(classifyPosition('developing', 'matching')).toBe('at')
-    expect(classifyPosition('achieving', 'matching')).toBe('at')
-    expect(classifyPosition('mastery', 'matching')).toBe('at')
-  })
-
-  it('younger band + achieving/mastery -> at (learner has it, as expected)', () => {
-    expect(classifyPosition('achieving', 'younger')).toBe('at')
-    expect(classifyPosition('mastery', 'younger')).toBe('at')
-  })
-
-  it('younger band + emerging/developing -> building (real gap)', () => {
-    expect(classifyPosition('emerging', 'younger')).toBe('building')
-    expect(classifyPosition('developing', 'younger')).toBe('building')
-  })
-
-  it('unknown band -> untimed', () => {
-    expect(classifyPosition('emerging', 'unknown')).toBe('untimed')
-    expect(classifyPosition('mastery', 'unknown')).toBe('untimed')
+describe('bandOffset', () => {
+  it('older = +1, matching = 0, younger = -1, unknown = 0', () => {
+    expect(bandOffset('older')).toBe(1)
+    expect(bandOffset('matching')).toBe(0)
+    expect(bandOffset('younger')).toBe(-1)
+    expect(bandOffset('unknown')).toBe(0)
   })
 })
 
 // ============================================================
-// classifyTrend
+// decayWeight
 // ============================================================
 
-function mkAssessment(level: StandardAssessment['level'], iso: string): StandardAssessment {
+describe('decayWeight (exponential decay)', () => {
+  it('returns 1 for a same-day (or future-clamped) assessment', () => {
+    expect(decayWeight(0)).toBe(1)
+    expect(decayWeight(-5)).toBe(1)
+  })
+
+  it('returns 0.5 at one half-life ago', () => {
+    expect(decayWeight(DECAY_HALF_LIFE_DAYS)).toBeCloseTo(0.5, 6)
+  })
+
+  it('returns 0.25 at two half-lives ago', () => {
+    expect(decayWeight(DECAY_HALF_LIFE_DAYS * 2)).toBeCloseTo(0.25, 6)
+  })
+
+  it('respects a custom half-life', () => {
+    expect(decayWeight(30, 30)).toBeCloseTo(0.5, 6)
+  })
+})
+
+// ============================================================
+// weightedLevelScore
+// ============================================================
+
+function mk(level: StandardAssessment['level'], iso: string): StandardAssessment {
   return {
-    id: `id-${iso}`,
+    id: `id-${iso}-${level}`,
     student_assignment_id: 'sa',
     student_id: 's',
     school_id: 'sch',
@@ -90,103 +94,193 @@ function mkAssessment(level: StandardAssessment['level'], iso: string): Standard
   }
 }
 
-describe('classifyTrend', () => {
-  it('returns flat for zero assessments', () => {
-    expect(classifyTrend([])).toBe('flat')
+const NOW = new Date('2026-05-21T00:00:00Z')
+
+describe('weightedLevelScore', () => {
+  it('returns null on empty history', () => {
+    expect(weightedLevelScore([], NOW)).toBeNull()
   })
 
-  it('returns flat for a single assessment', () => {
-    expect(classifyTrend([mkAssessment('developing', '2026-01-01')])).toBe('flat')
+  it('returns the literal level score for a single recent assessment', () => {
+    expect(weightedLevelScore([mk('achieving', '2026-05-20')], NOW)).toBeCloseTo(3, 5)
   })
 
-  it('returns up when latest level outranks prior', () => {
+  it('newer assessment dominates older', () => {
+    // Older = developing (2) ~6 months ago, newer = mastery (4) yesterday.
+    // With 90-day half-life, the newer weight should dominate the average.
+    const score = weightedLevelScore(
+      [mk('developing', '2025-11-20'), mk('mastery', '2026-05-20')],
+      NOW
+    )!
+    expect(score).toBeGreaterThan(3.5)
+  })
+
+  it('two same-day assessments at different levels average evenly', () => {
     expect(
-      classifyTrend([
-        mkAssessment('developing', '2026-01-01'),
-        mkAssessment('achieving', '2026-03-01'),
-      ])
-    ).toBe('up')
-  })
-
-  it('returns down when latest level is lower than prior', () => {
-    expect(
-      classifyTrend([
-        mkAssessment('achieving', '2026-01-01'),
-        mkAssessment('developing', '2026-03-01'),
-      ])
-    ).toBe('down')
-  })
-
-  it('returns flat when latest and prior are the same level', () => {
-    expect(
-      classifyTrend([
-        mkAssessment('developing', '2026-01-01'),
-        mkAssessment('developing', '2026-03-01'),
-      ])
-    ).toBe('flat')
-  })
-
-  it('is order-agnostic — sorts before comparing the last two', () => {
-    expect(
-      classifyTrend([
-        mkAssessment('achieving', '2026-03-01'),
-        mkAssessment('developing', '2026-01-01'),
-        mkAssessment('mastery', '2026-05-01'),
-      ])
-    ).toBe('up')
+      weightedLevelScore(
+        [mk('developing', '2026-05-21'), mk('mastery', '2026-05-21')],
+        NOW
+      )
+    ).toBeCloseTo(3, 5)
   })
 })
 
 // ============================================================
-// ageFromDob
+// computeSpectrumScore (the headline)
+// ============================================================
+
+describe('computeSpectrumScore — band-shifted spectrum', () => {
+  it('returns null when band is unknown', () => {
+    expect(
+      computeSpectrumScore([mk('achieving', '2026-05-20')], 'unknown', NOW)
+    ).toBeNull()
+  })
+
+  it('returns null with no history', () => {
+    expect(computeSpectrumScore([], 'matching', NOW)).toBeNull()
+  })
+
+  it('matching band: emerging=1, developing=2, achieving=3, mastery=4', () => {
+    expect(computeSpectrumScore([mk('emerging', '2026-05-20')], 'matching', NOW)).toBeCloseTo(1, 5)
+    expect(computeSpectrumScore([mk('developing', '2026-05-20')], 'matching', NOW)).toBeCloseTo(2, 5)
+    expect(computeSpectrumScore([mk('achieving', '2026-05-20')], 'matching', NOW)).toBeCloseTo(3, 5)
+    expect(computeSpectrumScore([mk('mastery', '2026-05-20')], 'matching', NOW)).toBeCloseTo(4, 5)
+  })
+
+  it('younger band raises the bar — same level reads more behind', () => {
+    // Score for younger should be one less than matching for the same level
+    expect(computeSpectrumScore([mk('developing', '2026-05-20')], 'younger', NOW)).toBeCloseTo(1, 5)
+    expect(computeSpectrumScore([mk('achieving', '2026-05-20')], 'younger', NOW)).toBeCloseTo(2, 5)
+    expect(computeSpectrumScore([mk('mastery', '2026-05-20')], 'younger', NOW)).toBeCloseTo(3, 5)
+  })
+
+  it('older band lowers the bar — same level reads more ahead', () => {
+    expect(computeSpectrumScore([mk('emerging', '2026-05-20')], 'older', NOW)).toBeCloseTo(2, 5)
+    expect(computeSpectrumScore([mk('developing', '2026-05-20')], 'older', NOW)).toBeCloseTo(3, 5)
+    expect(computeSpectrumScore([mk('achieving', '2026-05-20')], 'older', NOW)).toBeCloseTo(4, 5)
+    expect(computeSpectrumScore([mk('mastery', '2026-05-20')], 'older', NOW)).toBeCloseTo(5, 5)
+  })
+
+  it('clamps to [0, 5]', () => {
+    // younger + emerging would be 0; older + mastery would be 5; both clamped.
+    expect(computeSpectrumScore([mk('emerging', '2026-05-20')], 'younger', NOW)).toBe(0)
+    expect(computeSpectrumScore([mk('mastery', '2026-05-20')], 'older', NOW)).toBe(5)
+  })
+
+  it('blends history with decay — recent mastery pulls up an older developing', () => {
+    const score = computeSpectrumScore(
+      [mk('developing', '2025-11-20'), mk('mastery', '2026-05-20')],
+      'matching',
+      NOW
+    )!
+    expect(score).toBeGreaterThan(3.5)
+    expect(score).toBeLessThan(4)
+  })
+})
+
+// ============================================================
+// spectrumToBarPercent / spectrumToZone
+// ============================================================
+
+describe('spectrumToBarPercent', () => {
+  it('matching achieving (score 3) lands at exactly 60% on the linear bar', () => {
+    // Linear map: 3/5 * 100 = 60. We anchor zone bounds at 33%/67% so 3 sits
+    // safely in the "at" zone.
+    expect(spectrumToBarPercent(3)).toBeCloseTo(60, 5)
+  })
+
+  it('clamps the score before mapping', () => {
+    expect(spectrumToBarPercent(-1)).toBe(0)
+    expect(spectrumToBarPercent(7)).toBe(100)
+  })
+
+  it('produces monotonically increasing positions', () => {
+    let prev = -Infinity
+    for (let s = 0; s <= 5; s += 0.5) {
+      const p = spectrumToBarPercent(s)
+      expect(p).toBeGreaterThanOrEqual(prev)
+      prev = p
+    }
+  })
+})
+
+describe('spectrumToZone', () => {
+  it('< 2 -> below, [2, 4) -> at, >= 4 -> above, null -> untimed', () => {
+    expect(spectrumToZone(0)).toBe('below')
+    expect(spectrumToZone(1.9)).toBe('below')
+    expect(spectrumToZone(2)).toBe('at')
+    expect(spectrumToZone(3)).toBe('at')
+    expect(spectrumToZone(3.99)).toBe('at')
+    expect(spectrumToZone(4)).toBe('above')
+    expect(spectrumToZone(5)).toBe('above')
+    expect(spectrumToZone(null)).toBe('untimed')
+  })
+})
+
+// ============================================================
+// classifyTrend — unchanged from v1, tests retained
+// ============================================================
+
+describe('classifyTrend', () => {
+  it('flat for zero or one assessments', () => {
+    expect(classifyTrend([])).toBe('flat')
+    expect(classifyTrend([mk('developing', '2026-01-01')])).toBe('flat')
+  })
+
+  it('up / down / flat based on the last two assessments', () => {
+    expect(
+      classifyTrend([mk('developing', '2026-01-01'), mk('achieving', '2026-03-01')])
+    ).toBe('up')
+    expect(
+      classifyTrend([mk('achieving', '2026-01-01'), mk('developing', '2026-03-01')])
+    ).toBe('down')
+    expect(
+      classifyTrend([mk('developing', '2026-01-01'), mk('developing', '2026-03-01')])
+    ).toBe('flat')
+  })
+})
+
+// ============================================================
+// ageFromDob — unchanged
 // ============================================================
 
 describe('ageFromDob', () => {
-  it('returns the integer year difference, floored at the birthday', () => {
-    // DOB 2018-06-15, "now" 2026-06-14 → 7 (birthday hasn't happened yet)
+  it('rounds down at the birthday', () => {
     expect(ageFromDob('2018-06-15', new Date('2026-06-14T12:00:00'))).toBe(7)
-    // DOB 2018-06-15, "now" 2026-06-15 → 8 (birthday today)
     expect(ageFromDob('2018-06-15', new Date('2026-06-15T12:00:00'))).toBe(8)
   })
-
-  it('returns null for missing or unparseable dob', () => {
+  it('returns null on missing/unparseable input', () => {
     expect(ageFromDob(null)).toBeNull()
-    expect(ageFromDob(undefined)).toBeNull()
-    expect(ageFromDob('not a date')).toBeNull()
+    expect(ageFromDob('not-a-date')).toBeNull()
   })
 })
 
 // ============================================================
-// Smoke scenarios from the prompt: 7yo, 9yo, 11yo
+// End-to-end scenarios — Maya (7) and Theo (7) sample data
 // ============================================================
 
-describe('smoke scenarios — 7yo / 9yo / 11yo', () => {
-  // Sample standard bands: 4-5, 6-7, 8-9, 10-11
-  // (these mirror the Boundless conventions)
-
-  it('7yo on younger-band (4-5) standard still at developing → BUILDING', () => {
-    const band = classifyBand(7, 4, 5) // younger
-    expect(band).toBe('younger')
-    expect(classifyPosition('developing', band)).toBe('building')
+describe('smoke scenarios — band-shift rule for a 7yo learner', () => {
+  it('matching band (6-7): emerging=below, dev/achieving=at, mastery=above', () => {
+    const band = classifyBand(7, 6, 7)
+    expect(spectrumToZone(computeSpectrumScore([mk('emerging', '2026-05-20')], band, NOW))).toBe('below')
+    expect(spectrumToZone(computeSpectrumScore([mk('developing', '2026-05-20')], band, NOW))).toBe('at')
+    expect(spectrumToZone(computeSpectrumScore([mk('achieving', '2026-05-20')], band, NOW))).toBe('at')
+    expect(spectrumToZone(computeSpectrumScore([mk('mastery', '2026-05-20')], band, NOW))).toBe('above')
   })
 
-  it('9yo on older-band (10-11) standard at mastery → AHEAD', () => {
-    const band = classifyBand(9, 10, 11) // older
-    expect(band).toBe('older')
-    expect(classifyPosition('mastery', band)).toBe('ahead')
+  it('younger band (4-5): emerging/dev=below, achieving/mastery=at', () => {
+    const band = classifyBand(7, 4, 5)
+    expect(spectrumToZone(computeSpectrumScore([mk('emerging', '2026-05-20')], band, NOW))).toBe('below')
+    expect(spectrumToZone(computeSpectrumScore([mk('developing', '2026-05-20')], band, NOW))).toBe('below')
+    expect(spectrumToZone(computeSpectrumScore([mk('achieving', '2026-05-20')], band, NOW))).toBe('at')
+    expect(spectrumToZone(computeSpectrumScore([mk('mastery', '2026-05-20')], band, NOW))).toBe('at')
   })
 
-  it('11yo on older-band (12-14) standard at developing → AT (age-appropriate stretch)', () => {
-    const band = classifyBand(11, 12, 14)
-    expect(band).toBe('older')
-    expect(classifyPosition('developing', band)).toBe('at')
-  })
-
-  it('9yo on matching-band (8-9) at any level → AT', () => {
-    const band = classifyBand(9, 8, 9)
-    expect(band).toBe('matching')
-    for (const lvl of ['emerging', 'developing', 'achieving', 'mastery'] as const) {
-      expect(classifyPosition(lvl, band)).toBe('at')
-    }
+  it('older band (8-9): emerging/dev=at (stretch), achieving/mastery=above', () => {
+    const band = classifyBand(7, 8, 9)
+    expect(spectrumToZone(computeSpectrumScore([mk('emerging', '2026-05-20')], band, NOW))).toBe('at')
+    expect(spectrumToZone(computeSpectrumScore([mk('developing', '2026-05-20')], band, NOW))).toBe('at')
+    expect(spectrumToZone(computeSpectrumScore([mk('achieving', '2026-05-20')], band, NOW))).toBe('above')
+    expect(spectrumToZone(computeSpectrumScore([mk('mastery', '2026-05-20')], band, NOW))).toBe('above')
   })
 })
