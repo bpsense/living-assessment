@@ -89,25 +89,24 @@ export default function StandardDetailModal({
       ? `Ages ${row.standard.age_band_start}–${row.standard.age_band_end}`
       : 'No age band set'
 
-  // Centered when the modal fits, top-aligned (with scroll) when it
-  // doesn't. The outer fixed container owns scrolling so the body doesn't
-  // need to be locked — the page underneath stays put because the
-  // backdrop covers it.
+  // Fixed-size modal centered in the viewport. Header is sticky at the
+  // top of the modal; the body scrolls internally. The backdrop never
+  // scrolls, and the page underneath is untouched.
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/40"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 sm:p-8"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label="Standard detail"
     >
-      <div className="flex min-h-full items-center justify-center p-4 sm:p-8">
-        <div
-          className="relative my-auto w-full max-w-2xl rounded-2xl bg-bg-card shadow-2xl"
-          onClick={(e) => e.stopPropagation()}
-        >
-        {/* Header */}
-        <header className="flex items-start justify-between gap-4 border-b border-bg-muted p-5">
+      <div
+        className="relative flex w-full max-w-2xl flex-col rounded-2xl bg-bg-card shadow-2xl"
+        style={{ height: 'min(80vh, 720px)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header — fixed at the top, doesn't scroll. */}
+        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-bg-muted p-5">
           <div className="min-w-0">
             <div className="flex flex-wrap items-baseline gap-2">
               <span className="font-mono text-xs font-semibold text-text-muted">
@@ -133,8 +132,8 @@ export default function StandardDetailModal({
           </button>
         </header>
 
-        {/* Body */}
-        <div className="space-y-5 p-5">
+        {/* Body — only this section scrolls. */}
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
           {/* Spectrum mini-bar */}
           <section>
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
@@ -247,7 +246,6 @@ export default function StandardDetailModal({
               {error}
             </p>
           )}
-        </div>
         </div>
       </div>
     </div>
