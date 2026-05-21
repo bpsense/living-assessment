@@ -111,3 +111,56 @@ export function buildSnapshotsFromStandards(
 
   return snaps
 }
+
+// ============================================================
+// Current-only aggregate (for classroom mini-amoebas, dashboards, etc.)
+// ============================================================
+
+/**
+ * For a single learner, compute the current per-dimension competency average
+ * (1..4 or 0 when no contributing assessments) from their full assessment
+ * history. Latest-per-standard wins; standards aggregate into their dimension
+ * via the school-scoped `dimensionStandards` bridge.
+ *
+ * Returns a Record keyed by dimension_id. Use with `dimensions` to project
+ * onto the `DimensionScore[]` shape (see `currentDimensionScoresFromStandards`).
+ */
+export function currentDimensionAveragesFromStandards(input: {
+  schoolId: string
+  dimensions: Dimension[]
+  assessments: StandardAssessment[]
+  dimensionStandards: DimensionStandard[]
+}): Record<string, number> {
+  const { schoolId, dimensions, assessments, dimensionStandards } = input
+
+  const standardToDim = new Map<string, string>()
+  for (const ds of dimensionStandards) {
+    if (ds.school_id !== schoolId) continue
+    standardToDim.set(ds.standard_id, ds.dimension_id)
+  }
+
+  // Latest assessment per standard (assessments arrive ASC by date so the
+  // later overwrite wins).
+  const latestByStd = new Map<string, StandardAssessment>()
+  for (const a of assessments) {
+    latestByStd.set(a.standard_id, a)
+  }
+
+  const sums = new Map<string, { sum: number; n: number }>()
+  for (const a of latestByStd.values()) {
+    const dimId = standardToDim.get(a.standard_id)
+    if (!dimId) continue
+    const score = LEVEL_SCORE[a.level as AssessmentLevel]
+    const cur = sums.get(dimId) ?? { sum: 0, n: 0 }
+    cur.sum += score
+    cur.n += 1
+    sums.set(dimId, cur)
+  }
+
+  const out: Record<string, number> = {}
+  for (const dim of dimensions) {
+    const agg = sums.get(dim.id)
+    out[dim.id] = agg && agg.n > 0 ? agg.sum / agg.n : 0
+  }
+  return out
+}

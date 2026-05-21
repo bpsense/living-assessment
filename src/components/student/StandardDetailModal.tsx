@@ -48,16 +48,6 @@ export default function StandardDetailModal({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Lock body scroll while open.
-  useEffect(() => {
-    if (!open) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prev
-    }
-  }, [open])
-
   // Close on escape.
   useEffect(() => {
     if (!open) return
@@ -99,18 +89,23 @@ export default function StandardDetailModal({
       ? `Ages ${row.standard.age_band_start}–${row.standard.age_band_end}`
       : 'No age band set'
 
+  // Centered when the modal fits, top-aligned (with scroll) when it
+  // doesn't. The outer fixed container owns scrolling so the body doesn't
+  // need to be locked — the page underneath stays put because the
+  // backdrop covers it.
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:p-8"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/40"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label="Standard detail"
     >
-      <div
-        className="relative w-full max-w-2xl rounded-2xl bg-bg-card shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="flex min-h-full items-center justify-center p-4 sm:p-8">
+        <div
+          className="relative my-auto w-full max-w-2xl rounded-2xl bg-bg-card shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* Header */}
         <header className="flex items-start justify-between gap-4 border-b border-bg-muted p-5">
           <div className="min-w-0">
@@ -252,6 +247,7 @@ export default function StandardDetailModal({
               {error}
             </p>
           )}
+        </div>
         </div>
       </div>
     </div>

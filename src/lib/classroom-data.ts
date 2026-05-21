@@ -5,12 +5,13 @@ import type {
   Classroom,
   Student,
   Dimension,
-  Observation,
+  DimensionStandard,
   InterestSurvey,
   StudentContact,
 } from '../types/database'
 import type { DimensionScore } from './scoring'
-import { buildDimensionScores } from './scoring'
+import { currentDimensionAveragesFromStandards } from './standards-snapshots'
+import type { StandardAssessment } from './standards-assignment-data'
 
 // ============================================================
 // Types
@@ -183,17 +184,16 @@ export function useClassroomView(
           return
         }
 
-        // 4. Observations (12-month lookback) + surveys + contacts
-        const twelveMonthsAgo = new Date()
-        twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12)
-
-        const [obsRes, surveyRes, contactsRes] = await Promise.all([
+        // 4. Standards-pipeline data + interest surveys + contacts.
+        //    Observations are no longer the source of competency averages on
+        //    the classroom mini-amoebas; the new pipeline reads from
+        //    assignment_standard_assessments rolled up via dimension_standards.
+        const [assessRes, surveyRes, contactsRes, dsRes] = await Promise.all([
           supabase
-            .from('observations')
+            .from('assignment_standard_assessments')
             .select('*')
             .in('student_id', studentIds)
-            .gte('observed_at', twelveMonthsAgo.toISOString())
-            .order('observed_at', { ascending: false }),
+            .order('assessed_at', { ascending: true }),
           supabase
             .from('interest_surveys')
             .select('*')
@@ -204,14 +204,19 @@ export function useClassroomView(
             .select('*')
             .in('student_id', studentIds)
             .order('is_primary', { ascending: false }),
+          supabase
+            .from('dimension_standards')
+            .select('id, dimension_id, standard_id, school_id, created_at')
+            .eq('school_id', classroomData.school_id),
         ])
 
         if (cancelled) return
 
-        const allObs = (obsRes.data ?? []) as Observation[]
+        const allAssessments = (assessRes.data ?? []) as StandardAssessment[]
         const allSurveys = (surveyRes.data ?? []) as InterestSurvey[]
+        const dimensionStandards = (dsRes.data ?? []) as DimensionStandard[]
 
-        // Build per-student contacts map
+        // Per-student contacts map
         const contactsMap = new Map<string, StudentContact[]>()
         for (const c of (contactsRes.data ?? []) as StudentContact[]) {
           const arr = contactsMap.get(c.student_id) ?? []
@@ -220,15 +225,39 @@ export function useClassroomView(
         }
         if (!cancelled) setStudentContactsMap(contactsMap)
 
-        // 5. Build per-student dimension scores
+        // 5. Build per-student current dimension scores.
+        //    Competency comes from latest-per-standard rolled up to dimensions;
+        //    interest comes from the most recent interest survey response.
         const scoresMap = new Map<string, DimensionScore[]>()
         for (const st of studentsData) {
-          const stObs = allObs.filter((o) => o.student_id === st.id)
-          const stSurveys = allSurveys.filter((s) => s.student_id === st.id)
-          scoresMap.set(
-            st.id,
-            buildDimensionScores(dimsData, stObs, stSurveys)
-          )
+          const stAssess = allAssessments.filter((a) => a.student_id === st.id)
+          const avgs = currentDimensionAveragesFromStandards({
+            schoolId: classroomData.school_id,
+            dimensions: dimsData,
+            assessments: stAssess,
+            dimensionStandards,
+          })
+          // Pick the most recent survey for this student.
+          const latestSurvey = allSurveys
+            .filter((s) => s.student_id === st.id)
+            .sort(
+              (a, b) =>
+                new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()
+            )[0]
+          const responses = (latestSurvey?.responses ?? {}) as Record<string, number>
+          const studentScores: DimensionScore[] = dimsData.map((d) => ({
+            dimension_id: d.id,
+            dimension_name: d.name,
+            icon: d.icon,
+            display_order: d.display_order,
+            competency: avgs[d.id] ?? 0,
+            interest: typeof responses[d.id] === 'number' ? responses[d.id] : 0,
+            observation_count: 0,
+            current_month_observation_count: 0,
+            latest_observation: null,
+            competency_breakdown: undefined,
+          }))
+          scoresMap.set(st.id, studentScores)
         }
 
         // 6. Class interest pulse — average interest per dimension
