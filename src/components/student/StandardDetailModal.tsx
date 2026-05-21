@@ -206,12 +206,19 @@ export default function StandardDetailModal({
             )}
           </section>
 
-          {/* Parent assignments */}
+          {/* Assignments this standard was assessed under for this learner. */}
           {detail?.assignments && detail.assignments.length > 0 && (
             <section>
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
-                {audience === 'family' ? 'Where this came up' : 'Parent assignments'}
+              <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">
+                {audience === 'family'
+                  ? 'Where this came up'
+                  : 'Assignments covering this standard'}
               </h3>
+              <p className="mb-2 text-[11px] text-text-light">
+                {audience === 'family'
+                  ? 'Activities where this skill was checked.'
+                  : 'Active or completed assignments tagged with this standard for this learner.'}
+              </p>
               <ul className="space-y-1.5">
                 {detail.assignments.map((a) => (
                   <li
