@@ -325,7 +325,7 @@ export default function TimelinePlayback({
               const isActive = i === filteredIndex
               const isGradeTransition = snap.isAgeRollover
               const transitionTitle = isGradeTransition && snap.prevAgeYears != null
-                ? `${snap.prevAgeYears}y → ${snap.ageYears}y`
+                ? `${snap.label} — turned ${snap.ageYears} (rubric advanced)`
                 : snap.label
               return (
                 <button

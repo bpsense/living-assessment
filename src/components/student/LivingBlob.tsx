@@ -361,84 +361,112 @@ export default function LivingBlob({
           filter={`url(#${uid}-ring-glow)`}
         />
 
-        {/* ── Incoming squeeze rings (visible during grade transition) ── */}
-        {ringSqueezeProgress > 0.01 && ringRadii.map((r, i) => {
-          // Incoming rings start large (80% beyond normal) and squeeze to normal position
-          const inflatedR = r * (1 + 0.8 * ringSqueezeProgress)
-          // Outer rings inflate even more for dramatic effect
-          const outerBoost = 1 + (i / LEVEL_COUNT) * 0.3 * ringSqueezeProgress
-          return (
-            <circle
-              key={`squeeze-ring-${i}`}
-              cx={cx}
-              cy={cy}
-              r={inflatedR * outerBoost}
-              fill={i === 0 ? `rgba(13,115,119,${0.04 * ringSqueezeProgress})` : 'none'}
-              stroke={TEAL}
-              strokeWidth={i === LEVEL_COUNT - 1 ? 3 : 2}
-              strokeDasharray={i < LEVEL_COUNT - 1 ? '4 6' : 'none'}
-              opacity={0.15 + 0.5 * ringSqueezeProgress}
+        {/* ──────────────────────────────────────────────────────────
+            Two-phase rollover choreography (when ringSqueezeProgress > 0):
+              Phase 1 (1 → 0.5):  outgoing rings + amoeba shrink in unison
+                                  toward the centre, outgoing rings fade out.
+              Phase 2 (0.5 → 0):  new rings expand inward from outside the
+                                  field, fading in; amoeba climbs back to
+                                  its (data-decayed) natural radius.
+            Settled state (= 0): regular ring render takes over. The
+            handoff is seamless because the incoming rings at p=0 sit at
+            scale 1, opacity 1 — identical to the regular render.
+        ─────────────────────────────────────────────────────────── */}
+        {(() => {
+          const p = ringSqueezeProgress
+          const renderRings = (scale: number, opacity: number, keyPrefix: string) => (
+            <g
+              transform={
+                scale === 1
+                  ? undefined
+                  : `translate(${cx},${cy}) scale(${scale}) translate(${-cx},${-cy})`
+              }
+              opacity={opacity}
               style={{ transition: 'none' }}
-            />
+            >
+              {[...ringRadii].reverse().map((r, revI) => {
+                const i = ringRadii.length - 1 - revI
+                return (
+                  <circle
+                    key={`${keyPrefix}-fill-${i}`}
+                    cx={cx}
+                    cy={cy}
+                    r={r}
+                    fill={LEVEL_META[i].fill}
+                    stroke="none"
+                  />
+                )
+              })}
+              {ringRadii.map((r, i) => (
+                <circle
+                  key={`${keyPrefix}-ring-${i}`}
+                  cx={cx}
+                  cy={cy}
+                  r={r}
+                  fill="none"
+                  stroke={LEVEL_META[i].stroke}
+                  strokeWidth={i === LEVEL_COUNT - 1 ? 2 : 1.5}
+                  strokeDasharray={i < LEVEL_COUNT - 1 ? '4 6' : 'none'}
+                  opacity={0.9}
+                />
+              ))}
+              {showLevelLabels &&
+                ringRadii.map((r, i) => (
+                  <text
+                    key={`${keyPrefix}-lvl-${i}`}
+                    x={cx + 8}
+                    y={cy - r + 15}
+                    fill="#A9A49A"
+                    fontSize={12}
+                    fontWeight={600}
+                    opacity={0.9}
+                    letterSpacing="0.02em"
+                  >
+                    {LEVEL_META[i].label}
+                  </text>
+                ))}
+            </g>
           )
-        })}
 
-        {/* ── Main content group: compressed during grade transition ── */}
-        <g
-          transform={
-            ringSqueezeProgress > 0.01
-              ? `translate(${cx},${cy}) scale(${1 - 0.4 * ringSqueezeProgress}) translate(${-cx},${-cy})`
-              : undefined
+          if (p < 0.01) {
+            // Settled: single regular ring layer.
+            return renderRings(1, 1, 'ring')
           }
+          // 1 → 0.5 = shrink (0 → 1); 0.5 → 0 = emerge (0 → 1)
+          const shrink = Math.min(1, Math.max(0, (1 - p) / 0.5))
+          const emerge = Math.min(1, Math.max(0, (0.5 - p) / 0.5))
+          const SHRINK_TARGET = 0.3 // how small the field collapses to
+          const EMERGE_START = 1.9 // how far outside the new rings start
+          const outgoingScale = 1 - (1 - SHRINK_TARGET) * shrink
+          const outgoingOpacity = 1 - shrink
+          const incomingScale = EMERGE_START - (EMERGE_START - 1) * emerge
+          const incomingOpacity = emerge
+          return (
+            <>
+              {outgoingOpacity > 0.01 && renderRings(outgoingScale, outgoingOpacity, 'out')}
+              {incomingOpacity > 0.01 && renderRings(incomingScale, incomingOpacity, 'in')}
+            </>
+          )
+        })()}
+
+        {/* ── Amoeba layer: spokes + blob + dots ──
+             During the rollover, this scale "dips and returns" — shrinking
+             with the outgoing rings then climbing back to the data-decayed
+             natural radius as the new rings arrive. Outside of a rollover,
+             no transform is applied. */}
+        <g
+          transform={(() => {
+            if (ringSqueezeProgress < 0.01) return undefined
+            const p = ringSqueezeProgress
+            const shrink = Math.min(1, Math.max(0, (1 - p) / 0.5))
+            const emerge = Math.min(1, Math.max(0, (0.5 - p) / 0.5))
+            const SHRINK_TARGET = 0.3
+            const amoebaScale = 1 - (1 - SHRINK_TARGET) * shrink + (1 - SHRINK_TARGET) * emerge
+            if (Math.abs(amoebaScale - 1) < 0.005) return undefined
+            return `translate(${cx},${cy}) scale(${amoebaScale}) translate(${-cx},${-cy})`
+          })()}
           style={ringSqueezeProgress > 0.01 ? { transition: 'none' } : undefined}
         >
-          {/* ── Background: concentric level fill bands (outermost first) ── */}
-          {[...ringRadii].reverse().map((r, revI) => {
-            const i = ringRadii.length - 1 - revI
-            return (
-              <circle
-                key={`ring-fill-${i}`}
-                cx={cx}
-                cy={cy}
-                r={r}
-                fill={LEVEL_META[i].fill}
-                stroke="none"
-              />
-            )
-          })}
-
-          {/* ── Concentric level ring strokes ── */}
-          {ringRadii.map((r, i) => (
-            <circle
-              key={`ring-${i}`}
-              cx={cx}
-              cy={cy}
-              r={r}
-              fill="none"
-              stroke={LEVEL_META[i].stroke}
-              strokeWidth={i === LEVEL_COUNT - 1 ? 2 : 1.5}
-              strokeDasharray={i < LEVEL_COUNT - 1 ? '4 6' : 'none'}
-              opacity={0.9}
-            />
-          ))}
-
-          {/* Level labels along the right axis */}
-          {showLevelLabels &&
-            ringRadii.map((r, i) => (
-              <text
-                key={`lvl-${i}`}
-                x={cx + 8}
-                y={cy - r + 15}
-                fill="#A9A49A"
-                fontSize={12}
-                fontWeight={600}
-                opacity={0.9}
-                letterSpacing="0.02em"
-              >
-                {LEVEL_META[i].label}
-              </text>
-            ))}
-
           {/* ── Dotted axis lines from center to label position ── */}
           {labels.map((l) => (
             <line

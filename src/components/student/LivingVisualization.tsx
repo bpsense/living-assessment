@@ -15,9 +15,18 @@ import { History, TrendingUp, Maximize2, X } from 'lucide-react'
 import type { DimensionScore } from '../../lib/student-data'
 import type { Snapshot } from '../../lib/living-data'
 import type { Observation } from '../../types/database'
-import { interpolateScores } from '../../lib/living-data'
+import { interpolateScores, decayDimensionScores } from '../../lib/living-data'
 import LivingBlob from './LivingBlob'
 import TimelinePlayback from './TimelinePlayback'
+
+// US grade for a given age (age 5 = K, age 6 = G1, …). Used only to annotate
+// the age label so educators can map between the two conventions at a glance.
+function gradeForAge(ageYears: number): string {
+  if (ageYears <= 4) return 'PreK'
+  if (ageYears === 5) return 'K'
+  const g = ageYears - 5
+  return g >= 1 && g <= 12 ? `G${g}` : `${ageYears}yo`
+}
 
 // ── Smooth animation hook ────────────────────────────────────────
 // Uses requestAnimationFrame to interpolate between DimensionScore[]
@@ -123,11 +132,13 @@ function useAgeTransition(
     }
 
     // Start the squeeze animation
-    const label = `${snap.ageYears}y ${snap.ageMonths}m`
+    const label = `Turning ${snap.ageYears} · ${gradeForAge(snap.ageYears)}`
     setTransitionLabel(label)
     setSqueezeProgress(1)
 
-    const duration = playing ? 2000 : 1000
+    // Two-phase choreography in LivingBlob (shrink → emerge) needs more
+    // airtime than the prior single-phase squeeze.
+    const duration = playing ? 2800 : 1600
     const startTime = performance.now()
 
     if (rafRef.current) cancelAnimationFrame(rafRef.current)
@@ -210,14 +221,28 @@ export default function LivingVisualization({
   observations,
   observers,
 }: Props) {
-  // Determine which scores to display (discrete target)
+  // Baseline age = age at the earliest snapshot. Used to compute the
+  // cumulative per-birthday rescale applied to displayed competency values
+  // (see decayDimensionScores in living-data.ts).
+  const baselineAge = snapshots[0]?.ageYears ?? 0
+
+  // Determine which scores to display (discrete target). Apply the age-rescale
+  // decay so that what was "Achieving" at age 6 reads as "Developing" at age 7 —
+  // the rubric got harder, so the same observed performance lands a tier lower.
+  // For the live (no-timeline) view, decay against the latest snapshot's age.
   const displayScores = useMemo(() => {
-    if (!showTimeline || snapshotIdx === null || snapshots.length === 0) {
-      return dimensionScores
+    const usingTimeline =
+      showTimeline && snapshotIdx !== null && snapshots.length > 0
+    if (!usingTimeline) {
+      const latestAge = snapshots[snapshots.length - 1]?.ageYears
+      if (latestAge == null) return dimensionScores
+      return decayDimensionScores(dimensionScores, latestAge, baselineAge)
     }
-    const idx = Math.min(snapshotIdx, snapshots.length - 1)
-    return snapshots[idx]?.dimensionScores ?? dimensionScores
-  }, [showTimeline, snapshotIdx, snapshots, dimensionScores])
+    const idx = Math.min(snapshotIdx!, snapshots.length - 1)
+    const snap = snapshots[idx]
+    const raw = snap?.dimensionScores ?? dimensionScores
+    return snap ? decayDimensionScores(raw, snap.ageYears, baselineAge) : raw
+  }, [showTimeline, snapshotIdx, snapshots, dimensionScores, baselineAge])
 
   // Smooth animation: interpolate toward displayScores.
   // Duration is intentionally ~12% longer than the play interval (1250ms)
@@ -232,13 +257,14 @@ export default function LivingVisualization({
     playing ?? false
   )
 
-  // Current age label — always shows during timeline playback (e.g. "7y 4m")
+  // Current age label — always shows during timeline playback. Age-first,
+  // grade-in-parens for educators who think in grades. E.g. "7y 4m · G2".
   const currentGradeLabel = useMemo(() => {
     if (!showTimeline || snapshotIdx === null || snapshots.length === 0) return undefined
     const idx = Math.min(snapshotIdx, snapshots.length - 1)
     const snap = snapshots[idx]
     if (!snap) return undefined
-    return `${snap.ageYears}y ${snap.ageMonths}m`
+    return `${snap.ageYears}y ${snap.ageMonths}m · ${gradeForAge(snap.ageYears)}`
   }, [showTimeline, snapshotIdx, snapshots])
 
   // Filter observations to those visible at the current snapshot date

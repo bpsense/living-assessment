@@ -33,20 +33,19 @@ A learner-centered assessment platform that visualizes student growth across mul
 ### Living Assessment Visualization
 - **`src/lib/living-data.ts`** — Builds monthly snapshot time series from observations/surveys. Handles grade-level transitions (September boundaries), forward-looking smoothing, and score decay at grade changes.
 - **`src/components/student/LivingBlob.tsx`** — SVG amoeba/blob chart using Catmull-Rom curves. Shows competency (teal) and interest (amber) across 8 dimensions with concentric rings (Emerging → Developing → Achieving → Mastery).
-- **`src/components/student/LivingVisualization.tsx`** — Orchestrates blob + timeline playback + animation. Contains `useAnimatedScores` (smooth morphing) and `useGradeTransition` (squeeze animation at September).
+- **`src/components/student/LivingVisualization.tsx`** — Orchestrates blob + timeline playback + animation. Contains `useAnimatedScores` (smooth morphing) and `useAgeTransition` (squeeze animation on age rollover).
 - **`src/components/student/TimelinePlayback.tsx`** — Timeline scrubber with school-year navigation buttons, play/pause/loop, and snapshot dot markers.
-- **`src/pages/StudentProfile.tsx`** — Main student page. Builds the snapshot pipeline: `buildSnapshots → smoothSnapshots → applyGradeTransitionDecay`.
+- **`src/pages/StudentProfile.tsx`** — Main student page. Builds the snapshot pipeline: `buildSnapshotsFromStandards → smoothSnapshots`. The age-rollover decay (`decayDimensionScores`) is applied later in the visualization layer, not in the pipeline.
 
 ### Grade Transitions
-- School year boundary: September 1st
-- At each September, competency scores decay by 0.35x to represent higher-grade expectations
-- The blob "squeezes" with an animation showing new rings coming in
-- A persistent grade label (e.g., "Grade 2") shows in the blob center during playback
+- Rollover triggers per-student on the snapshot for the student's birthday month (via `ageAt(dob, cutoff)` in `src/lib/standards-snapshots.ts`), not a fixed calendar date.
+- Visualization-only rescale: `decayDimensionScores` in `src/lib/living-data.ts` applies cumulative factor `0.75^(ageYears - baselineAge)` inside `LivingVisualization.tsx`. The snapshot pipeline itself is untouched.
+- Blob "squeezes" on age rollover (via `isAgeRollover`) as new rings come in. Center label is age-first with grade in parens, e.g. `7y 4m · G2`.
 
 ### Data Flow
 - Observations (educator-assessed) + Interest Surveys (learner-reported) → monthly snapshots
 - Forward-looking smoothing creates gradual ramps instead of staircase jumps
-- Grade boundary detection prevents smoothing across September transitions
+- Age-rollover boundary detection (per-student birthday month) prevents smoothing across transitions
 
 ## Commands
 

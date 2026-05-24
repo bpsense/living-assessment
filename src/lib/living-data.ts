@@ -168,6 +168,51 @@ function forwardSmooth(
 // Interpolation (used by LivingVisualization for fluid morphing)
 // ============================================================
 
+// ============================================================
+// Age-rescale decay (visualization layer only)
+// ============================================================
+
+/**
+ * Default per-birthday competency decay. A score of 3.0 (Achieving) at age 6
+ * displays as 2.25 (mid-Developing) once the learner turns 7 — modelling
+ * "the rubric got harder, so the same observed performance lands a tier lower."
+ */
+export const DEFAULT_AGE_DECAY_FACTOR = 0.75
+
+/**
+ * Cumulative decay factor for a snapshot at `ageYears`, given a baseline
+ * (the age at the earliest snapshot in the timeline). Pure function — no
+ * dependency on snapshot data; safe to memoize on (ageYears, baselineAgeYears).
+ */
+export function ageDecayFactor(
+  ageYears: number,
+  baselineAgeYears: number,
+  factor: number = DEFAULT_AGE_DECAY_FACTOR
+): number {
+  const k = Math.max(0, ageYears - baselineAgeYears)
+  if (k === 0) return 1
+  return Math.pow(factor, k)
+}
+
+/**
+ * Apply the age-rescale decay to a DimensionScore[] in place of the raw
+ * competency values. Interest values are not touched.
+ */
+export function decayDimensionScores(
+  scores: DimensionScore[],
+  ageYears: number,
+  baselineAgeYears: number,
+  factor: number = DEFAULT_AGE_DECAY_FACTOR
+): DimensionScore[] {
+  const f = ageDecayFactor(ageYears, baselineAgeYears, factor)
+  if (f === 1) return scores
+  return scores.map((s) => ({ ...s, competency: s.competency * f }))
+}
+
+// ============================================================
+// Interpolation (used by LivingVisualization for fluid morphing)
+// ============================================================
+
 export function interpolateScores(
   from: DimensionScore[],
   to: DimensionScore[],
