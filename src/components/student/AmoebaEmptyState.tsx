@@ -1,6 +1,6 @@
 /**
  * AmoebaEmptyState.tsx
- * Friendly empty-state copy for the Living Assessment surface when one of the
+ * Friendly empty-state copy for the SproutMap surface when one of the
  * required pieces is missing: date of birth, skill assessments, or
  * competency-domain → dimension mappings.
  */

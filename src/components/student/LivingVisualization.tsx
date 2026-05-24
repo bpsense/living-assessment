@@ -317,7 +317,7 @@ export default function LivingVisualization({
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-text">
-            {familyView ? 'Growth Profile' : 'Living Assessment'}
+            {familyView ? 'Growth Profile' : 'SproutMap'}
           </h2>
           <p className="mt-0.5 text-sm text-text-muted">
             {familyView
@@ -537,7 +537,7 @@ function ExpandedBlobModal({
       <div className="flex items-center justify-between px-5 py-4 sm:px-8">
         <div>
           <h2 className="text-lg font-bold text-text">
-            {familyView ? 'Growth Profile' : 'Living Assessment'}
+            {familyView ? 'Growth Profile' : 'SproutMap'}
           </h2>
           <p className="text-xs text-text-muted">
             {familyView

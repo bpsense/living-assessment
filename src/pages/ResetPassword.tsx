@@ -69,7 +69,7 @@ export default function ResetPassword() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-500">
             <GraduationCap className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-text">Living Assessment</h1>
+          <h1 className="text-2xl font-bold text-text">SproutMap</h1>
           <p className="mt-1 text-sm text-text-muted">Set your new password</p>
         </div>
 

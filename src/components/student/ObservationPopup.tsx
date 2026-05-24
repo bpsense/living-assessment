@@ -1,7 +1,7 @@
 /**
  * ObservationPopup.tsx
  * Popup card that appears when a competency or interest dot is clicked
- * on the Living Assessment blob. Shows all observations for that dimension
+ * on the SproutMap blob. Shows all observations for that dimension
  * at the current snapshot point in time.
  */
 
