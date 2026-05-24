@@ -26,6 +26,10 @@ import {
   X,
   Plus,
   KeyRound,
+  Eye,
+  EyeOff,
+  RefreshCw,
+  Mail,
 } from 'lucide-react'
 import { useAuth } from '../../lib/auth'
 import { useAccessControl } from '../../lib/access-control'
@@ -108,6 +112,14 @@ export default function UsersPage() {
   const [inviteSchoolId, setInviteSchoolId] = useState<string>('')
   const [inviting, setInviting] = useState(false)
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null)
+
+  // ── Direct-create mode (alternative to email invite) ────
+  // When 'invite': send invite email (user picks own password).
+  // When 'direct': admin sets a temporary password and the account is
+  // created ready to sign in immediately.
+  const [createMode, setCreateMode] = useState<'invite' | 'direct'>('invite')
+  const [invitePassword, setInvitePassword] = useState('')
+  const [showInvitePassword, setShowInvitePassword] = useState(false)
 
   // ── Learner invite state ───────────────────────────────
   const [learnerLinkMode, setLearnerLinkMode] = useState<'existing' | 'new'>('existing')
@@ -271,12 +283,18 @@ export default function UsersPage() {
     e.preventDefault()
     const inviteEffectiveSchoolId = activeSchoolId || inviteSchoolId
     if (!inviteEffectiveSchoolId || !inviteName.trim() || !inviteEmail.trim()) return
+    if (createMode === 'direct' && invitePassword.length < 8) {
+      setActionError('Temporary password must be at least 8 characters')
+      return
+    }
 
     setInviting(true)
     setActionError(null)
     setInviteSuccess(null)
 
-    const { error: err } = await inviteUser({
+    const directPassword = createMode === 'direct' ? invitePassword : undefined
+
+    const { error: err, createdDirectly } = await inviteUser({
       email: inviteEmail.trim(),
       fullName: inviteName.trim(),
       schoolId: inviteEffectiveSchoolId,
@@ -285,13 +303,18 @@ export default function UsersPage() {
       isSystemAdmin: isAllSchoolsInvite || undefined,
       studentId: !isAllSchoolsInvite && inviteRole === 'learner' && learnerLinkMode === 'existing' && inviteStudentId ? inviteStudentId : undefined,
       classroomId: !isAllSchoolsInvite && inviteRole === 'learner' && learnerLinkMode === 'new' && inviteClassroomId ? inviteClassroomId : undefined,
+      temporaryPassword: directPassword,
     })
 
     if (err) {
       setActionError(err)
     } else {
       const roleLabel = isAllSchoolsInvite ? 'System Admin' : (ROLE_OPTIONS.find(o => o.value === inviteRole)?.label ?? inviteRole)
-      setInviteSuccess(`Invitation sent to ${inviteEmail.trim()} as ${roleLabel}`)
+      setInviteSuccess(
+        createdDirectly
+          ? `Account created for ${inviteEmail.trim()} as ${roleLabel} — they can sign in with the password you set.`
+          : `Invitation sent to ${inviteEmail.trim()} as ${roleLabel}`
+      )
       setInviteName('')
       setInviteEmail('')
       setInviteRole('educator')
@@ -301,11 +324,14 @@ export default function UsersPage() {
       setInviteClassroomId('')
       setLearnerLinkMode('existing')
       setStudentSearch('')
+      setCreateMode('invite')
+      setInvitePassword('')
+      setShowInvitePassword(false)
       setShowInvite(false)
       refresh()
     }
     setInviting(false)
-  }, [activeSchoolId, inviteSchoolId, isAllSchoolsInvite, inviteName, inviteEmail, inviteRole, inviteDeptId, learnerLinkMode, inviteStudentId, inviteClassroomId, refresh])
+  }, [activeSchoolId, inviteSchoolId, isAllSchoolsInvite, inviteName, inviteEmail, inviteRole, inviteDeptId, learnerLinkMode, inviteStudentId, inviteClassroomId, createMode, invitePassword, refresh])
 
   const handleAssignDept = useCallback(async (userId: string, deptId: string) => {
     if (!activeSchoolId) return
@@ -374,9 +400,43 @@ export default function UsersPage() {
           onSubmit={handleInvite}
           className="rounded-xl border border-primary-200 bg-primary-50/30 p-5 shadow-sm"
         >
-          <h2 className="mb-4 text-sm font-semibold text-text">
-            {isAllSchoolsInvite ? 'Invite New System Admin' : 'Invite New User'}
-          </h2>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold text-text">
+              {createMode === 'direct'
+                ? (isAllSchoolsInvite ? 'Create System Admin Account' : 'Create User Account')
+                : (isAllSchoolsInvite ? 'Invite New System Admin' : 'Invite New User')}
+            </h2>
+
+            {/* Mode toggle — email invite vs direct create */}
+            <div className="inline-flex rounded-lg border border-bg-muted bg-bg p-0.5">
+              <button
+                type="button"
+                onClick={() => { setCreateMode('invite'); setInvitePassword(''); setActionError(null) }}
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                  createMode === 'invite'
+                    ? 'bg-bg-card text-text shadow-sm'
+                    : 'text-text-muted hover:text-text'
+                }`}
+                title="Send the user an email invitation; they choose their own password."
+              >
+                <Mail className="h-3.5 w-3.5" />
+                Send invite
+              </button>
+              <button
+                type="button"
+                onClick={() => { setCreateMode('direct'); setActionError(null) }}
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                  createMode === 'direct'
+                    ? 'bg-bg-card text-text shadow-sm'
+                    : 'text-text-muted hover:text-text'
+                }`}
+                title="Create the account now with a password you set. The user can sign in immediately."
+              >
+                <KeyRound className="h-3.5 w-3.5" />
+                Set password now
+              </button>
+            </div>
+          </div>
           <div className={`grid gap-4 sm:grid-cols-2 ${isAllSchoolsInvite ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
             {/* Full Name */}
             <div>
@@ -565,14 +625,71 @@ export default function UsersPage() {
             </div>
           )}
 
+          {/* Temporary password (direct-create mode only) */}
+          {createMode === 'direct' && (
+            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50/40 p-4">
+              <label className="mb-1 block text-xs font-medium text-text">
+                Temporary Password
+                <span className="ml-1 font-normal text-text-light">(min 8 characters — share with the user securely)</span>
+              </label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type={showInvitePassword ? 'text' : 'password'}
+                    required
+                    value={invitePassword}
+                    onChange={e => setInvitePassword(e.target.value)}
+                    placeholder="At least 8 characters"
+                    autoComplete="new-password"
+                    className="w-full rounded-lg border border-bg-muted bg-bg-card px-3 py-2 pr-10 text-sm text-text placeholder:text-text-light focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-300"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowInvitePassword(v => !v)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-text-light hover:bg-bg-muted hover:text-text"
+                    title={showInvitePassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showInvitePassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Generate a readable 12-char password: 3 chars + dash + 4 + dash + 4
+                    const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789'
+                    const pick = (n: number) =>
+                      Array.from(crypto.getRandomValues(new Uint8Array(n)))
+                        .map(b => chars[b % chars.length])
+                        .join('')
+                    setInvitePassword(`${pick(3)}-${pick(4)}-${pick(4)}`)
+                    setShowInvitePassword(true)
+                  }}
+                  className="flex items-center gap-1.5 rounded-lg border border-bg-muted bg-bg-card px-3 py-2 text-xs font-medium text-text-muted hover:bg-bg-muted hover:text-text"
+                  title="Generate a random password"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Generate
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="mt-4 flex items-center gap-3">
             <button
               type="submit"
-              disabled={inviting || !inviteName.trim() || !inviteEmail.trim() || (isAllSchoolsInvite && !inviteSchoolId)}
+              disabled={
+                inviting ||
+                !inviteName.trim() ||
+                !inviteEmail.trim() ||
+                (isAllSchoolsInvite && !inviteSchoolId) ||
+                (createMode === 'direct' && invitePassword.length < 8)
+              }
               className="flex items-center gap-2 rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-600 disabled:opacity-50"
             >
-              {inviting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-              Send Invite
+              {inviting
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : createMode === 'direct' ? <KeyRound className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+              {createMode === 'direct' ? 'Create User' : 'Send Invite'}
             </button>
             <button
               type="button"

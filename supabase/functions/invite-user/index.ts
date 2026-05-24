@@ -87,7 +87,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // 3. Parse request body
-    const { email, full_name, school_id, role, department_id, is_system_admin, student_id, classroom_id } = await req.json() as {
+    const { email, full_name, school_id, role, department_id, is_system_admin, student_id, classroom_id, temporary_password } = await req.json() as {
       email?: string
       full_name?: string
       school_id?: string
@@ -96,10 +96,15 @@ Deno.serve(async (req: Request) => {
       is_system_admin?: boolean
       student_id?: string      // Link learner to existing student record
       classroom_id?: string    // Auto-create student record in this classroom
+      temporary_password?: string // When present, create the account directly with this password instead of sending an invite email.
     }
 
     if (!email || !full_name || !school_id || !role) {
       return jsonResponse({ error: 'email, full_name, school_id, and role are required' })
+    }
+
+    if (temporary_password != null && temporary_password.length < 8) {
+      return jsonResponse({ error: 'Temporary password must be at least 8 characters' })
     }
 
     const validRoles = ['admin', 'educator', 'parent', 'learner']
@@ -139,27 +144,50 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: 'An account with this email already exists.' })
     }
 
-    // 6. Invite user — creates the account AND sends the invite email
-    const { data: inviteData, error: inviteErr } = await serviceClient.auth.admin.inviteUserByEmail(
-      email,
-      {
-        data: {
-          full_name,
-          role,
-          school_id,
-        },
-      }
-    )
+    // 6. Create the account — either via invite email or by direct creation
+    //    with the caller-supplied temporary password.
+    let newUserId: string
 
-    if (inviteErr) {
-      const msg = inviteErr.message || ''
-      if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('duplicate')) {
-        return jsonResponse({ error: 'An account with this email already exists.' })
+    if (temporary_password) {
+      const { data: createData, error: createErr } = await serviceClient.auth.admin.createUser({
+        email,
+        password: temporary_password,
+        email_confirm: true, // skip verification so the user can sign in immediately
+        user_metadata: { full_name, role, school_id },
+      })
+      if (createErr) {
+        const msg = createErr.message || ''
+        if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('duplicate')) {
+          return jsonResponse({ error: 'An account with this email already exists.' })
+        }
+        return jsonResponse({ error: msg || 'Failed to create user' })
       }
-      return jsonResponse({ error: msg || 'Failed to invite user' })
+      if (!createData?.user) {
+        return jsonResponse({ error: 'createUser returned no user record' })
+      }
+      newUserId = createData.user.id
+    } else {
+      const { data: inviteData, error: inviteErr } = await serviceClient.auth.admin.inviteUserByEmail(
+        email,
+        {
+          data: {
+            full_name,
+            role,
+            school_id,
+          },
+        }
+      )
+
+      if (inviteErr) {
+        const msg = inviteErr.message || ''
+        if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('duplicate')) {
+          return jsonResponse({ error: 'An account with this email already exists.' })
+        }
+        return jsonResponse({ error: msg || 'Failed to invite user' })
+      }
+
+      newUserId = inviteData.user.id
     }
-
-    const newUserId = inviteData.user.id
 
     // 7. Ensure profile exists with correct role
     let linkedStudentId = student_id || null
@@ -254,6 +282,7 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({
       success: true,
       user_id: newUserId,
+      created_directly: !!temporary_password,
       student_linked: !!linkedStudentId,
       department_assigned: departmentAssigned,
       system_admin_assigned: systemAdminAssigned,
