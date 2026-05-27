@@ -331,6 +331,106 @@ export async function getStudentRosterForAssignment(
 }
 
 // ============================================================
+// Quick Observations (ad-hoc, snapshot-driven)
+// ============================================================
+
+/**
+ * Returns the student_assignment_id to attach a quick (ad-hoc) observation to.
+ * Finds-or-creates a per-student "Quick Observations" parent assignment,
+ * ensures the student is enrolled, and ensures the standard exists in the
+ * student's snapshot. Idempotent.
+ *
+ * The marker is `assignments.project_data.quick_observations = true`.
+ */
+export async function findOrCreateQuickObsStudentAssignment(args: {
+  studentId: string
+  schoolId: string
+  educatorId: string
+  standardId: string
+}): Promise<string> {
+  const { studentId, schoolId, educatorId, standardId } = args
+
+  // 1. Find an existing student_assignment whose parent assignment is the
+  //    quick-obs marker. We pull candidates by student + school, then filter
+  //    by the parent's project_data flag client-side (project_data is JSONB).
+  const { data: existingSARows, error: saErr } = await supabase
+    .from('student_assignments')
+    .select(
+      'id, assignment:assignments!inner(id, school_id, project_data, status)'
+    )
+    .eq('student_id', studentId)
+  if (saErr) throw saErr
+
+  type Row = {
+    id: string
+    assignment: {
+      id: string
+      school_id: string
+      project_data: Record<string, unknown> | null
+      status: string
+    }
+  }
+  const rows = (existingSARows ?? []) as unknown as Row[]
+  const existing = rows.find(
+    (r) =>
+      r.assignment.school_id === schoolId &&
+      (r.assignment.project_data as { quick_observations?: boolean } | null)
+        ?.quick_observations === true
+  )
+
+  let studentAssignmentId: string
+  if (existing) {
+    studentAssignmentId = existing.id
+  } else {
+    // Create the parent assignment + student row in sequence. The DB trigger
+    // snapshots assignment_standards into student_assignment_standards on
+    // insert — for quick-obs the parent set stays empty and we manage the
+    // student's snapshot directly below.
+    const { data: created, error: aErr } = await supabase
+      .from('assignments')
+      .insert({
+        school_id: schoolId,
+        teacher_id: educatorId,
+        classroom_id: null,
+        title: 'Quick Observations',
+        description: 'Ad-hoc observations recorded outside an assignment.',
+        assignment_type: 'individual',
+        status: 'active',
+        project_data: { quick_observations: true },
+      })
+      .select('id')
+      .single()
+    if (aErr || !created) throw new Error(`Failed to create quick-obs assignment: ${aErr?.message}`)
+
+    const { data: saCreated, error: saInsErr } = await supabase
+      .from('student_assignments')
+      .insert({ assignment_id: created.id, student_id: studentId })
+      .select('id')
+      .single()
+    if (saInsErr || !saCreated)
+      throw new Error(`Failed to assign student to quick-obs: ${saInsErr?.message}`)
+    studentAssignmentId = saCreated.id
+  }
+
+  // 2. Ensure the standard is on the student's snapshot for this assignment.
+  const { data: standardRows, error: standardErr } = await supabase
+    .from('student_assignment_standards')
+    .select('id')
+    .eq('student_assignment_id', studentAssignmentId)
+    .eq('standard_id', standardId)
+    .limit(1)
+  if (standardErr) throw standardErr
+  if ((standardRows ?? []).length === 0) {
+    const { error: insErr } = await supabase
+      .from('student_assignment_standards')
+      .insert({ student_assignment_id: studentAssignmentId, standard_id: standardId })
+    if (insErr) throw insErr
+  }
+
+  return studentAssignmentId
+}
+
+// ============================================================
 // Assessments (append-only)
 // ============================================================
 

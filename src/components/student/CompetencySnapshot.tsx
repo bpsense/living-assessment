@@ -20,6 +20,8 @@ import {
   ArrowUp,
   ChevronDown,
   ChevronRight,
+  Eye,
+  EyeOff,
   Layers,
   Loader2,
 } from 'lucide-react'
@@ -47,6 +49,8 @@ import type {
 import type { StandardAssessment } from '../../lib/standards-assignment-data'
 import { DimensionIcon } from './DimensionIcon'
 import StandardDetailModal from './StandardDetailModal'
+import { setStudentSnapshotVisibility } from '../../lib/snapshot-visibility'
+import { useToast } from '../Toast'
 
 export type SnapshotAudience = 'educator' | 'family'
 
@@ -56,6 +60,15 @@ interface Props {
   studentFirstName: string
   dateOfBirth: string | null
   audience: SnapshotAudience
+  /** Current value of students.family_snapshot_visible. Drives the educator
+   *  header toggle; ignored for family audience (gating happens upstream). */
+  familyVisible?: boolean
+  /** Called after the educator toggles family visibility so the page can
+   *  refetch the student record. */
+  onChangedVisibility?: () => void
+  /** Called after an educator records an ad-hoc observation from the
+   *  standard-detail modal so upstream data can refresh. */
+  onObservationSaved?: () => void
   prefetched?: {
     dimensions: Dimension[]
     dimensionStandards: DimensionStandard[]
@@ -69,12 +82,36 @@ export default function CompetencySnapshot({
   studentFirstName,
   dateOfBirth,
   audience,
+  familyVisible = true,
+  onChangedVisibility,
+  onObservationSaved,
   prefetched,
 }: Props) {
   const [standards, setStandards] = useState<Standard[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [openRow, setOpenRow] = useState<SnapshotRow | null>(null)
+  const [togglingVis, setTogglingVis] = useState(false)
   const familyView = audience === 'family'
+  const { toast } = useToast()
+
+  async function handleToggleVisibility() {
+    if (togglingVis) return
+    setTogglingVis(true)
+    const next = !familyVisible
+    const { error } = await setStudentSnapshotVisibility(studentId, next)
+    setTogglingVis(false)
+    if (error) {
+      toast(error, 'error')
+      return
+    }
+    toast(
+      next
+        ? `Snapshot now visible to ${studentFirstName}'s family`
+        : `Snapshot hidden from ${studentFirstName}'s family`,
+      'success'
+    )
+    onChangedVisibility?.()
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -111,9 +148,18 @@ export default function CompetencySnapshot({
     })
   }, [standards, prefetched, studentId, schoolId, dateOfBirth, familyView])
 
+  const headerAction =
+    audience === 'educator' ? (
+      <VisibilityToggle
+        visible={familyVisible}
+        busy={togglingVis}
+        onClick={handleToggleVisibility}
+      />
+    ) : null
+
   if (snapshot === null || !prefetched) {
     return (
-      <Shell title="Competency Snapshot">
+      <Shell title="Competency Snapshot" action={headerAction}>
         <div className="flex items-center justify-center py-6">
           {error ? (
             <p className="text-sm text-alert-600">Could not load snapshot: {error}</p>
@@ -130,7 +176,7 @@ export default function CompetencySnapshot({
 
   if (!hasAnything) {
     return (
-      <Shell title="Competency Snapshot">
+      <Shell title="Competency Snapshot" action={headerAction}>
         <EmptyState audience={audience} firstName={studentFirstName} />
       </Shell>
     )
@@ -142,7 +188,7 @@ export default function CompetencySnapshot({
       : `Spectrum position per standard. Weighted across recent assessments (90-day half-life) with a band shift applied. Click a marker for full detail.`
 
   return (
-    <Shell title="Competency Snapshot" subtitle={subtitle}>
+    <Shell title="Competency Snapshot" subtitle={subtitle} action={headerAction}>
       <TotalsStrip totals={snapshot.totals} />
 
       <div className="mt-4 space-y-3">
@@ -178,8 +224,47 @@ export default function CompetencySnapshot({
         schoolId={schoolId}
         row={openRow}
         audience={audience}
+        onObservationSaved={onObservationSaved}
       />
     </Shell>
+  )
+}
+
+function VisibilityToggle({
+  visible,
+  busy,
+  onClick,
+}: {
+  visible: boolean
+  busy: boolean
+  onClick: () => void
+}) {
+  const Icon = visible ? Eye : EyeOff
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={busy}
+      className={clsx(
+        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+        visible
+          ? 'border-success-200 bg-success-50 text-success-700 hover:bg-success-100'
+          : 'border-bg-muted bg-bg-muted/60 text-text-muted hover:bg-bg-muted'
+      )}
+      title={
+        visible
+          ? 'Snapshot is visible to family — click to hide'
+          : 'Snapshot is hidden from family — click to show'
+      }
+      aria-pressed={visible}
+    >
+      {busy ? (
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+      ) : (
+        <Icon className="h-3.5 w-3.5" />
+      )}
+      {visible ? 'Family can see' : 'Hidden from family'}
+    </button>
   )
 }
 
@@ -190,18 +275,23 @@ export default function CompetencySnapshot({
 function Shell({
   title,
   subtitle,
+  action,
   children,
 }: {
   title: string
   subtitle?: string
+  action?: React.ReactNode
   children: React.ReactNode
 }) {
   return (
     <section className="glass-card p-5">
       <header className="mb-4">
-        <div className="flex items-center gap-2">
-          <Layers className="h-5 w-5 text-primary-500" />
-          <h2 className="text-lg font-bold text-text">{title}</h2>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Layers className="h-5 w-5 text-primary-500" />
+            <h2 className="text-lg font-bold text-text">{title}</h2>
+          </div>
+          {action && <div className="shrink-0">{action}</div>}
         </div>
         {subtitle && <p className="mt-1 text-sm text-text-muted">{subtitle}</p>}
       </header>

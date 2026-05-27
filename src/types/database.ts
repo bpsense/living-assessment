@@ -110,6 +110,11 @@ export interface Student {
   avatar_url: string | null
   family_code: string | null
   student_number: string | null
+  /** Whether the Competency Snapshot section is shown in the family/learner
+   *  view of this student's profile (added in migration 082). Defaults to
+   *  true; admins batch-toggle by classroom and educators can override per
+   *  student. */
+  family_snapshot_visible: boolean
   created_at: string
   updated_at: string
 }
@@ -250,7 +255,7 @@ export type ClassroomInsert = Omit<Classroom, 'id' | 'created_at' | 'updated_at'
   grade_level?: string | null
 }
 
-export type StudentInsert = Omit<Student, 'id' | 'created_at' | 'updated_at'> & {
+export type StudentInsert = Omit<Student, 'id' | 'created_at' | 'updated_at' | 'family_snapshot_visible'> & {
   id?: string
   middle_name?: string | null
   preferred_name?: string | null
@@ -269,6 +274,7 @@ export type StudentInsert = Omit<Student, 'id' | 'created_at' | 'updated_at'> & 
   avatar_url?: string | null
   family_code?: string | null
   student_number?: string | null
+  family_snapshot_visible?: boolean
 }
 
 export type ObservationInsert = Omit<Observation, 'id' | 'created_at' | 'updated_at' | 'observed_at'> & {

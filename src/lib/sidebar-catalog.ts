@@ -55,6 +55,7 @@ export type SidebarKey =
   | 'families'
   | 'users'
   | 'permissions'
+  | 'snapshot-visibility'
   // Folder
   | 'utilities'
 
@@ -178,6 +179,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
       'educators',
       'families',
       'users',
+      'snapshot-visibility',
       'permissions',
     ],
     defaultAccess: { admin: 'edit', dept_admin: 'view', educator: 'view', parent: 'hidden', learner: 'hidden' },
@@ -229,6 +231,13 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     label: 'Users',
     icon: 'Users',
     to: '/admin/users',
+    defaultAccess: deptAdminElevated,
+  },
+  {
+    key: 'snapshot-visibility',
+    label: 'Snapshot Visibility',
+    icon: 'Eye',
+    to: '/admin/snapshot-visibility',
     defaultAccess: deptAdminElevated,
   },
   {

@@ -7,7 +7,7 @@
  * available), full assessment history, and parent assignments.
  */
 import { useEffect, useState } from 'react'
-import { ArrowDown, ArrowRight, ArrowUp, Loader2, X } from 'lucide-react'
+import { ArrowDown, ArrowRight, ArrowUp, Loader2, Save, X } from 'lucide-react'
 import { clsx } from 'clsx'
 import { format, formatDistanceToNow } from 'date-fns'
 import {
@@ -20,7 +20,15 @@ import {
   ZONE_TOKEN,
   type Trend,
 } from '../../lib/competency-snapshot'
-import { formatLevel, type AssessmentLevel } from '../../lib/standards-assignment-data'
+import {
+  ASSESSMENT_LEVELS,
+  findOrCreateQuickObsStudentAssignment,
+  formatLevel,
+  recordStandardAssessments,
+  type AssessmentLevel,
+} from '../../lib/standards-assignment-data'
+import { useAuth } from '../../lib/auth'
+import { useToast } from '../Toast'
 
 interface Props {
   open: boolean
@@ -34,6 +42,9 @@ interface Props {
   audience: 'educator' | 'family'
   /** Optional override for "now" — used by tests; defaults to current time. */
   now?: Date
+  /** Called after the educator records a new ad-hoc observation so upstream
+   *  data (snapshot, amoeba) can refresh. */
+  onObservationSaved?: () => void
 }
 
 export default function StandardDetailModal({
@@ -43,6 +54,7 @@ export default function StandardDetailModal({
   schoolId,
   row,
   audience,
+  onObservationSaved,
 }: Props) {
   const [detail, setDetail] = useState<StandardDetail | null>(null)
   const [loading, setLoading] = useState(false)
@@ -161,6 +173,23 @@ export default function StandardDetailModal({
               <p className="text-sm text-text">{row.standard.description}</p>
             )}
           </section>
+
+          {/* Quick observation form (educator+) */}
+          {audience === 'educator' && row && (
+            <QuickObservationForm
+              studentId={studentId}
+              schoolId={schoolId}
+              standardId={row.standard.id}
+              standardCode={row.standard.code}
+              onSaved={() => {
+                // Re-fetch the detail so history shows the new row immediately.
+                getStandardDetail({ studentId, schoolId, standardId: row.standard.id })
+                  .then(setDetail)
+                  .catch(() => {})
+                onObservationSaved?.()
+              }}
+            />
+          )}
 
           {/* Assessment history */}
           <section>
@@ -387,4 +416,147 @@ function TrendIcon({ trend }: { trend: Trend }) {
   if (trend === 'up') return <ArrowUp className="h-4 w-4 text-success-600" />
   if (trend === 'down') return <ArrowDown className="h-4 w-4 text-alert-600" />
   return <ArrowRight className="h-4 w-4 text-text-light" />
+}
+
+// ============================================================
+// Quick observation form
+// ============================================================
+
+const LEVEL_FORM_STYLES: Record<AssessmentLevel, { active: string; idle: string }> = {
+  emerging:   { active: 'bg-amber-500 text-white',   idle: 'bg-amber-50 text-amber-700 hover:bg-amber-100' },
+  developing: { active: 'bg-sky-500 text-white',     idle: 'bg-sky-50 text-sky-700 hover:bg-sky-100' },
+  achieving:  { active: 'bg-emerald-500 text-white', idle: 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' },
+  mastery:    { active: 'bg-violet-500 text-white',  idle: 'bg-violet-50 text-violet-700 hover:bg-violet-100' },
+}
+
+function todayISO(): string {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function QuickObservationForm({
+  studentId,
+  schoolId,
+  standardId,
+  standardCode,
+  onSaved,
+}: {
+  studentId: string
+  schoolId: string
+  standardId: string
+  standardCode: string
+  onSaved: () => void
+}) {
+  const { profile } = useAuth()
+  const { toast } = useToast()
+  const [level, setLevel] = useState<AssessmentLevel | null>(null)
+  const [observedDate, setObservedDate] = useState<string>(todayISO())
+  const [notes, setNotes] = useState('')
+  const [saving, setSaving] = useState(false)
+  const today = todayISO()
+
+  async function save() {
+    if (!profile?.id || !level) return
+    setSaving(true)
+    try {
+      const studentAssignmentId = await findOrCreateQuickObsStudentAssignment({
+        studentId,
+        schoolId,
+        educatorId: profile.id,
+        standardId,
+      })
+      // Compose an ISO timestamp from the date input, anchored at noon local
+      // time so timezone wobble doesn't push it to the prior day.
+      const assessedAt = new Date(`${observedDate}T12:00:00`).toISOString()
+      await recordStandardAssessments([
+        {
+          student_assignment_id: studentAssignmentId,
+          student_id: studentId,
+          school_id: schoolId,
+          standard_id: standardId,
+          level,
+          notes: notes.trim() || null,
+          assessor_id: profile.id,
+          assessed_at: assessedAt,
+        },
+      ])
+      toast(`Recorded ${formatLevel(level)} for ${standardCode}`, 'success')
+      setLevel(null)
+      setNotes('')
+      setObservedDate(todayISO())
+      onSaved()
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Failed to save observation', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const canSave = level !== null && !saving && observedDate <= today
+
+  return (
+    <section className="rounded-lg border border-primary-100 bg-primary-50/40 p-3">
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-primary-700">
+        Record observation
+      </h3>
+      <div className="flex flex-wrap gap-1.5">
+        {ASSESSMENT_LEVELS.map((lvl) => {
+          const styles = LEVEL_FORM_STYLES[lvl]
+          const active = level === lvl
+          return (
+            <button
+              key={lvl}
+              type="button"
+              onClick={() => setLevel(active ? null : lvl)}
+              className={clsx(
+                'rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                active ? styles.active : styles.idle
+              )}
+            >
+              {formatLevel(lvl)}
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[auto,1fr]">
+        <label className="flex items-center gap-2 text-xs text-text-muted">
+          <span>Observed on</span>
+          <input
+            type="date"
+            value={observedDate}
+            max={today}
+            onChange={(e) => setObservedDate(e.target.value)}
+            className="rounded-md border border-bg-muted bg-bg-card px-2 py-1 text-xs text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+          />
+        </label>
+        <input
+          type="text"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Optional note…"
+          className="rounded-md border border-bg-muted bg-bg-card px-2 py-1 text-xs text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+        />
+      </div>
+
+      <div className="mt-2 flex items-center justify-between gap-3">
+        <p className="text-[10px] text-text-light">
+          Back-date to log historical observations — the amoeba timeline will
+          place it at this date.
+        </p>
+        <button
+          type="button"
+          onClick={save}
+          disabled={!canSave}
+          className="flex items-center gap-1.5 rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+          Save
+        </button>
+      </div>
+    </section>
+  )
 }
