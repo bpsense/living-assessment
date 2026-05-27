@@ -381,19 +381,27 @@ export default function StudentProfile() {
         </div>
       </section>
 
-      {/* ========== COMPETENCY SNAPSHOT (current standing, standard by standard) ========== */}
-      <CompetencySnapshot
-        studentId={student.id}
-        schoolId={student.school_id}
-        studentFirstName={student.first_name}
-        dateOfBirth={student.date_of_birth}
-        audience={isFamilyView ? 'family' : 'educator'}
-        prefetched={{
-          dimensions: visibleDimensions,
-          dimensionStandards,
-          standardAssessments,
-        }}
-      />
+      {/* ========== COMPETENCY SNAPSHOT (current standing, standard by standard) ==========
+          Hidden from family view when the student's `family_snapshot_visible`
+          flag is false (admin- or educator-controlled). Educator+ always sees
+          it and can toggle the family visibility from the section header. */}
+      {(!isFamilyView || student.family_snapshot_visible) && (
+        <CompetencySnapshot
+          studentId={student.id}
+          schoolId={student.school_id}
+          studentFirstName={student.first_name}
+          dateOfBirth={student.date_of_birth}
+          audience={isFamilyView ? 'family' : 'educator'}
+          familyVisible={student.family_snapshot_visible}
+          onChangedVisibility={refetch}
+          prefetched={{
+            dimensions: visibleDimensions,
+            dimensionStandards,
+            standardAssessments,
+          }}
+          onObservationSaved={refetch}
+        />
+      )}
 
       {/* ========== ASSIGNED TO ME (standards-driven) ========== */}
       <LearnerAssignmentsSection

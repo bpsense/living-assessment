@@ -34,6 +34,7 @@ import Permissions from './pages/admin/Permissions'
 import Messages from './pages/Messages'
 import IncidentReportPage from './pages/IncidentReport'
 import IncidentsPage from './pages/admin/IncidentsPage'
+import SnapshotVisibility from './pages/admin/SnapshotVisibility'
 import TranslatePage from './pages/Translate'
 
 function PasswordRecoveryRedirect() {
@@ -172,6 +173,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute requiredRole="admin">
               <Permissions />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/snapshot-visibility"
+          element={
+            <ProtectedRoute requiredRole="admin" allowDepartmentAdmin>
+              <SnapshotVisibility />
             </ProtectedRoute>
           }
         />

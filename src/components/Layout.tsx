@@ -53,7 +53,7 @@ import { useRolePermissions, resolveAccess, type RolePermissionMap } from '../li
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutDashboard, School, Users, UserCheck, UsersRound, Layers, BookOpen,
   Building2, PlusCircle, User, MapPin, ClipboardList, MessageCircle, Target,
-  ShieldAlert, Languages, Wrench, Lock, Sprout,
+  ShieldAlert, Languages, Wrench, Lock, Sprout, Eye,
 }
 
 function renderIcon(name: string) {
