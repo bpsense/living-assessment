@@ -326,7 +326,12 @@ export async function updateStudentClassroomStatus(
 ): Promise<{ error: string | null }> {
   const { error } = await supabase
     .from('student_classrooms')
-    .update({ status })
+    .update({
+      status,
+      // Stamp when the student left so we can compute educator/student
+      // time-overlap for the archived-learners view; clear it on restore.
+      archived_at: status === 'archived' ? new Date().toISOString() : null,
+    })
     .eq('student_id', studentId)
     .eq('classroom_id', classroomId)
 

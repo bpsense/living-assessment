@@ -32,6 +32,7 @@ import {
   ChevronRight,
   Lock,
   Sprout,
+  Archive,
 } from 'lucide-react'
 import type { UserRole } from '../types/database'
 import QuickObserveModal from './QuickObserveModal'
@@ -53,7 +54,7 @@ import { useRolePermissions, resolveAccess, type RolePermissionMap } from '../li
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutDashboard, School, Users, UserCheck, UsersRound, Layers, BookOpen,
   Building2, PlusCircle, User, MapPin, ClipboardList, MessageCircle, Target,
-  ShieldAlert, Languages, Wrench, Lock, Sprout, Eye,
+  ShieldAlert, Languages, Wrench, Lock, Sprout, Eye, Archive,
 }
 
 function renderIcon(name: string) {

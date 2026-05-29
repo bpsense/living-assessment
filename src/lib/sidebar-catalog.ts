@@ -51,6 +51,7 @@ export type SidebarKey =
   | 'skill-library'
   | 'assignments'
   | 'students'
+  | 'archived-students'
   | 'educators'
   | 'families'
   | 'users'
@@ -176,6 +177,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
       'skill-library',
       'assignments',
       'students',
+      'archived-students',
       'educators',
       'families',
       'users',
@@ -211,6 +213,15 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     icon: 'Users',
     to: '/students',
     defaultAccess: { admin: 'edit', dept_admin: 'edit', educator: 'edit', parent: 'hidden', learner: 'hidden' },
+  },
+  {
+    key: 'archived-students',
+    label: 'Archived Learners',
+    icon: 'Archive',
+    to: '/archived-students',
+    // Educator-centric: learners an educator previously taught who have since
+    // been archived. Admins use the full Learners page instead.
+    defaultAccess: { admin: 'hidden', dept_admin: 'view', educator: 'view', parent: 'hidden', learner: 'hidden' },
   },
   {
     key: 'educators',

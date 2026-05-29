@@ -8,6 +8,7 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Classrooms from './pages/Classrooms'
 import Students from './pages/Students'
+import ArchivedStudents from './pages/ArchivedStudents'
 import LearnerProfileAdmin from './pages/admin/LearnerProfile'
 import Educators from './pages/admin/Educators'
 import EducatorProfilePage from './pages/admin/EducatorProfile'
@@ -64,6 +65,7 @@ function AppRoutes() {
         <Route path="/classrooms" element={<Classrooms />} />
         <Route path="/classroom/:id" element={<ClassroomPage />} />
         <Route path="/students" element={<Students />} />
+        <Route path="/archived-students" element={<ArchivedStudents />} />
         <Route path="/observe" element={<Observe />} />
         <Route path="/student/:id" element={<StudentProfile />} />
         <Route path="/student/:id/observe" element={<RecordObservation />} />
