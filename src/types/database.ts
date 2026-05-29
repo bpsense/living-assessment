@@ -76,6 +76,8 @@ export interface StudentClassroom {
   school_id: string
   is_primary: boolean
   status: StudentClassroomStatus
+  /** When the student was archived from this classroom (null while active). */
+  archived_at: string | null
   created_at: string
 }
 

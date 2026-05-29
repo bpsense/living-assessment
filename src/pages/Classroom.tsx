@@ -48,6 +48,7 @@ import AddStudentModal from '../components/classroom/AddStudentModal'
 import CsvImportModal from '../components/classroom/CsvImportModal'
 import AssignProjectModal from '../components/assignment/AssignProjectModal'
 import ClassroomActiveAssignments from '../components/classroom/ClassroomActiveAssignments'
+import ClassroomAnalysis from '../components/classroom/ClassroomAnalysis'
 import { createClassConversation } from '../lib/messaging-data'
 import type { DimensionScore } from '../lib/student-data'
 import type { Student, Dimension, StudentContact } from '../types/database'
@@ -452,6 +453,18 @@ export default function ClassroomPage() {
             </div>
           )}
         </section>
+      )}
+
+      {/* ================================================================
+          1c. AI CLASS ANALYSIS (staff only) — above the roster
+          ================================================================ */}
+      {isStaff && (
+        <ClassroomAnalysis
+          classroom={classroom}
+          dimensions={dimensions}
+          students={activeStudents}
+          studentScoresMap={studentScoresMap}
+        />
       )}
 
       {/* ================================================================

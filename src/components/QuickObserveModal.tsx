@@ -32,12 +32,22 @@ function StudentSearch({
   const [results, setResults] = useState<Student[]>([])
   const [loading, setLoading] = useState(false)
   const [recentStudents, setRecentStudents] = useState<Student[]>([])
-  const [classroomIds, setClassroomIds] = useState<string[] | null>(null)
+  /** Educator's assigned classrooms (id + name). null until loaded. */
+  const [classrooms, setClassrooms] = useState<{ id: string; name: string }[] | null>(null)
+  /** Selected classroom filter; null = all of the educator's classrooms. */
+  const [selectedClassroom, setSelectedClassroom] = useState<string | null>(null)
   const [noClassrooms, setNoClassrooms] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const isAdmin = role === 'admin'
+
+  // Classroom IDs in the current scope (selected one, or all assigned).
+  const scopedClassroomIds = !classrooms
+    ? null
+    : selectedClassroom
+      ? [selectedClassroom]
+      : classrooms.map((c) => c.id)
 
   // Focus on mount
   useEffect(() => {
@@ -45,46 +55,65 @@ function StudentSearch({
     return () => clearTimeout(timer)
   }, [])
 
-  // Fetch educator's assigned classroom IDs (educators only)
+  // Fetch educator's assigned classrooms (educators only)
   useEffect(() => {
     if (isAdmin) {
       // Admins see all students — no classroom filter
-      setClassroomIds(null)
+      setClassrooms(null)
       return
     }
 
     async function fetchClassrooms() {
       const { data } = await supabase
         .from('educator_classrooms')
-        .select('classroom_id')
+        .select('classroom_id, classrooms(id, name)')
         .eq('educator_id', educatorId)
 
-      const ids = (data ?? []).map((r) => (r as { classroom_id: string }).classroom_id)
-      if (ids.length === 0) {
+      const rooms = (data ?? [])
+        .map((r) => {
+          // Supabase types the joined relation as an array; it's to-one here.
+          const rel = (r as { classrooms: { id: string; name: string } | { id: string; name: string }[] | null }).classrooms
+          const c = Array.isArray(rel) ? rel[0] : rel
+          return c ? { id: c.id, name: c.name } : null
+        })
+        .filter((c): c is { id: string; name: string } => c !== null)
+        .sort((a, b) => a.name.localeCompare(b.name))
+
+      if (rooms.length === 0) {
         setNoClassrooms(true)
-        setClassroomIds([])
+        setClassrooms([])
       } else {
         setNoClassrooms(false)
-        setClassroomIds(ids)
+        setClassrooms(rooms)
       }
     }
     fetchClassrooms()
   }, [educatorId, isAdmin])
 
-  // Load recent students (first 6) on mount — scoped for educators
-  useEffect(() => {
-    // Wait for classroom IDs to load for educators
-    if (!isAdmin && classroomIds === null) return
-    if (!isAdmin && classroomIds?.length === 0) return
+  // Fetch active student IDs in the current classroom scope (educators only).
+  const fetchActiveStudentIds = useCallback(
+    async (classroomIds: string[]): Promise<string[]> => {
+      const { data } = await supabase
+        .from('student_classrooms')
+        .select('student_id')
+        .in('classroom_id', classroomIds)
+        .eq('status', 'active')
+      return [...new Set((data ?? []).map((r) => r.student_id))]
+    },
+    []
+  )
 
+  // Load recent students (first 6) — scoped for educators, active-only.
+  useEffect(() => {
+    // Wait for classrooms to load for educators
+    if (!isAdmin && scopedClassroomIds === null) return
+    if (!isAdmin && scopedClassroomIds?.length === 0) return
+
+    let cancelled = false
     async function loadRecent() {
-      if (!isAdmin && classroomIds && classroomIds.length > 0) {
-        // For educators: get students via junction table
-        const { data: scData } = await supabase
-          .from('student_classrooms')
-          .select('student_id')
-          .in('classroom_id', classroomIds)
-        const studentIds = [...new Set((scData ?? []).map((r) => r.student_id))]
+      if (!isAdmin && scopedClassroomIds && scopedClassroomIds.length > 0) {
+        const studentIds = await fetchActiveStudentIds(scopedClassroomIds)
+        if (cancelled) return
         if (studentIds.length === 0) {
           setRecentStudents([])
           return
@@ -96,7 +125,7 @@ function StudentSearch({
           .eq('school_id', schoolId)
           .order('last_name')
           .limit(6)
-        setRecentStudents((data ?? []) as Student[])
+        if (!cancelled) setRecentStudents((data ?? []) as Student[])
       } else {
         // Admins see all students
         const { data } = await supabase
@@ -105,11 +134,15 @@ function StudentSearch({
           .eq('school_id', schoolId)
           .order('last_name')
           .limit(6)
-        setRecentStudents((data ?? []) as Student[])
+        if (!cancelled) setRecentStudents((data ?? []) as Student[])
       }
     }
     loadRecent()
-  }, [schoolId, classroomIds, isAdmin])
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schoolId, isAdmin, selectedClassroom, classrooms, fetchActiveStudentIds])
 
   const search = useCallback(
     async (q: string) => {
@@ -118,17 +151,13 @@ function StudentSearch({
         return
       }
       // Don't search if educator has no classrooms
-      if (!isAdmin && classroomIds?.length === 0) return
+      if (!isAdmin && scopedClassroomIds?.length === 0) return
 
       setLoading(true)
 
-      if (!isAdmin && classroomIds && classroomIds.length > 0) {
-        // For educators: scope to students in their classrooms via junction table
-        const { data: scData } = await supabase
-          .from('student_classrooms')
-          .select('student_id')
-          .in('classroom_id', classroomIds)
-        const studentIds = [...new Set((scData ?? []).map((r) => r.student_id))]
+      if (!isAdmin && scopedClassroomIds && scopedClassroomIds.length > 0) {
+        // For educators: scope to ACTIVE students in their classroom(s)
+        const studentIds = await fetchActiveStudentIds(scopedClassroomIds)
         if (studentIds.length === 0) {
           setResults([])
           setLoading(false)
@@ -155,8 +184,15 @@ function StudentSearch({
       }
       setLoading(false)
     },
-    [schoolId, classroomIds, isAdmin]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [schoolId, isAdmin, selectedClassroom, classrooms, fetchActiveStudentIds]
   )
+
+  // Re-run the active search when the classroom filter changes.
+  useEffect(() => {
+    if (query.length > 0) search(query)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedClassroom])
 
   function handleQueryChange(value: string) {
     setQuery(value)
@@ -180,8 +216,41 @@ function StudentSearch({
     )
   }
 
+  // Show classroom filter chips when the educator teaches more than one room.
+  const showClassroomFilter = !isAdmin && classrooms !== null && classrooms.length > 1
+
   return (
     <div className="space-y-3">
+      {showClassroomFilter && (
+        <div className="flex flex-wrap gap-1.5">
+          <button
+            onClick={() => setSelectedClassroom(null)}
+            className={clsx(
+              'rounded-full px-3 py-1 text-xs font-medium transition-colors',
+              selectedClassroom === null
+                ? 'bg-primary-500 text-white'
+                : 'bg-bg-muted text-text-muted hover:bg-primary-50 hover:text-primary-600'
+            )}
+          >
+            All classrooms
+          </button>
+          {classrooms!.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => setSelectedClassroom(c.id)}
+              className={clsx(
+                'rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                selectedClassroom === c.id
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-bg-muted text-text-muted hover:bg-primary-50 hover:text-primary-600'
+              )}
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
         <input
