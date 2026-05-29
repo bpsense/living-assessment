@@ -100,7 +100,27 @@ export function useClassroomAnalysis(
         },
       })
 
-      if (error) throw error
+      if (error) {
+        // supabase-js wraps non-2xx responses in a FunctionsHttpError whose
+        // generic message ("…non-2xx status code") hides the real reason. The
+        // actual JSON body ({ error: "…" }) lives on error.context (a Response).
+        let detail = error.message
+        const ctx = (error as { context?: unknown }).context
+        if (ctx instanceof Response) {
+          try {
+            const errBody = await ctx.clone().json()
+            if (errBody?.error) detail = errBody.error
+          } catch {
+            try {
+              const t = await ctx.clone().text()
+              if (t) detail = t
+            } catch {
+              /* keep generic message */
+            }
+          }
+        }
+        throw new Error(detail)
+      }
 
       setState({
         analysis: data.analysis ?? null,
