@@ -141,7 +141,7 @@ export default function IncidentReportPage() {
     try {
       const url = await getAttachmentUrl(filePath)
       window.open(url, '_blank')
-    } catch (e) {
+    } catch {
       toast('Failed to download file', 'error')
     }
   }, [toast])
