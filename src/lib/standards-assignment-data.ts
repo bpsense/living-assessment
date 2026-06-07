@@ -139,24 +139,6 @@ export async function createStandardsAssignment(args: {
   return assignmentId
 }
 
-/** Add more students to an existing assignment (snapshot trigger fires per row). */
-export async function assignStudents(assignmentId: string, studentIds: string[]): Promise<void> {
-  if (studentIds.length === 0) return
-  const { error } = await supabase
-    .from('student_assignments')
-    .insert(studentIds.map((student_id) => ({ assignment_id: assignmentId, student_id })))
-  if (error) throw error
-}
-
-/** Remove a single student from an assignment. */
-export async function unassignStudent(studentAssignmentId: string): Promise<void> {
-  const { error } = await supabase
-    .from('student_assignments')
-    .delete()
-    .eq('id', studentAssignmentId)
-  if (error) throw error
-}
-
 /** Mark the parent assignment complete — drops it from "Assigned to Me" for all students. */
 export async function completeAssignment(assignmentId: string): Promise<void> {
   const { error } = await supabase
@@ -465,20 +447,6 @@ export async function getLatestAssessmentsByStudent(
     if (!out.has(row.standard_id)) out.set(row.standard_id, row)
   }
   return out
-}
-
-/** Full assessment history for a student — drives the amoeba timeline. */
-export async function getAssessmentHistoryForStudent(
-  studentId: string
-): Promise<StandardAssessment[]> {
-  const { data, error } = await supabase
-    .from('assignment_standard_assessments')
-    .select('*')
-    .eq('student_id', studentId)
-    .order('assessed_at', { ascending: true })
-    .returns<StandardAssessment[]>()
-  if (error) throw error
-  return data ?? []
 }
 
 // ============================================================

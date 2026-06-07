@@ -236,8 +236,3 @@ export const ZONE_TOKEN: Record<
   above: { dot: 'bg-primary-500', chip: 'bg-primary-50 text-primary-700', text: 'text-primary-700' },
   untimed: { dot: 'bg-bg-muted', chip: 'bg-bg-muted text-text-muted', text: 'text-text-muted' },
 }
-
-/** Helper retained for unit tests: simple level → score. */
-export function levelOrdinal(level: AssessmentLevel): number {
-  return LEVEL_SCORE[level]
-}

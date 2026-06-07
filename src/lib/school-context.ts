@@ -11,12 +11,3 @@ export function useActiveSchoolId(): string | undefined {
   if (isSystemAdmin) return activeSchoolId ?? undefined
   return profile?.school_id
 }
-
-/**
- * Returns true when the system admin is viewing the "All Schools" aggregate view
- * (i.e. no specific school is selected).
- */
-export function useIsAllSchoolsView(): boolean {
-  const { isSystemAdmin, activeSchoolId } = useAuth()
-  return isSystemAdmin && activeSchoolId === null
-}

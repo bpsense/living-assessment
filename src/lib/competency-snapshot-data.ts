@@ -82,59 +82,6 @@ interface SnapshotInputs {
   now?: Date
 }
 
-export async function getCompetencySnapshot(
-  studentId: string,
-  options: { familyView?: boolean } = {}
-): Promise<CompetencySnapshot> {
-  const familyView = options.familyView ?? false
-
-  const { data: student, error: stuErr } = await supabase
-    .from('students')
-    .select('id, school_id, date_of_birth')
-    .eq('id', studentId)
-    .single()
-  if (stuErr || !student) throw new Error(`Student not found: ${stuErr?.message}`)
-  const stu = student as Pick<Student, 'id' | 'school_id' | 'date_of_birth'>
-
-  const [dimsRes, dsRes, stdsRes, asRes] = await Promise.all([
-    supabase
-      .from('dimensions')
-      .select('*')
-      .eq('school_id', stu.school_id)
-      .eq('is_active', true)
-      .order('display_order'),
-    supabase
-      .from('dimension_standards')
-      .select('id, dimension_id, standard_id, school_id, created_at')
-      .eq('school_id', stu.school_id),
-    supabase
-      .from('standards')
-      .select(
-        'id, framework_id, school_id, code, description, grade_level, parent_id, display_order, visible_to_family, age_band_start, age_band_end, created_at, updated_at'
-      )
-      .eq('school_id', stu.school_id)
-      .order('display_order'),
-    supabase
-      .from('assignment_standard_assessments')
-      .select('*')
-      .eq('student_id', studentId)
-      .order('assessed_at', { ascending: true }),
-  ])
-  if (dimsRes.error) throw dimsRes.error
-  if (dsRes.error) throw dsRes.error
-  if (stdsRes.error) throw stdsRes.error
-  if (asRes.error) throw asRes.error
-
-  return buildCompetencySnapshot({
-    student: stu,
-    dimensions: (dimsRes.data ?? []) as Dimension[],
-    dimensionStandards: (dsRes.data ?? []) as DimensionStandard[],
-    standards: (stdsRes.data ?? []) as Standard[],
-    assessments: (asRes.data ?? []) as StandardAssessment[],
-    familyView,
-  })
-}
-
 // ============================================================
 // Standard detail (for the click-through modal)
 // ============================================================

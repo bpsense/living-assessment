@@ -203,7 +203,7 @@ export default function UsersPage() {
       const linkedIds = (linkedProfiles ?? []).map(p => p.student_id).filter(Boolean) as string[]
 
       // Get students NOT in that list
-      let query = supabase
+      const query = supabase
         .from('students')
         .select('id, first_name, last_name, classroom:classrooms(name)')
         .eq('school_id', schoolId)

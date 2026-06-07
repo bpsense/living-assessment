@@ -141,7 +141,7 @@ export function useFamilyList(schoolId: string | undefined): FamilyListData {
         const studentIds = [...new Set(links.map((l) => l.student_id))]
 
         // 3. Student names + classroom IDs (via junction table)
-        let studentMap = new Map<string, { first_name: string; last_name: string; classroom_id: string }>()
+        const studentMap = new Map<string, { first_name: string; last_name: string; classroom_id: string }>()
         if (studentIds.length > 0) {
           const [studentsDataRes, scDataRes] = await Promise.all([
             supabase
@@ -171,7 +171,7 @@ export function useFamilyList(schoolId: string | undefined): FamilyListData {
 
         // 4. Classroom names
         const classroomIds = [...new Set(Array.from(studentMap.values()).map((s) => s.classroom_id))]
-        let classroomMap = new Map<string, string>()
+        const classroomMap = new Map<string, string>()
         if (classroomIds.length > 0) {
           const { data: classrooms } = await supabase
             .from('classrooms')

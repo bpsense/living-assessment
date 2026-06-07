@@ -174,7 +174,7 @@ export default function LearnerProfile() {
     const dimIds = allDims.map((d) => d.id)
 
     // Fetch observation counts per dimension in a single query
-    let obsCounts = new Map<string, number>()
+    const obsCounts = new Map<string, number>()
     if (dimIds.length > 0) {
       const { data: obsData } = await supabase
         .from('observations')

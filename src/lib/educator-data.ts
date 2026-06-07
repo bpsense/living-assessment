@@ -186,7 +186,7 @@ export function useEducatorList(schoolId: string | undefined): EducatorListData 
         const ecRows = (ecData ?? []) as { educator_id: string; classroom_id: string }[]
         const classroomIds = [...new Set(ecRows.map((r) => r.classroom_id))]
 
-        let classroomMap = new Map<string, string>()
+        const classroomMap = new Map<string, string>()
         if (classroomIds.length > 0) {
           const { data: classrooms } = await supabase
             .from('classrooms')
@@ -377,7 +377,7 @@ export function useEducatorProfile(educatorId: string | undefined): EducatorProf
 
         // 4. Student stats — need student names + classroom names
         const studentIds = [...new Set(observations.map((o) => o.student_id))]
-        let studentMap = new Map<string, { name: string; classroom_id: string }>()
+        const studentMap = new Map<string, { name: string; classroom_id: string }>()
 
         if (studentIds.length > 0) {
           const [studentsDataRes, scDataRes] = await Promise.all([
