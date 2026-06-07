@@ -122,10 +122,10 @@ export function useIncidentReports(
 
         // Fetch student names + tag list + unread state for each incident
         const incidentIds = items.map((i) => i.id)
-        let studentMap: Record<string, string[]> = {}
-        let studentCountMap: Record<string, number> = {}
-        let taggedIncidentIds = new Set<string>()
-        let unreadIncidentIds = new Set<string>()
+        const studentMap: Record<string, string[]> = {}
+        const studentCountMap: Record<string, number> = {}
+        const taggedIncidentIds = new Set<string>()
+        const unreadIncidentIds = new Set<string>()
 
         if (incidentIds.length > 0) {
           // Resolve "current user" for the tag/unread enrichment — prefer the
@@ -524,18 +524,6 @@ export async function createIncidentReport(data: CreateIncidentData): Promise<st
   }
 
   return reportId
-}
-
-export async function updateIncidentReport(
-  id: string,
-  data: IncidentReportUpdate
-): Promise<void> {
-  const { error } = await supabase
-    .from('incident_reports')
-    .update(data)
-    .eq('id', id)
-
-  if (error) throw new Error(`Failed to update incident: ${error.message}`)
 }
 
 export async function addFollowUp(

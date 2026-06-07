@@ -114,51 +114,6 @@ export async function fetchTranslationHistory(
 }
 
 // ============================================================
-// Get a single translation with all mappings
-// ============================================================
-
-export async function fetchTranslationWithMappings(
-  translationId: string
-): Promise<TranslationRecordWithDetails | null> {
-  const { data: record, error: recErr } = await supabase
-    .from('translation_records')
-    .select(`
-      *,
-      framework:standards_frameworks(id, name, description, framework_type),
-      translator:profiles!translation_records_translated_by_fkey(full_name),
-      reviewer:profiles!translation_records_reviewed_by_fkey(full_name)
-    `)
-    .eq('id', translationId)
-    .single()
-
-  if (recErr) throw recErr
-  if (!record) return null
-
-  const { data: mappings, error: mapErr } = await supabase
-    .from('translation_mappings')
-    .select(`
-      *,
-      standard:standards(id, code, description, grade_level, domain)
-    `)
-    .eq('translation_id', translationId)
-    .order('confidence', { ascending: false })
-
-  if (mapErr) throw mapErr
-
-  const rec = record as any
-  return {
-    ...rec,
-    framework: rec.framework ?? undefined,
-    translator_name: rec.translator?.full_name ?? null,
-    reviewer_name: rec.reviewer?.full_name ?? null,
-    mappings: ((mappings ?? []) as any[]).map((m) => ({
-      ...m,
-      standard: m.standard ?? undefined,
-    })),
-  }
-}
-
-// ============================================================
 // Update a single mapping (human review/override)
 // ============================================================
 
@@ -198,17 +153,4 @@ export async function markTranslationReviewed(
 
   if (error) throw error
   return data as TranslationRecord
-}
-
-// ============================================================
-// Delete a translation record (cascades to mappings)
-// ============================================================
-
-export async function deleteTranslation(translationId: string): Promise<void> {
-  const { error } = await supabase
-    .from('translation_records')
-    .delete()
-    .eq('id', translationId)
-
-  if (error) throw error
 }

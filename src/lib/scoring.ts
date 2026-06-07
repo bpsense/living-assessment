@@ -114,9 +114,6 @@ export function computeObservationScores(
   return scores
 }
 
-/** @deprecated Use computeObservationScores instead */
-export const computeCompetencyScores = computeObservationScores
-
 // ============================================================
 // Competency-based dimension scoring (from assignments)
 // ============================================================
