@@ -1,17 +1,16 @@
 /**
  * CompetencySnapshot.tsx
  *
- * Current-position view of the standards pipeline, sibling to the amoeba
- * (which shows growth over time).
+ * Current-position view of each dimension's competencies, sibling to the amoeba
+ * (which shows growth over time). Sourced from observations against competencies.
  *
- * v2 layout:
- *  - Default: domain summary rows with stacked proportion strip.
- *  - Expanded: a single continuous gradient bar per domain. Each assessed
- *    standard is a marker placed at its computed spectrum percent (left =
- *    below age expectation, center = at age, right = above). Markers are
- *    clickable; the click opens a StandardDetailModal.
+ * Layout:
+ *  - Default: dimension summary rows with a stacked proportion strip.
+ *  - Expanded: a continuous gradient bar per dimension. Each competency is a
+ *    marker placed at its computed spectrum percent (left = below age
+ *    expectation, center = at age, right = above).
  *
- * Two audience modes share one data layer + one rule.
+ * Two audience modes (educator / family) share one data layer + one rule.
  */
 import { useEffect, useMemo, useState } from 'react'
 import {
@@ -27,7 +26,6 @@ import {
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import {
-  buildCompetencySnapshot,
   buildCompetencySnapshotFromObservations,
   type CompetencySnapshot as Snapshot,
   type DomainGroup,
@@ -42,16 +40,8 @@ import {
 } from '../../lib/competency-snapshot'
 import { formatLevel } from '../../lib/standards-assignment-data'
 import { supabase } from '../../lib/supabase'
-import type {
-  Competency,
-  Dimension,
-  DimensionStandard,
-  Observation,
-  Standard,
-} from '../../types/database'
-import type { StandardAssessment } from '../../lib/standards-assignment-data'
+import type { Competency, Dimension, Observation } from '../../types/database'
 import { DimensionIcon } from './DimensionIcon'
-import StandardDetailModal from './StandardDetailModal'
 import { setStudentSnapshotVisibility } from '../../lib/snapshot-visibility'
 import { useToast } from '../Toast'
 
@@ -69,15 +59,9 @@ interface Props {
   /** Called after the educator toggles family visibility so the page can
    *  refetch the student record. */
   onChangedVisibility?: () => void
-  /** Called after an educator records an ad-hoc observation from the
-   *  standard-detail modal so upstream data can refresh. */
-  onObservationSaved?: () => void
   prefetched?: {
     dimensions: Dimension[]
-    dimensionStandards: DimensionStandard[]
-    standardAssessments: StandardAssessment[]
-    /** Direct observations — used when the school assesses via observations
-     *  rather than the standards pipeline. */
+    /** Direct observations that drive the competency snapshot. */
     observations: Observation[]
   }
 }
@@ -90,18 +74,10 @@ export default function CompetencySnapshot({
   audience,
   familyVisible = true,
   onChangedVisibility,
-  onObservationSaved,
   prefetched,
 }: Props) {
-  const [standards, setStandards] = useState<Standard[] | null>(null)
   const [competencies, setCompetencies] = useState<Competency[] | null>(null)
   const [error, setError] = useState<string | null>(null)
-
-  // Prefer the spreadsheet competency framework. Fall back to the legacy standards
-  // pipeline ONLY for a school that has no dimension-linked competencies at all.
-  const hasStandardsMapping = !!prefetched && prefetched.dimensionStandards.length > 0
-  const useStandards = hasStandardsMapping && competencies !== null && competencies.length === 0
-  const [openRow, setOpenRow] = useState<SnapshotRow | null>(null)
   const [togglingVis, setTogglingVis] = useState(false)
   const familyView = audience === 'family'
   const { toast } = useToast()
@@ -148,54 +124,16 @@ export default function CompetencySnapshot({
     }
   }, [schoolId])
 
-  // Fall back to the standards pipeline only when the school has no competencies.
-  useEffect(() => {
-    if (!useStandards) return
-    let cancelled = false
-    async function run() {
-      const { data, error } = await supabase
-        .from('standards')
-        .select(
-          'id, framework_id, school_id, code, description, grade_level, parent_id, display_order, visible_to_family, age_band_start, age_band_end, created_at, updated_at'
-        )
-        .eq('school_id', schoolId)
-        .order('display_order')
-      if (cancelled) return
-      if (error) {
-        setError(error.message)
-        return
-      }
-      setStandards((data ?? []) as Standard[])
-    }
-    void run()
-    return () => {
-      cancelled = true
-    }
-  }, [schoolId, useStandards])
-
   const snapshot: Snapshot | null = useMemo(() => {
     if (!prefetched || competencies === null) return null
-    const student = { id: studentId, school_id: schoolId, date_of_birth: dateOfBirth }
-    // Competencies-first: the spreadsheet framework drives the snapshot wherever it exists.
-    if (competencies.length === 0 && useStandards) {
-      if (!standards) return null
-      return buildCompetencySnapshot({
-        student,
-        dimensions: prefetched.dimensions,
-        dimensionStandards: prefetched.dimensionStandards,
-        standards,
-        assessments: prefetched.standardAssessments,
-        familyView,
-      })
-    }
     return buildCompetencySnapshotFromObservations({
-      student,
+      student: { id: studentId, school_id: schoolId, date_of_birth: dateOfBirth },
       dimensions: prefetched.dimensions,
       competencies,
       observations: prefetched.observations,
       familyView,
     })
-  }, [useStandards, standards, competencies, prefetched, studentId, schoolId, dateOfBirth, familyView])
+  }, [competencies, prefetched, studentId, schoolId, dateOfBirth, familyView])
 
   const headerAction =
     audience === 'educator' ? (
@@ -231,15 +169,13 @@ export default function CompetencySnapshot({
     )
   }
 
-  // Competency rows are positioned on the same spectrum, but their detail modal
-  // is standards-only, so disable the click-through in the competency path.
-  const handleRowClick = useStandards ? setOpenRow : () => {}
+  // Competency markers aren't clickable (no detail modal in the competency view).
+  const noop = () => {}
 
-  const unit = useStandards ? 'standard' : 'competency'
   const subtitle =
     audience === 'family'
-      ? `Where ${studentFirstName} stands today on each ${unit}, weighted toward the most recent assessments. The amoeba above shows how this has changed over time.`
-      : `Spectrum position per ${unit}, weighted across recent assessments (90-day half-life) with an age-band shift applied.${useStandards ? ' Click a marker for full detail.' : ''}`
+      ? `Where ${studentFirstName} stands today on each competency, weighted toward the most recent observations. The amoeba above shows how this has changed over time.`
+      : 'Spectrum position per competency, weighted across recent observations (90-day half-life) with an age-band shift applied.'
 
   return (
     <Shell title="Competency Snapshot" subtitle={subtitle} action={headerAction}>
@@ -247,40 +183,18 @@ export default function CompetencySnapshot({
 
       <div className="mt-4 space-y-3">
         {snapshot.groups.map((group) => (
-          <DomainPanel
-            key={group.dimension.id}
-            group={group}
-            audience={audience}
-            onRowClick={handleRowClick}
-          />
+          <DomainPanel key={group.dimension.id} group={group} audience={audience} onRowClick={noop} />
         ))}
 
         {snapshot.unassigned.length > 0 && (
-          <UnassignedPanel
-            rows={snapshot.unassigned}
-            audience={audience}
-            onRowClick={handleRowClick}
-          />
+          <UnassignedPanel rows={snapshot.unassigned} audience={audience} onRowClick={noop} />
         )}
       </div>
 
       {snapshot.learnerAge === null && (
         <p className="mt-3 text-xs text-text-muted">
-          Add a date of birth to surface age-relative positions; current view
-          shows assessed standards as untimed.
+          Add a date of birth to surface age-relative positions; competencies currently show as untimed.
         </p>
-      )}
-
-      {useStandards && (
-        <StandardDetailModal
-          open={openRow !== null}
-          onClose={() => setOpenRow(null)}
-          studentId={studentId}
-          schoolId={schoolId}
-          row={openRow}
-          audience={audience}
-          onObservationSaved={onObservationSaved}
-        />
       )}
     </Shell>
   )

@@ -46,9 +46,7 @@ export type SidebarKey =
   | 'observe'
   // Utilities folder children
   | 'learner-profile'
-  | 'translate'
   | 'skill-library'
-  | 'assignments'
   | 'students'
   | 'archived-students'
   | 'educators'
@@ -171,9 +169,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     icon: 'Wrench',
     children: [
       'learner-profile',
-      'translate',
       'skill-library',
-      'assignments',
       'students',
       'archived-students',
       'educators',
@@ -189,13 +185,6 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     label: 'Learner Profile',
     icon: 'Sprout',
     to: '/admin/learner-profile',
-    defaultAccess: adminOnly,
-  },
-  {
-    key: 'translate',
-    label: 'Translate',
-    icon: 'Languages',
-    to: '/translate',
     defaultAccess: adminOnly,
   },
   {

@@ -8,7 +8,6 @@ import { useAccessControl } from '../lib/access-control'
 import { useToast } from '../components/Toast'
 import { supabase } from '../lib/supabase'
 import { smoothSnapshots, snapshotToDimensionScores } from '../lib/living-data'
-import { buildSnapshotsFromStandards } from '../lib/standards-snapshots'
 import { buildSnapshotsFromObservations } from '../lib/observation-snapshots'
 import LivingVisualization from '../components/student/LivingVisualization'
 import AmoebaEmptyState from '../components/student/AmoebaEmptyState'
@@ -23,10 +22,8 @@ import TeacherNotes from '../components/student/TeacherNotes'
 import ParentNotes from '../components/student/ParentNotes'
 import StudentIncidents from '../components/student/StudentIncidents'
 import LearnerMessagesSection from '../components/student/LearnerMessagesSection'
-import LearnerAssignmentsSection from '../components/student/LearnerAssignmentsSection'
 import StudentContextDoc from '../components/student/StudentContextDoc'
 import StudentClassroomsManager from '../components/student/StudentClassroomsManager'
-import TranslationHistory from '../components/student/TranslationHistory'
 
 // ============================================================
 // Student avatar with fallback initials
@@ -80,8 +77,6 @@ export default function StudentProfile() {
     observations,
     surveys,
     observers,
-    standardAssessments,
-    dimensionStandards,
     loading,
     error,
     refetch,
@@ -106,58 +101,29 @@ export default function StudentProfile() {
   const [playing, setPlaying] = useState(false)
 
   // ── Determine amoeba empty-state variant ──
-  const amoebaEmptyVariant = useMemo<
-    'no_dob' | 'no_assessments' | 'no_mappings' | null
-  >(() => {
+  const amoebaEmptyVariant = useMemo<'no_dob' | 'no_assessments' | null>(() => {
     if (!student) return null
     if (!student.date_of_birth) return 'no_dob'
-    // Standards path requires both assessments and dimension↔standard mappings.
-    const hasStandards = standardAssessments.length > 0 && dimensionStandards.length > 0
-    if (hasStandards) return null
-    // Otherwise fall back to the observations path (Record Observation feeds this).
     if (observations.length > 0) return null
-    if (standardAssessments.length === 0) return 'no_assessments'
-    return 'no_mappings'
-  }, [student, standardAssessments.length, dimensionStandards.length, observations.length])
+    return 'no_assessments'
+  }, [student, observations.length])
 
-  // Build amoeba snapshots from per-(student × standard) assessments rolled up
-  // through `dimension_standards` into Learner Profile dimensions, then converted
-  // to the DimensionScore[] shape the LivingBlob consumes (with interest dots
-  // merged in from the latest interest survey at each cutoff).
+  // Build the amoeba timeline from the student's observations, rolled up per
+  // dimension and converted to the DimensionScore[] shape the LivingBlob consumes
+  // (interest dots merged in from the latest interest survey at each cutoff).
   const snapshots = useMemo(() => {
     if (!student?.date_of_birth || amoebaEmptyVariant !== null) return []
-    // Prefer the standards pipeline when a school uses it; otherwise build the
-    // timeline from direct observations (so Record Observation feeds the amoeba).
-    const hasStandards = standardAssessments.length > 0 && dimensionStandards.length > 0
-    const raw = hasStandards
-      ? buildSnapshotsFromStandards({
-          dateOfBirth: student.date_of_birth,
-          schoolId: student.school_id,
-          dimensions: visibleDimensions,
-          assessments: standardAssessments,
-          dimensionStandards,
-        })
-      : buildSnapshotsFromObservations({
-          dateOfBirth: student.date_of_birth,
-          dimensions: visibleDimensions,
-          observations,
-        })
+    const raw = buildSnapshotsFromObservations({
+      dateOfBirth: student.date_of_birth,
+      dimensions: visibleDimensions,
+      observations,
+    })
     const smoothed = smoothSnapshots(raw)
-    const withScores = smoothed.map((s) => ({
+    return smoothed.map((s) => ({
       ...s,
       dimensionScores: snapshotToDimensionScores(s, visibleDimensions, surveys),
     }))
-    return withScores
-  }, [
-    student?.date_of_birth,
-    student?.school_id,
-    amoebaEmptyVariant,
-    visibleDimensions,
-    standardAssessments,
-    surveys,
-    dimensionStandards,
-    observations,
-  ])
+  }, [student?.date_of_birth, amoebaEmptyVariant, visibleDimensions, surveys, observations])
 
   // Initialize snapshotIdx to latest when snapshots become available
   // (covers the default showTimeline=true case)
@@ -396,7 +362,7 @@ export default function StudentProfile() {
         </div>
       </section>
 
-      {/* ========== COMPETENCY SNAPSHOT (current standing, standard by standard) ==========
+      {/* ========== COMPETENCY SNAPSHOT (current standing, competency by competency) ==========
           Hidden from family view when the student's `family_snapshot_visible`
           flag is false (admin- or educator-controlled). Educator+ always sees
           it and can toggle the family visibility from the section header. */}
@@ -411,25 +377,10 @@ export default function StudentProfile() {
           onChangedVisibility={refetch}
           prefetched={{
             dimensions: visibleDimensions,
-            dimensionStandards,
-            standardAssessments,
             observations,
           }}
-          onObservationSaved={refetch}
         />
       )}
-
-      {/* ========== ASSIGNED TO ME (standards-driven) ========== */}
-      <LearnerAssignmentsSection
-        student={{
-          id: student.id,
-          first_name: student.first_name,
-          last_name: student.last_name,
-          school_id: student.school_id,
-        }}
-        familyView={isFamilyView}
-        canAssign={!isFamilyView}
-      />
 
       {/* ========== CLASSROOM ENROLLMENTS (educator/admin only) ========== */}
       {!isFamilyView && (
@@ -446,11 +397,6 @@ export default function StudentProfile() {
       {/* ========== SIS INFORMATION (educator/admin only) ========== */}
       {!isFamilyView && (
         <SISSection student={student} onEdit={() => setShowSISEdit(true)} role={role} onRefetch={refetch} />
-      )}
-
-      {/* ========== TRANSLATION HISTORY (educator/admin only) ========== */}
-      {!isFamilyView && (
-        <TranslationHistory studentId={student.id} />
       )}
 
       {/* ========== TEACHER NOTES (educator/admin only) ========== */}

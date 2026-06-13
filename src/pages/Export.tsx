@@ -18,7 +18,6 @@ import {
   Trophy,
   Compass,
   Anchor,
-  ChevronRight,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import {
@@ -26,7 +25,6 @@ import {
   getCompetencyLevel,
   getCompetencyLabel,
   getInterestLabel,
-  standardsNarrative,
 } from '../lib/report-data'
 import { classifyZones, type Zone } from '../lib/student-data'
 import { DimensionIcon } from '../components/student/DimensionIcon'
@@ -105,9 +103,7 @@ export default function ExportPage() {
     data,
     loading,
     error,
-    setFrameworkId,
     setPeriodKey,
-    selectedFrameworkId,
     selectedPeriodKey,
   } = useReportData(id)
 
@@ -152,7 +148,6 @@ export default function ExportPage() {
     school,
     dimensionScores,
     dimensionReports,
-    frameworks,
     availablePeriods,
   } = data
 
@@ -162,8 +157,6 @@ export default function ExportPage() {
 
   const selectedPeriod = availablePeriods.find((p) => p.key === selectedPeriodKey)
   const periodLabel = selectedPeriod?.label ?? 'Current'
-
-  const selectedFramework = frameworks.find((f) => f.id === selectedFrameworkId)
 
   const classified = classifyZones(dimensionScores)
 
@@ -203,25 +196,6 @@ export default function ExportPage() {
               {availablePeriods.map((p) => (
                 <option key={p.key} value={p.key}>
                   {p.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Framework selector */}
-          <div className="flex-1">
-            <label className="mb-1 block text-xs font-semibold text-text-muted">
-              Standards Framework
-            </label>
-            <select
-              value={selectedFrameworkId ?? ''}
-              onChange={(e) => setFrameworkId(e.target.value || null)}
-              className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
-            >
-              <option value="">No framework selected</option>
-              {frameworks.map((fw) => (
-                <option key={fw.id} value={fw.id}>
-                  {fw.name}
                 </option>
               ))}
             </select>
@@ -290,14 +264,6 @@ export default function ExportPage() {
                   Age
                 </span>
                 <p className="text-sm font-medium text-text">{age}</p>
-              </div>
-            )}
-            {selectedFramework && (
-              <div>
-                <span className="text-xs font-semibold uppercase tracking-wide text-text-light">
-                  Framework
-                </span>
-                <p className="text-sm font-medium text-text">{selectedFramework.name}</p>
               </div>
             )}
           </div>
@@ -529,39 +495,6 @@ export default function ExportPage() {
                     </div>
                   )}
 
-                  {/* Standards alignment */}
-                  {selectedFramework && dr.mappedStandards.length > 0 && level && (
-                    <div className="rounded-lg border border-bg-muted bg-white p-3">
-                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-text-light">
-                        Standards Alignment — {selectedFramework.name}
-                      </p>
-                      <div className="space-y-1.5">
-                        {dr.mappedStandards.map((std) => (
-                          <div
-                            key={std.id}
-                            className="flex items-start gap-2 text-xs"
-                          >
-                            <ChevronRight className="mt-0.5 h-3 w-3 shrink-0 text-primary-400" />
-                            <div>
-                              <span className="font-semibold text-primary-700">
-                                {std.code}
-                              </span>
-                              <span className="mx-1 text-text-light">—</span>
-                              <span className="text-text-muted">
-                                {standardsNarrative(level, std.description.toLowerCase())}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedFramework && dr.mappedStandards.length === 0 && (
-                    <p className="text-[11px] italic text-text-light">
-                      No standards mapped to this dimension yet
-                    </p>
-                  )}
                 </div>
               )
             })}
@@ -572,11 +505,7 @@ export default function ExportPage() {
         <footer className="border-t border-bg-muted pt-4 text-center">
           <p className="text-xs text-text-light">
             This report was generated from {school.name}&apos;s learner profile
-            system
-            {selectedFramework && (
-              <> and mapped to <span className="font-medium">{selectedFramework.name}</span></>
-            )}
-            .
+            system.
           </p>
           <p className="mt-1 text-[10px] text-text-light">
             Competency levels reflect educator observations. Interest levels are

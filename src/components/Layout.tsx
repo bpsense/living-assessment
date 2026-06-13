@@ -36,7 +36,6 @@ import {
 } from 'lucide-react'
 import type { UserRole } from '../types/database'
 import QuickObserveModal from './QuickObserveModal'
-import AssignProjectModal from './assignment/AssignProjectModal'
 import IncidentReportModal from './incident/IncidentReportModal'
 import SpeedDial from './SpeedDial'
 import SchoolSwitcher from './SchoolSwitcher'
@@ -286,7 +285,6 @@ export default function Layout() {
   const navigate = useNavigate()
   const location = useLocation()
   const [quickObserveOpen, setQuickObserveOpen] = useState(false)
-  const [showAssignProject, setShowAssignProject] = useState(false)
   const [incidentReportOpen, setIncidentReportOpen] = useState(false)
   const [schoolName, setSchoolName] = useState<string>('')
   const [openDropdown, setOpenDropdown] = useState<ViewAsPill | null>(null)
@@ -724,12 +722,6 @@ export default function Layout() {
               color: 'bg-accent-500 hover:bg-accent-600',
             },
             {
-              icon: <ClipboardList className="h-4 w-4" />,
-              label: 'Assign Project',
-              onClick: () => setShowAssignProject(true),
-              color: 'bg-primary-500 hover:bg-primary-600',
-            },
-            {
               icon: <AlertTriangle className="h-4 w-4" />,
               label: 'Incident Report',
               onClick: () => setIncidentReportOpen(true),
@@ -743,12 +735,6 @@ export default function Layout() {
       <QuickObserveModal
         open={quickObserveOpen}
         onClose={() => setQuickObserveOpen(false)}
-      />
-
-      {/* ============ Assign Project (standards-driven, from FAB) ============ */}
-      <AssignProjectModal
-        open={showAssignProject}
-        onClose={() => setShowAssignProject(false)}
       />
 
       {/* ============ Incident Report Modal ============ */}

@@ -19,7 +19,6 @@ import {
   ExternalLink,
   CheckCircle,
   XCircle,
-  ListTree,
 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { useAccessControl } from '../lib/access-control'
@@ -324,7 +323,6 @@ export default function SchoolProfile() {
     school,
     documents,
     dimensions,
-    frameworks,
     loading,
     saving,
     error,
@@ -725,120 +723,6 @@ export default function SchoolProfile() {
                 className="inline-flex items-center gap-1 text-xs font-medium text-primary-500 hover:text-primary-600"
               >
                 Manage dimensions
-                <ExternalLink className="h-3 w-3" />
-              </Link>
-            )}
-          </div>
-        )}
-      </Section>
-      )}
-
-      {/* Section 5: Standards Frameworks */}
-      {isSectionVisible('standards_frameworks') && (
-      <Section
-        title="Standards Frameworks"
-        description={
-          frameworks.length > 0
-            ? `${frameworks.length} framework${frameworks.length !== 1 ? 's' : ''} with ${frameworks.reduce((n, f) => n + f.standards.length, 0)} standards`
-            : 'Learning standards linked to your dimensions'
-        }
-        icon={<ListTree className="h-5 w-5 text-primary-500" />}
-        sectionKey="standards_frameworks"
-        visibility={effectiveVisibility}
-        onToggleVisibility={handleToggleVisibility}
-        canEdit={canEditSchoolProfile}
-      >
-        {frameworks.length === 0 ? (
-          <div className="py-4 text-center">
-            <p className="text-sm text-text-light">
-              No standards frameworks configured yet.
-            </p>
-            <Link
-              to="/standards"
-              className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary-500 hover:text-primary-600"
-            >
-              Set up standards
-              <ExternalLink className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {frameworks.map((fw) => (
-              <div key={fw.id}>
-                <div className="mb-2 flex items-center gap-2">
-                  <span className="text-sm font-semibold text-text">{fw.name}</span>
-                  {fw.version && (
-                    <span className="rounded-full bg-bg-muted px-2 py-0.5 text-[10px] text-text-light">
-                      v{fw.version}
-                    </span>
-                  )}
-                </div>
-                {fw.description && (
-                  <p className="mb-2 text-xs text-text-muted">{fw.description}</p>
-                )}
-
-                {/* Show top-level standards (those without a parent) */}
-                {(() => {
-                  const topLevel = fw.standards.filter((s) => !s.parent_id)
-                  if (topLevel.length === 0) {
-                    return (
-                      <p className="text-xs italic text-text-light">No standards defined</p>
-                    )
-                  }
-                  return (
-                    <div className="space-y-1">
-                      {topLevel.slice(0, 10).map((std) => {
-                        const children = fw.standards.filter((s) => s.parent_id === std.id)
-                        return (
-                          <div
-                            key={std.id}
-                            className="rounded-lg border border-bg-muted bg-bg px-3 py-2"
-                          >
-                            <div className="flex items-baseline gap-2">
-                              <span className="shrink-0 rounded bg-primary-50 px-1.5 py-0.5 text-[11px] font-mono font-medium text-primary-700">
-                                {std.code}
-                              </span>
-                              <p className="text-xs text-text-muted">{std.description}</p>
-                            </div>
-                            {children.length > 0 && (
-                              <div className="ml-6 mt-1.5 space-y-1 border-l-2 border-bg-muted pl-3">
-                                {children.slice(0, 5).map((child) => (
-                                  <div key={child.id} className="flex items-baseline gap-2">
-                                    <span className="shrink-0 text-[10px] font-mono text-text-light">
-                                      {child.code}
-                                    </span>
-                                    <p className="text-[11px] text-text-muted">
-                                      {child.description}
-                                    </p>
-                                  </div>
-                                ))}
-                                {children.length > 5 && (
-                                  <p className="text-[10px] text-text-light">
-                                    + {children.length - 5} more
-                                  </p>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )
-                      })}
-                      {topLevel.length > 10 && (
-                        <p className="text-xs text-text-light">
-                          + {topLevel.length - 10} more top-level standards
-                        </p>
-                      )}
-                    </div>
-                  )
-                })()}
-              </div>
-            ))}
-
-            {canEditSchoolProfile && (
-              <Link
-                to="/standards"
-                className="inline-flex items-center gap-1 text-xs font-medium text-primary-500 hover:text-primary-600"
-              >
-                Manage standards
                 <ExternalLink className="h-3 w-3" />
               </Link>
             )}

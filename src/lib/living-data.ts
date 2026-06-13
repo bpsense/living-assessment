@@ -7,8 +7,8 @@
  *  - `snapshotToDimensionScores` (snapshot → DimensionScore[] for LivingBlob)
  *  - `smoothSnapshots` / `interpolateScores` (rendering smoothing)
  *
- * The actual snapshot builder lives in `standards-snapshots.ts` and reads
- * from `assignment_standard_assessments` + `dimension_standards`.
+ * The snapshot builder lives in `observation-snapshots.ts` and reads from the
+ * `observations` table (per-dimension ratings).
  */
 
 import type { Dimension, InterestSurvey } from '../types/database'

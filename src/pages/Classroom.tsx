@@ -46,8 +46,6 @@ import { DimensionIcon } from '../components/student/DimensionIcon'
 import MiniRadar from '../components/dashboard/MiniRadar'
 import AddStudentModal from '../components/classroom/AddStudentModal'
 import CsvImportModal from '../components/classroom/CsvImportModal'
-import AssignProjectModal from '../components/assignment/AssignProjectModal'
-import ClassroomActiveAssignments from '../components/classroom/ClassroomActiveAssignments'
 import ClassroomAnalysis from '../components/classroom/ClassroomAnalysis'
 import { createClassConversation } from '../lib/messaging-data'
 import type { DimensionScore } from '../lib/student-data'
@@ -132,7 +130,6 @@ export default function ClassroomPage() {
   const [newEducatorRole, setNewEducatorRole] = useState<ClassroomEducatorRole>('lead')
   const [showAddStudentModal, setShowAddStudentModal] = useState(false)
   const [showCsvModal, setShowCsvModal] = useState(false)
-  const [showCreateAssignment, setShowCreateAssignment] = useState(false)
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card')
   const [rosterFilter, setRosterFilter] = useState<'active' | 'archived'>('active')
   const [creatingClassChat, setCreatingClassChat] = useState(false)
@@ -261,13 +258,6 @@ export default function ClassroomPage() {
                 >
                   <Upload className="h-3.5 w-3.5" />
                   Import CSV
-                </button>
-                <button
-                  onClick={() => setShowCreateAssignment(true)}
-                  className="flex items-center gap-1.5 rounded-lg border border-accent-300 bg-accent-50 px-3 py-2 text-xs font-medium text-accent-700 transition-colors hover:bg-accent-100"
-                >
-                  <ClipboardList className="h-3.5 w-3.5" />
-                  New Assignment
                 </button>
                 <button
                   onClick={async () => {
@@ -572,14 +562,6 @@ export default function ClassroomPage() {
       </section>
 
       {/* ================================================================
-          2.5. ACTIVE ASSIGNMENTS (standards-driven)
-          ================================================================ */}
-      <ClassroomActiveAssignments
-        classroomId={classroom.id}
-        classroomName={classroom.name}
-      />
-
-      {/* ================================================================
           3. CLASS-LEVEL ANALYTICS (collapsible)
           ================================================================ */}
       {students.length > 0 && dimensions.length > 0 && (
@@ -635,14 +617,6 @@ export default function ClassroomPage() {
           classroomId={classroom.id}
           schoolId={classroom.school_id}
           onImported={refetch}
-        />
-      )}
-
-      {classroom && (
-        <AssignProjectModal
-          open={showCreateAssignment}
-          onClose={() => setShowCreateAssignment(false)}
-          prefilledClassroom={{ id: classroom.id, name: classroom.name }}
         />
       )}
 

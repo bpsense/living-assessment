@@ -5,13 +5,11 @@ import type {
   Classroom,
   Student,
   Dimension,
-  DimensionStandard,
   InterestSurvey,
   StudentContact,
+  Observation,
 } from '../types/database'
-import type { DimensionScore } from './scoring'
-import { currentDimensionAveragesFromStandards } from './standards-snapshots'
-import type { StandardAssessment } from './standards-assignment-data'
+import { computeObservationScores, type DimensionScore } from './scoring'
 
 // ============================================================
 // Types
@@ -184,16 +182,14 @@ export function useClassroomView(
           return
         }
 
-        // 4. Standards-pipeline data + interest surveys + contacts.
-        //    Observations are no longer the source of competency averages on
-        //    the classroom mini-amoebas; the new pipeline reads from
-        //    assignment_standard_assessments rolled up via dimension_standards.
-        const [assessRes, surveyRes, contactsRes, dsRes] = await Promise.all([
+        // 4. Observations + interest surveys + contacts. Per-dimension competency
+        //    averages for the classroom mini-amoebas come from observations.
+        const [obsRes, surveyRes, contactsRes] = await Promise.all([
           supabase
-            .from('assignment_standard_assessments')
+            .from('observations')
             .select('*')
             .in('student_id', studentIds)
-            .order('assessed_at', { ascending: true }),
+            .order('observed_at', { ascending: true }),
           supabase
             .from('interest_surveys')
             .select('*')
@@ -204,17 +200,12 @@ export function useClassroomView(
             .select('*')
             .in('student_id', studentIds)
             .order('is_primary', { ascending: false }),
-          supabase
-            .from('dimension_standards')
-            .select('id, dimension_id, standard_id, school_id, created_at')
-            .eq('school_id', classroomData.school_id),
         ])
 
         if (cancelled) return
 
-        const allAssessments = (assessRes.data ?? []) as StandardAssessment[]
+        const allObservations = (obsRes.data ?? []) as Observation[]
         const allSurveys = (surveyRes.data ?? []) as InterestSurvey[]
-        const dimensionStandards = (dsRes.data ?? []) as DimensionStandard[]
 
         // Per-student contacts map
         const contactsMap = new Map<string, StudentContact[]>()
@@ -226,17 +217,12 @@ export function useClassroomView(
         if (!cancelled) setStudentContactsMap(contactsMap)
 
         // 5. Build per-student current dimension scores.
-        //    Competency comes from latest-per-standard rolled up to dimensions;
+        //    Competency comes from observations (current-month avg, else latest);
         //    interest comes from the most recent interest survey response.
         const scoresMap = new Map<string, DimensionScore[]>()
         for (const st of studentsData) {
-          const stAssess = allAssessments.filter((a) => a.student_id === st.id)
-          const avgs = currentDimensionAveragesFromStandards({
-            schoolId: classroomData.school_id,
-            dimensions: dimsData,
-            assessments: stAssess,
-            dimensionStandards,
-          })
+          const stObs = allObservations.filter((o) => o.student_id === st.id)
+          const obsScores = computeObservationScores(stObs, dimsData)
           // Pick the most recent survey for this student.
           const latestSurvey = allSurveys
             .filter((s) => s.student_id === st.id)
@@ -250,10 +236,10 @@ export function useClassroomView(
             dimension_name: d.name,
             icon: d.icon,
             display_order: d.display_order,
-            competency: avgs[d.id] ?? 0,
+            competency: obsScores.get(d.id)?.competency ?? 0,
             interest: typeof responses[d.id] === 'number' ? responses[d.id] : 0,
             observation_count: 0,
-            current_month_observation_count: 0,
+            current_month_observation_count: obsScores.get(d.id)?.currentMonthCount ?? 0,
             latest_observation: null,
             competency_breakdown: undefined,
           }))
