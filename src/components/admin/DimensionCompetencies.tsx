@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useToast } from '../Toast'
@@ -31,6 +31,14 @@ export default function DimensionCompetencies({
   const [deleteTarget, setDeleteTarget] = useState<Competency | null>(null)
   const [deleting, setDeleting] = useState(false)
 
+  // Keep the latest onCountChange in a ref so `load` doesn't change identity when
+  // the parent passes a fresh inline callback each render (which caused an
+  // effect → setState → re-render → effect… loop, i.e. the flicker).
+  const onCountChangeRef = useRef(onCountChange)
+  useEffect(() => {
+    onCountChangeRef.current = onCountChange
+  })
+
   const load = useCallback(async () => {
     setLoading(true)
     const { data } = await supabase
@@ -43,8 +51,8 @@ export default function DimensionCompetencies({
     const rows = (data ?? []) as Competency[]
     setCompetencies(rows)
     setLoading(false)
-    onCountChange?.(rows.length)
-  }, [schoolId, dimensionId, onCountChange])
+    onCountChangeRef.current?.(rows.length)
+  }, [schoolId, dimensionId])
 
   useEffect(() => {
     load()

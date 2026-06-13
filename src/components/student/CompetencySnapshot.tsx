@@ -97,9 +97,10 @@ export default function CompetencySnapshot({
   const [competencies, setCompetencies] = useState<Competency[] | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // Use the standards pipeline only when this school maps standards → dimensions;
-  // otherwise build the snapshot from the flat competency model + observations.
-  const useStandards = !!prefetched && prefetched.dimensionStandards.length > 0
+  // Prefer the spreadsheet competency framework. Fall back to the legacy standards
+  // pipeline ONLY for a school that has no dimension-linked competencies at all.
+  const hasStandardsMapping = !!prefetched && prefetched.dimensionStandards.length > 0
+  const useStandards = hasStandardsMapping && competencies !== null && competencies.length === 0
   const [openRow, setOpenRow] = useState<SnapshotRow | null>(null)
   const [togglingVis, setTogglingVis] = useState(false)
   const familyView = audience === 'family'
@@ -124,38 +125,47 @@ export default function CompetencySnapshot({
     onChangedVisibility?.()
   }
 
+  // Always load this school's dimension-linked competencies (the spreadsheet framework).
   useEffect(() => {
     let cancelled = false
     async function run() {
-      if (useStandards) {
-        const { data, error } = await supabase
-          .from('standards')
-          .select(
-            'id, framework_id, school_id, code, description, grade_level, parent_id, display_order, visible_to_family, age_band_start, age_band_end, created_at, updated_at'
-          )
-          .eq('school_id', schoolId)
-          .order('display_order')
-        if (cancelled) return
-        if (error) {
-          setError(error.message)
-          return
-        }
-        setStandards((data ?? []) as Standard[])
-      } else {
-        // Observations path: fetch this school's dimension-linked competencies.
-        const { data, error } = await supabase
-          .from('competencies')
-          .select('*')
-          .eq('school_id', schoolId)
-          .not('dimension_id', 'is', null)
-          .order('display_order')
-        if (cancelled) return
-        if (error) {
-          setError(error.message)
-          return
-        }
-        setCompetencies((data ?? []) as Competency[])
+      const { data, error } = await supabase
+        .from('competencies')
+        .select('*')
+        .eq('school_id', schoolId)
+        .not('dimension_id', 'is', null)
+        .order('display_order')
+      if (cancelled) return
+      if (error) {
+        setError(error.message)
+        return
       }
+      setCompetencies((data ?? []) as Competency[])
+    }
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [schoolId])
+
+  // Fall back to the standards pipeline only when the school has no competencies.
+  useEffect(() => {
+    if (!useStandards) return
+    let cancelled = false
+    async function run() {
+      const { data, error } = await supabase
+        .from('standards')
+        .select(
+          'id, framework_id, school_id, code, description, grade_level, parent_id, display_order, visible_to_family, age_band_start, age_band_end, created_at, updated_at'
+        )
+        .eq('school_id', schoolId)
+        .order('display_order')
+      if (cancelled) return
+      if (error) {
+        setError(error.message)
+        return
+      }
+      setStandards((data ?? []) as Standard[])
     }
     void run()
     return () => {
@@ -164,9 +174,10 @@ export default function CompetencySnapshot({
   }, [schoolId, useStandards])
 
   const snapshot: Snapshot | null = useMemo(() => {
-    if (!prefetched) return null
+    if (!prefetched || competencies === null) return null
     const student = { id: studentId, school_id: schoolId, date_of_birth: dateOfBirth }
-    if (useStandards) {
+    // Competencies-first: the spreadsheet framework drives the snapshot wherever it exists.
+    if (competencies.length === 0 && useStandards) {
       if (!standards) return null
       return buildCompetencySnapshot({
         student,
@@ -177,7 +188,6 @@ export default function CompetencySnapshot({
         familyView,
       })
     }
-    if (!competencies) return null
     return buildCompetencySnapshotFromObservations({
       student,
       dimensions: prefetched.dimensions,
@@ -356,16 +366,16 @@ function EmptyState({
   if (audience === 'family') {
     return (
       <p className="text-sm text-text-muted">
-        {firstName} hasn't been assessed on any standards yet. Once educators
-        record assessments, this view will show where {firstName} stands today.
+        {firstName} hasn't been assessed on any competencies yet. Once educators
+        record observations, this view will show where {firstName} stands today.
       </p>
     )
   }
   return (
     <p className="text-sm text-text-muted">
-      No standards assessments or age-appropriate ghost rows to display. Once
-      you assess a standard on an active assignment or the school maps
-      standards to dimensions, the snapshot will populate here.
+      Nothing to show for this learner's age yet. Record an observation against a
+      competency (or set up competencies for this age in Settings → Dimensions) and
+      it'll appear here.
     </p>
   )
 }

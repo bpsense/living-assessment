@@ -450,7 +450,9 @@ export function buildCompetencySnapshotFromObservations(input: {
     let spectrumScore: number | null
     let isGhost: boolean
     if (hist.length === 0) {
-      if (!applicableNow) continue // not age-appropriate and unassessed — omit
+      // Known age + not age-appropriate -> omit. Unknown age -> show as untimed
+      // (so the framework's competencies still appear; add a DOB to age-position).
+      if (learnerAge != null && !applicableNow) continue
       isGhost = true
       spectrumScore = learnerAge == null ? null : 3
     } else {
