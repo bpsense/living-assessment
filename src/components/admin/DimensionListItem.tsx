@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import { GripVertical, Pencil, Archive, ArchiveRestore, Eye, EyeOff } from 'lucide-react'
+import { GripVertical, Pencil, Archive, ArchiveRestore, Eye, EyeOff, ChevronRight } from 'lucide-react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { DimensionIcon } from '../student/DimensionIcon'
@@ -31,6 +31,11 @@ interface Props {
   onDeactivate: (dim: Dimension) => void
   onReactivate: (dim: Dimension) => void
   onToggleFamilyVisibility: (dim: Dimension) => void
+  /** When provided, shows a chevron that expands the dimension's competencies. */
+  onToggleExpand?: () => void
+  expanded?: boolean
+  /** Competency count badge (omitted if undefined). */
+  competencyCount?: number
 }
 
 // ============================================================
@@ -43,6 +48,9 @@ export default function DimensionListItem({
   onDeactivate,
   onReactivate,
   onToggleFamilyVisibility,
+  onToggleExpand,
+  expanded,
+  competencyCount,
 }: Props) {
   const {
     attributes,
@@ -92,6 +100,20 @@ export default function DimensionListItem({
         <GripVertical className="h-5 w-5" />
       </button>
 
+      {/* Expand competencies */}
+      {onToggleExpand && (
+        <button
+          onClick={onToggleExpand}
+          className="shrink-0 rounded p-0.5 text-text-light transition-colors hover:text-text"
+          aria-label={expanded ? 'Collapse competencies' : 'Expand competencies'}
+          aria-expanded={expanded}
+        >
+          <ChevronRight
+            className={clsx('h-4 w-4 transition-transform', expanded && 'rotate-90')}
+          />
+        </button>
+      )}
+
       {/* Icon */}
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50">
         <DimensionIcon name={dimension.icon} className="h-4.5 w-4.5 text-primary-600" />
@@ -114,6 +136,16 @@ export default function DimensionListItem({
       >
         {dimension.category}
       </span>
+
+      {/* Competency count */}
+      {competencyCount !== undefined && (
+        <span
+          className="hidden shrink-0 rounded-full bg-primary-50 px-2 py-0.5 text-[11px] font-medium text-primary-700 sm:inline-block"
+          title={`${competencyCount} competenc${competencyCount !== 1 ? 'ies' : 'y'}`}
+        >
+          {competencyCount} comp
+        </span>
+      )}
 
       {/* Observation count */}
       <span

@@ -28,6 +28,7 @@ import {
 import { clsx } from 'clsx'
 import {
   buildCompetencySnapshot,
+  buildCompetencySnapshotFromObservations,
   type CompetencySnapshot as Snapshot,
   type DomainGroup,
   type SnapshotRow,
@@ -42,8 +43,10 @@ import {
 import { formatLevel } from '../../lib/standards-assignment-data'
 import { supabase } from '../../lib/supabase'
 import type {
+  Competency,
   Dimension,
   DimensionStandard,
+  Observation,
   Standard,
 } from '../../types/database'
 import type { StandardAssessment } from '../../lib/standards-assignment-data'
@@ -73,6 +76,9 @@ interface Props {
     dimensions: Dimension[]
     dimensionStandards: DimensionStandard[]
     standardAssessments: StandardAssessment[]
+    /** Direct observations — used when the school assesses via observations
+     *  rather than the standards pipeline. */
+    observations: Observation[]
   }
 }
 
@@ -88,7 +94,12 @@ export default function CompetencySnapshot({
   prefetched,
 }: Props) {
   const [standards, setStandards] = useState<Standard[] | null>(null)
+  const [competencies, setCompetencies] = useState<Competency[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Use the standards pipeline only when this school maps standards → dimensions;
+  // otherwise build the snapshot from the flat competency model + observations.
+  const useStandards = !!prefetched && prefetched.dimensionStandards.length > 0
   const [openRow, setOpenRow] = useState<SnapshotRow | null>(null)
   const [togglingVis, setTogglingVis] = useState(false)
   const familyView = audience === 'family'
@@ -116,37 +127,65 @@ export default function CompetencySnapshot({
   useEffect(() => {
     let cancelled = false
     async function run() {
-      const { data, error } = await supabase
-        .from('standards')
-        .select(
-          'id, framework_id, school_id, code, description, grade_level, parent_id, display_order, visible_to_family, age_band_start, age_band_end, created_at, updated_at'
-        )
-        .eq('school_id', schoolId)
-        .order('display_order')
-      if (cancelled) return
-      if (error) {
-        setError(error.message)
-        return
+      if (useStandards) {
+        const { data, error } = await supabase
+          .from('standards')
+          .select(
+            'id, framework_id, school_id, code, description, grade_level, parent_id, display_order, visible_to_family, age_band_start, age_band_end, created_at, updated_at'
+          )
+          .eq('school_id', schoolId)
+          .order('display_order')
+        if (cancelled) return
+        if (error) {
+          setError(error.message)
+          return
+        }
+        setStandards((data ?? []) as Standard[])
+      } else {
+        // Observations path: fetch this school's dimension-linked competencies.
+        const { data, error } = await supabase
+          .from('competencies')
+          .select('*')
+          .eq('school_id', schoolId)
+          .not('dimension_id', 'is', null)
+          .order('display_order')
+        if (cancelled) return
+        if (error) {
+          setError(error.message)
+          return
+        }
+        setCompetencies((data ?? []) as Competency[])
       }
-      setStandards((data ?? []) as Standard[])
     }
     void run()
     return () => {
       cancelled = true
     }
-  }, [schoolId])
+  }, [schoolId, useStandards])
 
   const snapshot: Snapshot | null = useMemo(() => {
-    if (!standards || !prefetched) return null
-    return buildCompetencySnapshot({
-      student: { id: studentId, school_id: schoolId, date_of_birth: dateOfBirth },
+    if (!prefetched) return null
+    const student = { id: studentId, school_id: schoolId, date_of_birth: dateOfBirth }
+    if (useStandards) {
+      if (!standards) return null
+      return buildCompetencySnapshot({
+        student,
+        dimensions: prefetched.dimensions,
+        dimensionStandards: prefetched.dimensionStandards,
+        standards,
+        assessments: prefetched.standardAssessments,
+        familyView,
+      })
+    }
+    if (!competencies) return null
+    return buildCompetencySnapshotFromObservations({
+      student,
       dimensions: prefetched.dimensions,
-      dimensionStandards: prefetched.dimensionStandards,
-      standards,
-      assessments: prefetched.standardAssessments,
+      competencies,
+      observations: prefetched.observations,
       familyView,
     })
-  }, [standards, prefetched, studentId, schoolId, dateOfBirth, familyView])
+  }, [useStandards, standards, competencies, prefetched, studentId, schoolId, dateOfBirth, familyView])
 
   const headerAction =
     audience === 'educator' ? (
@@ -182,10 +221,15 @@ export default function CompetencySnapshot({
     )
   }
 
+  // Competency rows are positioned on the same spectrum, but their detail modal
+  // is standards-only, so disable the click-through in the competency path.
+  const handleRowClick = useStandards ? setOpenRow : () => {}
+
+  const unit = useStandards ? 'standard' : 'competency'
   const subtitle =
     audience === 'family'
-      ? `Where ${studentFirstName} stands today on each standard, weighted toward the most recent assessments. The amoeba above shows how this has changed over time.`
-      : `Spectrum position per standard. Weighted across recent assessments (90-day half-life) with a band shift applied. Click a marker for full detail.`
+      ? `Where ${studentFirstName} stands today on each ${unit}, weighted toward the most recent assessments. The amoeba above shows how this has changed over time.`
+      : `Spectrum position per ${unit}, weighted across recent assessments (90-day half-life) with an age-band shift applied.${useStandards ? ' Click a marker for full detail.' : ''}`
 
   return (
     <Shell title="Competency Snapshot" subtitle={subtitle} action={headerAction}>
@@ -197,7 +241,7 @@ export default function CompetencySnapshot({
             key={group.dimension.id}
             group={group}
             audience={audience}
-            onRowClick={setOpenRow}
+            onRowClick={handleRowClick}
           />
         ))}
 
@@ -205,7 +249,7 @@ export default function CompetencySnapshot({
           <UnassignedPanel
             rows={snapshot.unassigned}
             audience={audience}
-            onRowClick={setOpenRow}
+            onRowClick={handleRowClick}
           />
         )}
       </div>
@@ -217,15 +261,17 @@ export default function CompetencySnapshot({
         </p>
       )}
 
-      <StandardDetailModal
-        open={openRow !== null}
-        onClose={() => setOpenRow(null)}
-        studentId={studentId}
-        schoolId={schoolId}
-        row={openRow}
-        audience={audience}
-        onObservationSaved={onObservationSaved}
-      />
+      {useStandards && (
+        <StandardDetailModal
+          open={openRow !== null}
+          onClose={() => setOpenRow(null)}
+          studentId={studentId}
+          schoolId={schoolId}
+          row={openRow}
+          audience={audience}
+          onObservationSaved={onObservationSaved}
+        />
+      )}
     </Shell>
   )
 }

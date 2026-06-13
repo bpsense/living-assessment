@@ -9,6 +9,7 @@ import { useToast } from '../components/Toast'
 import { supabase } from '../lib/supabase'
 import { smoothSnapshots, snapshotToDimensionScores } from '../lib/living-data'
 import { buildSnapshotsFromStandards } from '../lib/standards-snapshots'
+import { buildSnapshotsFromObservations } from '../lib/observation-snapshots'
 import LivingVisualization from '../components/student/LivingVisualization'
 import AmoebaEmptyState from '../components/student/AmoebaEmptyState'
 import CompetencySnapshot from '../components/student/CompetencySnapshot'
@@ -110,10 +111,14 @@ export default function StudentProfile() {
   >(() => {
     if (!student) return null
     if (!student.date_of_birth) return 'no_dob'
+    // Standards path requires both assessments and dimension↔standard mappings.
+    const hasStandards = standardAssessments.length > 0 && dimensionStandards.length > 0
+    if (hasStandards) return null
+    // Otherwise fall back to the observations path (Record Observation feeds this).
+    if (observations.length > 0) return null
     if (standardAssessments.length === 0) return 'no_assessments'
-    if (dimensionStandards.length === 0) return 'no_mappings'
-    return null
-  }, [student, standardAssessments.length, dimensionStandards.length])
+    return 'no_mappings'
+  }, [student, standardAssessments.length, dimensionStandards.length, observations.length])
 
   // Build amoeba snapshots from per-(student × standard) assessments rolled up
   // through `dimension_standards` into Learner Profile dimensions, then converted
@@ -121,13 +126,22 @@ export default function StudentProfile() {
   // merged in from the latest interest survey at each cutoff).
   const snapshots = useMemo(() => {
     if (!student?.date_of_birth || amoebaEmptyVariant !== null) return []
-    const raw = buildSnapshotsFromStandards({
-      dateOfBirth: student.date_of_birth,
-      schoolId: student.school_id,
-      dimensions: visibleDimensions,
-      assessments: standardAssessments,
-      dimensionStandards,
-    })
+    // Prefer the standards pipeline when a school uses it; otherwise build the
+    // timeline from direct observations (so Record Observation feeds the amoeba).
+    const hasStandards = standardAssessments.length > 0 && dimensionStandards.length > 0
+    const raw = hasStandards
+      ? buildSnapshotsFromStandards({
+          dateOfBirth: student.date_of_birth,
+          schoolId: student.school_id,
+          dimensions: visibleDimensions,
+          assessments: standardAssessments,
+          dimensionStandards,
+        })
+      : buildSnapshotsFromObservations({
+          dateOfBirth: student.date_of_birth,
+          dimensions: visibleDimensions,
+          observations,
+        })
     const smoothed = smoothSnapshots(raw)
     const withScores = smoothed.map((s) => ({
       ...s,
@@ -142,6 +156,7 @@ export default function StudentProfile() {
     standardAssessments,
     surveys,
     dimensionStandards,
+    observations,
   ])
 
   // Initialize snapshotIdx to latest when snapshots become available
@@ -398,6 +413,7 @@ export default function StudentProfile() {
             dimensions: visibleDimensions,
             dimensionStandards,
             standardAssessments,
+            observations,
           }}
           onObservationSaved={refetch}
         />

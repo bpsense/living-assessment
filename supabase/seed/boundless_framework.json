@@ -1,0 +1,1599 @@
+{
+  "framework": "Boundless",
+  "source": "Boundless Competencies and Standards.xlsx (Continuum)",
+  "strands": [
+    "Academic",
+    "Social Emotional"
+  ],
+  "dimensions": [
+    {
+      "name": "Think Deeply",
+      "strand": "Academic",
+      "learner_profile": "Thinker",
+      "area_of_development": "Scientific Thinking & Inquiry",
+      "standards": [
+        {
+          "name": "Doing an inquiry/ PBL",
+          "competencies": [
+            {
+              "name": "Inquiry skills",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Shows sensory curiosity by reaching toward new sights, sounds, and textures. Engages sensorially with natural objects and environments",
+                "2": "Begins to notice and attend to changes and features. Manipulates objects to discover what they do, such as shaking or rolling them.",
+                "3": "Asks simple what questions to find out what things are. Makes comparisons and categorizes features\n\nExplores objects or materials in different ways to see what happens, without a defined plan. Notices features and changes and explores objects intentionally (rolling, opening, combining, comparing).",
+                "4": "Follows a guided inquiry sequence, such as explore, observe, and reflect, with adult prompts.",
+                "5": "Engages in simple investigations and predictions. Explores variations independently by trying different ways of using materials.",
+                "6": "Predicts an outcome (“I think it will…”) and compares the result to what was expected.",
+                "7": "Understands that investigating involves distinct stages (exploring, observing, checking results) and can name or anticipate the next step during an inquiry.",
+                "8": "Proposes simple ways to investigate (trying again, looking closer, using a tool) when supported.",
+                "9": "Begins planning simple investigations with support. With help, decides what to explore, what to change, and what to observe.",
+                "10": "Conducts simple planned investigations. Carries out a short investigation by following agreed steps and staying focused on the inquiry goal.",
+                "11": "Uses tools to support inquiry. Uses basic tools (measuring tools, magnifiers, charts, digital tools, simple texts) to gather information more accurately.",
+                "12": "Makes an inquiry, gathers results from observations or trials and compares outcomes (before/after, same/different, more/less).",
+                "13": "Plans and carries out a basic investigation to explore a question or hypothesis. Uses observed results to explain what happened, referring to evidence rather than guesses or preferences.",
+                "14": "Conducts a structured investigation on a personally meaningful local issue, analyse findings, and explains conclusions using evidence. Adjusts the investigation by changing variables, improving methods, or repeating trials to improve understanding.",
+                "15": "Plans and carries out inquiries that unfold over time, involving data collection, revision, and synthesis. Conducts an inquiry, synthesizes findings from multiple sources or perspectives to develop a clear, well-reasoned position on a community or societal issue.",
+                "16": "Designs, conducts, and reflects on inquiries independently; selects appropriate methods, evaluates findings critically, and uses evidence to inform explanations or decisions. \nDesigns and carries out an inquiry into a complex global or systemic issue, using critical and creative thinking to propose actionable, research-informed solutions."
+              }
+            },
+            {
+              "name": "Observation skills",
+              "age_band_start": 4,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "4": "Looks at or listens to an object, event, or action for a short time when prompted, noticing obvious features without yet describing them.",
+                "5": "Identifies simple observable features such as colour, size, movement, or sound when asked (“It’s loud,” “It’s moving,” “It’s big”).",
+                "6": "Observes intentionally when given a simple focus or intention (e.g. “Watch what happens when…”).",
+                "7": "Uses multiple senses to observe. Combines sight, sound, touch, or smell to gather information intentionally.",
+                "8": "Can observe calmly and with intention without immediately touching, changing, or interfering.",
+                "9": "Describes observations with detail and uses increasingly specific language to describe what is noticed.",
+                "10": "Does repeated observations and looks again to check accuracy or consistency of what was observed.",
+                "11": "Is able to separate observation from interpretation. Understands the difference between what is seen and what is thought (“I saw… I think…”).",
+                "12": "Uses drawings, notes, charts, photos, or symbols to document observations.",
+                "13": "Notices regularities, sequences, or trends across multiple observations.",
+                "14": "Observes using agreed criteria, time frames, or variables (using scientific method).",
+                "15": "Refers to observations to support explanations, conclusions, or arguments.",
+                "16": "Designs and carries out intentional, unbiased observations, controls attention to detail, and uses observational data to inform inquiry, reasoning, and knowledge construction."
+              }
+            },
+            {
+              "name": "Questioning skills",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Asks or shows interest in simple what questions such as what something is.",
+                "2": "Asks sensory or surface level questions such as about colour or size.",
+                "3": "Asks basic why questions that show curiosity about reasons.",
+                "4": "Asks purposeful questions during activities, such as what will happen if they try something.",
+                "5": "Suggests simple explanations and tests them through repeated actions.\n\nRefines questions to seek understanding. Rephrases or repeats questions to gain clearer understanding (“Why does it do that?” → “Why does it change when I move it?”).",
+                "6": "Asks simple why questions to learn about causes and reasons.",
+                "7": "Asks specific and relevant questions that are clearly connected to the task or topic.",
+                "8": "Seeks information through observing, asking others, and looking for clues.",
+                "9": "Identifies what they want to find out and how they might begin to explore, with support.",
+                "10": "Designs questions that help solve a problem or move a project forward.",
+                "11": "Decides which questions are most important or useful to investigate.",
+                "12": "Chooses appropriate methods, such as experiments or interviews, to investigate questions.",
+                "13": "Improves vague questions into more precise and powerful ones.",
+                "14": "Initiates and sustains deeper investigations or research projects.",
+                "15": "Conducts multi stage investigations that include data collection, revision, and analysis.",
+                "16": "Creates investigative frameworks, asks high level research questions, and leads inquiry processes."
+              }
+            },
+            {
+              "name": "Critical Thinking",
+              "age_band_start": 6,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "6": "Identifies basic facts or information",
+                "7": "Recalls basic facts and information",
+                "8": "Asks clarifying questions to understand meaning and context to make interpretation.",
+                "9": "Recognizes similarities and differences between ideas and is able to compare them.",
+                "10": "Identifies simple reasons, facts, or evidence to support or question a claim for deeper understanding.",
+                "11": "Analyzes causes and effects to reason how one action can influence  or lead to an outcome.",
+                "12": "Evaluates sources of facts and distinguishes between more or less reliable information or evidence.",
+                "13": "Builds simple arguments with reasons and explains reasoning with examples.",
+                "14": "Analyzes an issue from multiple viewpoints and perspectives, identifies assumptions. Becomes aware of biases.",
+                "15": "Critically and independently evaluates and assesses strengths, weaknesses, biases, and implications of ideas or claims.",
+                "16": "Applies critical judgement and synthesizes evidence and reasoning to form well-justified, ethical, and context-aware interpretations, arguments and decisions."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Spatial, Measurement & Data Reasoning",
+          "competencies": [
+            {
+              "name": "Shape, Position & Geometric Reasoning",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Explores shape, space, size, movement and position through crawling, stacking, posting, nesting, hiding and building.",
+                "2": "Responds to positional language such as in, on, under, up, down, inside and outside; explores big/small and tall/short through sensory play.",
+                "3": "Identifies and matches common 2D shapes; compares size, length and height using sensorial materials and everyday objects.",
+                "4": "Names and describes basic 2D shapes, sorts by shape or size, follows positional instructions, and compares long/short, tall/short, thick/thin and wide/narrow.",
+                "5": "Recognises and names basic 2D and 3D shapes and uses everyday language of size, position, distance and direction.",
+                "6": "?",
+                "7": "Identifies and describes common 2D and 3D shapes; describes position, direction and movement using everyday and mathematical language.",
+                "8": "Describes properties of 2D and 3D shapes, recognises symmetry, and uses turns to describe position and direction.",
+                "9": "Identifies right angles, compares angles, describes properties of shapes, and uses simple grids or coordinates in practical contexts.",
+                "10": "Classifies shapes by properties, measures and compares angles, identifies lines of symmetry, and reads coordinates in the first quadrant.",
+                "11": "Uses coordinates with increasing accuracy, identifies properties of polygons, and describes translations and reflections on grids.",
+                "12": "Uses coordinates in all four quadrants, classifies shapes using geometric properties, and solves problems involving angles and position.",
+                "13": "Applies angle facts, transformations, coordinates and properties of shapes to solve geometric problems.",
+                "14": "Uses geometric reasoning with transformations, constructions, angles, coordinates and properties of 2D and 3D shapes.",
+                "15": "?",
+                "16": "?"
+              }
+            },
+            {
+              "name": "Time, Measures & Unit Conversion",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Experiences daily routines and responds to now, next, before, after, full, empty, big, small, heavy and light.",
+                "2": "Directly compares objects by size, length, mass or capacity using everyday language.",
+                "3": "Compares two objects through observation and sensory exploration, using language such as longer, shorter, heavier, lighter, full and empty.",
+                "4": "Measures informally using hands, blocks, rods, steps, containers or natural materials.",
+                "5": "Uses everyday language of time, length, mass and capacity, such as before, after, longer, shorter, heavier and full.",
+                "6": "?",
+                "7": "Measures and compares length, mass, capacity and time using practical tools and simple standard units.",
+                "8": "Measures length, mass, capacity, temperature and time using standard units, and compares measurements.",
+                "9": "Tells and records time accurately, reads simple scales, and solves practical direct-measure problems.",
+                "10": "Converts between common units of time and metric measure, reads scales accurately, and solves problems involving length, mass, capacity and temperature.",
+                "11": "Converts between metric units, solves problems involving time intervals and timetables, and uses decimals in direct measurement.",
+                "12": "Converts accurately between standard units of time, length, mass and capacity, reads scales precisely, and solves multi-step direct-measure problems.",
+                "13": "Converts fluently between related units and applies measures in scale, rate and proportional contexts.",
+                "14": "Solves complex problems involving unit conversion, rates and derived units, including speed, density and other compound contexts.",
+                "15": "?",
+                "16": "?"
+              }
+            },
+            {
+              "name": "Area, Perimeter, Volume & Compound Measures",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Explores space, volume and containment through filling, emptying, stacking, covering and fitting objects together.",
+                "2": "Compares how much space objects take up through building, pouring, nesting and covering.",
+                "3": "Compares the size of objects, containers and spaces using everyday language.",
+                "4": "Builds, covers, fills and compares spaces, noticing bigger or smaller areas and fuller or emptier containers.",
+                "5": "Compares the size of objects and spaces using everyday language and begins to describe distance around or space inside.",
+                "6": "?",
+                "7": "Compares and measures lengths practically and begins to describe distance around simple shapes.",
+                "8": "Measures length and begins to understand perimeter as the distance around a shape.",
+                "9": "Measures and calculates perimeter and begins to understand area by counting squares.",
+                "10": "Calculates perimeter and area of rectangles and rectilinear shapes using standard units.",
+                "11": "Calculates and compares area and perimeter, estimates volume, and solves missing-measure problems.",
+                "12": "Calculates area, perimeter and volume, including compound shapes, and converts units where needed.",
+                "13": "Solves problems involving area, volume, surface area and scale in geometric contexts.",
+                "14": "Solves problems involving area, volume, surface area and compound measures, including speed, distance and time.",
+                "15": "?",
+                "16": "?"
+              }
+            },
+            {
+              "name": "Data Representation & Interpretation",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Explores objects by touching, moving, grouping, collecting and separating them.",
+                "2": "Sorts or groups objects through sensory exploration, often by interest, colour, size or type.",
+                "3": "Sorts objects by one visible attribute, such as colour, shape, size or texture.",
+                "4": "Sorts objects by more than one attribute and begins to explain groupings.",
+                "5": "Sorts and groups objects using simple criteria and talks about what is noticed.",
+                "6": "?",
+                "7": "Reads and creates simple pictograms, block diagrams and tally charts, and answers simple questions about data.",
+                "8": "Constructs and interprets pictograms, tally charts, block diagrams, bar charts and simple tables.",
+                "9": "Interprets and presents data using bar charts, pictograms and tables, and solves one-step and two-step questions.",
+                "10": "Interprets and compares data in charts and tables, including scaled axes, and solves questions involving totals, differences and comparisons.",
+                "11": "Interprets line graphs and timetables, solves comparison and sum/difference problems, and chooses suitable ways to present data.",
+                "12": "Interprets and constructs pie charts and line graphs, calculates the mean, and summarises data using appropriate representations.",
+                "13": "Uses tables, charts, graphs and summary statistics to compare data sets and interpret patterns.",
+                "14": "Interprets grouped and ungrouped data, scatter graphs and statistical diagrams, and evaluates conclusions drawn from data.",
+                "15": "?",
+                "16": "?"
+              }
+            },
+            {
+              "name": "Classification of similarities and differencies",
+              "age_band_start": 6,
+              "age_band_end": 14,
+              "step_descriptors": {
+                "6": "Explores objects through play and general interactions.",
+                "7": "Uses their senses to compare different characteristics of various objects and structures.",
+                "8": "Observes and compares the physical characteristics and the behavioral characteristics of a variety of animals, including insects.",
+                "9": "Groups living things based on observable features and distinguishes them from non-living things.",
+                "10": "Explores and uses classification keys to help group, identifies and names a variety of living things in their local and wider environment.",
+                "11": "Classifies organisms, including humans, according to their role in a food chain. Describes the differences in the life cycles of a mammal, an amphibian, an insect and a bird.",
+                "12": "Classifies and organizes diverse organisms based on various observable differences. Gives reasons for classifying.",
+                "13": "Compares the structure(s) and function(s) environmental and biological organisms.",
+                "14": "Analyzes how the unique structures of the environment and ecosystem contribute to the specific functions of each organism and explains why these differences are important for survival in the different environments."
+              }
+            },
+            {
+              "name": "Chance, Probability & Data Variation",
+              "age_band_start": 3,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "3": "Uses everyday language such as again, maybe, next and surprise during games, stories and routines.",
+                "4": "Talks about what might happen next in stories, routines, games or practical experiments.",
+                "5": "Uses everyday language of chance, such as might happen, will happen and will not happen.",
+                "6": "?",
+                "7": "Describes simple events using likely and unlikely, and compares outcomes in practical contexts.",
+                "8": "Uses simple language of chance and begins to record outcomes from practical activities.",
+                "9": "Collects outcomes from simple experiments and discusses whether results are expected, surprising, likely or unlikely.",
+                "10": "Uses fractions and simple language to describe chance, and compares likelihood in familiar contexts.",
+                "11": "Uses data to reason about likelihood and calculates or compares the mean in simple contexts.",
+                "12": "Uses mean, median, mode and range to describe variation in data, and begins to express probability using fractions or percentages.",
+                "13": "Calculates probability on a 0–1 scale, lists possible outcomes systematically, and uses experimental data to estimate probability.",
+                "14": "Compares theoretical and experimental probability, evaluates likelihood, and uses averages and spread to compare data sets in real contexts.",
+                "15": "?",
+                "16": "?"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Create Boldly",
+      "strand": "Academic",
+      "learner_profile": "Creative",
+      "area_of_development": "Creative expression and innovation",
+      "standards": [
+        {
+          "name": "Media literacy",
+          "competencies": [
+            {
+              "name": "Visual literacy",
+              "age_band_start": 7,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "7": "Recognise and describe simple pictures, signs, or symbols one sees in everyday life (e.g. restroom sign, stop sign). \nUnderstand that shapes, colors, and symbols can send messages (e.g. red = danger, green = go).",
+                "8": "Match or sort images and symbols by meaning (e.g. weather icons, traffic signs, emoji).",
+                "9": "Use pictures, icons, or arrows to tell or show a sequence or idea.",
+                "10": "Begin to describe the meaning of simple diagrams, timelines, or labeled illustrations with guidance.",
+                "11": "Read and explain simple charts, graphs, or maps, and moving images. Describe what is happening in a photograph or short video and how it makes one feel.",
+                "12": "Explain how visual choices (color, angle, music, editing) in photos or videos create mood or meaning.",
+                "13": "Interpret how visual media and moving images (e.g. ads, posters, news images and videos) influence thinking or emotions. Create antiads, fake news and analyse them.",
+                "14": "Analyse visual media for bias or intent, and recognise how photos or video can be edited or staged. \nRecognise emotional, cultural, and ethical dimensions of visual communication",
+                "15": "Evaluate how images or videos may be misleading, exaggerated, or digitally altered (e.g. filters, AI, deepfakes). Understand media bias, digital manipulation, and AI awareness",
+                "16": "Critically interpret complex visual media across formats (photos, infographics, film, AI-generated images), explaining purpose, audience, and ethical impact."
+              }
+            },
+            {
+              "name": "Digital literacy",
+              "age_band_start": 6,
+              "age_band_end": 13,
+              "step_descriptors": {
+                "6": "Uses devices with assistance",
+                "7": "Navigates simple interfaces",
+                "8": "Understands functions",
+                "9": "Finds information online with guidance",
+                "10": "Creates simple content online",
+                "11": "Evaluates relevance of online information",
+                "12": "Uses search terms",
+                "13": "Organises digital information"
+              }
+            },
+            {
+              "name": "Response and Interpretation",
+              "age_band_start": 7,
+              "age_band_end": 13,
+              "step_descriptors": {
+                "7": "Connects personal experiences to events or characters in the text.",
+                "8": "Identifies the key message or theme in a short text.",
+                "9": "Comments on the author’s choices, such as title or ending.",
+                "10": "Supports opinions using simple evidence from the text.",
+                "11": "Reflects on tone, bias, or the impact of a text on the reader.",
+                "12": "Analyses how structure and perspective affect meaning.",
+                "13": "Critiques how language and structure shape interpretation and emotional response."
+              }
+            },
+            {
+              "name": "Inferential Understanding",
+              "age_band_start": 7,
+              "age_band_end": 13,
+              "step_descriptors": {
+                "7": "Predicts what might happen next in a familiar story.",
+                "8": "Infers simple character thoughts or feelings using pictures or text.",
+                "9": "Connects clues across a text to make logical inferences.",
+                "10": "Identifies mood, tone, or implied meaning in short passages.",
+                "11": "Infers author’s purpose (e.g. to inform, persuade) with support.",
+                "12": "Draws conclusions using multiple pieces of evidence.",
+                "13": "Compares viewpoints or perspectives using text-based reasoning."
+              }
+            },
+            {
+              "name": "Multimodal Engagement",
+              "age_band_start": 7,
+              "age_band_end": 13,
+              "step_descriptors": {
+                "7": "Respond to stories or information using gestures, pictures, or sounds.",
+                "8": "Use drawings or movement to represent understanding of a spoken or visual text.",
+                "9": "Combine pictures and words to show meaning, such as in a captioned drawing.",
+                "10": "Create a simple product like a labelled poster using text and image.",
+                "11": "Interpret meaning using visuals like charts, maps, or diagrams.",
+                "12": "Create a multimodal text using visuals and writing, such as a slideshow.",
+                "13": "Present ideas using mixed media like voice-over, images, and text."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Design thinking",
+          "competencies": [
+            {
+              "name": "Creativity",
+              "age_band_start": 6,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "6": "Expresses curiosity and generates many playful ideas through drawing and pretend play.",
+                "7": "Expresses curiosity and generates many playful ideas through drawing and playful exploration.",
+                "8": "Suggests creative ideas and different ways to use familiar objects.",
+                "9": "Suggests different ways to use familiar objects and shows originality.",
+                "10": "Combines two unrelated objects/ideas into something new and shows originality.",
+                "11": "Improves or adapts an idea creatively to make it more effective, interesting or original.",
+                "12": "Brainstorms multiple creative and possible solutions to a problem and explain reasoning for choices.",
+                "13": "Attempts creative, unusual, bold, original or unconventional ideas, while tolerating ambiguity or failure.",
+                "14": "Synthesizes ideas from different subjects, cultures, or experiences to create new cross-connection solutions and innovations.",
+                "15": "Critically reflects on the originality, usefulness, and impact of own and others’ creative ideas in order to improve them.",
+                "16": "Facilitates, helps, supports or leads others in a collaborative creative process that integrates diverse contributions to produce innovative products, services, or solutions."
+              }
+            },
+            {
+              "name": "Ideation",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "N/A – this competency is not yet observable at this stage.",
+                "2": "Explores materials or situations freely, producing variations without aiming to solve a problem.",
+                "3": "Responds to given ideas. Builds on or modifies ideas suggested by others when prompted (“What if you tried this?”).",
+                "4": "Produces an independent idea. Suggests a single idea in response to a simple problem or prompt.",
+                "5": "Produces two or more different ideas for approaching the same simple problem.",
+                "6": "Changes aspects of an idea (shape, method, materials, approach) to create alternatives.",
+                "7": "Builds on previous ideas. Uses one idea as a starting point to create a new or improved idea.",
+                "8": "Uses representations to express ideas. Expresses ideas through sketches, models, stories, diagrams, or gestures.",
+                "9": "Combines ideas in novel ways. Merges ideas from different sources or contexts to create original concepts.",
+                "10": "Generates ideas within constraints. Produces multiple ideas while considering requirements or limitations (time, materials, rules).",
+                "11": "Demonstrates idea fluency. Generates many ideas rapidly without immediately judging or narrowing them.",
+                "12": "Demonstrates idea flexibility. Shifts perspective and generates ideas from different viewpoints or categories.",
+                "13": "Produces original or unusual Ideas. Generates ideas that are clearly distinct from common or expected solutions.",
+                "14": "Refines and extends promising ideas. Elaborates ideas by adding detail, features, or variations while staying in idea-generation mode.",
+                "15": "Applies ideation across domains and disciplinies. Generates ideas in different contexts (design, science, writing, social challenges) using similar creative strategies.",
+                "16": "Advanced ideation capability.\nDemonstrates sustained, flexible, and original idea generation; intentionally uses ideation strategies (brainstorming, analogies, provocations) to expand possibility spaces.Generates original ideas, prototypes solutions, and improves them through sophisticated experimentation."
+              }
+            },
+            {
+              "name": "Idea Development",
+              "age_band_start": 6,
+              "age_band_end": 13,
+              "step_descriptors": {
+                "6": "Share ideas using pictures, symbols, or scribbles to represent meaning.",
+                "7": "Write short phrases to represent a single thought or event.",
+                "8": "Write simple sentences linked to a familiar experience.",
+                "9": "Generate and organise ideas using basic planning tools such as word banks or drawings.",
+                "10": "Plan and develop a paragraph with a main idea and supporting detail.",
+                "11": "Expand ideas across paragraphs with topic and supporting sentences.",
+                "12": "Develop cohesive writing by elaborating on key points and using linking ideas.",
+                "13": "Compose extended pieces with a clear central message and supporting arguments or narrative elements."
+              }
+            },
+            {
+              "name": "Creative expression",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Explores sensory materials through spontaneous actions",
+                "2": "Uses basic tools and materials with intention",
+                "3": "Expresses ideas using materials and tools",
+                "4": "Explores artistic elements like form, color, pattern",
+                "5": "Uses art to communicate feelings, ideas, or stories",
+                "6": "Creates simple visual or material representations based on personal experiences or observations",
+                "7": "Develops emerging personal preferences and choices in artistic processes (materials, colors, techniques). Adds details to clarify meaning, relationships, or actions within a visual work.",
+                "8": "Chooses media to match expressive intent. Uses visual sequencing (multiple images, panels, stages) to show change or narrative.",
+                "9": "Represents abstract ideas symbolically. Selects materials and tools deliberately to match expressive intent (e.g. bold lines for energy).",
+                "10": "Experiments with metaphor and symbolism. Experiments with visual elements (contrast, pattern, texture, foreground/background).",
+                "11": "Organises compositions with coherence. Begins to organise composition intentionally, considering balance, focus, and spatial relationships.",
+                "12": "Integrates multimodal expression. Represents abstract ideas or emotions visually (e.g. mood, movement, atmosphere).",
+                "13": "Integrates visual expression with other modes (text, story, movement, digital media).",
+                "14": "Uses expression to explore complex issues. Revises visual work based on reflection or feedback to improve clarity or impact.",
+                "15": "Demonstrates a personal artistic style. Develops a recognisable personal visual style and sustained expressive intent across works.",
+                "16": "Uses artistic work for inquiry or advocacy. Uses visual expression strategically for communication, inquiry, or advocacy, articulating choices and meaning."
+              }
+            },
+            {
+              "name": "Prototyping",
+              "age_band_start": 4,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "4": "Creates simple constructions, drawings, or arrangements to represent ideas, without yet intending to test or improve them.",
+                "5": "Creates a basic physical or visual model to show what an idea might look like or do, using available materials.",
+                "6": "Explains the purpose of a prototype. Describes what they built and how it is meant to work or what it represents.",
+                "7": "Creates alternative versions of an idea. Builds more than one version of a simple idea to show different possibilities.",
+                "8": "Uses feedback or observation to modify a prototype. Changes a model based on what is noticed during use or after receiving feedback.",
+                "9": "Tests a prototype against its purpose. Tests whether the prototype does what it is intended to do and notices strengths and limitations.",
+                "10": "Makes deliberate changes to improve performance, clarity, or usefulness based on testing.",
+                "11": "Builds, tests, and refines a prototype through more than one iteration to better meet the goal.",
+                "12": "Uses prototypes to compare different ideas or solutions rather than committing to one too early.",
+                "13": "Creates prototypes intentionally aligned to defined criteria, constraints, or user needs.",
+                "14": "Uses prototyping to explore abstract, social, or systemic ideas (e.g. processes, services, experiences).",
+                "15": "Independently designs, builds, and refines prototypes",
+                "16": "Uses prototyping strategically to test, compare, and optimise complex solutions"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Reason & Solve",
+      "strand": "Academic",
+      "learner_profile": "Problem solver",
+      "area_of_development": "Mathematical thinking & Problem solving",
+      "standards": [
+        {
+          "name": "Logical reasoning",
+          "competencies": [
+            {
+              "name": "Problem solving",
+              "age_band_start": 6,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "6": "Tries a different way when the first attempt doesn’t work.",
+                "7": "Recognizes simple problems by noticing when something doesn’t work or creates difficulty in class or daily life. Describes the problem in simple words (“My pencil broke,” “We don’t have enough balls at recess”). Tries a quick fix with teacher/peer help.",
+                "8": "Asks questions about problems. Identifies what is confusing or challenging (“Why can’t we all play at once?”). Begins to ask clarifying questions (Who? What? Where?). Suggests one or two possible fixes, even if simple or obvious.",
+                "9": "Gathers perspectives to hear different views to a problem (“Why do you think this happens?”). Begins distinguishing between the immediate symptom (e.g., broken pencil) and the cause (not enough sharpeners). Tries simple methods like drawing or mapping the problem.",
+                "10": "Frames a problem statement using gathered perspectives (“The problem is… because…”). Suggests more than one possible solution and tries out the simplest one. Reflects on whether it worked.",
+                "11": "Frames problem with tools. Defines problems considering peer/user/community perspectives. Uses tools like 5 Whys or a fishbone diagram to separate symptoms from root causes. Writes a clear problem statement.",
+                "12": "Frames problems with constraints and measurable success criteria. Generates ideas (including “wild” ones), clusters them, and chooses one idea or solution to develop.",
+                "13": "Uses methods like SCAMPER, brainwriting, or analogies to create many possible solutions to a problem. Develops a simple prototype or mock-up to represent the solution.",
+                "14": "Evaluates multiple options to a problem and compares solutions using a criteria matrix (e.g., feasibility, desirability, viability, sustainability, equity). Selects the most promising direction to solve a problem.",
+                "15": "Estimates, tests and analyzes impact, effort, and risks of solutions to a problem. Tests candidate solutions, gathers user/peer feedback, and identifies improvements.",
+                "16": "Iterates, refines and scales solutions through feedback loops. Applies cross-disciplinary knowledge to solve complex, real-world problems. Communicates solutions effectively and adapts for broader contexts."
+              }
+            },
+            {
+              "name": "Structure and Organisation",
+              "age_band_start": 6,
+              "age_band_end": 13,
+              "step_descriptors": {
+                "6": "Group drawings or marks around a single theme or object.",
+                "7": "Sequence ideas with a clear start and end using sentence stems or visuals.",
+                "8": "Connect two or three sentences in a logical order.",
+                "9": "Group related ideas into short paragraphs.",
+                "10": "Use paragraphing to signal beginning, middle, and end of a piece.",
+                "11": "Link paragraphs using transitions and ordering words.",
+                "12": "Use structure appropriate to purpose, such as argument, narrative, or explanation.",
+                "13": "Integrate logical flow and coherence across multiple sections."
+              }
+            },
+            {
+              "name": "Accuracy, Efficiency & Flexibility",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Notices repeated number language, counting rhythms and small quantities in songs, routines and play.",
+                "2": "Joins in counting rhythms and begins to use number words during practical routines.",
+                "3": "Counts small sets with support and begins to match one number word to one object.",
+                "4": "Counts with increasing accuracy and begins to recognise small quantities without recounting.",
+                "5": "Counts confidently in familiar contexts, subitises small quantities and uses known number patterns.",
+                "6": "Counts beyond 20, subitises small quantities, compares quantities to 10 and begins to recall useful number facts.",
+                "7": "Recalls key number facts and uses simple counting, concrete, pictorial or mental strategies accurately.",
+                "8": "Recalls number facts and uses efficient strategies for simple whole-number calculations.",
+                "9": "Recalls and applies key multiplication and division facts and chooses efficient methods for familiar calculations.",
+                "10": "Uses known number facts and efficient strategies across whole numbers, decimals and simple fractions.",
+                "11": "Calculates with increasing fluency across whole numbers, decimals and fractions, choosing accurate and efficient methods.",
+                "12": "Selects efficient strategies across whole numbers, decimals, fractions and percentages, and checks for accuracy.",
+                "13": "Calculates fluently across integers, fractions, decimals, percentages, powers and roots, choosing efficient strategies.",
+                "14": "Uses number relationships fluently in complex calculations, including ratio, proportional reasoning, standard form and appropriate degrees of accuracy.",
+                "15": "?",
+                "16": "?"
+              }
+            },
+            {
+              "name": "Explaining, Justifying & Connecting",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Communicates choices and comparisons through gestures, actions and simple words.",
+                "2": "Uses everyday comparison language to describe quantity, size, position or change.",
+                "3": "Explains simple mathematical thinking through objects, actions, pointing, matching and short phrases.",
+                "4": "Explains choices using simple mathematical language and familiar comparisons.",
+                "5": "Explains thinking using everyday language, objects, actions, drawings and simple mathematical ideas.",
+                "6": "Explains simple strategies using objects, drawings, number patterns or familiar mathematical language.",
+                "7": "Explains answers using objects, drawings, number lines and simple mathematical vocabulary.",
+                "8": "Explains and compares simple strategies using appropriate mathematical vocabulary.",
+                "9": "Explains methods, identifies patterns and uses examples or representations to justify answers.",
+                "10": "Justifies answers using mathematical vocabulary and explains why a method works.",
+                "11": "Compares methods, explains efficiency and begins to generalise from examples.",
+                "12": "Uses logical reasoning to justify methods, test ideas and evaluate whether answers are reasonable.",
+                "13": "Explains solutions clearly, identifies misconceptions and tests whether statements are always, sometimes or never true.",
+                "14": "Uses precise mathematical language to compare methods, justify generalisations and connect numerical, algebraic, graphical and geometric ideas.",
+                "15": "?",
+                "16": "?"
+              }
+            },
+            {
+              "name": "Applying, Modelling & Checking",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Explores objects through trial and error, repeating actions such as filling, emptying, stacking, hiding and finding.",
+                "2": "Solves simple practical problems in play through fitting, matching, carrying, sharing, filling or building.",
+                "3": "Solves simple problems using objects, stories, pretend play and adult support.",
+                "4": "Solves practical problems involving counting, matching, sharing, sorting, measuring, comparing or building.",
+                "5": "Solves simple practical problems through play, objects, stories, trial and error.",
+                "6": "Solves simple practical problems by choosing counting, matching, sharing, drawing or building strategies.",
+                "7": "Solves one-step and simple two-step problems using number facts, counting strategies and simple checks.",
+                "8": "Solves one- and two-step problems using appropriate operations, representations and checks.",
+                "9": "Solves familiar problems involving number relationships, operations, measures and simple data.",
+                "10": "Solves multi-step problems by choosing appropriate operations, strategies and checks.",
+                "11": "Solves multi-step problems across number, measure and data contexts, selecting efficient strategies independently.",
+                "12": "Solves non-routine problems across number, proportion, algebra, measure and data, checking and refining solutions.",
+                "13": "Solves complex problems involving connected mathematical ideas, choosing, checking and justifying strategies.",
+                "14": "Solves and models complex multi-step problems across number, algebra, geometry, measure and data, evaluating accuracy, efficiency and reasonableness.",
+                "15": "?",
+                "16": "?"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Number Sense & Operational competency",
+          "competencies": [
+            {
+              "name": "Counting, Place Value & Number Structure",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Notices differences in amounts and responds to quantity language such as more, lots, all gone and one more.",
+                "2": "Matches objects one-to-one in practical routines and begins to compare more, less and same.",
+                "3": "Recognises small quantities up to 3 without counting and begins to connect spoken numbers, objects and numerals.",
+                "4": "Recognises numerals 0–9, counts and labels small groups, and compares quantities using more, fewer and same.",
+                "5": "Recognises numbers to 20, counts objects accurately, compares quantities, and understands one more and one less.",
+                "6": "Counts beyond 20, subitises and compares quantities to 10, and begins to understand how numbers can be made in different ways.",
+                "7": "Reads, writes, orders and compares numbers to 100, understands tens and ones, and represents numbers on number lines.",
+                "8": "Reads, writes, orders and compares numbers to at least 100, uses place value confidently, and begins to work with numbers beyond 100.",
+                "9": "Understands place value to 1,000, partitions three-digit numbers, compares and orders numbers, and recognises simple fractions as numbers.",
+                "10": "Understands place value to at least 10,000, rounds numbers, compares decimals to two decimal places, and places fractions and decimals on number lines.",
+                "11": "Reads, writes, orders and compares numbers to at least 1,000,000, rounds numbers, uses negative numbers in context, and compares fractions and decimals.",
+                "12": "Reads, writes, orders and compares numbers up to 10,000,000, rounds to required accuracy, uses negative numbers, and connects fractions, decimals and percentages as equivalent representations.",
+                "13": "Works with integers, directed numbers, rational numbers, powers and roots, comparing and ordering values across different representations.",
+                "14": "Uses powers, roots, standard form and significant figures to represent, compare and calculate with very large and very small numbers.",
+                "15": "?",
+                "16": "?"
+              }
+            },
+            {
+              "name": "Financial Literacy",
+              "age_band_start": 3,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "3": "Explores coins, tokens or exchange in pretend play without formal value.",
+                "4": "Uses coins, tokens or role-play money in shops, cafés or home-corner play.",
+                "5": "Recognises that coins and notes are used to buy things and compares simple prices using more and less.",
+                "6": "Uses coins, notes, prices or pretend money in practical play and begins to understand that different amounts have different values.",
+                "7": "Recognises common coins and notes, counts small amounts of money, and solves simple buying problems.",
+                "8": "Combines coins and notes to make amounts, finds change in simple practical contexts, and connects money to addition and subtraction.",
+                "9": "Adds and subtracts money using euros and cents, finds change, and solves practical shopping problems.",
+                "10": "Solves money problems involving the four operations, decimal notation and estimation.",
+                "11": "Solves multi-step financial problems involving budgets, totals, change, value for money and simple percentages.",
+                "12": "Solves financial problems involving discounts, percentage increase and decrease, profit, loss and comparison of prices.",
+                "13": "Solves financial problems involving percentage change, unit rates, best buys and simple interest contexts.",
+                "14": "Models financial situations using percentages, ratios, formulae and graphs, and evaluates financial decisions.",
+                "15": "?",
+                "16": "?"
+              }
+            },
+            {
+              "name": "Four Operations & Calculation Structures",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Explores putting objects in, taking objects out, giving objects away and getting more during play.",
+                "2": "Combines and separates objects informally in practical routines and play.",
+                "3": "Combines and separates small sets with adult support, using language such as more, less, all gone and altogether.",
+                "4": "Uses counting to combine and separate quantities up to 5 in practical contexts.",
+                "5": "Combines and separates quantities in practical contexts and recognises relationships such as more, less and equal.",
+                "6": "Represents simple addition, subtraction, sharing and grouping situations using objects, drawings, fingers or stories.",
+                "7": "Understands addition as combining and subtraction as taking away or finding the difference, and begins to use inverse relationships.",
+                "8": "Uses addition and subtraction accurately with two-digit numbers, and understands multiplication and division through arrays, grouping and sharing.",
+                "9": "Uses all four operations with increasing accuracy, including formal written addition and subtraction and short multiplication or division by one-digit numbers.",
+                "10": "Applies formal written methods for all four operations, uses inverse operations to check, and solves problems involving combinations of operations.",
+                "11": "Applies operation structures to large whole numbers, decimals and fractions, including multi-step calculations and contextual problems.",
+                "12": "Applies operations flexibly across whole numbers, fractions, decimals and percentages, including long multiplication and long division.",
+                "13": "Applies operations with integers, negative numbers, fractions and decimals, and uses brackets and powers to structure calculations.",
+                "14": "Applies order of operations, including brackets and powers, and simplifies multi-step numerical and algebraic expressions accurately.",
+                "15": "?",
+                "16": "?"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Algebraic & Relational Reasoning",
+          "competencies": [
+            {
+              "name": "Patterns, Sequences & Algebraic Thinking",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Notices repeated sounds, actions, songs, movements and daily routines.",
+                "2": "Copies simple repeated actions or AB patterns with objects, sounds, movements or colours.",
+                "3": "Continues simple AB patterns using objects, actions, beads, colours or shapes.",
+                "4": "Extends AB, AAB and ABC patterns and begins to create own repeating patterns.",
+                "5": "Recognises, copies, continues and creates repeating patterns using objects, shapes, sounds and movements.",
+                "6": "?",
+                "7": "Recognises and extends visual and number patterns, including counting in 2s, 5s and 10s.",
+                "8": "Recognises and extends number sequences, including counting in 2s, 3s, 5s and 10s, and finds missing numbers.",
+                "9": "Describes and continues sequences involving addition, subtraction, multiplication and simple rules.",
+                "10": "Uses patterns to solve problems, describes rules, and begins to generalise relationships using words and simple symbols.",
+                "11": "Generates sequences from rules, uses simple formulae, and solves missing-number problems with inverse operations.",
+                "12": "Represents relationships using symbols, uses formulae, solves missing-value problems, and begins to express simple algebraic relationships.",
+                "13": "Substitutes into formulae, writes and simplifies algebraic expressions, and solves simple linear equations.",
+                "14": "Expands and simplifies expressions, solves multi-step linear equations, and represents relationships graphically.",
+                "15": "?",
+                "16": "?"
+              }
+            },
+            {
+              "name": "Expressions, Equations & Graphs",
+              "age_band_start": 4,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "4": "Uses objects or pictures to notice a missing part in a simple practical situation.",
+                "5": "Uses objects and pictures to show simple unknowns, such as a missing part in a group.",
+                "6": "?",
+                "7": "Finds missing numbers in simple addition and subtraction sentences using objects, drawings or number lines.",
+                "8": "Solves missing-number problems using inverse relationships and begins to describe simple rules.",
+                "9": "Uses symbols or empty boxes to represent unknowns and solves simple one-step missing-value problems.",
+                "10": "Uses simple formulae and inverse operations to solve missing-value problems in practical contexts.",
+                "11": "Uses letters and symbols to represent unknowns, evaluates simple formulae, and solves one-step equations.",
+                "12": "Writes and uses simple expressions and formulae, solves one-step equations, and represents relationships in tables.",
+                "13": "Substitutes into expressions, simplifies algebraic expressions, solves linear equations, and connects equations with tables and graphs.",
+                "14": "Solves multi-step equations, uses inequalities, expands and simplifies expressions, and interprets linear graphs.",
+                "15": "?",
+                "16": "?"
+              }
+            },
+            {
+              "name": "Ratio, Scaling & Proportional Relationships",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Explores sharing, giving and receiving objects informally.",
+                "2": "Shares objects informally in play with adult support.",
+                "3": "Uses language such as more, less, same and equal in practical sharing contexts.",
+                "4": "Shares objects into simple equal groups and recognises whole and half in familiar contexts.",
+                "5": "Uses language such as more, less, same and equal, and shares objects informally.",
+                "6": "?",
+                "7": "Solves simple sharing and grouping problems, recognises equal groups, and understands halves and quarters practically.",
+                "8": "Understands equal groups, doubling, halving, simple fractions and repeated addition as foundations for multiplication and division.",
+                "9": "Uses fractions as parts of quantities, solves simple scaling problems, and connects multiplication with equal groups and measures.",
+                "10": "Recognises equivalence between simple fractions and decimals, uses scaling in multiplication and measurement, and solves correspondence problems.",
+                "11": "Solves scaling problems and uses percentages in familiar contexts, including 50%, 25%, 10% and simple percentage equivalents.",
+                "12": "Solves ratio, proportion, percentage and scaling problems in real contexts, including recipes, maps, rates and conversions.",
+                "13": "Calculates unit rates, solves percentage increase and decrease problems, and interprets multiplicative relationships in tables, graphs and contexts.",
+                "14": "Solves direct proportion problems using scaling, unit rates, graphs, equations and simple formulae.",
+                "15": "?",
+                "16": "?"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Communicate with Impact",
+      "strand": "Academic",
+      "learner_profile": "Communicator",
+      "area_of_development": "Literacy & Communication",
+      "standards": [
+        {
+          "name": "Speaking and listening skills",
+          "competencies": [
+            {
+              "name": "Respectful communication",
+              "age_band_start": 7,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "7": "Uses basic polite words like “please,” “thank you,” and “sorry” with reminders.",
+                "8": "Greets others and respond appropriately in familiar situations (e.g. \"Good morning\").",
+                "9": "Speaks kindly and listens when others talk in group activities.\nIdentifies different emotions both individually and collaboratively.",
+                "10": "Takes turns speaking and waits for others to finish before responding.",
+                "11": "Expresses simple needs or opinions respectfully in classroom or peer situations.",
+                "12": "Uses polite language and tone when expressing disagreement or frustration. Identifies own emotions in dialogue.",
+                "13": "Adjusts communication style based on situation and audience (e.g. formal/informal, peer/teacher/stranger).",
+                "14": "Recognises and repairs communication that may be unintentionally hurtful or unclear.",
+                "15": "Communicates ideas clearly while maintaining respect in challenging or sensitive conversations.",
+                "16": "Models respectful communication and supports others in using inclusive and thoughtful language in diverse group settings."
+              }
+            },
+            {
+              "name": "Purposeful Communication",
+              "age_band_start": 7,
+              "age_band_end": 13,
+              "step_descriptors": {
+                "7": "Communicate a short message through writing, drawing, or speech.",
+                "8": "Write or say a short text for a simple purpose, such as to describe or ask.",
+                "9": "Create a simple text that follows a basic structure like beginning, middle, and end.",
+                "10": "Choose tone or form to match purpose, such as writing to invite vs explain.",
+                "11": "Create a piece for a specific audience, such as a letter to a peer.",
+                "12": "Use rhetorical or persuasive devices to influence or inform.",
+                "13": "Shift communication style for context, such as casual chat vs formal report."
+              }
+            },
+            {
+              "name": "Speaking for Expression",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Uses single words to express needs and label objects/places",
+                "2": "Speaks in short phrases and simple sentences",
+                "3": "Uses full sentences to describe or request",
+                "4": "Tells short personal stories with sequence",
+                "5": "Uses linking words to connect ideas in storytelling and presentation moments",
+                "6": "Shares ideas or experiences in short sentences, beginning to adjust speech to audience/context",
+                "7": "Express a personal idea or experience in full sentences, using key topic words to adjust to audience/context",
+                "8": "Describe a familiar event or object using relevant detail and topic vocabulary.",
+                "9": "Explain an idea using connected sentences with specific nouns or verbs.",
+                "10": "Present an idea with structured sentences and appropriate connectives to suit a given task.",
+                "11": "Express an opinion with clear reasons, using precise vocabulary for clarity and tone.",
+                "12": "Construct an argument or viewpoint using appropriate structure, formality, and subject-specific language.",
+                "13": "Adapt speech for audience and purpose using academic or persuasive language features.",
+                "14": "?",
+                "15": "?",
+                "16": "?"
+              }
+            },
+            {
+              "name": "Spoken Presentation",
+              "age_band_start": 6,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "6": "Attempts a very short presentation with an opening phrase, faces audience; adult prompts for volume and finish",
+                "7": "Begin and end a short oral story using appropriate voice volume.",
+                "8": "Present simple information using time words and occasional eye contact.",
+                "9": "Organise a short talk with a clear main point and modulated voice.",
+                "10": "Structure a short presentation with an opening, key points, and a conclusion; use eye contact and posture.",
+                "11": "Link ideas using transitions and adjust volume, tone, and speed for clarity.",
+                "12": "Use body language and visual supports to enhance meaning; apply feedback to improve delivery.",
+                "13": "Present fluently with effective structure, vocal control, and audience awareness; reflect on feedback.",
+                "14": "?",
+                "15": "?",
+                "16": "?"
+              }
+            },
+            {
+              "name": "Active Listening and Collaboration",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Responds to own name, simple instructions and yes/no questions",
+                "2": "Answers literal questions about familiar contexts",
+                "3": "Follows basic two- or three-step directions",
+                "4": "Predicts simple events and retells them after listening them",
+                "5": "Responds to simple questions with appropriate actions and/or comments.",
+                "6": "Understands familiar talk and responds, showing first signs of awareness of tone or mood.",
+                "7": "Beginning to infer meaning from tone, context, or non-verbal cues",
+                "8": "Follows short conversations or instructions and uses tone/context to figure out meaning when something is unclear.",
+                "9": "Follows advanced two- to three-step instructions accurately.",
+                "10": "Identify key ideas or sequences from a conversation or story.",
+                "11": "Explain meaning affected by speaker tone or emphasis.",
+                "12": "Summarise key points from an explanation or group discussion.",
+                "13": "Analyse relevant arguments and key ideas in extended speech.",
+                "14": "?",
+                "15": "?",
+                "16": "?"
+              }
+            },
+            {
+              "name": "Social Use of Language",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Uses basic social phrases appropriately (hello, thank you)",
+                "2": "Takes turns speaking and listens to peers",
+                "3": "Initiates and maintains a conversation",
+                "4": "Adapts tone, volume, or language to place",
+                "5": "Clarifies or rephrases when misunderstood",
+                "6": "Take turns in a group activity by responding with a relevant point.",
+                "7": "Respond to others’ ideas by connecting or building upon them.",
+                "8": "Adapts tone, volume, or language to context",
+                "9": "Add to or respectfully challenge peer ideas in discussion.",
+                "10": "Clarify or summarise what another person has said.",
+                "11": "Use strategies like prompting, rephrasing, and summarising to support group talk.",
+                "12": "Facilitate balanced dialogue by managing turn-taking and group input.",
+                "13": "Lead or moderate a discussion, integrating feedback and managing differing perspectives.",
+                "14": "?",
+                "15": "?",
+                "16": "?"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Writing Skills",
+          "competencies": [
+            {
+              "name": "Writing Mechanics",
+              "age_band_start": 2,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "2": "Engages in purposeful mark-making using writing tools",
+                "3": "Traces straight lines, curves, and simple shapes with control",
+                "4": "Traces letters with visual and tactile guidance (e.g., sandpaper letters, sand tray)",
+                "5": "Forms letters independently using correct stroke direction and spacing - upper and lower case",
+                "6": "Writes full words and short sentences legibly and consistently applying directionality.",
+                "7": "Applies directionality, spacing, and page layout conventions in writing",
+                "8": "Writes short paragraphs legibly; maintains spacing between words and consistent line orientation",
+                "9": "Increases the legibility, consistency and quality of their handwriting",
+                "10": "Chooses the correct  writing implement that best suits the task",
+                "14": "?",
+                "15": "?",
+                "16": "?"
+              }
+            },
+            {
+              "name": "Word Construction & Spelling",
+              "age_band_start": 3,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "3": "Identifies and writes initial sound of familiar words",
+                "4": "CVC Encoding - Segments and encodes simple CVC words (e.g., cat, dog)",
+                "5": "Consonant Blends - Encodes words with initial or final blends (e.g., bl-, -nd)",
+                "6": "Double consonants - Encodes words with double consonants (e.g., bell, dress)",
+                "7": "Consonant Digraphs - Encodes words with consonant digraphs (e.g., sh, ch, th)",
+                "8": "Long Vowels - Applies phonograms (e.g., ai, ee, oa) in writing simple words",
+                "9": "Advanced Spelling Patterns & Irregular Words - Applies less common phonograms and irregular patterns (e.g., igh, kn, -ed)",
+                "10": "Use tools such as word walls or dictionaries to spell unfamiliar words.",
+                "11": "Proofread writing to correct common errors.",
+                "12": "Use etymology or morphology to inform spelling choices.",
+                "13": "Use varied strategies such as root analysis and thesauruses to refine vocabulary.",
+                "14": "?",
+                "15": "?",
+                "16": "?"
+              }
+            },
+            {
+              "name": "Written Expression & Structure",
+              "age_band_start": 4,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "4": "Labels & Word Strings  - Writes own name, labels objects, or creates lists using letter approximations and invented spelling",
+                "5": "Sentence-Level Expression - Writes simple sentences to describe, narrate, or share preferences",
+                "6": "Structured Storytelling - Writes structured stories or recounts with beginning, middle, and end",
+                "7": "Share ideas using pictures, symbols, or scribbles to represent meaning.",
+                "8": "Write short phrases to represent a single thought or event.",
+                "9": "Write simple sentences linked to a familiar experience.",
+                "10": "Generate and organise ideas using basic planning tools such as word banks or drawings.",
+                "11": "Plan and develop a paragraph with a main idea and supporting detail.",
+                "12": "Expand ideas across paragraphs with topic and supporting sentences.",
+                "13": "Develop cohesive writing by elaborating on key points and using linking ideas.",
+                "14": "?",
+                "15": "?",
+                "16": "?"
+              }
+            },
+            {
+              "name": "Grammar & Punctuation",
+              "age_band_start": 5,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "5": "Capitalizes name and first word in a sentence with support",
+                "6": "Uses a full stop to end a sentence with growing consistency",
+                "7": "Can use a captial letter and full stop more confidently and is beginning to understand the use of question marks, exclamations in texts.",
+                "8": "Apply subject–verb agreement in short sentences.",
+                "9": "Use basic correct punctuation for sentences (full stop, capital letter, question mark).",
+                "10": "Use commas in lists and apostrophes for possession or contraction.",
+                "11": "Maintain consistent tense and accurate punctuation across a text.",
+                "12": "Apply complex grammar such as relative clauses and modal verbs with accuracy.",
+                "13": "Control grammatical conventions across varied genres and structures.",
+                "14": "?",
+                "15": "?",
+                "16": "?"
+              }
+            },
+            {
+              "name": "Vocabulary and Word Choice",
+              "age_band_start": 6,
+              "age_band_end": 13,
+              "step_descriptors": {
+                "6": "Use familiar nouns or verbs in early writing.",
+                "7": "Add describing words to label or describe objects or characters.",
+                "8": "Use topic-linked words provided during teaching.",
+                "9": "Choose more precise nouns or verbs relevant to the text.",
+                "10": "Use expanded noun phrases and sensory words to add detail.",
+                "11": "Include words selected for tone, effect, or clarity.",
+                "12": "Use language to reflect formality, genre, or audience such as “Firstly” or “In contrast.”",
+                "13": "Select language for subtle effect, such as to imply mood, persuade, or build character."
+              }
+            },
+            {
+              "name": "Sentence Construction",
+              "age_band_start": 7,
+              "age_band_end": 13,
+              "step_descriptors": {
+                "7": "Construct short sentences starting with “I” or a noun.",
+                "8": "Join ideas with “and” or “but” in simple sentences.",
+                "9": "Vary sentence openers and use basic questions or commands.",
+                "10": "Combine clauses using subordination and different connectives.",
+                "11": "Use varied sentence lengths for effect and clarity.",
+                "12": "Apply a range of structures including questions, embedded clauses, and rhetorical questions.",
+                "13": "Refine sentence patterns to create rhythm, emphasis, or tone."
+              }
+            },
+            {
+              "name": "Writing Process",
+              "age_band_start": 6,
+              "age_band_end": 13,
+              "step_descriptors": {
+                "6": "Re-read writing when prompted.",
+                "7": "Make simple changes when guided by an adult.",
+                "8": "Identify obvious errors with support.",
+                "9": "Revise based on feedback to improve clarity or accuracy.",
+                "10": "Edit for meaning, vocabulary, and structure.",
+                "11": "Set personal writing targets and track progress.",
+                "12": "Make purposeful edits based on audience or intent.",
+                "13": "Make purposeful edits based on audience or intent."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reading and integrated literacy",
+          "competencies": [
+            {
+              "name": "Print Awareness & Concepts of Print",
+              "age_band_start": 1,
+              "age_band_end": 11,
+              "step_descriptors": {
+                "1": "Handles books correctly and turns pages in order",
+                "2": "Engages with print and understands it carries meaning",
+                "3": "Follows print from left to right and top to bottom",
+                "4": "Recognizes spaces, letters, and words as distinct units",
+                "5": "Identifies print features like title, author: Recognizes brands' & peers' names",
+                "6": "Connects spoken and written words; recognizes familiar words or phrases in print during reading or daily routines.",
+                "7": "Reads simple texts aloud with developing confidence and phrasing.",
+                "8": "Uses punctuation to guide intonation and pausing in oral reading.",
+                "9": "Reads known texts smoothly with appropriate tone and expression.",
+                "10": "Adjusts reading pace based on purpose (e.g. skimming vs reading aloud).",
+                "11": "Self-corrects during reading to improve fluency and meaning."
+              }
+            },
+            {
+              "name": "Reading Mechanics",
+              "age_band_start": 3,
+              "age_band_end": 13,
+              "step_descriptors": {
+                "3": "Letter-Sound Recognition - Identifies individual sounds and their corresponding letters (a → /a/)",
+                "4": "Blends Sounds into CVC Words - Blends 2–3 letter sounds to read phonetic words (e.g., cat, bed, mop)",
+                "5": "Sight Words - Recognizes common non-phonetic words by sight and uses them in context (e.g., I, the, a, is, my)",
+                "6": "Initial & Final Blends - Reads words with initial or final blends (e.g., flag, sand, grip)",
+                "7": "Digraphs & Double Consonants - Reads words with consonant digraphs or double endings (e.g., ship, bell, math)",
+                "8": "Long Vowels - Reads words with familiar long vowel phonograms (e.g., rain, feet, boat)",
+                "9": "Advanced Spelling Patterns & Irregular Words - Reads words with complex phonograms and irregular patterns (e.g., night, knee, said)",
+                "10": "Reads multisyllabic words using decoding and known morphemes.",
+                "11": "Uses prefixes, suffixes, and root words to decode unfamiliar vocabulary.",
+                "12": "Reads academic and domain-specific words using word-part knowledge.",
+                "13": "Infers meaning of unfamiliar words using morphological and contextual strategies."
+              }
+            },
+            {
+              "name": "Reading Comprehension",
+              "age_band_start": 1,
+              "age_band_end": 13,
+              "step_descriptors": {
+                "1": "Engages with story content through listening and commenting",
+                "2": "Recalls key characters or events from familiar stories that have been read",
+                "3": "Answers literal questions about characters, setting, or events from stories that have been read",
+                "4": "Connects story themes or events to personal experiences",
+                "5": "Retells short familiar stories that have been read in order with beginning, middle, and end",
+                "6": "Makes simple predictions or inferences from text",
+                "7": "Retells the beginning, middle, and end of a story.",
+                "8": "Answers who, what, where questions using details from the text.",
+                "9": "Summarises key events or ideas in fiction and nonfiction.",
+                "10": "Identifies cause and effect or simple problem/solution relationships.",
+                "11": "Uses textual clues like diagrams or captions to support understanding.",
+                "12": "Compares information across two short texts on the same topic.",
+                "13": "Synthesises literal meaning from longer or multi-section texts."
+              }
+            },
+            {
+              "name": "Reading Fluency",
+              "age_band_start": 5,
+              "age_band_end": 13,
+              "step_descriptors": {
+                "5": "Reads simple words with smoothness and accuracy",
+                "6": "Begins to adjust pacing and expression for meaning reading simple sentences",
+                "7": "Reads simple texts aloud with developing confidence and phrasing.",
+                "8": "Uses punctuation to guide intonation and pausing in oral reading.",
+                "9": "Reads known texts smoothly with appropriate tone and expression.",
+                "10": "Adjusts reading pace based on purpose (e.g. skimming vs reading aloud).",
+                "11": "Self-corrects during reading to improve fluency and meaning.",
+                "12": "Reads aloud confidently with expression across varied text types.",
+                "13": "Uses phrasing, emphasis, and volume to enhance meaning."
+              }
+            },
+            {
+              "name": "Genre Awareness",
+              "age_band_start": 6,
+              "age_band_end": 13,
+              "step_descriptors": {
+                "6": "Multi-Form Purposeful Writing - Applies writing purposefully across genres (e.g., thank-you note, procedure, fact page)",
+                "7": "Identify a text as fiction, nonfiction, poem, or list using visual or content clues.",
+                "8": "Describe the difference between a story and an informational text.",
+                "9": "Explain why a text was written, such as to inform or entertain.",
+                "10": "Choose a suitable genre for a simple purpose, such as giving instructions.",
+                "11": "Compare how two genres differ in layout or language.",
+                "12": "Analyse how purpose or audience influences genre choices.",
+                "13": "Adapt a genre by combining features for a particular task."
+              }
+            },
+            {
+              "name": "Functional Literacy",
+              "age_band_start": 7,
+              "age_band_end": 13,
+              "step_descriptors": {
+                "7": "Read and create simple functional texts like labels or lists.",
+                "8": "Type or record short messages using digital tools.",
+                "9": "Use familiar real-world formats like menus or calendars to get or share information.",
+                "10": "Choose appropriate layout and style for a common task, such as a form or email.",
+                "11": "Compare formats and purposes of real-world texts like blogs vs reviews.",
+                "12": "Create functional documents with clarity and relevance, such as a brochure or survey.",
+                "13": "Apply literacy skills confidently across complex real-life and academic tasks."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Know Yourself",
+      "strand": "Social Emotional",
+      "learner_profile": "Self-aware",
+      "area_of_development": "Inner self & Wellbeing",
+      "standards": [
+        {
+          "name": "Emotional Awareness",
+          "competencies": [
+            {
+              "name": "Emotional self-awareness",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Begins to notice and express basic emotions",
+                "2": "Associates facial expressions and tones with basic emotional meanings",
+                "3": "Identifies own basic emotions with simple words or gestures",
+                "4": "Recognizes emotions in others and shows empathy (with support)",
+                "5": "Reflects on causes of emotions and expresses them clearly",
+                "6": "Names emotions independently.",
+                "7": "Uses broader emotional vocabulary.",
+                "8": "Identifies mixed emotions simply.",
+                "9": "Recognizes emotional triggers.",
+                "10": "Identifies physical cues to one's emotions",
+                "11": "Describes emotional intensity.",
+                "12": "Names subtle emotions.",
+                "13": "Reflects on emotional changes.",
+                "14": "Recognizes emotional patterns.",
+                "15": "Communicates emotions with nuance.",
+                "16": "Deep emotional awareness and literacy."
+              }
+            },
+            {
+              "name": "Emotional Self-regulation",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Begins to soothe or settle with external support",
+                "2": "Uses simple strategies to self-soothe with guidance",
+                "3": "Begins to control impulses and respond to simple limits",
+                "4": "Uses taught strategies to calm or redirect emotions",
+                "5": "Begins noticing internal emotional shifts (e.g., “I’m getting upset”).",
+                "6": "Starts connecting emotional states with simple causes (“I felt sad because…”).",
+                "7": "Recognizes emotional patterns.",
+                "8": "Understands how thoughts are linked to emotions.",
+                "9": "Recognizes that some emotions come from inside, not only from what is happening outside.",
+                "10": "Recognizes emotional buildup.",
+                "11": "Identifies unmet needs behind emotions.",
+                "12": "Understands layered emotions.",
+                "13": "Reflects on emotional sequences.",
+                "14": "Understands recurring patterns.",
+                "15": "Anticipates emotional reactions.",
+                "16": "Deep insight into origins."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Wellbeing",
+          "competencies": [
+            {
+              "name": "Mindfulness",
+              "age_band_start": 2,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "2": "Brief natural sensory absorption.",
+                "3": "Attends to senses with support.",
+                "4": "Imitates mindful actions.",
+                "5": "Participates in guided mindfulness.",
+                "6": "Attends intentionally briefly.",
+                "7": "Shows brief sustained presence.",
+                "8": "Returns attention with prompts.",
+                "9": "Notices thoughts/feelings arising.",
+                "10": "Self-initiates mindful noticing.",
+                "11": "Non-judgmental awareness.",
+                "12": "Uses mindfulness to settle.",
+                "13": "Present in neutral/mild stress.",
+                "14": "Mindfulness habits form.",
+                "15": "Sustained grounded presence.",
+                "16": "Deep moment-to-moment awareness."
+              }
+            },
+            {
+              "name": "Healthy Boundaries",
+              "age_band_start": 2,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "2": "Reacts to discomfort through body signals (turning away, withdrawing, clinging).",
+                "3": "Shows clear preferences for certain types of touch, proximity, or sensory input.",
+                "4": "Demonstrates an early sense of ownership and separation (“mine / not mine”).",
+                "5": "Communicates simple physical boundaries through words or gestures (“no,” “stop”).",
+                "6": "Recognizes when environments or interactions feel overwhelming or draining.",
+                "7": "States basic needs for personal space, rest, or quiet with support.",
+                "8": "Begins recognizing emotional discomfort linked to boundaries being crossed.",
+                "9": "Maintains physical boundaries consistently in familiar situations.",
+                "10": "Protects emotional boundaries by withdrawing, pausing, or setting limits.",
+                "11": "Adjusts boundaries intentionally depending on context, energy, and comfort.",
+                "12": "Understands internal boundaries related to time, attention, and emotional energy.",
+                "13": "Balances openness and connection with self-protection and self-care.",
+                "14": "Communicates boundaries clearly, calmly, and without excessive defensiveness.",
+                "15": "Holds firm boundaries even under pressure, guilt, or competing demands.",
+                "16": "Demonstrates strong, integrated inner boundaries rooted in self-respect, awareness, and energy balance."
+              }
+            },
+            {
+              "name": "Task Management & responsibility",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Attends briefly to people or objects",
+                "2": "Sustains attention during a simple activity",
+                "3": "Follows through with single-step tasks",
+                "4": "Engages in multi-step tasks with support",
+                "5": "Initiates and completes activities independently",
+                "6": "If interrupted, can return to the task independently and shows early ability to self-redirect.\nSustains attention and completes multi-step tasks independently or with minimal guidance.",
+                "7": "Can listen while doing a simple hands on task, such as building while following brief instructions.",
+                "8": "Participates attentively in circle time, lessons, or group activities for predictable durations without constant prompts.",
+                "9": "Switches attention between two activities on request, such as reading, then discussion, then writing, without losing track of the purpose.",
+                "10": "Maintains focus for extended periods, around ten to fifteen minutes, even when the task is mildly challenging or less enjoyable.",
+                "11": "Successfully ignores common background distractions such as soft talking or small movements while working.",
+                "12": "Uses strategies such as note taking or choosing a quiet place to support focus without being asked.",
+                "13": "Transitions between tasks with different thinking demands, such as writing, discussion, and problem solving, smoothly and purposefully.",
+                "14": "Works with sustained concentration across multi-step or long duration academic tasks such as projects, research, or experiments.",
+                "15": "Maintains deep attention on complex reasoning tasks, such as extended reading or multi-step problem solving, with limited fatigue.",
+                "16": "Regulates attention in dynamic and unpredictable environments, intentionally choosing focus strategies and sometimes helping peers stay on task."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Keep Growing",
+      "strand": "Social Emotional",
+      "learner_profile": "Balanced",
+      "area_of_development": "Physical Wellbeing & Spirit of Growth",
+      "standards": [
+        {
+          "name": "Physical skills & Safety",
+          "competencies": [
+            {
+              "name": "Ethical and safe use of media & technology",
+              "age_band_start": 7,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "7": "Use media tools (e.g. tablet, camera, apps) with support and follow simple classroom rules.",
+                "8": "Ask for permission before taking or sharing photos or recordings of others.",
+                "9": "Distinguish between messages to be shared publicly and privately. \nTalk about what is safe to share online or in a group (e.g. first name only, no private details).",
+                "10": "Recognise that some things found online or in media belong to someone else.",
+                "11": "Begin to credit the source when using someone else’s picture, music, or idea (e.g. “Image by…”).",
+                "12": "Evaluate impacts on publicity and privacy when sharing ideas. \nChoose safe and respectful ways to contribute to shared digital or media spaces (e.g. class blog, Padlet, group folder).",
+                "13": "Explain what copyright, attribution, and permission mean in my own words.",
+                "14": "Recognize the difference between own work and reused work, and apply basic copyright guidelines.",
+                "15": "Participate in media sharing or publishing with awareness of digital footprint, consent, and respectful tone.",
+                "16": "Apply ethical practices consistently when creating, sharing, or responding to content — including crediting sources, protecting privacy, and behaving respectfully in online/public spaces."
+              }
+            },
+            {
+              "name": "Independent Mobility & Safety",
+              "age_band_start": 6,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "6": "Walks short, familiar outdoor routes with an adult, following safety instructions. Recognises when situations feel unsafe and seeks adult help appropriately.",
+                "7": "Demonstrates awareness of personal safety rules (looking both ways, stopping at edges) with reminders. Identifies simple risks to personal privacy or physical safety (sharing name, wandering off, unsafe play).",
+                "8": "Navigates very familiar routes (e.g. home–school gate) with minimal adult prompting. Describes situations that may threaten physical, emotional, or mental wellbeing (peer pressure, exclusion, unsafe behaviour).",
+                "9": "Identifies common hazards in the environment (traffic, obstacles) and responds appropriately with support.",
+                "10": "Moves independently in familiar neighbourhood spaces during low-risk conditions while applying safety strategies.",
+                "11": "Uses simple orientation skills (landmarks, signs, basic directions) to stay on route. Applies basic protective behaviours.",
+                "12": "Applies safety strategies consistently (road crossing routines, situational awareness, help-seeking). in physical or digital contexts. Identifies and explains situations that may threaten personal privacy or the wellbeing of oneself or others.",
+                "13": "Navigates neighbourhood routes independently, adjusting behaviour to changing conditions (weather, traffic, crowds). Uses independent judgment to avoid or exit unsafe situations",
+                "14": "Uses public or shared infrastructure appropriately (crossings, bike paths, basic public transport with guidance). Acts responsibly, considering risk, time, and context.",
+                "15": "Plans and completes independent journeys in familiar areas, managing time, safety, and contingencies. Supports peers in recognising risks and making safe choices, both offline and online.",
+                "16": "Demonstrates responsible, ethical, and confident independent mobility and safety awareness across diverse environments, advocating for safe practices."
+              }
+            },
+            {
+              "name": "Gross motor skills",
+              "age_band_start": 1,
+              "age_band_end": 7,
+              "step_descriptors": {
+                "1": "Walks and runs short distances, changes speed/direction, climbs onto low objects",
+                "2": "Moves in varied directions (e.g., zigzag, curved), navigates obstacles, begins to stop or turn quickly",
+                "3": "Jumps with two feet, hops on one foot briefly, balances on low beams or lines, dances with body awareness",
+                "4": "Climbs, runs with control, balances on one leg, skips, rides a tricycle with ease",
+                "5": "Dances rhythmically, climbs confidently, kicks or strikes balls with intention, swings independently",
+                "6": "Combines multiple gross-motor skills in sequence (run–jump–turn–balance) with improved control and coordination",
+                "7": "Adapts gross-motor movements to structured activities or games, following simple rules and adjusting speed, force, or direction"
+              }
+            },
+            {
+              "name": "Fine motor skills",
+              "age_band_start": 1,
+              "age_band_end": 7,
+              "step_descriptors": {
+                "1": "Uses whole hand movements to manipulate and explore objects with purpose",
+                "2": "Uses hand–eye coordination to complete basic functional tasks",
+                "3": "Strengthens pincer grip and bilateral coordination",
+                "4": "Uses both hands in a coordinated way for creative and practical tasks",
+                "5": "Demonstrates control and precision in refined fine motor tasks",
+                "6": "Combines fine-motor skills in increasingly complex, multi-step tasks with consistency and endurance",
+                "7": "Applies fine-motor skills independently and adapts technique across varied expressive, academic, and practical contexts"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Openmindedness",
+          "competencies": [
+            {
+              "name": "Growth mindset",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Shows delight in interacting with new sensory experiences.",
+                "2": "Stays longer with preferred activities than with ones they do not enjoy.",
+                "3": "Joins familiar learning routines willingly and with interest.",
+                "4": "Expresses joy or pride not only in success but in trying, practising, and improving (“I’m getting better”).",
+                "5": "Chooses learning activities independently and stays engaged long enough to make progress, especially in familiar tasks.",
+                "6": "Attempts slightly difficult tasks when encouraged, beginning to tolerate frustration and try again rather than avoiding.",
+                "7": "Recognizes that some tasks feel easy (“comfort zone”) and others feel hard.",
+                "8": "Tries new things even when uncertain and responds positively to encouragement. Learns that “trying” is part of learning.",
+                "9": "Recognizes that mistakes are part of learning and tries again with support. Can say, “I made a mistake, but I can learn from it.”",
+                "10": "Acknowledges feelings of fear or discomfort with new challenges but takes small steps forward. Reflects on what was difficult and what helped them keep going.",
+                "11": "Starts to use growth mindset language (“I don’t know this yet”) instead of “I can’t.” Is open to challenges.",
+                "12": "Accepts constructive feedback without defensiveness. Has an open mindset and is open to make changes and improvements.",
+                "13": "Sees peers’ strengths as opportunities to learn, not as threats. Seeks collaboration and input to improve own skills and growth.",
+                "14": "Chooses more challenging tasks intentionally to stretch ability. Understands that learning requires leaving the comfort zone.",
+                "15": "Understands that challenges and failures helps to grow. Demonstrates persistence through failure or setbacks, adapting strategies rather than giving up.",
+                "16": "Develops the belief that abilities can grow with effort, embrace challenges as opportunities, and cultivate a lifelong learning orientation."
+              }
+            },
+            {
+              "name": "Resilience",
+              "age_band_start": 2,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "2": "Calms and recovers after distress with consistent external soothing.",
+                "3": "Returns to emotional balance after minor disruptions when comforted.",
+                "4": "Tolerates brief frustration or delay with adult support.",
+                "5": "Shows early signs of staying engaged after small disappointments",
+                "6": "Recovers from frustration and re-engages in an activity with encouragement.",
+                "7": "Completes very simple tasks with encouragement; begins learning that effort supports completion.",
+                "8": "Keeps trying after initial frustration with support.",
+                "9": "Stays with a slightly challenging activity (e.g., puzzle, drawing, task) until completion, even if mistakes happen.",
+                "10": "Maintains motivation during tasks that feel unclear or mildly frustrating; begins using basic coping strategies (pause, help-seeking, reassurance).",
+                "11": "Uses simple self-reminders (e.g., “I can keep going”) and increasingly completes tasks independently, even when boring or repetitive.",
+                "12": "Shows perseverance in everyday activities by staying engaged, trying alternative approaches, and not giving up easily.",
+                "13": "Demonstrates flexibility and persistence when plans change or obstacles arise; adapts effort while staying emotionally regulated.",
+                "14": "Persists through setbacks, mistakes, or disappointment with emotional steadiness and renewed effort.",
+                "15": "Demonstrates resilience across academic and personal contexts; reflects, adjusts, and continues with determination.",
+                "16": "Shows sustained resilience, optimism, and perseverance in complex or uncertain situations; models inner strength and endurance."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Connect Across Difference",
+      "strand": "Social Emotional",
+      "learner_profile": "Open-minded",
+      "area_of_development": "Collaborative & Relational Skills",
+      "standards": [
+        {
+          "name": "Social competencies",
+          "competencies": [
+            {
+              "name": "Teamwork and Collaboration",
+              "age_band_start": 4,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "4": "Works alongside others during play or creative activities and begins to engage in shared experiences, such as group games, songs, or classroom routines, with adult guidance.",
+                "5": "Works side by side with a partner and begins to share tools, space, or materials, showing early awareness that tasks can be done together.",
+                "6": "Helps a partner or peer in a shared task, takes turns, and begins to share simple responsibilities within a small group activity.",
+                "7": "Participates actively in group activities by contributing ideas or actions and cooperating toward a simple shared goal.",
+                "8": "Works collaboratively with peers by sharing ideas, listening to others, and coordinating actions during play, creative tasks, or classroom projects.",
+                "9": "Supports teamwork by helping peers, sharing responsibilities, and beginning to recognise how different contributions support the group’s success.",
+                "10": "Completes a group project with assigned roles and offers or seeks help appropriately to support the group’s work.",
+                "11": "Joins group discussions respectfully, listens to peers’ perspectives, and shares ideas constructively.",
+                "12": "Takes responsibility for assigned tasks, completes them reliably, and supports others when needed, recognising how individual strengths align with group goals.",
+                "13": "Helps set shared goals and timelines for group projects and begins to intentionally leverage individual strengths within the team.",
+                "14": "Acts as a constructive team member by using dialogue to reach shared decisions, reflecting on group dynamics, and suggesting ways to improve collaboration.",
+                "15": "Works with peers to generate new solutions by integrating diverse perspectives and balancing team goals with broader community needs and values.",
+                "16": "Rotates or shares leadership roles in complex, long-term projects, takes collective responsibility for outcomes, evaluates team processes, and adapts collaboration strategies in response to challenges."
+              }
+            },
+            {
+              "name": "Social Awareness",
+              "age_band_start": 3,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "3": "Notices others’ emotions/actions. Observes others crying, laughing, or acting upset and may comment or react, without understanding causes or perspectives.",
+                "4": "Recognises and identifies basic emotions in others (happy, sad, angry, scared) through facial expressions, tone, or behaviour.",
+                "5": "Explains why someone may feel a certain way. Can give simple explanations for others’ emotions in familiar situations (e.g., “She is sad because she lost her toy”).",
+                "6": "Begins to recognise that their words or actions can affect how others feel, usually with adult prompting.",
+                "7": "Understands basic shared expectations and agreements such as taking turns, fairness, and following agreed rules within a group.",
+                "8": "Interprets social cues, tone of voice, facial expressions, body language, and situational cues to guide their behaviour.",
+                "9": "Understands differing experiences. Recognises that people may experience the same situation differently based on feelings, roles, or background.",
+                "10": "Notices patterns in group interaction (who leads, who is included or excluded, who is quiet or dominant).",
+                "11": "Considers social impact on how words or actions are likely to affect others socially or emotionally before acting.",
+                "12": "Understands expectations across settings and adapts behaviour based on context (classroom, playground, online, home, community).",
+                "13": "Recognises peer pressure and identifies social influence, peer expectations, and understands how they shape behaviour.",
+                "14": "Reflects on fairness and bias, considers issues of fairness, exclusion, stereotypes, and bias within peer and group interactions.",
+                "15": "Considers multiple perspectives and integrates emotional, social, or contextual perspectives when interpreting social situations or conflicts.",
+                "16": "Demonstrates mature social awareness, reads complex social situations, acts with empathy and ethical awareness, and promotes inclusive, respectful interactions."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Relational competencies",
+          "competencies": [
+            {
+              "name": "Avocacy and Voice",
+              "age_band_start": 3,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "3": "Expresses needs, preferences, and feelings using words, gestures, or actions.",
+                "4": "Shares ideas and choices during play and daily routines (e.g., what to play, how to build together).",
+                "5": "Expresses own thoughts and feelings respectfully with familiar adults and peers.",
+                "6": "Listens to others and takes turns sharing ideas in conversations or group activities.",
+                "7": "Recognizes issues or needs in familiar contexts (classroom, playground) and talks about them respectfully.",
+                "8": "Collaborates with others to suggest ideas or solutions in group settings (schoolwork, play, activities).",
+                "9": "Contributes ideas in discussions and group decision-making, explaining reasons for viewpoints.",
+                "10": "Speaks up for self or others to improve situations or outcomes (fairness, inclusion, safety).",
+                "11": "Understands that people can influence decisions and bring about change by using their voice.",
+                "12": "Identifies examples of advocacy in school or community contexts (student councils, community helpers, youth voices).",
+                "13": "Takes part in simple advocacy actions with others (e.g., posters, presentations, class petitions, awareness activities).",
+                "14": "Works collaboratively to plan and carry out an awareness activity or small campaign for an issue they care about.",
+                "15": "Uses evidence, dialogue, and ethical reasoning to advocate for equitable or sustainable change in school or community contexts.",
+                "16": "Demonstrates informed, responsible advocacy by influencing decisions, engaging stakeholders, and reflecting on impact locally or globally."
+              }
+            },
+            {
+              "name": "Participatory Decision-Making",
+              "age_band_start": 4,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "4": "Begins to make simple choices when offered options and experiences having a say in everyday decisions (e.g., choosing activities or materials), with adult support.",
+                "5": "Expresses simple preferences or opinions in familiar group situations, primarily focused on sharing personal choices rather than influencing group outcomes.",
+                "6": "Begins to understand that expressing opinions is part of group decision-making and experiences that their voice can be heard and considered by others.",
+                "7": "Learns to listen to other's preferences and choices, learns that other's voice matters too.",
+                "8": "When participating in group votings and decisions, begins to accept majority decisions.",
+                "9": "Shares personal opinions in group discussions and listens to peers’ views. Recognizes that others may think differently.",
+                "10": "Practices small collaborative decisions in teams. Learns to negotiate and compromise.",
+                "11": "Contributes to co-creating rules or agreements and reflects on fairness and equality in the process.",
+                "12": "Evaluates pros and cons of different group proposals before making a decision. Participates in structured decision-making (e.g., consensus-building, ranked-choice).",
+                "13": "Takes responsibility for carrying out agreed decisions and begins to see decisions as linked to shared accountability, not only personal.",
+                "14": "Analyzes whose voices are included/excluded in decision-making. Proposes strategies to ensure diverse participation (gender, background, ability, etc.).",
+                "15": "Engages in authentic decision-making processes with real consequences beyond the classroom (e.g., student council, community service planning, environmental campaign).",
+                "16": "Leads or facilitates participatory processes (e.g., organizing meetings, gathering input, representing peers to school/community leaders). Reflects on ethical responsibility and inclusiveness in democratic action."
+              }
+            },
+            {
+              "name": "Conflict resolution",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Reacts to social tension or frustration with strong emotions (crying, grabbing) without understanding conflict.",
+                "2": "Shows distress or frustration during peer conflict and seeks adult comfort or intervention.",
+                "3": "Reacts to conflict with strong emotions (crying, grabbing, shouting) and seeks adult intervention or comfort, without yet attempting to resolve the conflict independently.",
+                "4": "Begins to recognise simple conflicts (e.g., over toys or turns) and accepts adult-guided solutions, such as taking turns or stopping an action.",
+                "5": "Attempts basic conflict-resolution strategies when prompted, such as using words, apologising, or taking turns, but still relies on adult support.",
+                "6": "Uses adult-supported calming strategies to stay engaged in a conflict and express needs with words instead of physical reactions.",
+                "7": "Names own feelings and needs during conflict and begins to listen to the other person’s viewpoint with guidance.",
+                "8": "Listens to another person’s perspective and begins to recognise that conflicts involve different needs or interpretations of the same situation.",
+                "9": "Identifies multiple perspectives in a conflict and suggests fair solutions.",
+                "10": "Uses negotiation and compromise to resolve peer conflicts independently.",
+                "11": "Reflects on how actions affect relationships and chooses solutions that preserve trust.",
+                "12": "Participates in restorative conversations, taking responsibility and repairing harm.",
+                "13": "Manages emotionally charged conflicts using respectful communication and self-control.",
+                "14": "Manages complex or emotionally charged conflicts by maintaining self-control, communicating respectfully, and navigating social dynamics (e.g., peer pressure, group conflict, exclusion).",
+                "15": "Anticipates potential conflicts, intervenes early to prevent escalation, and supports peers in resolving disagreements through fair and respectful processes.",
+                "16": "Demonstrates mature conflict resolution: mediating disputes, balancing power dynamics, and acting with ethical and relational integrity."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Navigate the World",
+      "strand": "Social Emotional",
+      "learner_profile": "Global Citizen",
+      "area_of_development": "Global Citizenship & Practical Life",
+      "standards": [
+        {
+          "name": "Environmental awareness",
+          "competencies": [
+            {
+              "name": "Nature Awareness",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Becomes aware of living things in their immediate surroundings through observation (e.g., noticing plants, animals, insects).",
+                "2": "Begins to interact gently with living things when guided (e.g., touching softly, watching without disturbing).",
+                "3": "Recognizes when living things need care and responds with adult support (e.g., watering plants, feeding animals when prompted).",
+                "4": "Participates consistently in simple routines to care for living things with reminders (e.g., daily plant care, class pet routines).",
+                "5": "Understands basic needs of living things (food, water, shelter) and begins to act independently to meet them.",
+                "6": "Notices natural elements (plants, animals, weather, light) using senses and simple descriptive language.",
+                "7": "Expresses emotional responses to nature through play, movement, drawing, or storytelling (e.g., joy, calm, curiosity).",
+                "8": "Describes how nature affects their feelings and wellbeing (e.g., “I feel calm in the forest”).",
+                "9": "Explores nature regularly and identifies changes in seasons, habitats, or local species and how this connects to their own wellbeing.",
+                "10": "Reflect on personal experiences in nature and begin to connect them to values (e.g., care, peace, joy).",
+                "11": "Expresses how nature supports wellbeing (focus, happiness, relaxation). Recognizes personal routines linked to nature (e.g., walking to school, being outside, field trips).",
+                "12": "Explores how family or community connects to nature through traditions, practices, or outdoor activities. Compares these to their own experiences.",
+                "13": "Recognizes that different cultures and communities connect to nature in diverse ways. Shows respect and curiosity about these perspectives.",
+                "14": "Articulates emerging personal values related to nature (e.g., calmness, beauty, interconnection). Analyzes how their habits affect nature and their own sense of connectedness.",
+                "15": "Reflects on how their sense of identity and belonging is shaped by nature. Recognizes that their life meaning and wellbeing are interdependent with the natural world.",
+                "16": "Describes a personal worldview or philosophy that includes nature as essential to a meaningful life. Expresses a sense of unity, respect, or kinship with nature as part of self."
+              }
+            },
+            {
+              "name": "Investigates ecosystems",
+              "age_band_start": 6,
+              "age_band_end": 14,
+              "step_descriptors": {
+                "6": "Engages with natural materials and shows curiosity in ecosystems and natural resources.",
+                "7": "Gives examples to show Earth’s resources are used in a variety of ways.",
+                "8": "Identifies that certain resources have different uses and describe examples of where science is used in people’s daily lives.",
+                "9": "Compares multiple solutions designed to slow or prevent wind or water from changing the shape of the land.",
+                "10": "Generates and compares multiple solutions to reduce the impacts of natural Earth processes on humans. Identifies renewable and non-renewable sources of energy.",
+                "11": "Develops a model using an example to describe ways the geosphere, biosphere, hydrosphere, and/or atmosphere interact.",
+                "12": "Obtains and combines information about ways individual communities use science ideas to protect the Earth’s resources and environment.",
+                "13": "Analyzes how the sustainable use of resources depends on the way they are formed and cycle through Earth systems.",
+                "14": "Proposes and justifies actions that support the sustainable use of Earth’s resources by linking them to how resources form and cycle through natural systems."
+              }
+            },
+            {
+              "name": "Systems and futures thinking",
+              "age_band_start": 6,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "6": "Begins to observe and talk about everyday experiences (e.g., “The sun comes up in the morning,” “When I water the plant, it grows,” “Birds come when we put out food”). Recognizes that things happen in sequence and are sometimes connected.",
+                "7": "Recognizes simple cause-and-effect relationships in the environment\nIdentifies direct links (e.g., “If we cut down a tree, birds lose their home,” “If it rains, puddles form,” “If we share toys, everyone gets a turn”). Moves from noticing patterns to describing clear causes and outcomes.",
+                "8": "Describes interactions between people and the environment\nUnderstands that humans use resources and affect nature (e.g., “We need water to drink,” “If we leave trash on the ground, it makes the park dirty”). Begins to see mutual dependence between people and the natural world.",
+                "9": "Predicts how societal systems and current events may affect the future\nConnects present-day events (like school rules, recycling, or community changes) to possible future outcomes. Starts asking “What might happen if…?” about social and environmental issues.",
+                "10": "Recognizes interdependence within systems\nUnderstands that living and non-living things are connected in cycles (e.g., plants need sun and water, animals eat plants, people eat plants and animals). Sees that changes in one part affect others.",
+                "11": "Identifies how human activities affect ecosystems (e.g., pollution → water quality → health). Reflects on unintended consequences.",
+                "12": "Examines multiple perspectives on how different groups (farmers, tourists, businesses, residents) are connected in an issue like tourism or energy use. Recognizes conflicting needs in the ecosystem.",
+                "13": "Identifies complex systems and analyzes how one change can cause a chain reaction (e.g., climate change → crop failure → migration → economic shifts).",
+                "14": "Investigates “wrold's wicked problems” (poverty, inequality, biodiversity loss, climate change) by identifying their root causes across social, economic, and environmental systems. Begins to identify feedback loops (reinforcing or balancing effects in the system).",
+                "15": "Creating different scenarios for possible futures understanding interconnected systems in global challenges (e.g., water scarcity, AI impacts)",
+                "16": "Proposes and justifies systemic interventions (policies, innovations, community actions) that address interconnected challenges. Critically evaluates trade-offs and long-term impacts."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Global Citizenship skills",
+          "competencies": [
+            {
+              "name": "Global awareness",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Notices and reacts to changes in the environment and daily routines",
+                "2": "Recognizes familiar people, places, and community helpers",
+                "3": "Begins to connect local experiences to broader ideas (e.g., food comes from farms, people help each other in different ways).",
+                "4": "Recognizes that people, animals, and environments are connected and influence one another (e.g., people care for animals, weather affects daily life).",
+                "5": "Demonstrates curiosity and respect for different ways people live, work, and care for their communities.",
+                "6": "Explains simple interdependence in communities (different jobs and helpers support each other).",
+                "7": "Understands that systems rely on many parts working together (school, family, town).",
+                "8": "Describes interdependence across communities (food supply, trade, shared resources).",
+                "9": "Recognizes links between local and global systems (e.g., products coming from other countries).",
+                "10": "Understands how disruptions in one part of a system can affect others.",
+                "11": "Analyzes interdependence using examples such as ecosystems and global supply chains.",
+                "12": "Understands consequences of global interdependence (climate, migration, trade effects).",
+                "13": "Applies systems thinking to explain real-world interconnections among people and planet.",
+                "14": "Evaluates interdependence from multiple perspectives (social, economic, ecological).",
+                "15": "Synthesizes understanding of systems and interdependence to explain global challenges.",
+                "16": "Demonstrates advanced systemic reasoning about global interdependence and shared responsibility."
+              }
+            },
+            {
+              "name": "Cultural Awareness",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Expresses awareness of self",
+                "2": "Begins noticing similarities and differences",
+                "3": "Expresses interest in others’ experiences",
+                "4": "Shows respect for differences in behavior and culture",
+                "5": "Shares their own background while learning about others",
+                "6": "Begins to recognize that differences in behaviour, routines, or traditions are connected to people’s families or cultural backgrounds, with adult guidance.",
+                "7": "Identifies visible signs of cultural diversity in their school or classroom (e.g. languages spoken, clothing, holidays).",
+                "8": "Recogises differences in cultural traditions at school and surrounding community",
+                "9": "Compares and contrasts elements of one’s personal cultural identity with those of others.",
+                "10": "Ask respectful questions about customs or traditions that are unfamiliar.",
+                "11": "Shows curiosity without judgmentand and discusses differences with kindness. Asks respectful questions about cultural activities that they observe, showing openness and avoiding stereotypes.",
+                "12": "Describes how visible aspects of culture (behaviours, food culture, family roles, rituals) shape how people live and interact. Begins to recognize that their own practices are also “cultural” and not universal. Compares and contrasts the roots of personal cultural identity with those of others.",
+                "13": "Compares the roots of personal identity (heritage, values, traditions) with those of others. Begins to explore deeper structures: why cultures differ (history, geography, religion, political systems)",
+                "14": "Expresses appreciation for cultural diversity as enriching, and articulates the difference between visible and invisible culture (behaviours and values, thinking patterns, traditions, norms, rules). Acknowledges cultural complexities (e.g., one culture is not “just one thing”). Challenges stereotypes when they arise.",
+                "15": "Analyses cultural differences, and reflects critically on cultural norms. Recognizes that multiple perspectives can exist simultaneously. Explains why cultural respect and inclusion are important on personal and community levels.",
+                "16": "Advocates for inclusiveness and shows leadership in promoting cultural understanding and dialogue. Mediates misunderstandings and fosters respectful collaboration across cultural groups."
+              }
+            },
+            {
+              "name": "Appreciating Diversity",
+              "age_band_start": 1,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "1": "Expresses awareness of self",
+                "2": "Begins noticing similarities and differences",
+                "3": "Expresses interest in others’ experiences",
+                "4": "Shows respect for differences in behavior and culture",
+                "5": "Shares their own background while learning about others",
+                "6": "Begins to recognize that differences in behaviour, routines, or traditions are connected to people’s families or cultural backgrounds, with adult guidance.",
+                "7": "Identifies visible signs of cultural diversity in their school or classroom (e.g. languages spoken, clothing, holidays).",
+                "8": "Recogises differences in cultural traditions at school and surrounding community",
+                "9": "Compares and contrasts elements of one’s personal cultural identity with those of others.",
+                "10": "Ask respectful questions about customs or traditions that are unfamiliar.",
+                "11": "Shows curiosity without judgmentand and discusses differences with kindness. Asks respectful questions about cultural activities that they observe, showing openness and avoiding stereotypes.",
+                "12": "Describes how visible aspects of culture (behaviours, food culture, family roles, rituals) shape how people live and interact. Begins to recognize that their own practices are also “cultural” and not universal. Compares and contrasts the roots of personal cultural identity with those of others.",
+                "13": "Compares the roots of personal identity (heritage, values, traditions) with those of others. Begins to explore deeper structures: why cultures differ (history, geography, religion, political systems)",
+                "14": "Expresses appreciation for cultural diversity as enriching, and articulates the difference between visible and invisible culture (behaviours and values, thinking patterns, traditions, norms, rules). Acknowledges cultural complexities (e.g., one culture is not “just one thing”). Challenges stereotypes when they arise.",
+                "15": "Analyses cultural differences, and reflects critically on cultural norms. Recognizes that multiple perspectives can exist simultaneously. Explains why cultural respect and inclusion are important on personal and community levels.",
+                "16": "Advocates for inclusiveness and shows leadership in promoting cultural understanding and dialogue. Mediates misunderstandings and fosters respectful collaboration across cultural groups."
+              }
+            },
+            {
+              "name": "Social Justice Awareness",
+              "age_band_start": 4,
+              "age_band_end": 16,
+              "step_descriptors": {
+                "4": "Recognizes unfairness in simple, personal contexts (“That’s not fair to me”).",
+                "5": "Identifies unfair treatment of others and shows empathy or concern.",
+                "6": "Understands that fairness sometimes means meeting different needs, not treating everyone exactly the same.",
+                "7": "Recognizes exclusion, bias, or unfair rules in everyday settings (classroom, playground).",
+                "8": "Explains why certain situations are unfair and suggests simple ways to make them more just.",
+                "9": "Recognizes that some groups have fewer opportunities or resources than others.",
+                "10": "Understands basic concepts of equity, privilege, and access using age-appropriate examples.",
+                "11": "Identifies stereotypes, bias, or discrimination in media, stories, or social situations.",
+                "12": "Connects unfair outcomes to rules, systems, or historical patterns rather than individual behavior alone.",
+                "13": "Analyzes social justice issues (e.g., poverty, discrimination, environmental injustice) from multiple perspectives.",
+                "14": "Evaluates how power, voice, and representation affect fairness within societies.",
+                "15": "Advocates for fairness and justice using evidence, ethical reasoning, and respectful dialogue.",
+                "16": "Demonstrates mature social justice awareness by integrating critical analysis, empathy, and informed action at local or global levels."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

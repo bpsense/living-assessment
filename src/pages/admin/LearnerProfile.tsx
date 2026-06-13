@@ -25,6 +25,7 @@ import ConfirmDialog from '../../components/ConfirmDialog'
 import DimensionListItem from '../../components/admin/DimensionListItem'
 import type { DimensionWithCount } from '../../components/admin/DimensionListItem'
 import DimensionEditModal from '../../components/admin/DimensionEditModal'
+import DimensionCompetencies from '../../components/admin/DimensionCompetencies'
 import StandardsMappingSection from '../../components/admin/StandardsMappingSection'
 import type { Dimension } from '../../types/database'
 
@@ -32,77 +33,18 @@ import type { Dimension } from '../../types/database'
 // Default dimension definitions (must match seed data)
 // ============================================================
 
+// The Boundless 8 — the canonical default dimensions (see supabase/seed/boundless_framework.json).
+// `name` is the action phrase; `category` mirrors the strand. Resetting re-creates these
+// dimensions; competencies are (re)seeded separately by scripts/seed-boundless-framework.ts.
 const DEFAULT_DIMENSIONS = [
-  {
-    name: 'Language & Literacy',
-    description:
-      'Reading, writing, speaking, and listening skills across genres and contexts.',
-    icon: 'book-open',
-    category: 'Academic',
-  },
-  {
-    name: 'Mathematical Thinking',
-    description:
-      'Number sense, operations, patterns, algebraic reasoning, and problem solving.',
-    icon: 'calculator',
-    category: 'Academic',
-  },
-  {
-    name: 'Scientific Inquiry',
-    description:
-      'Observation, hypothesis formation, experimentation, and evidence-based reasoning.',
-    icon: 'microscope',
-    category: 'Academic',
-  },
-  {
-    name: 'Social Studies & Global Awareness',
-    description:
-      'Geography, history, civics, economics, and understanding diverse cultures.',
-    icon: 'globe',
-    category: 'Academic',
-  },
-  {
-    name: 'Creative Expression',
-    description:
-      'Visual arts, music, dance, drama, and imaginative design thinking.',
-    icon: 'palette',
-    category: 'Creative & Arts',
-  },
-  {
-    name: 'Physical Development & Wellness',
-    description:
-      'Gross and fine motor skills, health habits, nutrition awareness, and body regulation.',
-    icon: 'heart-pulse',
-    category: 'Physical & Health',
-  },
-  {
-    name: 'Social-Emotional Learning',
-    description:
-      'Self-awareness, empathy, relationship skills, and responsible decision-making.',
-    icon: 'users',
-    category: 'Social & Emotional',
-  },
-  {
-    name: 'Critical Thinking & Problem Solving',
-    description:
-      'Analysis, evaluation, logical reasoning, and creative solution development.',
-    icon: 'lightbulb',
-    category: 'Cognitive',
-  },
-  {
-    name: 'Communication & Collaboration',
-    description:
-      'Effective expression of ideas, active listening, teamwork, and conflict resolution.',
-    icon: 'message-circle',
-    category: 'Social & Emotional',
-  },
-  {
-    name: 'Self-Direction & Executive Function',
-    description:
-      'Goal setting, time management, organization, self-monitoring, and perseverance.',
-    icon: 'compass',
-    category: 'Cognitive',
-  },
+  { name: 'Think Deeply', description: 'Scientific Thinking & Inquiry', icon: 'microscope', category: 'Academic', strand: 'Academic', learner_profile: 'Thinker', area_of_development: 'Scientific Thinking & Inquiry' },
+  { name: 'Create Boldly', description: 'Creative Expression & Innovation', icon: 'palette', category: 'Academic', strand: 'Academic', learner_profile: 'Creative', area_of_development: 'Creative Expression & Innovation' },
+  { name: 'Reason & Solve', description: 'Mathematical Thinking & Problem Solving', icon: 'calculator', category: 'Academic', strand: 'Academic', learner_profile: 'Problem solver', area_of_development: 'Mathematical Thinking & Problem Solving' },
+  { name: 'Communicate with Impact', description: 'Literacy & Communication', icon: 'book-open', category: 'Academic', strand: 'Academic', learner_profile: 'Communicator', area_of_development: 'Literacy & Communication' },
+  { name: 'Know Yourself', description: 'Inner Self & Wellbeing', icon: 'lightbulb', category: 'Social & Emotional', strand: 'Social-Emotional', learner_profile: 'Self-aware', area_of_development: 'Inner Self & Wellbeing' },
+  { name: 'Keep Growing', description: 'Physical Wellbeing & Spirit of Growth', icon: 'heart-pulse', category: 'Social & Emotional', strand: 'Social-Emotional', learner_profile: 'Balanced', area_of_development: 'Physical Wellbeing & Spirit of Growth' },
+  { name: 'Connect Across Difference', description: 'Collaborative & Relational Skills', icon: 'users', category: 'Social & Emotional', strand: 'Social-Emotional', learner_profile: 'Open-minded', area_of_development: 'Collaborative & Relational Skills' },
+  { name: 'Navigate the World', description: 'Global Citizenship & Practical Life', icon: 'globe', category: 'Social & Emotional', strand: 'Social-Emotional', learner_profile: 'Global Citizen', area_of_development: 'Global Citizenship & Practical Life' },
 ]
 
 const MAX_DIMENSIONS = 15
@@ -137,6 +79,19 @@ export default function LearnerProfile() {
 
   // Inactive section
   const [showInactive, setShowInactive] = useState(false)
+
+  // Competency builder: which dimensions are expanded + their competency counts
+  const [expandedDims, setExpandedDims] = useState<Set<string>>(new Set())
+  const [compCounts, setCompCounts] = useState<Record<string, number>>({})
+
+  function toggleExpand(id: string) {
+    setExpandedDims((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   // ---- Derived state ----
   const activeDimensions = dimensions.filter((d) => d.is_active)
@@ -189,6 +144,20 @@ export default function LearnerProfile() {
         )
       }
     }
+
+    // Competency counts per dimension (for the builder badges)
+    const compCountMap: Record<string, number> = {}
+    if (dimIds.length > 0) {
+      const { data: compData } = await supabase
+        .from('competencies')
+        .select('dimension_id')
+        .eq('school_id', profile.school_id)
+        .in('dimension_id', dimIds)
+      for (const row of (compData ?? []) as { dimension_id: string | null }[]) {
+        if (row.dimension_id) compCountMap[row.dimension_id] = (compCountMap[row.dimension_id] ?? 0) + 1
+      }
+    }
+    setCompCounts(compCountMap)
 
     setDimensions(
       allDims.map((d) => ({
@@ -369,6 +338,9 @@ export default function LearnerProfile() {
         display_order: i + 1,
         icon: d.icon,
         category: d.category,
+        strand: d.strand,
+        learner_profile: d.learner_profile,
+        area_of_development: d.area_of_development,
         is_active: true,
       }))
     )
@@ -411,7 +383,7 @@ export default function LearnerProfile() {
 
   const confirmMessage =
     confirmAction === 'reset'
-      ? 'This will deactivate all current dimensions and create the 10 default dimensions. Existing observation data will be preserved but linked to the old (inactive) dimensions. This cannot be undone.'
+      ? 'This will deactivate all current dimensions and create the 8 Boundless default dimensions. Existing observation data will be preserved but linked to the old (inactive) dimensions. Competencies are seeded separately. This cannot be undone.'
       : confirmTarget
         ? `This dimension has ${(confirmTarget as DimensionWithCount).observation_count ?? 0} observation${((confirmTarget as DimensionWithCount).observation_count ?? 0) !== 1 ? 's' : ''}. It will be hidden from all views but historical data will be preserved. You can reactivate it later.`
         : ''
@@ -517,14 +489,30 @@ export default function LearnerProfile() {
           >
             <div className="space-y-2">
               {activeDimensions.map((dim) => (
-                <DimensionListItem
-                  key={dim.id}
-                  dimension={dim}
-                  onEdit={handleEdit}
-                  onDeactivate={requestDeactivate}
-                  onReactivate={handleReactivate}
-                  onToggleFamilyVisibility={handleToggleFamilyVisibility}
-                />
+                <div key={dim.id}>
+                  <DimensionListItem
+                    dimension={dim}
+                    onEdit={handleEdit}
+                    onDeactivate={requestDeactivate}
+                    onReactivate={handleReactivate}
+                    onToggleFamilyVisibility={handleToggleFamilyVisibility}
+                    onToggleExpand={() => toggleExpand(dim.id)}
+                    expanded={expandedDims.has(dim.id)}
+                    competencyCount={compCounts[dim.id]}
+                  />
+                  {expandedDims.has(dim.id) && profile?.school_id && (
+                    <div className="mt-2">
+                      <DimensionCompetencies
+                        schoolId={profile.school_id}
+                        dimensionId={dim.id}
+                        canEdit={canEdit}
+                        onCountChange={(n) =>
+                          setCompCounts((p) => ({ ...p, [dim.id]: n }))
+                        }
+                      />
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </SortableContext>
