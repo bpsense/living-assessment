@@ -35,7 +35,6 @@ import Messages from './pages/Messages'
 import IncidentReportPage from './pages/IncidentReport'
 import IncidentsPage from './pages/admin/IncidentsPage'
 import SnapshotVisibility from './pages/admin/SnapshotVisibility'
-import TranslatePage from './pages/Translate'
 
 function PasswordRecoveryRedirect() {
   const { isPasswordRecovery } = useAuth()
@@ -152,14 +151,6 @@ function AppRoutes() {
         <Route
           path="/admin/dimensions"
           element={<Navigate to="/admin/learner-profile" replace />}
-        />
-        <Route
-          path="/translate"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <TranslatePage />
-            </ProtectedRoute>
-          }
         />
         <Route
           path="/admin/permissions"
