@@ -7,9 +7,6 @@ import type {
   Dimension,
   Observation,
   InterestSurvey,
-  StandardsFramework,
-  Standard,
-  DimensionStandard,
   Profile,
 } from '../types/database'
 import type { DimensionScore } from './scoring'
@@ -30,8 +27,6 @@ export interface DimensionReportData {
   narrativeObserver: string | null
   /** Date of the latest observation */
   narrativeDate: string | null
-  /** Standards mapped to this dimension */
-  mappedStandards: Standard[]
 }
 
 export interface ReportData {
@@ -41,9 +36,6 @@ export interface ReportData {
   dimensions: Dimension[]
   dimensionScores: DimensionScore[]
   dimensionReports: DimensionReportData[]
-  frameworks: StandardsFramework[]
-  /** Currently selected framework's standards mapped to dimensions */
-  standardsMappings: Map<string, Standard[]>
   availablePeriods: AcademicPeriod[]
 }
 
@@ -71,25 +63,6 @@ export function getInterestLabel(score: number): string {
   if (score < 3) return 'Moderate'
   if (score < 4) return 'High'
   return 'Very High'
-}
-
-/**
- * Translate a competency level to a standards-aligned narrative.
- */
-export function standardsNarrative(
-  level: CompetencyLevel,
-  standardDescription: string
-): string {
-  switch (level) {
-    case 'emerging':
-      return `Beginning to develop awareness of ${standardDescription}`
-    case 'developing':
-      return `Growing understanding of ${standardDescription}, benefits from support`
-    case 'practicing':
-      return `Applying ${standardDescription} with increasing independence`
-    case 'proficient':
-      return `Demonstrates consistent, independent mastery of ${standardDescription}`
-  }
 }
 
 // ============================================================
@@ -142,9 +115,7 @@ export interface UseReportResult {
   data: ReportData | null
   loading: boolean
   error: string | null
-  setFrameworkId: (id: string | null) => void
   setPeriodKey: (key: string | null) => void
-  selectedFrameworkId: string | null
   selectedPeriodKey: string | null
 }
 
@@ -156,13 +127,9 @@ export function useReportData(studentId: string | undefined): UseReportResult {
   const [observations, setObservations] = useState<Observation[]>([])
   const [surveys, setSurveys] = useState<InterestSurvey[]>([])
   const [observers, setObservers] = useState<Map<string, string>>(new Map())
-  const [frameworks, setFrameworks] = useState<StandardsFramework[]>([])
-  const [allStandards, setAllStandards] = useState<Standard[]>([])
-  const [dimensionStandards, setDimensionStandards] = useState<DimensionStandard[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const [selectedFrameworkId, setFrameworkId] = useState<string | null>(null)
   const [selectedPeriodKey, setPeriodKey] = useState<string | null>(null)
 
   useEffect(() => {
@@ -186,15 +153,13 @@ export function useReportData(studentId: string | undefined): UseReportResult {
         const st = studentData as Student
         setStudent(st)
 
-        // 2. Parallel fetch: classroom, school, dimensions, observations, surveys, frameworks, dimension_standards
+        // 2. Parallel fetch: classroom, school, dimensions, observations, surveys
         const [
           classroomRes,
           schoolRes,
           dimensionsRes,
           observationsRes,
           surveysRes,
-          frameworksRes,
-          dimStandardsRes,
         ] = await Promise.all([
           supabase.from('classrooms').select('*').eq('id', st.classroom_id).single(),
           supabase.from('schools').select('*').eq('id', st.school_id).single(),
@@ -215,15 +180,6 @@ export function useReportData(studentId: string | undefined): UseReportResult {
             .select('*')
             .eq('student_id', studentId!)
             .order('submitted_at', { ascending: false }),
-          supabase
-            .from('standards_frameworks')
-            .select('*')
-            .eq('school_id', st.school_id)
-            .order('name'),
-          supabase
-            .from('dimension_standards')
-            .select('*')
-            .eq('school_id', st.school_id),
         ])
 
         if (cancelled) return
@@ -233,27 +189,8 @@ export function useReportData(studentId: string | undefined): UseReportResult {
         setDimensions((dimensionsRes.data ?? []) as Dimension[])
         setObservations((observationsRes.data ?? []) as Observation[])
         setSurveys((surveysRes.data ?? []) as InterestSurvey[])
-        setFrameworks((frameworksRes.data ?? []) as StandardsFramework[])
-        setDimensionStandards((dimStandardsRes.data ?? []) as DimensionStandard[])
 
-        // Auto-select first framework if available
-        const fws = (frameworksRes.data ?? []) as StandardsFramework[]
-        if (fws.length > 0 && !cancelled) {
-          setFrameworkId((prev) => prev ?? fws[0].id)
-        }
-
-        // 3. Fetch all standards for this school (across all frameworks)
-        const { data: standardsData } = await supabase
-          .from('standards')
-          .select('*')
-          .eq('school_id', st.school_id)
-          .order('display_order')
-
-        if (!cancelled) {
-          setAllStandards((standardsData ?? []) as Standard[])
-        }
-
-        // 4. Fetch observer names
+        // 3. Fetch observer names
         const obs = (observationsRes.data ?? []) as Observation[]
         const observerIds = [...new Set(obs.map((o) => o.observer_id))]
         if (observerIds.length > 0) {
@@ -324,24 +261,6 @@ export function useReportData(studentId: string | undefined): UseReportResult {
     }
   })
 
-  // Build standards mappings for selected framework
-  const standardsMappings = new Map<string, Standard[]>()
-  if (selectedFrameworkId) {
-    const frameworkStandards = allStandards.filter(
-      (s) => s.framework_id === selectedFrameworkId
-    )
-    const standardsById = new Map(frameworkStandards.map((s) => [s.id, s]))
-
-    for (const ds of dimensionStandards) {
-      const std = standardsById.get(ds.standard_id)
-      if (std) {
-        const arr = standardsMappings.get(ds.dimension_id) ?? []
-        arr.push(std)
-        standardsMappings.set(ds.dimension_id, arr)
-      }
-    }
-  }
-
   // Build dimension reports
   const dimensionReports: DimensionReportData[] = dimensions.map((dim) => {
     const score = dimensionScores.find((s) => s.dimension_id === dim.id)!
@@ -367,7 +286,6 @@ export function useReportData(studentId: string | undefined): UseReportResult {
         ? observers.get(latestWithNotes.observer_id) ?? null
         : null,
       narrativeDate: latestWithNotes?.observed_at ?? null,
-      mappedStandards: standardsMappings.get(dim.id) ?? [],
     }
   })
 
@@ -381,8 +299,6 @@ export function useReportData(studentId: string | undefined): UseReportResult {
           dimensions,
           dimensionScores,
           dimensionReports,
-          frameworks,
-          standardsMappings,
           availablePeriods,
         }
       : null
@@ -391,9 +307,7 @@ export function useReportData(studentId: string | undefined): UseReportResult {
     data,
     loading,
     error,
-    setFrameworkId,
     setPeriodKey,
-    selectedFrameworkId,
     selectedPeriodKey: effectivePeriodKey,
   }
 }

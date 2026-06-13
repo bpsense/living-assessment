@@ -5,8 +5,6 @@ import type {
   SchoolContext,
   SchoolDocument,
   Dimension,
-  StandardsFramework,
-  Standard,
   SchoolProfileSectionKey,
   SchoolProfileVisibility,
 } from '../types/database'
@@ -16,15 +14,10 @@ import { DEFAULT_PROFILE_VISIBILITY } from '../types/database'
 // Types
 // ============================================================
 
-export interface StandardsFrameworkWithStandards extends StandardsFramework {
-  standards: Standard[]
-}
-
 interface SchoolProfileState {
   school: School | null
   documents: SchoolDocument[]
   dimensions: Dimension[]
-  frameworks: StandardsFrameworkWithStandards[]
   loading: boolean
   saving: boolean
   error: string | null
@@ -46,7 +39,6 @@ const INITIAL_STATE: SchoolProfileState = {
   school: null,
   documents: [],
   dimensions: [],
-  frameworks: [],
   loading: true,
   saving: false,
   error: null,
@@ -68,7 +60,7 @@ export function useSchoolProfile(schoolId: string | undefined): UseSchoolProfile
     setState((prev) => ({ ...prev, loading: true, error: null }))
 
     try {
-      const [schoolRes, docsRes, dimsRes, fwRes, stdRes] = await Promise.all([
+      const [schoolRes, docsRes, dimsRes] = await Promise.all([
         supabase.from('schools').select('*').eq('id', schoolId).single(),
         supabase
           .from('school_documents')
@@ -80,33 +72,14 @@ export function useSchoolProfile(schoolId: string | undefined): UseSchoolProfile
           .select('*')
           .eq('school_id', schoolId)
           .order('display_order'),
-        supabase
-          .from('standards_frameworks')
-          .select('*')
-          .eq('school_id', schoolId)
-          .order('name'),
-        supabase
-          .from('standards')
-          .select('*')
-          .eq('school_id', schoolId)
-          .order('display_order'),
       ])
 
       if (schoolRes.error) throw schoolRes.error
-
-      // Group standards under their frameworks
-      const allStandards = (stdRes.data as Standard[]) ?? []
-      const rawFrameworks = (fwRes.data as StandardsFramework[]) ?? []
-      const frameworks: StandardsFrameworkWithStandards[] = rawFrameworks.map((fw) => ({
-        ...fw,
-        standards: allStandards.filter((s) => s.framework_id === fw.id),
-      }))
 
       setState({
         school: schoolRes.data as School,
         documents: (docsRes.data as SchoolDocument[]) ?? [],
         dimensions: (dimsRes.data as Dimension[]) ?? [],
-        frameworks,
         loading: false,
         saving: false,
         error: docsRes.error ? 'Could not load documents' : null,
