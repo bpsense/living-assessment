@@ -413,6 +413,7 @@ export default function StudentProfile() {
             dimensions: visibleDimensions,
             dimensionStandards,
             standardAssessments,
+            observations,
           }}
           onObservationSaved={refetch}
         />

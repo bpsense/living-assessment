@@ -26,10 +26,16 @@ import {
   type Zone,
   type Trend,
 } from './competency-snapshot'
-import { type StandardAssessment } from './standards-assignment-data'
+import {
+  ASSESSMENT_LEVELS,
+  type AssessmentLevel,
+  type StandardAssessment,
+} from './standards-assignment-data'
 import type {
+  Competency,
   Dimension,
   DimensionStandard,
+  Observation,
   Standard,
   Student,
 } from '../types/database'
@@ -306,6 +312,87 @@ export function buildCompetencySnapshot(input: SnapshotInputs): CompetencySnapsh
     unassigned,
     totals,
   }
+}
+
+// ============================================================
+// Observations-driven snapshot (schools without the standards pipeline)
+// ============================================================
+
+/** Map a 1-4 observation rating to an assessment level. */
+function ratingToLevel(rating: number): AssessmentLevel {
+  const i = Math.min(4, Math.max(1, Math.round(Number(rating)))) - 1
+  return ASSESSMENT_LEVELS[i]
+}
+
+/**
+ * Build the same CompetencySnapshot shape from the flat competency model
+ * (`competencies` + `observations.competency_id`) instead of the standards
+ * pipeline. Competencies are adapted to the `Standard` shape and observations
+ * to `StandardAssessment`, so all the spectrum/zone/ghost/render logic is reused
+ * unchanged. Used as a fallback for schools that assess via observations.
+ */
+export function buildCompetencySnapshotFromObservations(input: {
+  student: Pick<Student, 'id' | 'school_id' | 'date_of_birth'>
+  dimensions: Dimension[]
+  competencies: Competency[]
+  observations: Observation[]
+  familyView: boolean
+  now?: Date
+}): CompetencySnapshot {
+  const { student, dimensions, competencies, observations, familyView, now } = input
+  const linked = competencies.filter((c) => c.dimension_id)
+
+  const standards: Standard[] = linked.map((c) => ({
+    id: c.id,
+    framework_id: c.framework_id ?? '',
+    school_id: c.school_id ?? student.school_id,
+    // The snapshot renders `code` as the marker label — use the competency name
+    // (its internal BL.* code would be meaningless to a teacher/parent).
+    code: c.name,
+    description: c.objective ?? c.name,
+    grade_level: null,
+    parent_id: null,
+    display_order: c.display_order,
+    visible_to_family: true,
+    age_band_start: c.age_band_start,
+    age_band_end: c.age_band_end,
+    created_at: c.created_at,
+    updated_at: c.created_at,
+  }))
+
+  const dimensionStandards: DimensionStandard[] = linked.map((c) => ({
+    id: c.id,
+    dimension_id: c.dimension_id as string,
+    standard_id: c.id,
+    school_id: c.school_id ?? student.school_id,
+    created_at: c.created_at,
+  }))
+
+  const assessments: StandardAssessment[] = observations
+    .filter((o) => o.competency_id)
+    .map((o) => ({
+      id: o.id,
+      student_assignment_id: '',
+      student_id: o.student_id,
+      school_id: o.school_id,
+      standard_id: o.competency_id as string,
+      level: ratingToLevel(Number(o.rating)),
+      notes: o.notes,
+      assessor_id: o.observer_id,
+      assessed_at: o.observed_at,
+      created_at: o.created_at,
+    }))
+    .sort((a, b) => new Date(a.assessed_at).getTime() - new Date(b.assessed_at).getTime())
+
+  return buildCompetencySnapshot({
+    student,
+    dimensions,
+    dimensionStandards,
+    standards,
+    assessments,
+    familyView,
+    now,
+  })
 }
 
 // ============================================================
