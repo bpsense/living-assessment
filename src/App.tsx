@@ -15,7 +15,6 @@ import EducatorProfilePage from './pages/admin/EducatorProfile'
 import Families from './pages/admin/Families'
 import FamilyView from './pages/admin/FamilyView'
 import Departments from './pages/admin/Departments'
-import Standards from './pages/Standards'
 import Observe from './pages/Observe'
 import Profile from './pages/Profile'
 import SchoolProfile from './pages/SchoolProfile'
@@ -153,14 +152,6 @@ function AppRoutes() {
         <Route
           path="/admin/dimensions"
           element={<Navigate to="/admin/learner-profile" replace />}
-        />
-        <Route
-          path="/standards"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <Standards />
-            </ProtectedRoute>
-          }
         />
         <Route
           path="/translate"

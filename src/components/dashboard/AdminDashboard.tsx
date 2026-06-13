@@ -17,7 +17,6 @@ import {
   GraduationCap,
   ClipboardPen,
   Layers,
-  BookOpen,
   Settings,
 } from 'lucide-react'
 import type { AdminDashboardData } from '../../lib/dashboard-data'
@@ -325,12 +324,6 @@ export default function AdminDashboard({ data }: Props) {
             icon={<Layers className="h-5 w-5 text-primary-600" />}
             label="Configure Dimensions"
             to="/dimensions"
-            navigate={navigate}
-          />
-          <QuickLink
-            icon={<BookOpen className="h-5 w-5 text-primary-600" />}
-            label="Standards"
-            to="/standards"
             navigate={navigate}
           />
           <QuickLink
