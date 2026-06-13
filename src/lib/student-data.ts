@@ -10,11 +10,9 @@ import type {
   CompetencyScoreRow,
   CompetencyDimensionMapping,
   Competency,
-  DimensionStandard,
 } from '../types/database'
 import { buildDimensionScores } from './scoring'
 import type { DimensionScore, CompetencyBasedData } from './scoring'
-import type { StandardAssessment } from './standards-assignment-data'
 
 // Re-export scoring types so existing imports from student-data continue to work
 export type { DimensionScore, Zone, ZoneClassification } from './scoring'
@@ -91,10 +89,6 @@ export interface StudentProfileData {
   observers: Map<string, string>
   /** Competency-based scoring data (from assignments). null when no assignment data exists. */
   competencyData: CompetencyBasedData | null
-  /** Standards-driven assessments for this student (append-only history that feeds the amoeba). */
-  standardAssessments: StandardAssessment[]
-  /** standard_id → dimension_id mapping for this school (rollup bridge). */
-  dimensionStandards: DimensionStandard[]
   loading: boolean
   error: string | null
   refetch: () => void
@@ -109,8 +103,6 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
   const [surveys, setSurveys] = useState<InterestSurvey[]>([])
   const [observers, setObservers] = useState<Map<string, string>>(new Map())
   const [competencyData, setCompetencyData] = useState<CompetencyBasedData | null>(null)
-  const [standardAssessments, setStandardAssessments] = useState<StandardAssessment[]>([])
-  const [dimensionStandards, setDimensionStandards] = useState<DimensionStandard[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [fetchCount, setFetchCount] = useState(0)
@@ -161,8 +153,7 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
 
         if (cancelled) return
 
-        // Fetch classrooms, dimensions, observations, surveys, competency data,
-        // and the standards-driven amoeba pipeline (assessments + dimension bridges) in parallel
+        // Fetch classrooms, dimensions, observations, surveys, and competency data in parallel
         const [
           classroomsRes,
           dimensionsRes,
@@ -171,8 +162,6 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
           compScoresRes,
           mappingsRes,
           competenciesRes,
-          standardAssessmentsRes,
-          dimensionStandardsRes,
         ] = await Promise.all([
           classroomIds.length > 0
             ? supabase.from('classrooms').select('*').in('id', classroomIds)
@@ -219,17 +208,6 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
                   .eq('school_id', stu.school_id)
               ).data?.map((f) => f.id) || []
             ),
-          // Standards-driven assessments — append-only history that feeds the amoeba
-          supabase
-            .from('assignment_standard_assessments')
-            .select('*')
-            .eq('student_id', studentId)
-            .order('assessed_at', { ascending: true }),
-          // standard_id ↔ dimension_id bridges for this school's amoeba rollup
-          supabase
-            .from('dimension_standards')
-            .select('id, dimension_id, standard_id, school_id, created_at')
-            .eq('school_id', stu.school_id),
         ])
 
         if (cancelled) return
@@ -247,16 +225,12 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
         const compScoresData = (compScoresRes.data ?? []) as CompetencyScoreRow[]
         const mappingsData = (mappingsRes.data ?? []) as CompetencyDimensionMapping[]
         const competenciesData = (competenciesRes.data ?? []) as Competency[]
-        const standardAssessmentsData = (standardAssessmentsRes.data ?? []) as StandardAssessment[]
-        const dimensionStandardsData = (dimensionStandardsRes.data ?? []) as DimensionStandard[]
 
         setClassroom(classroomData ? { ...classroomData } : null)
         setClassrooms(classroomsList)
         setDimensions(dimensionsData)
         setObservations(observationsData)
         setSurveys(surveysData)
-        setStandardAssessments(standardAssessmentsData)
-        setDimensionStandards(dimensionStandardsData)
 
         // Build competency-based data if we have scores and mappings
         if (compScoresData.length > 0 && mappingsData.length > 0) {
@@ -322,8 +296,6 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
     surveys,
     observers,
     competencyData,
-    standardAssessments,
-    dimensionStandards,
     loading,
     error,
     refetch,
