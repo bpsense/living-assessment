@@ -5,7 +5,19 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import { useToast } from '../Toast'
 import { DimensionIcon } from '../student/DimensionIcon'
-import type { Dimension, ObservationRating } from '../../types/database'
+import type { Dimension, Competency, ObservationRating } from '../../types/database'
+
+/** Whole-year age from a date-of-birth string (null if unknown). */
+function ageFromDob(dob: string | null): number | null {
+  if (!dob) return null
+  const b = new Date(dob)
+  if (isNaN(b.getTime())) return null
+  const now = new Date()
+  let age = now.getFullYear() - b.getFullYear()
+  const m = now.getMonth() - b.getMonth()
+  if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--
+  return age
+}
 
 // ============================================================
 // Rating level config
@@ -94,6 +106,12 @@ export default function ObservationForm({
   const [saving, setSaving] = useState(false)
   const [loadingDims, setLoadingDims] = useState(true)
 
+  // Competency picker (age-appropriate competencies within the selected dimension)
+  const [studentAge, setStudentAge] = useState<number | null>(null)
+  const [competencies, setCompetencies] = useState<Competency[]>([])
+  const [selectedCompetency, setSelectedCompetency] = useState<string | null>(null)
+  const [loadingComps, setLoadingComps] = useState(false)
+
   // Assignment linking
   const [assignments, setAssignments] = useState<
     { id: string; title: string; student_assignment_id: string | null }[]
@@ -150,8 +168,76 @@ export default function ObservationForm({
     if (preselectedDimensionId) setSelectedDimension(preselectedDimensionId)
   }, [preselectedDimensionId])
 
+  // Fetch the student's age (to filter competencies by age band)
+  useEffect(() => {
+    async function loadAge() {
+      const { data } = await supabase
+        .from('students')
+        .select('date_of_birth')
+        .eq('id', studentId)
+        .single()
+      setStudentAge(ageFromDob((data as { date_of_birth: string | null } | null)?.date_of_birth ?? null))
+    }
+    loadAge()
+  }, [studentId])
+
+  // Fetch the selected dimension's competencies, filtered to the child's age band
+  useEffect(() => {
+    setSelectedCompetency(null)
+    if (!selectedDimension) {
+      setCompetencies([])
+      return
+    }
+    let cancelled = false
+    setLoadingComps(true)
+    async function loadComps() {
+      const { data } = await supabase
+        .from('competencies')
+        .select('*')
+        .eq('school_id', schoolId)
+        .eq('dimension_id', selectedDimension)
+        .order('display_order')
+        .order('name')
+      if (cancelled) return
+      let rows = (data ?? []) as Competency[]
+      if (studentAge != null) {
+        rows = rows.filter(
+          (c) =>
+            (c.age_band_start == null || c.age_band_start <= studentAge) &&
+            (c.age_band_end == null || c.age_band_end >= studentAge)
+        )
+      }
+      setCompetencies(rows)
+      setLoadingComps(false)
+    }
+    loadComps()
+    return () => {
+      cancelled = true
+    }
+  }, [selectedDimension, schoolId, studentAge])
+
   const selectedDimensionObj = dimensions.find((d) => d.id === selectedDimension)
-  const canSave = selectedDimension && rating && profile
+  const selectedCompetencyObj = competencies.find((c) => c.id === selectedCompetency)
+  // When a dimension has competencies, recording one is required; otherwise allow a dimension-level note.
+  const needsCompetency = competencies.length > 0
+  const canSave =
+    !!selectedDimension &&
+    !!rating &&
+    !!profile &&
+    !loadingComps &&
+    (!needsCompetency || !!selectedCompetency)
+
+  // Group competencies by their standard label (preserve display order)
+  const competencyGroups: { label: string; items: Competency[] }[] = []
+  for (const c of competencies) {
+    const label = c.standard_label ?? 'Other'
+    let g = competencyGroups.find((x) => x.label === label)
+    if (!g) {
+      g = { label, items: [] }
+      competencyGroups.push(g)
+    }
+    g.items.push(c)
+  }
 
   async function handleSave() {
     if (!canSave) return
@@ -170,6 +256,7 @@ export default function ObservationForm({
       school_id: schoolId,
       student_id: studentId,
       dimension_id: selectedDimension,
+      competency_id: selectedCompetency,
       observer_id: profile!.id,
       rating: rating,
       notes: notesWithEvidence,
@@ -190,6 +277,7 @@ export default function ObservationForm({
     setNotes('')
     setEvidenceUrl('')
     setSelectedAssignment('')
+    setSelectedCompetency(null)
     if (!preselectedDimensionId) setSelectedDimension(null)
     onSaved?.()
   }
@@ -252,10 +340,85 @@ export default function ObservationForm({
         </div>
       </div>
 
+      {/* ---- Competency picker (age-appropriate, within the selected dimension) ---- */}
+      {selectedDimension && (
+        <div>
+          <label className="mb-2 block text-sm font-semibold text-text">
+            Competency
+            {studentAge != null && (
+              <span className="ml-1 text-xs font-normal text-text-light">
+                · age-appropriate for {studentAge}y
+              </span>
+            )}
+          </label>
+
+          {loadingComps ? (
+            <div className="flex items-center gap-2 py-3 text-sm text-text-muted">
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading competencies…
+            </div>
+          ) : competencies.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-bg-muted px-4 py-3 text-xs text-text-muted">
+              No competencies set up for this dimension yet — you can record a
+              dimension-level observation, or add competencies in Settings → Dimensions.
+            </p>
+          ) : (
+            <div className="max-h-72 space-y-3 overflow-y-auto pr-1">
+              {competencyGroups.map((g) => (
+                <div key={g.label}>
+                  <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-text-light">
+                    {g.label}
+                  </p>
+                  <div className="space-y-1.5">
+                    {g.items.map((c) => {
+                      const selected = selectedCompetency === c.id
+                      const desc =
+                        studentAge != null
+                          ? c.step_descriptors?.[String(studentAge)]
+                          : undefined
+                      return (
+                        <button
+                          key={c.id}
+                          onClick={() => setSelectedCompetency(c.id)}
+                          className={clsx(
+                            'block w-full rounded-xl border-2 px-3 py-2 text-left transition-all',
+                            selected
+                              ? 'border-primary-500 bg-primary-50'
+                              : 'border-bg-muted bg-bg-card hover:border-primary-200'
+                          )}
+                        >
+                          <span
+                            className={clsx(
+                              'block text-sm font-medium',
+                              selected ? 'text-primary-700' : 'text-text'
+                            )}
+                          >
+                            {c.name}
+                          </span>
+                          {desc && (
+                            <span className="mt-0.5 block text-[11px] leading-snug text-text-muted">
+                              {desc}
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ---- Competency rating ---- */}
       <div>
         <label className="mb-2 block text-sm font-semibold text-text">
-          Competency Level
+          Level
+          {selectedCompetencyObj && (
+            <span className="ml-1 text-xs font-normal text-text-light">
+              · {selectedCompetencyObj.name}
+            </span>
+          )}
         </label>
         <div className={clsx('grid gap-2', compact ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-4')}>
           {RATING_LEVELS.map((level) => (

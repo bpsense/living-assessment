@@ -188,7 +188,7 @@ export function computeCompetencyBasedScores(
 
       breakdown.push({
         competency_id: comp.id,
-        competency_code: comp.code,
+        competency_code: comp.code ?? '',
         competency_name: comp.name,
         score: Number(scoreRow.score),
         source: scoreRow.source,

@@ -137,6 +137,12 @@ export interface Dimension {
   display_order: number
   icon: string | null
   category: string
+  /** 'Academic' | 'Social-Emotional' — top-level strand from the Boundless framework. */
+  strand: string | null
+  /** Learner-profile word, e.g. 'Thinker'. */
+  learner_profile: string | null
+  /** Descriptive area name, e.g. 'Scientific Thinking & Inquiry'. */
+  area_of_development: string | null
   is_active: boolean
   visible_to_family: boolean
   created_at: string
@@ -148,6 +154,8 @@ export interface Observation {
   school_id: string
   student_id: string
   dimension_id: string
+  /** Optional link to the specific competency (within the dimension) that was observed. */
+  competency_id: string | null
   observer_id: string
   rating: ObservationRating
   notes: string | null
@@ -717,9 +725,16 @@ export type StepDescriptors = Record<string, string>
 
 export interface Competency {
   id: string
-  subdomain_id: string
-  framework_id: string
-  code: string
+  /** School that owns this competency (the flat spine is school-scoped). */
+  school_id: string | null
+  /**
+   * Dimension this competency belongs to (the assessment spine:
+   * Dimension -> Competency -> Observation). NULL means "unplaced" -- the
+   * per-dimension observation picker hides it until an admin maps it.
+   */
+  dimension_id: string | null
+  /** Optional "Standard" group label from the source framework, e.g. 'Doing an inquiry/ PBL'. */
+  standard_label: string | null
   name: string
   objective: string | null
   step_descriptors: StepDescriptors
@@ -727,14 +742,31 @@ export interface Competency {
   age_band_start: number | null
   /** Inclusive upper bound of the typical age this competency targets. */
   age_band_end: number | null
+  display_order: number
+  /** Legacy framework linkage (Common-Core seed); null for Boundless-framework rows. */
+  subdomain_id: string | null
+  framework_id: string | null
+  code: string | null
   created_at: string
 }
 
-export type CompetencyInsert = Omit<Competency, 'id' | 'created_at' | 'age_band_start' | 'age_band_end'> & {
+export type CompetencyInsert = Omit<
+  Competency,
+  | 'id' | 'created_at' | 'age_band_start' | 'age_band_end' | 'dimension_id'
+  | 'school_id' | 'standard_label' | 'display_order'
+  | 'subdomain_id' | 'framework_id' | 'code'
+> & {
   id?: string
   objective?: string | null
   age_band_start?: number | null
   age_band_end?: number | null
+  dimension_id?: string | null
+  school_id?: string | null
+  standard_label?: string | null
+  display_order?: number
+  subdomain_id?: string | null
+  framework_id?: string | null
+  code?: string | null
 }
 
 // ============================================================
