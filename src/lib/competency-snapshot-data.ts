@@ -21,6 +21,7 @@ import {
   classifyBand,
   classifyTrend,
   computeSpectrumScore,
+  decayWeight,
   spectrumToBarPercent,
   spectrumToZone,
   type Zone,
@@ -324,31 +325,13 @@ function ratingToLevel(rating: number): AssessmentLevel {
   return ASSESSMENT_LEVELS[i]
 }
 
-/**
- * Build the same CompetencySnapshot shape from the flat competency model
- * (`competencies` + `observations.competency_id`) instead of the standards
- * pipeline. Competencies are adapted to the `Standard` shape and observations
- * to `StandardAssessment`, so all the spectrum/zone/ghost/render logic is reused
- * unchanged. Used as a fallback for schools that assess via observations.
- */
-export function buildCompetencySnapshotFromObservations(input: {
-  student: Pick<Student, 'id' | 'school_id' | 'date_of_birth'>
-  dimensions: Dimension[]
-  competencies: Competency[]
-  observations: Observation[]
-  familyView: boolean
-  now?: Date
-}): CompetencySnapshot {
-  const { student, dimensions, competencies, observations, familyView, now } = input
-  const linked = competencies.filter((c) => c.dimension_id)
-
-  const standards: Standard[] = linked.map((c) => ({
+/** Adapt a competency to the `Standard` shape the renderer expects (label = name). */
+function competencyAsStandard(c: Competency, fallbackSchoolId: string): Standard {
+  return {
     id: c.id,
     framework_id: c.framework_id ?? '',
-    school_id: c.school_id ?? student.school_id,
-    // The snapshot renders `code` as the marker label — use the competency name
-    // (its internal BL.* code would be meaningless to a teacher/parent).
-    code: c.name,
+    school_id: c.school_id ?? fallbackSchoolId,
+    code: c.name, // marker label — the internal BL.* code is meaningless to users
     description: c.objective ?? c.name,
     grade_level: null,
     parent_id: null,
@@ -358,41 +341,175 @@ export function buildCompetencySnapshotFromObservations(input: {
     age_band_end: c.age_band_end,
     created_at: c.created_at,
     updated_at: c.created_at,
+  }
+}
+
+/** Adapt an observation to the `StandardAssessment` shape (for level label + trend). */
+function observationAsAssessment(o: Observation): StandardAssessment {
+  return {
+    id: o.id,
+    student_assignment_id: '',
+    student_id: o.student_id,
+    school_id: o.school_id,
+    standard_id: o.competency_id as string,
+    level: ratingToLevel(Number(o.rating)),
+    notes: o.notes,
+    assessor_id: o.observer_id,
+    assessed_at: o.observed_at,
+    created_at: o.created_at,
+  }
+}
+
+/**
+ * Spectrum contribution [0,5] of a single observation, based on the step it was
+ * assessed at relative to the learner's current age:
+ *   - above step  -> "above" zone (>=4), even at "developing"
+ *   - at step      -> raw rating 1-4 (zones: <2 below, 2-4 at, >=4 above)
+ *   - below step   -> "below" zone (<2); "achieving"+ is handled as drop-off, so
+ *                     only emerging/developing reach here
+ * NULL assessed_age (legacy / dimension-level) falls back to raw rating.
+ */
+function observationStepScore(
+  rating: number,
+  assessedAge: number | null,
+  learnerAge: number | null
+): number {
+  const r = Math.max(1, Math.min(4, Number(rating)))
+  if (learnerAge == null || assessedAge == null) return r
+  const rel = assessedAge - learnerAge
+  if (rel > 0) return Math.min(5, 4 + 0.15 * (rel - 1) + 0.2 * (r - 1))
+  if (rel < 0) return Math.max(0, Math.min(1.9, r - 1 - 0.3 * (Math.abs(rel) - 1)))
+  return r
+}
+
+/**
+ * Build the Competency Snapshot from the flat competency model
+ * (`competencies` + `observations.competency_id` + `observations.assessed_age`).
+ *
+ * Position rule (per competency, vs the learner's CURRENT age):
+ *   - drops off entirely once "achieving"+ is recorded at a below-age step
+ *     (below-age content the learner has mastered)
+ *   - otherwise positioned by a recency-weighted (90-day half-life, last 5)
+ *     average of each observation's step-relative score (see observationStepScore)
+ *   - age-appropriate competencies with no observations show as centered ghosts
+ */
+export function buildCompetencySnapshotFromObservations(input: {
+  student: Pick<Student, 'id' | 'school_id' | 'date_of_birth'>
+  dimensions: Dimension[]
+  competencies: Competency[]
+  observations: Observation[]
+  familyView: boolean
+  now?: Date
+}): CompetencySnapshot {
+  const { student, dimensions, competencies, observations, familyView, now = new Date() } = input
+  const learnerAge = ageFromDob(student.date_of_birth ?? null, now)
+
+  const visibleDims = familyView ? dimensions.filter((d) => d.visible_to_family) : dimensions
+  const visibleDimIds = new Set(visibleDims.map((d) => d.id))
+
+  const obsByComp = new Map<string, Observation[]>()
+  for (const o of observations) {
+    if (!o.competency_id) continue
+    const arr = obsByComp.get(o.competency_id)
+    if (arr) arr.push(o)
+    else obsByComp.set(o.competency_id, [o])
+  }
+
+  const groups: DomainGroup[] = visibleDims.map((dimension) => ({
+    dimension,
+    rows: [],
+    counts: emptyZoneCounts(),
+    untimed: [],
   }))
+  const groupByDim = new Map(groups.map((g) => [g.dimension.id, g]))
+  const unassigned: SnapshotRow[] = []
+  const nowMs = now.getTime()
 
-  const dimensionStandards: DimensionStandard[] = linked.map((c) => ({
-    id: c.id,
-    dimension_id: c.dimension_id as string,
-    standard_id: c.id,
-    school_id: c.school_id ?? student.school_id,
-    created_at: c.created_at,
-  }))
+  for (const comp of competencies) {
+    if (!comp.dimension_id || !visibleDimIds.has(comp.dimension_id)) continue
 
-  const assessments: StandardAssessment[] = observations
-    .filter((o) => o.competency_id)
-    .map((o) => ({
-      id: o.id,
-      student_assignment_id: '',
-      student_id: o.student_id,
-      school_id: o.school_id,
-      standard_id: o.competency_id as string,
-      level: ratingToLevel(Number(o.rating)),
-      notes: o.notes,
-      assessor_id: o.observer_id,
-      assessed_at: o.observed_at,
-      created_at: o.created_at,
-    }))
-    .sort((a, b) => new Date(a.assessed_at).getTime() - new Date(b.assessed_at).getTime())
+    const hist = (obsByComp.get(comp.id) ?? [])
+      .slice()
+      .sort((a, b) => new Date(a.observed_at).getTime() - new Date(b.observed_at).getTime())
 
-  return buildCompetencySnapshot({
-    student,
-    dimensions,
-    dimensionStandards,
-    standards,
-    assessments,
-    familyView,
-    now,
-  })
+    // Drop-off: ever achieved (3+) at a step below the learner's current age.
+    const dropped = hist.some(
+      (o) =>
+        o.assessed_age != null &&
+        learnerAge != null &&
+        o.assessed_age < learnerAge &&
+        Number(o.rating) >= 3
+    )
+    if (dropped) continue
+
+    const applicableNow =
+      learnerAge != null &&
+      (comp.age_band_start == null || comp.age_band_start <= learnerAge) &&
+      (comp.age_band_end == null || comp.age_band_end >= learnerAge)
+
+    let spectrumScore: number | null
+    let isGhost: boolean
+    if (hist.length === 0) {
+      if (!applicableNow) continue // not age-appropriate and unassessed — omit
+      isGhost = true
+      spectrumScore = learnerAge == null ? null : 3
+    } else {
+      isGhost = false
+      const recent = hist.slice(-5) // most recent 5
+      let weightedSum = 0
+      let totalWeight = 0
+      for (const o of recent) {
+        const days = Math.max(0, (nowMs - new Date(o.observed_at).getTime()) / 86_400_000)
+        const w = decayWeight(days)
+        weightedSum += observationStepScore(Number(o.rating), o.assessed_age, learnerAge) * w
+        totalWeight += w
+      }
+      spectrumScore = totalWeight > 0 ? Math.max(0, Math.min(5, weightedSum / totalWeight)) : null
+    }
+
+    const adaptedHist = hist.map(observationAsAssessment)
+    const zone = spectrumToZone(spectrumScore)
+    const row: SnapshotRow = {
+      standard: competencyAsStandard(comp, student.school_id),
+      latest: adaptedHist.length ? adaptedHist[adaptedHist.length - 1] : null,
+      history: adaptedHist,
+      spectrumScore,
+      barPercent: spectrumScore === null ? 50 : spectrumToBarPercent(spectrumScore),
+      zone,
+      trend: classifyTrend(adaptedHist),
+      isGhost,
+    }
+
+    const group = groupByDim.get(comp.dimension_id)
+    if (!group) {
+      unassigned.push(row)
+    } else if (zone === 'untimed') {
+      group.untimed.push(row)
+    } else {
+      group.rows.push(row)
+      group.counts[zone] += 1
+    }
+  }
+
+  for (const group of groups) {
+    group.rows.sort(rowSortFn)
+    group.untimed.sort(rowSortFn)
+  }
+  unassigned.sort(rowSortFn)
+
+  const totals = emptyZoneCounts()
+  for (const group of groups) {
+    for (const row of group.rows) totals[row.zone] += 1
+    for (const row of group.untimed) totals[row.zone] += 1
+  }
+  for (const row of unassigned) totals[row.zone] += 1
+
+  return {
+    learnerAge,
+    groups: groups.filter((g) => g.rows.length > 0 || g.untimed.length > 0),
+    unassigned,
+    totals,
+  }
 }
 
 // ============================================================

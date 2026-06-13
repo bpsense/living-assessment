@@ -156,6 +156,9 @@ export interface Observation {
   dimension_id: string
   /** Optional link to the specific competency (within the dimension) that was observed. */
   competency_id: string | null
+  /** Age step the competency was assessed against (may differ from the learner's
+   *  actual age, ±3 yrs for remedial/stretch). NULL = positioned by rating alone. */
+  assessed_age: number | null
   observer_id: string
   rating: ObservationRating
   notes: string | null

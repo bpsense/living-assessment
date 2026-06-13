@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { clsx } from 'clsx'
-import { Loader2, Link as LinkIcon, ClipboardList } from 'lucide-react'
+import { Loader2, Link as LinkIcon, ClipboardList, Minus, Plus } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import { useToast } from '../Toast'
@@ -108,6 +108,8 @@ export default function ObservationForm({
 
   // Competency picker (age-appropriate competencies within the selected dimension)
   const [studentAge, setStudentAge] = useState<number | null>(null)
+  /** Age step being assessed against. null = the learner's own age (default). */
+  const [assessedAge, setAssessedAge] = useState<number | null>(null)
   const [competencies, setCompetencies] = useState<Competency[]>([])
   const [selectedCompetency, setSelectedCompetency] = useState<string | null>(null)
   const [loadingComps, setLoadingComps] = useState(false)
@@ -181,9 +183,10 @@ export default function ObservationForm({
     loadAge()
   }, [studentId])
 
-  // Fetch the selected dimension's competencies, filtered to the child's age band
+  // Fetch the selected dimension's competencies (all steps; filtered by age below)
   useEffect(() => {
     setSelectedCompetency(null)
+    setAssessedAge(null) // reset step to "at age" when switching dimension
     if (!selectedDimension) {
       setCompetencies([])
       return
@@ -199,27 +202,39 @@ export default function ObservationForm({
         .order('display_order')
         .order('name')
       if (cancelled) return
-      let rows = (data ?? []) as Competency[]
-      if (studentAge != null) {
-        rows = rows.filter(
-          (c) =>
-            (c.age_band_start == null || c.age_band_start <= studentAge) &&
-            (c.age_band_end == null || c.age_band_end >= studentAge)
-        )
-      }
-      setCompetencies(rows)
+      setCompetencies((data ?? []) as Competency[])
       setLoadingComps(false)
     }
     loadComps()
     return () => {
       cancelled = true
     }
-  }, [selectedDimension, schoolId, studentAge])
+  }, [selectedDimension, schoolId])
+
+  // The age step being assessed (defaults to the learner's age). Steppable ±3 yrs.
+  const effectiveAge = assessedAge ?? studentAge
+  const stepLo = studentAge == null ? 1 : Math.max(1, studentAge - 3)
+  const stepHi = studentAge == null ? 16 : Math.min(16, studentAge + 3)
+
+  // Competencies applicable at the chosen step.
+  const visibleComps =
+    effectiveAge == null
+      ? competencies
+      : competencies.filter(
+          (c) =>
+            (c.age_band_start == null || c.age_band_start <= effectiveAge) &&
+            (c.age_band_end == null || c.age_band_end >= effectiveAge)
+        )
+
+  function stepAssessedAge(next: number) {
+    setAssessedAge(Math.max(stepLo, Math.min(stepHi, next)))
+    setSelectedCompetency(null) // a new step is a different assessment
+  }
 
   const selectedDimensionObj = dimensions.find((d) => d.id === selectedDimension)
-  const selectedCompetencyObj = competencies.find((c) => c.id === selectedCompetency)
+  const selectedCompetencyObj = visibleComps.find((c) => c.id === selectedCompetency)
   // When a dimension has competencies, recording one is required; otherwise allow a dimension-level note.
-  const needsCompetency = competencies.length > 0
+  const needsCompetency = visibleComps.length > 0
   const canSave =
     !!selectedDimension &&
     !!rating &&
@@ -229,7 +244,7 @@ export default function ObservationForm({
 
   // Group competencies by their standard label (preserve display order)
   const competencyGroups: { label: string; items: Competency[] }[] = []
-  for (const c of competencies) {
+  for (const c of visibleComps) {
     const label = c.standard_label ?? 'Other'
     let g = competencyGroups.find((x) => x.label === label)
     if (!g) {
@@ -257,6 +272,8 @@ export default function ObservationForm({
       student_id: studentId,
       dimension_id: selectedDimension,
       competency_id: selectedCompetency,
+      // Record the step assessed against (only meaningful with a competency).
+      assessed_age: selectedCompetency ? effectiveAge : null,
       observer_id: profile!.id,
       rating: rating,
       notes: notesWithEvidence,
@@ -278,6 +295,7 @@ export default function ObservationForm({
     setEvidenceUrl('')
     setSelectedAssignment('')
     setSelectedCompetency(null)
+    setAssessedAge(null)
     if (!preselectedDimensionId) setSelectedDimension(null)
     onSaved?.()
   }
@@ -343,14 +361,53 @@ export default function ObservationForm({
       {/* ---- Competency picker (age-appropriate, within the selected dimension) ---- */}
       {selectedDimension && (
         <div>
-          <label className="mb-2 block text-sm font-semibold text-text">
-            Competency
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <label className="block text-sm font-semibold text-text">Competency</label>
             {studentAge != null && (
-              <span className="ml-1 text-xs font-normal text-text-light">
-                · age-appropriate for {studentAge}y
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-text-muted">Assess at age</span>
+                <div className="inline-flex items-center gap-0.5 rounded-lg border border-bg-muted bg-bg-card px-1 py-0.5">
+                  <button
+                    type="button"
+                    onClick={() => stepAssessedAge((effectiveAge ?? studentAge) - 1)}
+                    disabled={(effectiveAge ?? studentAge) <= stepLo}
+                    className="rounded p-1 text-text-muted transition-colors hover:text-text disabled:opacity-30"
+                    aria-label="Assess at a younger age step"
+                  >
+                    <Minus className="h-3.5 w-3.5" />
+                  </button>
+                  <span className="min-w-[2.25rem] text-center text-sm font-semibold text-text">
+                    {effectiveAge}y
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => stepAssessedAge((effectiveAge ?? studentAge) + 1)}
+                    disabled={(effectiveAge ?? studentAge) >= stepHi}
+                    className="rounded p-1 text-text-muted transition-colors hover:text-text disabled:opacity-30"
+                    aria-label="Assess at an older age step"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <span
+                  className={clsx(
+                    'text-[11px] font-medium',
+                    effectiveAge === studentAge
+                      ? 'text-text-light'
+                      : (effectiveAge ?? 0) > studentAge
+                        ? 'text-primary-600'
+                        : 'text-accent-600'
+                  )}
+                >
+                  {effectiveAge === studentAge
+                    ? 'at age'
+                    : (effectiveAge ?? 0) > studentAge
+                      ? 'above age (stretch)'
+                      : 'below age'}
+                </span>
+              </div>
             )}
-          </label>
+          </div>
 
           {loadingComps ? (
             <div className="flex items-center gap-2 py-3 text-sm text-text-muted">
@@ -360,6 +417,10 @@ export default function ObservationForm({
             <p className="rounded-xl border border-dashed border-bg-muted px-4 py-3 text-xs text-text-muted">
               No competencies set up for this dimension yet — you can record a
               dimension-level observation, or add competencies in Settings → Dimensions.
+            </p>
+          ) : visibleComps.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-bg-muted px-4 py-3 text-xs text-text-muted">
+              No competencies apply at age {effectiveAge}. Step to another age.
             </p>
           ) : (
             <div className="max-h-72 space-y-3 overflow-y-auto pr-1">
@@ -372,8 +433,8 @@ export default function ObservationForm({
                     {g.items.map((c) => {
                       const selected = selectedCompetency === c.id
                       const desc =
-                        studentAge != null
-                          ? c.step_descriptors?.[String(studentAge)]
+                        effectiveAge != null
+                          ? c.step_descriptors?.[String(effectiveAge)]
                           : undefined
                       return (
                         <button
