@@ -22,6 +22,40 @@ export function getAgeFromDob(dob: string | null | undefined): number | null {
 }
 
 /**
+ * Whole-year age on a specific date (dob is yyyy-mm-dd). Null if unparseable.
+ */
+export function ageOnDate(dob: string | null | undefined, at: Date): number | null {
+  if (!dob) return null
+  const birth = new Date(dob + 'T00:00:00')
+  if (isNaN(birth.getTime())) return null
+  let age = at.getFullYear() - birth.getFullYear()
+  const md = at.getMonth() - birth.getMonth()
+  if (md < 0 || (md === 0 && at.getDate() < birth.getDate())) age--
+  return age >= 0 ? age : null
+}
+
+/**
+ * Assigned "standard age" for the school year containing `date`, via the Dec-1
+ * cutoff. The school year runs Sep–Aug, so a date in Jan–Aug belongs to the
+ * year that began the previous September. Whichever age the student is on Dec 1
+ * (the school-year midpoint) is the standard they are held to for the WHOLE
+ * year — so the expectation steps up every September, not on the birthday.
+ *
+ *   born ≤ Aug 31         → already the next age at year start  → higher standard
+ *   birthday Sep 1–Dec 1  → turns next age in the first half     → higher standard
+ *   birthday Dec 2–Jun 30 → at the current age most of the year  → current standard
+ */
+export function standardAgeForDate(
+  dob: string | null | undefined,
+  date: Date
+): number | null {
+  // Sep = month index 8. Sep–Dec belong to this calendar year's school year;
+  // Jan–Aug belong to the one that started the previous September.
+  const schoolYearStart = date.getMonth() >= 8 ? date.getFullYear() : date.getFullYear() - 1
+  return ageOnDate(dob, new Date(schoolYearStart, 11, 1)) // Dec 1
+}
+
+/**
  * Check whether an item's [start, end] age band overlaps a query [min, max]
  * range. Items with no declared band are treated as "any age" and match.
  * A null bound on either side is treated as open-ended.

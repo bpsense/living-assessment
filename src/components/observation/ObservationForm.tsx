@@ -5,19 +5,8 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import { useToast } from '../Toast'
 import { DimensionIcon } from '../student/DimensionIcon'
+import { standardAgeForDate } from '../../lib/age-utils'
 import type { Dimension, Competency, ObservationRating } from '../../types/database'
-
-/** Whole-year age from a date-of-birth string (null if unknown). */
-function ageFromDob(dob: string | null): number | null {
-  if (!dob) return null
-  const b = new Date(dob)
-  if (isNaN(b.getTime())) return null
-  const now = new Date()
-  let age = now.getFullYear() - b.getFullYear()
-  const m = now.getMonth() - b.getMonth()
-  if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--
-  return age
-}
 
 // ============================================================
 // Rating level config
@@ -178,7 +167,10 @@ export default function ObservationForm({
         .select('date_of_birth')
         .eq('id', studentId)
         .single()
-      setStudentAge(ageFromDob((data as { date_of_birth: string | null } | null)?.date_of_birth ?? null))
+      // Default the assessed age to the standard the learner is held to this
+      // school year (Dec-1 rule), not their raw current age. Educators can still
+      // step ±3 for stretch / remedial assessment.
+      setStudentAge(standardAgeForDate((data as { date_of_birth: string | null } | null)?.date_of_birth ?? null, new Date()))
     }
     loadAge()
   }, [studentId])

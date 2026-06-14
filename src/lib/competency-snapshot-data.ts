@@ -16,7 +16,6 @@
  * render them without dropping anything.
  */
 import {
-  ageFromDob,
   classifyTrend,
   decayWeight,
   spectrumToBarPercent,
@@ -25,6 +24,7 @@ import {
   type Zone,
   type Trend,
 } from './competency-snapshot'
+import { standardAgeForDate } from './age-utils'
 import {
   ASSESSMENT_LEVELS,
   type AssessmentLevel,
@@ -55,6 +55,10 @@ export interface SnapshotRow {
   trend: Trend
   /** True for age-appropriate standards with no assessment history. */
   isGhost: boolean
+  /** The assigned standard age this competency is assessed against (Dec-1 rule). */
+  standardAge: number | null
+  /** The age-specific "Achieving" descriptor for the standard age, or null. */
+  stepDescriptor: string | null
 }
 
 export interface DomainGroup {
@@ -158,7 +162,9 @@ export function buildCompetencySnapshotFromObservations(input: {
   now?: Date
 }): CompetencySnapshot {
   const { student, dimensions, competencies, observations, familyView, now = new Date() } = input
-  const learnerAge = ageFromDob(student.date_of_birth ?? null, now)
+  // The age standard we hold the learner to this school year (Dec-1 rule) — not
+  // necessarily their actual current age. Drives applicability + positioning.
+  const learnerAge = standardAgeForDate(student.date_of_birth ?? null, now)
 
   const visibleDims = familyView ? dimensions.filter((d) => d.visible_to_family) : dimensions
   const visibleDimIds = new Set(visibleDims.map((d) => d.id))
@@ -237,6 +243,9 @@ export function buildCompetencySnapshotFromObservations(input: {
     const adaptedHist = hist.map(observationAsAssessment)
     const recentAdapted = recentHist.map(observationAsAssessment)
     const zone = spectrumToZone(spectrumScore)
+    // Age-specific "Achieving" descriptor for the standard age (skip empty / N/A).
+    const rawDesc = learnerAge != null ? comp.step_descriptors?.[String(learnerAge)] : null
+    const stepDescriptor = rawDesc && rawDesc.trim() && rawDesc.trim() !== 'N/A' ? rawDesc.trim() : null
     const row: SnapshotRow = {
       standard: competencyAsStandard(comp, student.school_id),
       latest: recentAdapted.length ? recentAdapted[recentAdapted.length - 1] : null,
@@ -246,6 +255,8 @@ export function buildCompetencySnapshotFromObservations(input: {
       zone,
       trend: classifyTrend(recentAdapted),
       isGhost,
+      standardAge: learnerAge,
+      stepDescriptor,
     }
 
     const group = groupByDim.get(comp.dimension_id)
