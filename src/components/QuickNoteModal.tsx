@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { clsx } from 'clsx'
 import { X, Search, Loader2, Check, StickyNote, Lock, Unlock, Users } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { useToast } from './Toast'
 import { addTeacherNoteForStudents } from '../lib/sis-data'
+import { useEducatorClassroomScope } from '../lib/educator-data'
 import type { Student, NoteType } from '../types/database'
 
 interface Props {
@@ -42,75 +43,25 @@ function StudentMultiSelect({
   const [query, setQuery] = useState('')
   const [roster, setRoster] = useState<Student[]>([])
   const [loading, setLoading] = useState(true)
-  /** Educator's assigned classrooms (id + name). null until loaded. */
-  const [classrooms, setClassrooms] = useState<{ id: string; name: string }[] | null>(null)
-  /** Selected classroom filter; null = all of the educator's classrooms. */
-  const [selectedClassroom, setSelectedClassroom] = useState<string | null>(null)
-  const [noClassrooms, setNoClassrooms] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const isAdmin = role === 'admin'
-  const selectedIds = useMemo(() => new Set(selected.map((s) => s.id)), [selected])
+  const {
+    isAdmin,
+    classrooms,
+    selectedClassroom,
+    setSelectedClassroom,
+    noClassrooms,
+    scopedClassroomIds,
+    fetchActiveStudentIds,
+  } = useEducatorClassroomScope({ educatorId, role })
 
-  // Classroom IDs in the current scope (selected one, or all assigned).
-  const scopedClassroomIds = !classrooms
-    ? null
-    : selectedClassroom
-      ? [selectedClassroom]
-      : classrooms.map((c) => c.id)
+  const selectedIds = useMemo(() => new Set(selected.map((s) => s.id)), [selected])
 
   // Focus search on mount
   useEffect(() => {
     const timer = setTimeout(() => inputRef.current?.focus(), 100)
     return () => clearTimeout(timer)
   }, [])
-
-  // Fetch educator's assigned classrooms (educators only)
-  useEffect(() => {
-    if (isAdmin) {
-      setClassrooms(null)
-      return
-    }
-
-    async function fetchClassrooms() {
-      const { data } = await supabase
-        .from('educator_classrooms')
-        .select('classroom_id, classrooms(id, name)')
-        .eq('educator_id', educatorId)
-
-      const rooms = (data ?? [])
-        .map((r) => {
-          // Supabase types the joined relation as an array; it's to-one here.
-          const rel = (r as { classrooms: { id: string; name: string } | { id: string; name: string }[] | null }).classrooms
-          const c = Array.isArray(rel) ? rel[0] : rel
-          return c ? { id: c.id, name: c.name } : null
-        })
-        .filter((c): c is { id: string; name: string } => c !== null)
-        .sort((a, b) => a.name.localeCompare(b.name))
-
-      if (rooms.length === 0) {
-        setNoClassrooms(true)
-        setClassrooms([])
-      } else {
-        setNoClassrooms(false)
-        setClassrooms(rooms)
-      }
-    }
-    fetchClassrooms()
-  }, [educatorId, isAdmin])
-
-  // Active student IDs in the current classroom scope (educators only).
-  const fetchActiveStudentIds = useCallback(
-    async (classroomIds: string[]): Promise<string[]> => {
-      const { data } = await supabase
-        .from('student_classrooms')
-        .select('student_id')
-        .in('classroom_id', classroomIds)
-        .eq('status', 'active')
-      return [...new Set((data ?? []).map((r) => r.student_id))]
-    },
-    []
-  )
 
   // Load the full roster for the current scope. Unlike Quick Observation's
   // typeahead, we load the whole scoped list so the teacher can scan it and
