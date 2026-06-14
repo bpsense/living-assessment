@@ -55,7 +55,7 @@ interface Props {
 
 export default function SISSection({ student, onEdit, role, onRefetch }: Props) {
   const { contacts, loading: contactsLoading } = useStudentContacts(student.id)
-  const { parents: linkedParents, loading: parentsLoading } = useLinkedParents(student.id)
+  const { parents: linkedParents, loading: parentsLoading, refetch: refetchParents } = useLinkedParents(student.id)
   const showFamilyCode = role !== 'parent'
 
   // Expand by default if any SIS fields are populated
@@ -253,30 +253,13 @@ export default function SISSection({ student, onEdit, role, onRefetch }: Props) 
 
               {/* ── Linked Family Accounts ───────────── */}
               {showFamilyCode && (
-                <div>
-                  <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-text-muted">
-                    <User className="h-3.5 w-3.5" /> Linked Family Accounts
-                    {linkedParents.length > 0 && (
-                      <span className="rounded-full bg-primary-50 px-1.5 py-0.5 text-[10px] font-bold text-primary-700">
-                        {linkedParents.length}
-                      </span>
-                    )}
-                  </h3>
-
-                  {parentsLoading ? (
-                    <p className="text-xs text-text-light">Loading...</p>
-                  ) : linkedParents.length === 0 ? (
-                    <p className="text-xs text-text-light">
-                      No family accounts linked yet. Share the learner number with a parent to link.
-                    </p>
-                  ) : (
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {linkedParents.map((parent) => (
-                        <LinkedParentCard key={parent.id} parent={parent} />
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <LinkedFamilyAccounts
+                  student={student}
+                  parents={linkedParents}
+                  loading={parentsLoading}
+                  familyCode={student.family_code}
+                  onInvited={refetchParents}
+                />
               )}
 
               {/* ── Linked Learner Account ──────────── */}
@@ -455,6 +438,157 @@ function LinkedParentCard({ parent }: { parent: LinkedParent }) {
             <span className="truncate">{parent.email}</span>
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// Linked Family Accounts section (with invite)
+// ============================================================
+
+function LinkedFamilyAccounts({
+  student,
+  parents,
+  loading,
+  familyCode,
+  onInvited,
+}: {
+  student: Student
+  parents: LinkedParent[]
+  loading: boolean
+  familyCode: string | null
+  onInvited: () => void
+}) {
+  const [showForm, setShowForm] = useState(false)
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [inviting, setInviting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+
+  async function handleInvite(e: React.FormEvent) {
+    e.preventDefault()
+    if (!name.trim() || !email.trim()) return
+    setInviting(true)
+    setError(null)
+    const { error: err } = await inviteUser({
+      email: email.trim(),
+      fullName: name.trim(),
+      schoolId: student.school_id,
+      role: 'parent',
+    })
+    setInviting(false)
+    if (err) {
+      setError(err)
+      return
+    }
+    setSuccess(true)
+    setShowForm(false)
+    setName('')
+    setEmail('')
+    onInvited()
+  }
+
+  return (
+    <div>
+      <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-text-muted">
+        <User className="h-3.5 w-3.5" /> Linked Family Accounts
+        {parents.length > 0 && (
+          <span className="rounded-full bg-primary-50 px-1.5 py-0.5 text-[10px] font-bold text-primary-700">
+            {parents.length}
+          </span>
+        )}
+      </h3>
+
+      {loading ? (
+        <p className="text-xs text-text-light">Loading...</p>
+      ) : parents.length > 0 ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {parents.map((parent) => (
+            <LinkedParentCard key={parent.id} parent={parent} />
+          ))}
+        </div>
+      ) : (
+        <p className="text-xs text-text-light">No family accounts linked yet.</p>
+      )}
+
+      {/* Invite family */}
+      <div className="mt-3">
+        {success && (
+          <div className="mb-2 rounded-lg border border-success-200 bg-success-50 p-3">
+            <p className="text-xs font-medium text-success-700">
+              Invitation sent! Once they set up their account, they can link to {student.first_name}{' '}
+              with the family code{familyCode ? ` (${familyCode})` : ''}.
+            </p>
+          </div>
+        )}
+        {showForm ? (
+          <form onSubmit={handleInvite} className="rounded-lg border border-bg-muted bg-bg p-3 space-y-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-text-muted">
+                Parent / guardian name
+              </label>
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Jordan Rivera"
+                className="w-full rounded-lg border border-bg-muted bg-bg-card px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-300"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-text-muted">Email</label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="family@email.com"
+                className="w-full rounded-lg border border-bg-muted bg-bg-card px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-300"
+              />
+            </div>
+            {error && <p className="text-xs text-alert-600">{error}</p>}
+            <div className="flex items-center gap-2">
+              <button
+                type="submit"
+                disabled={inviting}
+                className="flex items-center gap-1.5 rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-600 disabled:opacity-50"
+              >
+                {inviting ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserPlus className="h-3 w-3" />}
+                Send Invite
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForm(false)
+                  setError(null)
+                }}
+                className="rounded-lg px-3 py-1.5 text-xs font-medium text-text-muted hover:bg-bg-muted"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="flex items-center gap-3 rounded-lg border border-dashed border-bg-muted bg-bg p-3">
+            <p className="flex-1 text-xs text-text-light">
+              Invite a parent/guardian to set up an account, then link to {student.first_name} with the
+              family code{familyCode ? ` (${familyCode})` : ''}.
+            </p>
+            <button
+              onClick={() => {
+                setShowForm(true)
+                setSuccess(false)
+              }}
+              className="flex shrink-0 items-center gap-1.5 rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-600"
+            >
+              <UserPlus className="h-3 w-3" />
+              Invite Family
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
