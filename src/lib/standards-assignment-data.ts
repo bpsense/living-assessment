@@ -34,6 +34,9 @@ export interface StandardAssessment {
   assessor_id: string
   assessed_at: string
   created_at: string
+  /** Age step this was assessed against (observations spine). May differ from
+   *  the learner's standard age for stretch/remedial. Optional; legacy rows omit it. */
+  assessed_age?: number | null
 }
 
 export function formatLevel(level: AssessmentLevel): string {

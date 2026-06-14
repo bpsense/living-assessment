@@ -59,6 +59,9 @@ export interface SnapshotRow {
   standardAge: number | null
   /** The age-specific "Achieving" descriptor for the standard age, or null. */
   stepDescriptor: string | null
+  /** Full per-age "Achieving" descriptors (age string -> text) for stepping the
+   *  assessed age up/down in the detail modal. */
+  stepDescriptors: Record<string, string>
 }
 
 export interface DomainGroup {
@@ -117,6 +120,7 @@ function observationAsAssessment(o: Observation): StandardAssessment {
     assessor_id: o.observer_id,
     assessed_at: o.observed_at,
     created_at: o.created_at,
+    assessed_age: o.assessed_age,
   }
 }
 
@@ -257,6 +261,7 @@ export function buildCompetencySnapshotFromObservations(input: {
       isGhost,
       standardAge: learnerAge,
       stepDescriptor,
+      stepDescriptors: comp.step_descriptors ?? {},
     }
 
     const group = groupByDim.get(comp.dimension_id)
