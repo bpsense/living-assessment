@@ -7,7 +7,7 @@ import LinkStudentModal from './LinkStudentModal'
 import { useAuth } from '../../lib/auth'
 import { fetchParentConversations, type ConversationWithDetails } from '../../lib/messaging-data'
 import type { ParentDashboardData } from '../../lib/dashboard-data'
-import { INTEREST_ENABLED } from '../../lib/features'
+import { INTEREST_ENABLED, MESSAGING_ENABLED } from '../../lib/features'
 
 interface Props {
   data: ParentDashboardData
@@ -100,6 +100,7 @@ export default function ParentDashboard({ data, userName, hideAddLearner }: Prop
       )}
 
       {/* ---- Recent Messages ---- */}
+      {MESSAGING_ENABLED && (
       <section className="glass-card">
         <div className="flex items-center justify-between border-b border-bg-muted px-5 py-4">
           <div className="flex items-center gap-2">
@@ -176,6 +177,7 @@ export default function ParentDashboard({ data, userName, hideAddLearner }: Prop
           </div>
         )}
       </section>
+      )}
 
       {/* ---- Child Cards ---- */}
       {data.children.length === 0 ? (
