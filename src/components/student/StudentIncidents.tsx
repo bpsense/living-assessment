@@ -61,9 +61,10 @@ export default function StudentIncidents({ studentId, isFamilyView = false }: Pr
     [incidents]
   )
 
-  // Family view: only show incidents shared with family
+  // Family view: only show incidents this student's family is allowed to see
+  // (per-student visibility, not the legacy incident-level flag).
   const visibleIncidents = useMemo(
-    () => isFamilyView ? incidents.filter((i) => i.shared_with_family) : incidents,
+    () => isFamilyView ? incidents.filter((i) => i.student_shared_with_family) : incidents,
     [incidents, isFamilyView]
   )
 
@@ -95,7 +96,8 @@ export default function StudentIncidents({ studentId, isFamilyView = false }: Pr
         ) : (
           <div className="space-y-2">
             {visibleIncidents.map((incident) => {
-              const sevStyle = SEVERITY_STYLES[incident.severity] ?? SEVERITY_STYLES.low
+              // Per-student severity override wins over the incident's overall severity.
+              const sevStyle = SEVERITY_STYLES[incident.effective_severity ?? incident.severity] ?? SEVERITY_STYLES.low
               const statusStyle = STATUS_STYLES[incident.status] ?? STATUS_STYLES.open
 
               return (

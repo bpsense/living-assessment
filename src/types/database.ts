@@ -1309,6 +1309,12 @@ export interface IncidentReport {
   witnesses: string | null
   parent_notified: boolean
   parent_notification_method: string | null
+  /** Narrative of what has been communicated to the family (staff-only). */
+  family_communication_log: string | null
+  /** Outstanding family-communication follow-up (staff-only). */
+  family_communication_followup: string | null
+  /** Legacy incident-level flag — retained but no longer drives parent access
+   * (per-student visibility on incident_report_students supersedes it). */
   shared_with_family: boolean
   status: IncidentStatus
   assigned_to: string | null
@@ -1318,13 +1324,15 @@ export interface IncidentReport {
   updated_at: string
 }
 
-export type IncidentReportInsert = Omit<IncidentReport, 'id' | 'created_at' | 'updated_at' | 'incident_time' | 'immediate_actions_taken' | 'witnesses' | 'parent_notified' | 'parent_notification_method' | 'shared_with_family' | 'status' | 'assigned_to' | 'resolution_notes' | 'resolved_at'> & {
+export type IncidentReportInsert = Omit<IncidentReport, 'id' | 'created_at' | 'updated_at' | 'incident_time' | 'immediate_actions_taken' | 'witnesses' | 'parent_notified' | 'parent_notification_method' | 'family_communication_log' | 'family_communication_followup' | 'shared_with_family' | 'status' | 'assigned_to' | 'resolution_notes' | 'resolved_at'> & {
   id?: string
   incident_time?: string | null
   immediate_actions_taken?: string | null
   witnesses?: string | null
   parent_notified?: boolean
   parent_notification_method?: string | null
+  family_communication_log?: string | null
+  family_communication_followup?: string | null
   shared_with_family?: boolean
   status?: IncidentStatus
   assigned_to?: string | null
@@ -1340,12 +1348,31 @@ export interface IncidentReportStudent {
   student_id: string
   role: IncidentStudentRole
   notes: string | null
+  /** Per-student severity override. null = inherit the incident's severity. */
+  severity: IncidentSeverity | null
+  /** Whether this student's family may see the incident (per-student). */
+  shared_with_family: boolean
 }
 
-export type IncidentReportStudentInsert = Omit<IncidentReportStudent, 'id'> & {
+export type IncidentReportStudentInsert = Omit<IncidentReportStudent, 'id' | 'severity' | 'shared_with_family'> & {
   id?: string
   role?: IncidentStudentRole
   notes?: string | null
+  severity?: IncidentSeverity | null
+  shared_with_family?: boolean
+}
+
+/** Row returned by the get_incident_family_students RPC. Non-redacted rows are
+ * the viewing family's own children; redacted rows expose nothing but their
+ * existence, to preserve the privacy of other families. */
+export interface IncidentFamilyStudent {
+  id: string
+  student_id: string | null
+  first_name: string | null
+  last_name: string | null
+  role: IncidentStudentRole | null
+  severity: IncidentSeverity | null
+  redacted: boolean
 }
 
 export interface IncidentReportClassroom {
@@ -1410,6 +1437,16 @@ export interface IncidentReportListItem extends IncidentReport {
   has_unread?: boolean
   /** Set when current user is on the tagged_users list (cc'd) */
   is_tagged?: boolean
+  // --- Per-student fields, populated when the list is scoped to one student
+  //     (useStudentIncidents). They describe that student's junction row. ---
+  /** This student's role on the incident. */
+  student_role?: IncidentStudentRole
+  /** This student's severity override (null = inherit). */
+  student_severity?: IncidentSeverity | null
+  /** Whether this student's family may see the incident. */
+  student_shared_with_family?: boolean
+  /** Per-student severity if set, otherwise the incident's severity. */
+  effective_severity?: IncidentSeverity
 }
 
 // ============================================================

@@ -16,6 +16,9 @@ import type {
   IncidentReportNotification,
   IncidentReportTaggedUser,
   IncidentStudentRole,
+  IncidentStatus,
+  IncidentSeverity,
+  IncidentFamilyStudent,
   Profile,
 } from '../types/database'
 
@@ -281,6 +284,8 @@ export function useIncidentReport(id: string | undefined) {
             student_id: s.student_id as string,
             role: s.role as string,
             notes: s.notes as string | null,
+            severity: (s.severity ?? null) as IncidentSeverity | null,
+            shared_with_family: (s.shared_with_family ?? false) as boolean,
             student: s.students as { id: string; first_name: string; last_name: string } | undefined,
           })) as IncidentReportWithDetails['students'],
           classrooms: (classroomsRes.data ?? []).map((c: Record<string, unknown>) => ({
@@ -339,10 +344,11 @@ export function useStudentIncidents(studentId: string | undefined) {
     async function load() {
       setLoading(true)
       try {
-        // Get incident IDs linked to this student
+        // Get this student's junction rows (one per incident) along with the
+        // per-student role, severity override, and family-visibility flag.
         const { data: links } = await supabase
           .from('incident_report_students')
-          .select('incident_report_id')
+          .select('incident_report_id, role, severity, shared_with_family')
           .eq('student_id', studentId)
 
         if (!links || links.length === 0) {
@@ -351,7 +357,24 @@ export function useStudentIncidents(studentId: string | undefined) {
           return
         }
 
-        const ids = links.map((l) => l.incident_report_id)
+        const linkMap = new Map<
+          string,
+          { role: IncidentStudentRole; severity: IncidentSeverity | null; shared_with_family: boolean }
+        >()
+        for (const l of links as {
+          incident_report_id: string
+          role: IncidentStudentRole
+          severity: IncidentSeverity | null
+          shared_with_family: boolean
+        }[]) {
+          linkMap.set(l.incident_report_id, {
+            role: l.role,
+            severity: l.severity,
+            shared_with_family: l.shared_with_family,
+          })
+        }
+
+        const ids = [...linkMap.keys()]
 
         const { data, error: err } = await supabase
           .from('incident_reports')
@@ -362,12 +385,20 @@ export function useStudentIncidents(studentId: string | undefined) {
         if (err) throw new Error(err.message)
         if (cancelled) return
 
-        const result: IncidentReportListItem[] = (data ?? []).map((item: IncidentReport & { profiles?: { full_name: string } }) => ({
-          ...item,
-          reporter_name: item.profiles?.full_name,
-          student_names: [],
-          student_count: 0,
-        }))
+        const result: IncidentReportListItem[] = (data ?? []).map((item: IncidentReport & { profiles?: { full_name: string } }) => {
+          const link = linkMap.get(item.id)
+          return {
+            ...item,
+            reporter_name: item.profiles?.full_name,
+            student_names: [],
+            student_count: 0,
+            student_role: link?.role,
+            student_severity: link?.severity ?? null,
+            student_shared_with_family: link?.shared_with_family ?? false,
+            // Per-student override wins over the incident's overall severity.
+            effective_severity: (link?.severity ?? item.severity) as IncidentSeverity,
+          }
+        })
 
         setIncidents(result)
       } catch (e) {
@@ -547,9 +578,12 @@ export async function addFollowUp(
   // 2. Update status if changed
   if (statusChange) {
     const update: IncidentReportUpdate = { status: statusChange as IncidentReport['status'] }
-    if (statusChange === 'resolved' || statusChange === 'closed') {
-      update.resolved_at = new Date().toISOString()
-    }
+    // Stamp resolved_at when resolving/closing; clear it when re-opening so a
+    // re-opened incident doesn't keep showing a stale "Resolved on …" date.
+    update.resolved_at =
+      statusChange === 'resolved' || statusChange === 'closed'
+        ? new Date().toISOString()
+        : null
     await supabase.from('incident_reports').update(update).eq('id', incidentId)
   }
 
@@ -627,16 +661,113 @@ export async function deleteIncidentAttachment(id: string): Promise<void> {
   if (error) throw new Error(`Failed to delete attachment: ${error.message}`)
 }
 
-export async function toggleFamilySharing(
+// ============================================================
+// Status changes (close / reopen / resolve)
+// ============================================================
+
+const STATUS_CHANGE_NOTE: Record<IncidentStatus, string> = {
+  open: 'Re-opened the incident.',
+  in_progress: 'Marked the incident in progress.',
+  resolved: 'Marked the incident resolved.',
+  closed: 'Closed the incident.',
+}
+
+/**
+ * Change an incident's status from the header control. Writes an audit
+ * follow-up (so the change shows in the timeline and notifies the
+ * reporter/assignee) and updates the status + resolved_at via addFollowUp.
+ */
+export async function changeIncidentStatus(
+  incidentId: string,
+  authorId: string,
+  newStatus: IncidentStatus,
+  note?: string
+): Promise<void> {
+  const trimmed = note?.trim()
+  const finalNote = trimmed && trimmed.length > 0 ? trimmed : STATUS_CHANGE_NOTE[newStatus]
+  await addFollowUp(incidentId, authorId, finalNote, newStatus)
+}
+
+// ============================================================
+// Per-student controls (admin-only via RLS)
+// ============================================================
+
+/** Set a per-student severity override (null = inherit incident severity). */
+export async function setIncidentStudentSeverity(
+  rowId: string,
+  severity: IncidentSeverity | null
+): Promise<void> {
+  const { error } = await supabase
+    .from('incident_report_students')
+    .update({ severity })
+    .eq('id', rowId)
+
+  if (error) throw new Error(`Failed to update student severity: ${error.message}`)
+}
+
+/** Toggle whether a single involved student's family can see the incident. */
+export async function setIncidentStudentVisibility(
+  rowId: string,
+  shared: boolean
+): Promise<void> {
+  const { error } = await supabase
+    .from('incident_report_students')
+    .update({ shared_with_family: shared })
+    .eq('id', rowId)
+
+  if (error) throw new Error(`Failed to update family visibility: ${error.message}`)
+}
+
+/** Bulk-set family visibility for every involved student on an incident. */
+export async function setAllIncidentStudentsVisibility(
   incidentId: string,
   shared: boolean
 ): Promise<void> {
   const { error } = await supabase
-    .from('incident_reports')
+    .from('incident_report_students')
     .update({ shared_with_family: shared })
+    .eq('incident_report_id', incidentId)
+
+  if (error) throw new Error(`Failed to update family visibility: ${error.message}`)
+}
+
+// ============================================================
+// Family communication (staff-only narrative)
+// ============================================================
+
+export interface IncidentCommunicationFields {
+  parent_notified: boolean
+  parent_notification_method: string | null
+  family_communication_log: string | null
+  family_communication_followup: string | null
+}
+
+export async function updateIncidentCommunication(
+  incidentId: string,
+  fields: IncidentCommunicationFields
+): Promise<void> {
+  const { error } = await supabase
+    .from('incident_reports')
+    .update(fields)
     .eq('id', incidentId)
 
-  if (error) throw new Error(`Failed to update sharing: ${error.message}`)
+  if (error) throw new Error(`Failed to update communication: ${error.message}`)
+}
+
+/**
+ * Family-facing involved-student list with redaction. Returns the viewing
+ * family's own children revealed and every other involved student redacted.
+ * Backed by the get_incident_family_students SECURITY DEFINER RPC.
+ */
+export async function getIncidentFamilyStudents(
+  incidentId: string
+): Promise<IncidentFamilyStudent[]> {
+  const { data, error } = await supabase.rpc('get_incident_family_students', {
+    p_incident_id: incidentId,
+  })
+
+  if (error) throw new Error(`Failed to load incident students: ${error.message}`)
+  return (data ?? []) as IncidentFamilyStudent[]
 }
 
 export async function markNotificationRead(notificationId: string): Promise<void> {
