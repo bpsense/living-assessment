@@ -25,6 +25,7 @@ import {
   MessageCircle,
   Target,
   AlertTriangle,
+  StickyNote,
   ShieldAlert,
   Languages,
   Activity,
@@ -36,6 +37,7 @@ import {
 } from 'lucide-react'
 import type { UserRole } from '../types/database'
 import QuickObserveModal from './QuickObserveModal'
+import QuickNoteModal from './QuickNoteModal'
 import IncidentReportModal from './incident/IncidentReportModal'
 import SpeedDial from './SpeedDial'
 import SchoolSwitcher from './SchoolSwitcher'
@@ -287,6 +289,7 @@ export default function Layout() {
   const navigate = useNavigate()
   const location = useLocation()
   const [quickObserveOpen, setQuickObserveOpen] = useState(false)
+  const [quickNoteOpen, setQuickNoteOpen] = useState(false)
   const [incidentReportOpen, setIncidentReportOpen] = useState(false)
   const [schoolName, setSchoolName] = useState<string>('')
   const [openDropdown, setOpenDropdown] = useState<ViewAsPill | null>(null)
@@ -724,6 +727,12 @@ export default function Layout() {
               color: 'bg-accent-500 hover:bg-accent-600',
             },
             {
+              icon: <StickyNote className="h-4 w-4" />,
+              label: 'Quick Note',
+              onClick: () => setQuickNoteOpen(true),
+              color: 'bg-primary-500 hover:bg-primary-600',
+            },
+            {
               icon: <AlertTriangle className="h-4 w-4" />,
               label: 'Incident Report',
               onClick: () => setIncidentReportOpen(true),
@@ -737,6 +746,12 @@ export default function Layout() {
       <QuickObserveModal
         open={quickObserveOpen}
         onClose={() => setQuickObserveOpen(false)}
+      />
+
+      {/* ============ Quick Note Modal ============ */}
+      <QuickNoteModal
+        open={quickNoteOpen}
+        onClose={() => setQuickNoteOpen(false)}
       />
 
       {/* ============ Incident Report Modal ============ */}
