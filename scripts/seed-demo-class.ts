@@ -337,6 +337,50 @@ async function main() {
     }
   }
 
+  // ── Current-term assessment round ────────────────────────────
+  // The Competency Snapshot only counts observations from the last ~2 months
+  // (RECENT_WINDOW_DAYS). Without fresh data the snapshot reads "not recently
+  // assessed". This sweep assesses ~90% of each learner's age-appropriate
+  // competencies within the last ~6 weeks at their current level, so the
+  // snapshot is populated (and ~10% stay "not yet assessed", as intended).
+  const RECENT_START = Date.UTC(2026, 4, 10) // May 10, 2026
+  const RECENT_END = Date.UTC(2026, 5, 12) //  Jun 12, 2026
+  const RECENT_SPAN = RECENT_END - RECENT_START
+  let recentCount = 0
+
+  for (const l of LEARNERS) {
+    const ceilings = CEILINGS[l.arch]
+    const ageNow = ageAtDate(l.dob, new Date(RECENT_END))
+    for (let di = 0; di < dims.length; di++) {
+      const dim = dims[di]
+      const pool = (compsByDim.get(dim.id) ?? []).filter(
+        (c) =>
+          (c.age_band_start == null || c.age_band_start <= ageNow) &&
+          (c.age_band_end == null || c.age_band_end >= ageNow)
+      )
+      for (const comp of pool) {
+        if (rand(`recskip:${l.id}:${comp.id}`) < 0.1) continue // ~10% left unassessed
+        const v = ceilings[di] + (rand(`reclvl:${l.id}:${comp.id}`) - 0.5) * 1.2 // ±0.6
+        const rating = Math.max(1, Math.min(4, Math.round(v)))
+        const when = new Date(RECENT_START + rand(`recday:${l.id}:${comp.id}`) * RECENT_SPAN)
+        rows.push({
+          school_id: SCHOOL_ID,
+          student_id: l.id,
+          dimension_id: dim.id,
+          competency_id: comp.id,
+          assessed_age: ageNow,
+          observer_id: observers[obsSeq % observers.length],
+          rating,
+          notes: null,
+          observed_at: when.toISOString(),
+        })
+        obsSeq++
+        recentCount++
+      }
+    }
+  }
+  console.log(`Added ${recentCount} current-term (last ~6 weeks) assessments across ${LEARNERS.length} learners`)
+
   console.log(`\nGenerated ${rows.length} observations (~${Math.round(rows.length / LEARNERS.length)}/learner). Inserting…`)
   for (let i = 0; i < rows.length; i += 500) {
     const batch = rows.slice(i, i + 500)

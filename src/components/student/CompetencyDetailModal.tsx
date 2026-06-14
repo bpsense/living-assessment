@@ -15,7 +15,7 @@ import { ArrowDown, ArrowRight, ArrowUp, ExternalLink, Loader2, Plus, X } from '
 import { clsx } from 'clsx'
 import { format } from 'date-fns'
 import type { SnapshotRow } from '../../lib/competency-snapshot-data'
-import { ZONE_LABEL, ZONE_TOKEN, type Trend } from '../../lib/competency-snapshot'
+import { RECENT_WINDOW_DAYS, ZONE_LABEL, ZONE_TOKEN, type Trend } from '../../lib/competency-snapshot'
 import {
   ASSESSMENT_LEVELS,
   formatLevel,
@@ -43,6 +43,11 @@ interface Props {
 }
 
 const URL_REGEX = /https?:\/\/[^\s),]+/g
+
+/** Within the snapshot's recency window — these observations drive the position. */
+function isRecent(dateStr: string): boolean {
+  return (Date.now() - new Date(dateStr).getTime()) / 86_400_000 <= RECENT_WINDOW_DAYS
+}
 
 const LEVEL_TONE: Record<AssessmentLevel, { chip: string; dot: string }> = {
   emerging: { chip: 'bg-amber-50 text-amber-700', dot: 'bg-amber-400' },
@@ -182,7 +187,7 @@ export default function CompetencyDetailModal({
           <div className="flex flex-wrap items-center gap-2">
             {row.isGhost ? (
               <span className="rounded-full bg-bg-muted px-2.5 py-1 text-xs font-medium text-text-muted">
-                Not yet assessed
+                {row.history.length > 0 ? 'No assessment in the last 2 months' : 'Not yet assessed'}
               </span>
             ) : (
               <>
@@ -226,21 +231,22 @@ export default function CompetencyDetailModal({
               </p>
             ) : (
               <ul className="space-y-2">
-                {history.map((h, i) => (
+                {history.map((h) => (
                   <HistoryItem
                     key={h.id}
                     item={h}
                     observerName={observers.get(h.assessor_id)}
                     showObserver={audience === 'educator'}
-                    /* The most-recent 5 drive the current spectrum position. */
-                    drivesPosition={i < 5}
+                    /* Only observations within the recency window drive the position. */
+                    drivesPosition={isRecent(h.assessed_at)}
                   />
                 ))}
               </ul>
             )}
-            {history.length > 5 && (
+            {history.some((h) => !isRecent(h.assessed_at)) && (
               <p className="mt-1.5 text-[10px] text-text-light">
-                The 5 most recent observations (★) weigh most toward the current position.
+                Only observations from the last 2 months (★) drive the current position; older
+                ones are kept for history.
               </p>
             )}
           </div>

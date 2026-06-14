@@ -21,6 +21,7 @@ import {
   decayWeight,
   spectrumToBarPercent,
   spectrumToZone,
+  RECENT_WINDOW_DAYS,
   type Zone,
   type Trend,
 } from './competency-snapshot'
@@ -187,8 +188,16 @@ export function buildCompetencySnapshotFromObservations(input: {
       .slice()
       .sort((a, b) => new Date(a.observed_at).getTime() - new Date(b.observed_at).getTime())
 
-    // Drop-off: ever achieved (3+) at a step below the learner's current age.
-    const dropped = hist.some(
+    // "Current" = only observations within the recency window. Older ones remain
+    // in `history` (for the detail modal) but no longer drive the position — the
+    // snapshot reflects recent standing, mirroring the amoeba's recency bias.
+    const recentHist = hist.filter(
+      (o) => (nowMs - new Date(o.observed_at).getTime()) / 86_400_000 <= RECENT_WINDOW_DAYS
+    )
+
+    // Drop-off: recently achieved (3+) at a step below the learner's current age
+    // (below-age content already mastered — uninformative about current standing).
+    const dropped = recentHist.some(
       (o) =>
         o.assessed_age != null &&
         learnerAge != null &&
@@ -204,15 +213,15 @@ export function buildCompetencySnapshotFromObservations(input: {
 
     let spectrumScore: number | null
     let isGhost: boolean
-    if (hist.length === 0) {
-      // Known age + not age-appropriate -> omit. Unknown age -> show as untimed
-      // (so the framework's competencies still appear; add a DOB to age-position).
+    if (recentHist.length === 0) {
+      // No current data (never assessed, or the last assessment is stale). Show
+      // as a ghost awaiting a fresh observation when age-appropriate / age unknown.
       if (learnerAge != null && !applicableNow) continue
       isGhost = true
       spectrumScore = learnerAge == null ? null : 3
     } else {
       isGhost = false
-      const recent = hist.slice(-5) // most recent 5
+      const recent = recentHist.slice(-5) // most recent 5 within the window
       let weightedSum = 0
       let totalWeight = 0
       for (const o of recent) {
@@ -224,16 +233,18 @@ export function buildCompetencySnapshotFromObservations(input: {
       spectrumScore = totalWeight > 0 ? Math.max(0, Math.min(5, weightedSum / totalWeight)) : null
     }
 
+    // Full history (asc) for the modal; position/level/trend reflect only recent.
     const adaptedHist = hist.map(observationAsAssessment)
+    const recentAdapted = recentHist.map(observationAsAssessment)
     const zone = spectrumToZone(spectrumScore)
     const row: SnapshotRow = {
       standard: competencyAsStandard(comp, student.school_id),
-      latest: adaptedHist.length ? adaptedHist[adaptedHist.length - 1] : null,
+      latest: recentAdapted.length ? recentAdapted[recentAdapted.length - 1] : null,
       history: adaptedHist,
       spectrumScore,
       barPercent: spectrumScore === null ? 50 : spectrumToBarPercent(spectrumScore),
       zone,
-      trend: classifyTrend(adaptedHist),
+      trend: classifyTrend(recentAdapted),
       isGhost,
     }
 
@@ -244,7 +255,8 @@ export function buildCompetencySnapshotFromObservations(input: {
       group.untimed.push(row)
     } else {
       group.rows.push(row)
-      group.counts[zone] += 1
+      // Ghosts (no recent assessment) are tracked via isGhost, not as "at age".
+      if (!isGhost) group.counts[zone] += 1
     }
   }
 
@@ -256,7 +268,7 @@ export function buildCompetencySnapshotFromObservations(input: {
 
   const totals = emptyZoneCounts()
   for (const group of groups) {
-    for (const row of group.rows) totals[row.zone] += 1
+    for (const row of group.rows) if (!row.isGhost) totals[row.zone] += 1
     for (const row of group.untimed) totals[row.zone] += 1
   }
   for (const row of unassigned) totals[row.zone] += 1
