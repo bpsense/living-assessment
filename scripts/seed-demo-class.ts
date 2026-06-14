@@ -31,6 +31,7 @@ import { createClient } from '@supabase/supabase-js'
 import { readFileSync } from 'fs'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
+import { standardAgeForDate } from '../src/lib/age-utils'
 
 // ── Bootstrap ──────────────────────────────────────────────────
 
@@ -163,13 +164,8 @@ function rand(seed: string): number {
   return ((h >>> 0) % 100000) / 100000
 }
 
-function ageAtDate(dobStr: string, at: Date): number {
-  const dob = new Date(dobStr + 'T00:00:00')
-  let age = at.getFullYear() - dob.getFullYear()
-  const md = at.getMonth() - dob.getMonth()
-  if (md < 0 || (md === 0 && at.getDate() < dob.getDate())) age--
-  return age
-}
+// The age standard a learner is assessed against (Dec-1 rule) comes from the
+// shared standardAgeForDate (src/lib/age-utils) so the seed matches the app.
 
 const LEVEL_NAME = ['', 'Emerging', 'Developing', 'Achieving', 'Mastery']
 
@@ -303,7 +299,7 @@ async function main() {
         // Observation date: a weekday-ish day within the month.
         const day = 5 + Math.floor(rand(`day:${l.id}:${dim.id}:${mi}`) * 20)
         const obsDate = new Date(Date.UTC(y, m, day, 12, 0, 0))
-        const age = ageAtDate(l.dob, obsDate)
+        const age = standardAgeForDate(l.dob, obsDate) ?? 8 // standard for the obs's school year
 
         // Pick an age-appropriate competency in this dimension (rotate for variety).
         const all = compsByDim.get(dim.id) ?? []
@@ -350,7 +346,7 @@ async function main() {
 
   for (const l of LEARNERS) {
     const ceilings = CEILINGS[l.arch]
-    const ageNow = ageAtDate(l.dob, new Date(RECENT_END))
+    const ageNow = standardAgeForDate(l.dob, new Date(RECENT_END)) ?? 8 // current-year standard
     for (let di = 0; di < dims.length; di++) {
       const dim = dims[di]
       const pool = (compsByDim.get(dim.id) ?? []).filter(
