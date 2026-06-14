@@ -23,10 +23,13 @@ export interface AmoebaSnapshot {
   date: string
   /** Human-readable label, e.g. "Mar 2026" */
   label: string
-  /** Student age years at end-of-month cutoff */
+  /** Student age years at end-of-month cutoff (the learner's real age) */
   ageYears: number
   /** Remaining months past ageYears */
   ageMonths: number
+  /** Assigned standard age for this snapshot's school year (Dec-1 rule). Drives
+   *  the age-rescale decay + rollover — steps up in September, not on the birthday. */
+  standardAge: number
   /** dimension_id → average 1-4 (or null when no contributing assessments) */
   dimensions: Record<string, number | null>
   /** True on the snapshot for the student's birthday month (rollover) */

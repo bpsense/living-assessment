@@ -11,6 +11,7 @@
  * carry forward the most recent prior observation; null until the first one.
  */
 import { ageAt, type AmoebaSnapshot } from './living-data'
+import { standardAgeForDate } from './age-utils'
 import type { Dimension, Observation } from '../types/database'
 
 export interface BuildObservationSnapshotsInput {
@@ -59,7 +60,7 @@ export function buildSnapshotsFromObservations(
   }
 
   const snaps: AmoebaSnapshot[] = []
-  let prevAge = -1
+  let prevStd = -1
 
   for (const month of months) {
     const monthStart = month.getTime()
@@ -88,17 +89,21 @@ export function buildSnapshotsFromObservations(
     }
 
     const { years, months: ageM } = ageAt(dob, new Date(cutoff))
-    const isAgeRollover = prevAge !== -1 && years !== prevAge
+    // Standard age (Dec-1 rule) drives the rollover/decay — it steps in September,
+    // so the blob rescales at the start of each school year, not on the birthday.
+    const standardAge = standardAgeForDate(dateOfBirth, month) ?? years
+    const isAgeRollover = prevStd !== -1 && standardAge !== prevStd
     snaps.push({
       date: month.toISOString().slice(0, 10),
       label: month.toLocaleString('en-US', { month: 'short', year: 'numeric' }),
       ageYears: years,
       ageMonths: ageM,
+      standardAge,
       dimensions: dimsOut,
       isAgeRollover: isAgeRollover || undefined,
-      prevAgeYears: isAgeRollover ? prevAge : undefined,
+      prevAgeYears: isAgeRollover ? prevStd : undefined,
     })
-    prevAge = years
+    prevStd = standardAge
   }
 
   return snaps

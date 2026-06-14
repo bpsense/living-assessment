@@ -132,7 +132,7 @@ function useAgeTransition(
     }
 
     // Start the squeeze animation
-    const label = `Turning ${snap.ageYears} · ${gradeForAge(snap.ageYears)}`
+    const label = `New school year · ${gradeForAge(snap.standardAge)}`
     setTransitionLabel(label)
     setSqueezeProgress(1)
 
@@ -221,27 +221,28 @@ export default function LivingVisualization({
   observations,
   observers,
 }: Props) {
-  // Baseline age = age at the earliest snapshot. Used to compute the
-  // cumulative per-birthday rescale applied to displayed competency values
-  // (see decayDimensionScores in living-data.ts).
-  const baselineAge = snapshots[0]?.ageYears ?? 0
+  // Baseline = the assigned standard age at the earliest snapshot. The decay is
+  // keyed to the standard age (Dec-1 rule), which steps up each September — so the
+  // blob rescales at the start of each school year, not on the birthday.
+  const baselineAge = snapshots[0]?.standardAge ?? 0
 
   // Determine which scores to display (discrete target). Apply the age-rescale
-  // decay so that what was "Achieving" at age 6 reads as "Developing" at age 7 —
-  // the rubric got harder, so the same observed performance lands a tier lower.
-  // For the live (no-timeline) view, decay against the latest snapshot's age.
+  // decay so that what was "Achieving" against the age-7 standard reads as
+  // "Developing" once the age-8 standard kicks in — the rubric got harder, so the
+  // same observed performance lands a tier lower. For the live (no-timeline)
+  // view, decay against the latest snapshot's standard age.
   const displayScores = useMemo(() => {
     const usingTimeline =
       showTimeline && snapshotIdx !== null && snapshots.length > 0
     if (!usingTimeline) {
-      const latestAge = snapshots[snapshots.length - 1]?.ageYears
+      const latestAge = snapshots[snapshots.length - 1]?.standardAge
       if (latestAge == null) return dimensionScores
       return decayDimensionScores(dimensionScores, latestAge, baselineAge)
     }
     const idx = Math.min(snapshotIdx!, snapshots.length - 1)
     const snap = snapshots[idx]
     const raw = snap?.dimensionScores ?? dimensionScores
-    return snap ? decayDimensionScores(raw, snap.ageYears, baselineAge) : raw
+    return snap ? decayDimensionScores(raw, snap.standardAge, baselineAge) : raw
   }, [showTimeline, snapshotIdx, snapshots, dimensionScores, baselineAge])
 
   // Smooth animation: interpolate toward displayScores.
@@ -264,7 +265,7 @@ export default function LivingVisualization({
     const idx = Math.min(snapshotIdx, snapshots.length - 1)
     const snap = snapshots[idx]
     if (!snap) return undefined
-    return `${snap.ageYears}y ${snap.ageMonths}m · ${gradeForAge(snap.ageYears)}`
+    return `${snap.ageYears}y ${snap.ageMonths}m · ${gradeForAge(snap.standardAge)}`
   }, [showTimeline, snapshotIdx, snapshots])
 
   // Filter observations to those visible at the current snapshot date

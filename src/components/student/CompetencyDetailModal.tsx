@@ -183,6 +183,19 @@ export default function CompetencyDetailModal({
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
+          {/* Age-specific expectation — what "Achieving" looks like at the
+              standard age the learner is held to this school year. */}
+          {row.stepDescriptor && (
+            <div className="mb-4 rounded-lg border border-primary-100 bg-primary-50/60 px-3 py-2.5">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-primary-600">
+                {row.standardAge != null
+                  ? `Achieving at age ${row.standardAge}`
+                  : 'Age-level expectation'}
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-text">{row.stepDescriptor}</p>
+            </div>
+          )}
+
           {/* Position summary */}
           <div className="flex flex-wrap items-center gap-2">
             {row.isGhost ? (
