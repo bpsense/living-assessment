@@ -202,7 +202,7 @@ export default function CompetencyDetailModal({
             <div className="mb-4 rounded-lg border border-primary-100 bg-primary-50/60 px-3 py-2.5">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-primary-600">
                 {row.standardAge != null
-                  ? `Achieving at age ${row.standardAge}`
+                  ? `Expectations for age ${row.standardAge}`
                   : 'Age-level expectation'}
               </p>
               <p className="mt-1 text-xs leading-relaxed text-text">{row.stepDescriptor}</p>
