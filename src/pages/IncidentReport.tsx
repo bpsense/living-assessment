@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { format } from 'date-fns'
 import { clsx } from 'clsx'
@@ -23,6 +23,10 @@ import {
   AtSign,
   X,
   Plus,
+  Lock,
+  CheckCircle2,
+  RotateCcw,
+  XCircle,
 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { useAccessControl } from '../lib/access-control'
@@ -30,7 +34,12 @@ import { useToast } from '../components/Toast'
 import {
   useIncidentReport,
   addFollowUp,
-  toggleFamilySharing,
+  changeIncidentStatus,
+  setIncidentStudentSeverity,
+  setIncidentStudentVisibility,
+  setAllIncidentStudentsVisibility,
+  updateIncidentCommunication,
+  getIncidentFamilyStudents,
   deleteIncidentAttachment,
   getAttachmentUrl,
   addIncidentTags,
@@ -38,8 +47,13 @@ import {
   markIncidentNotificationsRead,
 } from '../lib/incident-data'
 import { supabase } from '../lib/supabase'
-import type { Profile } from '../types/database'
-// IncidentStatus used by follow-up status change dropdown values
+import type {
+  Profile,
+  IncidentFamilyStudent,
+  IncidentSeverity,
+  IncidentStatus,
+  IncidentReportWithDetails,
+} from '../types/database'
 
 // ============================================================
 // Constants
@@ -61,6 +75,16 @@ const SEVERITY_STYLES: Record<string, { bg: string; text: string }> = {
   high: { bg: 'bg-orange-50', text: 'text-orange-700' },
   critical: { bg: 'bg-alert-50', text: 'text-alert-700' },
 }
+
+const SEVERITY_LABELS: Record<string, string> = {
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High',
+  critical: 'Critical',
+}
+
+// Ascending order — used to pick the highest severity among a family's children.
+const SEVERITY_ORDER: IncidentSeverity[] = ['low', 'medium', 'high', 'critical']
 
 const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
   open: { bg: 'bg-alert-50', text: 'text-alert-700' },
@@ -84,6 +108,8 @@ const ROLE_LABELS: Record<string, string> = {
   bystander: 'Bystander',
 }
 
+const NOTIFICATION_METHODS = ['Phone', 'Email', 'In-person', 'Via app']
+
 // ============================================================
 // Component
 // ============================================================
@@ -99,13 +125,43 @@ export default function IncidentReportPage() {
   const [followUpNotes, setFollowUpNotes] = useState('')
   const [followUpStatus, setFollowUpStatus] = useState('')
   const [submittingFollowUp, setSubmittingFollowUp] = useState(false)
-  const [togglingShare, setTogglingShare] = useState(false)
+  const [changingStatus, setChangingStatus] = useState(false)
+  const [familyStudents, setFamilyStudents] = useState<IncidentFamilyStudent[]>([])
 
   const isAdmin = role === 'admin'
   const isReporter = incident?.reported_by === profile?.id
   const isAssigned = incident?.assigned_to === profile?.id
   const canAddFollowUp = isAdmin || isAssigned || isReporter
   const isFamilyView = role === 'parent'
+
+  // Family view: fetch the redacted involved-student list (own children
+  // revealed, everyone else redacted) via the SECURITY DEFINER RPC.
+  useEffect(() => {
+    if (!isFamilyView || !incident) {
+      setFamilyStudents([])
+      return
+    }
+    let cancelled = false
+    getIncidentFamilyStudents(incident.id)
+      .then((rows) => { if (!cancelled) setFamilyStudents(rows) })
+      .catch(() => { if (!cancelled) setFamilyStudents([]) })
+    return () => { cancelled = true }
+  }, [isFamilyView, incident])
+
+  // Highest severity among the family's own (revealed) children — shown in the
+  // header instead of the incident-level severity, so a witness's family
+  // doesn't see a "Critical" tag for an incident their child barely touched.
+  const familyEffectiveSeverity = useMemo<IncidentSeverity | null>(() => {
+    const revealed = familyStudents.filter((s) => !s.redacted && s.severity)
+    if (revealed.length === 0) return null
+    return revealed.reduce<IncidentSeverity>(
+      (max, s) =>
+        SEVERITY_ORDER.indexOf(s.severity as IncidentSeverity) > SEVERITY_ORDER.indexOf(max)
+          ? (s.severity as IncidentSeverity)
+          : max,
+      'low'
+    )
+  }, [familyStudents])
 
   const handleAddFollowUp = useCallback(async () => {
     if (!profile || !id || !followUpNotes.trim()) return
@@ -123,17 +179,47 @@ export default function IncidentReportPage() {
     }
   }, [id, profile, followUpNotes, followUpStatus, toast, refetch])
 
-  const handleToggleShare = useCallback(async () => {
-    if (!incident) return
-    setTogglingShare(true)
+  const handleChangeStatus = useCallback(async (newStatus: IncidentStatus, note?: string) => {
+    if (!profile || !id) return
+    setChangingStatus(true)
     try {
-      await toggleFamilySharing(incident.id, !incident.shared_with_family)
-      toast(incident.shared_with_family ? 'Hidden from families' : 'Shared with families', 'success')
+      await changeIncidentStatus(id, profile.id, newStatus, note)
+      toast(`Incident ${(STATUS_LABELS[newStatus] ?? newStatus).toLowerCase()}`, 'success')
       refetch()
     } catch (e) {
       toast((e as Error).message, 'error')
     } finally {
-      setTogglingShare(false)
+      setChangingStatus(false)
+    }
+  }, [id, profile, toast, refetch])
+
+  const handleSetStudentSeverity = useCallback(async (rowId: string, severity: IncidentSeverity | null) => {
+    try {
+      await setIncidentStudentSeverity(rowId, severity)
+      refetch()
+    } catch (e) {
+      toast((e as Error).message, 'error')
+    }
+  }, [toast, refetch])
+
+  const handleSetStudentVisibility = useCallback(async (rowId: string, shared: boolean) => {
+    try {
+      await setIncidentStudentVisibility(rowId, shared)
+      toast(shared ? 'Visible to this family' : 'Hidden from this family', 'success')
+      refetch()
+    } catch (e) {
+      toast((e as Error).message, 'error')
+    }
+  }, [toast, refetch])
+
+  const handleSetAllVisibility = useCallback(async (shared: boolean) => {
+    if (!incident) return
+    try {
+      await setAllIncidentStudentsVisibility(incident.id, shared)
+      toast(shared ? 'Shared with all families' : 'Hidden from all families', 'success')
+      refetch()
+    } catch (e) {
+      toast((e as Error).message, 'error')
     }
   }, [incident, toast, refetch])
 
@@ -186,7 +272,10 @@ export default function IncidentReportPage() {
     )
   }
 
-  const sevStyle = SEVERITY_STYLES[incident.severity] ?? SEVERITY_STYLES.low
+  // In the family view, show the family's child severity (or nothing while it
+  // loads) rather than the incident-level severity. Staff always see the real one.
+  const headerSeverity: IncidentSeverity | null = isFamilyView ? familyEffectiveSeverity : incident.severity
+  const sevStyle = SEVERITY_STYLES[headerSeverity ?? 'low'] ?? SEVERITY_STYLES.low
   const statusStyle = STATUS_STYLES[incident.status] ?? STATUS_STYLES.open
 
   return (
@@ -203,10 +292,12 @@ export default function IncidentReportPage() {
       {/* Header */}
       <div className="rounded-xl border border-bg-muted bg-bg-card p-5">
         <div className="flex flex-wrap items-center gap-2 mb-3">
-          <span className={clsx('inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium', sevStyle.bg, sevStyle.text)}>
-            <AlertTriangle className="h-3 w-3" />
-            {incident.severity.charAt(0).toUpperCase() + incident.severity.slice(1)}
-          </span>
+          {headerSeverity && (
+            <span className={clsx('inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium', sevStyle.bg, sevStyle.text)}>
+              <AlertTriangle className="h-3 w-3" />
+              {SEVERITY_LABELS[headerSeverity] ?? headerSeverity}
+            </span>
+          )}
           <span className="rounded-full bg-primary-50 px-2.5 py-1 text-xs font-medium text-primary-700">
             {TYPE_LABELS[incident.incident_type] ?? incident.incident_type}
           </span>
@@ -214,6 +305,13 @@ export default function IncidentReportPage() {
             {STATUS_LABELS[incident.status] ?? incident.status}
           </span>
         </div>
+
+        {/* Status management — close / resolve / reopen (managers only) */}
+        {canAddFollowUp && (
+          <div className="mb-3">
+            <StatusControl status={incident.status} busy={changingStatus} onChange={handleChangeStatus} />
+          </div>
+        )}
 
         <div className="flex flex-wrap items-center gap-4 text-sm text-text-muted">
           <span className="flex items-center gap-1">
@@ -246,30 +344,141 @@ export default function IncidentReportPage() {
         </div>
       )}
 
-      {/* Students Involved — hide other students for family view */}
+      {/* Students Involved (staff view) — admins get per-student severity + visibility */}
       {!isFamilyView && incident.students && incident.students.length > 0 && (
+        <div className="rounded-xl border border-bg-muted bg-bg-card p-5">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-text">
+              <Users className="h-4 w-4" />
+              Students Involved ({incident.students.length})
+            </h3>
+            {isAdmin && incident.students.length > 1 && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => handleSetAllVisibility(true)}
+                  className="flex items-center gap-1 rounded-lg bg-success-50 px-2 py-1 text-[11px] font-medium text-success-700 hover:bg-success-100"
+                >
+                  <Eye className="h-3 w-3" /> Share all
+                </button>
+                <button
+                  onClick={() => handleSetAllVisibility(false)}
+                  className="flex items-center gap-1 rounded-lg bg-bg-muted px-2 py-1 text-[11px] font-medium text-text-muted hover:bg-bg-muted/80"
+                >
+                  <EyeOff className="h-3 w-3" /> Hide all
+                </button>
+              </div>
+            )}
+          </div>
+          <div className="space-y-2">
+            {incident.students.map((s) => {
+              const effSev = (s.severity ?? incident.severity) as IncidentSeverity
+              const effStyle = SEVERITY_STYLES[effSev] ?? SEVERITY_STYLES.low
+              return (
+                <div key={s.id} className="rounded-lg bg-bg px-3 py-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <Link
+                      to={`/student/${s.student_id}`}
+                      className="flex items-center gap-2 text-sm font-medium text-primary-600 hover:underline"
+                    >
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-100 text-[10px] font-bold text-primary-700">
+                        {s.student?.first_name?.[0]}{s.student?.last_name?.[0]}
+                      </div>
+                      {s.student?.first_name} {s.student?.last_name}
+                    </Link>
+                    <div className="flex items-center gap-1.5">
+                      <span className={clsx('rounded-full px-2 py-0.5 text-[11px] font-medium', effStyle.bg, effStyle.text)}>
+                        {SEVERITY_LABELS[effSev] ?? effSev}
+                      </span>
+                      <span className="rounded-full bg-bg-muted px-2 py-0.5 text-[11px] font-medium text-text-muted">
+                        {ROLE_LABELS[s.role] ?? s.role}
+                      </span>
+                    </div>
+                  </div>
+                  {isAdmin && (
+                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-bg-muted pt-2">
+                      <label className="flex items-center gap-1.5 text-[11px] text-text-muted">
+                        Severity
+                        <select
+                          value={s.severity ?? ''}
+                          onChange={(e) => handleSetStudentSeverity(s.id, e.target.value ? (e.target.value as IncidentSeverity) : null)}
+                          className="rounded-lg border border-bg-muted bg-bg-card px-2 py-1 text-[11px] text-text focus:outline-none"
+                        >
+                          <option value="">Inherit ({SEVERITY_LABELS[incident.severity]})</option>
+                          {SEVERITY_ORDER.map((sv) => (
+                            <option key={sv} value={sv}>{SEVERITY_LABELS[sv]}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <button
+                        onClick={() => handleSetStudentVisibility(s.id, !s.shared_with_family)}
+                        className={clsx(
+                          'flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium transition-colors',
+                          s.shared_with_family
+                            ? 'bg-success-50 text-success-700 hover:bg-success-100'
+                            : 'bg-bg-muted text-text-muted hover:bg-bg-muted/80'
+                        )}
+                      >
+                        {s.shared_with_family ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                        {s.shared_with_family ? 'Family can see' : 'Hidden from family'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+          {isAdmin && (
+            <p className="mt-3 text-[11px] leading-relaxed text-text-light">
+              Per-student severity sets what shows on each child&rsquo;s profile (&ldquo;Inherit&rdquo; uses the incident&rsquo;s {SEVERITY_LABELS[incident.severity]}). Family visibility is per-student — only enabled families can open this report, and other students are redacted for them.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Students Involved (family view) — own children revealed, others redacted */}
+      {isFamilyView && familyStudents.length > 0 && (
         <div className="rounded-xl border border-bg-muted bg-bg-card p-5">
           <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-text">
             <Users className="h-4 w-4" />
-            Students Involved ({incident.students.length})
+            Students Involved ({familyStudents.length})
           </h3>
           <div className="space-y-2">
-            {incident.students.map((s) => (
-              <div key={s.id} className="flex items-center justify-between rounded-lg bg-bg px-3 py-2">
-                <Link
-                  to={`/student/${s.student_id}`}
-                  className="flex items-center gap-2 text-sm font-medium text-primary-600 hover:underline"
-                >
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-100 text-[10px] font-bold text-primary-700">
-                    {s.student?.first_name?.[0]}{s.student?.last_name?.[0]}
+            {familyStudents.map((s) => {
+              if (s.redacted) {
+                return (
+                  <div key={s.id} className="flex items-center gap-2 rounded-lg bg-bg px-3 py-2 text-sm text-text-light">
+                    <Lock className="h-4 w-4 shrink-0" />
+                    <span className="italic">Redacted for privacy</span>
                   </div>
-                  {s.student?.first_name} {s.student?.last_name}
-                </Link>
-                <span className="rounded-full bg-bg-muted px-2 py-0.5 text-[11px] font-medium text-text-muted">
-                  {ROLE_LABELS[s.role] ?? s.role}
-                </span>
-              </div>
-            ))}
+                )
+              }
+              const rowStyle = s.severity ? (SEVERITY_STYLES[s.severity] ?? SEVERITY_STYLES.low) : null
+              return (
+                <div key={s.id} className="flex items-center justify-between gap-2 rounded-lg bg-bg px-3 py-2">
+                  <Link
+                    to={`/student/${s.student_id}`}
+                    className="flex items-center gap-2 text-sm font-medium text-primary-600 hover:underline"
+                  >
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-100 text-[10px] font-bold text-primary-700">
+                      {s.first_name?.[0]}{s.last_name?.[0]}
+                    </div>
+                    {s.first_name} {s.last_name}
+                  </Link>
+                  <div className="flex items-center gap-1.5">
+                    {s.severity && rowStyle && (
+                      <span className={clsx('rounded-full px-2 py-0.5 text-[11px] font-medium', rowStyle.bg, rowStyle.text)}>
+                        {SEVERITY_LABELS[s.severity] ?? s.severity}
+                      </span>
+                    )}
+                    {s.role && (
+                      <span className="rounded-full bg-bg-muted px-2 py-0.5 text-[11px] font-medium text-text-muted">
+                        {ROLE_LABELS[s.role] ?? s.role}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
@@ -337,55 +546,22 @@ export default function IncidentReportPage() {
         </div>
       )}
 
-      {/* Witnesses & Parent Notification */}
-      {!isFamilyView && (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {incident.witnesses && (
-            <div className="rounded-xl border border-bg-muted bg-bg-card p-5">
-              <h3 className="mb-2 text-sm font-semibold text-text">Witnesses</h3>
-              <p className="text-sm text-text-muted">{incident.witnesses}</p>
-            </div>
-          )}
-          <div className="rounded-xl border border-bg-muted bg-bg-card p-5">
-            <h3 className="mb-2 text-sm font-semibold text-text">Parent Notification</h3>
-            <p className="text-sm text-text-muted">
-              {incident.parent_notified ? (
-                <>Notified{incident.parent_notification_method ? ` via ${incident.parent_notification_method}` : ''}</>
-              ) : (
-                'Not yet notified'
-              )}
-            </p>
-          </div>
+      {/* Witnesses (staff only) */}
+      {!isFamilyView && incident.witnesses && (
+        <div className="rounded-xl border border-bg-muted bg-bg-card p-5">
+          <h3 className="mb-2 text-sm font-semibold text-text">Witnesses</h3>
+          <p className="text-sm text-text-muted">{incident.witnesses}</p>
         </div>
       )}
 
-      {/* Family Sharing Toggle (Admin only) */}
-      {isAdmin && (
-        <div className="rounded-xl border border-bg-muted bg-bg-card p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-semibold text-text">Family Sharing</h3>
-              <p className="text-xs text-text-muted">
-                {incident.shared_with_family
-                  ? 'Families of involved students can see this incident'
-                  : 'This incident is hidden from families'}
-              </p>
-            </div>
-            <button
-              onClick={handleToggleShare}
-              disabled={togglingShare}
-              className={clsx(
-                'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
-                incident.shared_with_family
-                  ? 'bg-success-50 text-success-700 hover:bg-success-100'
-                  : 'bg-bg-muted text-text-muted hover:bg-bg-muted/80'
-              )}
-            >
-              {incident.shared_with_family ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-              {incident.shared_with_family ? 'Shared' : 'Hidden'}
-            </button>
-          </div>
-        </div>
+      {/* Family Communication (staff only) — has this been communicated to parents? */}
+      {!isFamilyView && (
+        <FamilyCommunicationSection
+          key={incident.updated_at}
+          incident={incident}
+          canEdit={canAddFollowUp}
+          onSaved={refetch}
+        />
       )}
 
       {/* Resolution Notes */}
@@ -498,6 +674,229 @@ export default function IncidentReportPage() {
           onChanged={refetch}
         />
       )}
+    </div>
+  )
+}
+
+// ============================================================
+// Status control (close / resolve / reopen)
+// ============================================================
+
+function StatusControl({
+  status,
+  busy,
+  onChange,
+}: {
+  status: IncidentStatus
+  busy: boolean
+  onChange: (newStatus: IncidentStatus, note?: string) => void
+}) {
+  // Closing/resolving lets the user attach an optional note; reopening and
+  // marking-in-progress happen immediately.
+  const [pending, setPending] = useState<IncidentStatus | null>(null)
+  const [note, setNote] = useState('')
+
+  const isActive = status === 'open' || status === 'in_progress'
+  const neutralBtn =
+    'flex items-center gap-1 rounded-lg bg-bg-muted px-2.5 py-1 text-xs font-medium text-text-muted transition-colors hover:bg-bg-muted/80 disabled:opacity-50'
+
+  if (pending) {
+    return (
+      <div className="rounded-lg border border-bg-muted bg-bg p-3">
+        <label className="mb-1 block text-xs font-medium text-text-muted">
+          {pending === 'closed' ? 'Closing note (optional)' : 'Resolution note (optional)'}
+        </label>
+        <textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          rows={2}
+          placeholder="Add a short note for the record…"
+          className="w-full rounded-lg border border-bg-muted bg-bg-card px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+        />
+        <div className="mt-2 flex items-center justify-end gap-2">
+          <button
+            onClick={() => { setPending(null); setNote('') }}
+            className="rounded-lg px-3 py-1.5 text-xs text-text-muted hover:bg-bg-muted"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => { onChange(pending, note); setPending(null); setNote('') }}
+            disabled={busy}
+            className="flex items-center gap-1.5 rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-600 disabled:opacity-50"
+          >
+            {busy && <Loader2 className="h-3 w-3 animate-spin" />}
+            Confirm {pending === 'closed' ? 'Close' : 'Resolve'}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {status === 'open' && (
+        <button onClick={() => onChange('in_progress')} disabled={busy} className={neutralBtn}>
+          <Clock className="h-3.5 w-3.5" /> Mark in progress
+        </button>
+      )}
+      {isActive && (
+        <button
+          onClick={() => { setPending('resolved'); setNote('') }}
+          disabled={busy}
+          className="flex items-center gap-1 rounded-lg bg-success-50 px-2.5 py-1 text-xs font-medium text-success-700 transition-colors hover:bg-success-100 disabled:opacity-50"
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" /> Resolve
+        </button>
+      )}
+      {status !== 'closed' && (
+        <button onClick={() => { setPending('closed'); setNote('') }} disabled={busy} className={neutralBtn}>
+          <XCircle className="h-3.5 w-3.5" /> Close incident
+        </button>
+      )}
+      {!isActive && (
+        <button onClick={() => onChange('open')} disabled={busy} className={neutralBtn}>
+          <RotateCcw className="h-3.5 w-3.5" /> Reopen
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ============================================================
+// Family Communication (staff-only) sub-component
+// ============================================================
+
+function FamilyCommunicationSection({
+  incident,
+  canEdit,
+  onSaved,
+}: {
+  incident: IncidentReportWithDetails
+  canEdit: boolean
+  onSaved: () => void
+}) {
+  const { toast } = useToast()
+  const [notified, setNotified] = useState(incident.parent_notified)
+  const [method, setMethod] = useState(incident.parent_notification_method ?? '')
+  const [log, setLog] = useState(incident.family_communication_log ?? '')
+  const [followup, setFollowup] = useState(incident.family_communication_followup ?? '')
+  const [saving, setSaving] = useState(false)
+
+  const dirty =
+    notified !== incident.parent_notified ||
+    (method || null) !== (incident.parent_notification_method ?? null) ||
+    (log.trim() || null) !== (incident.family_communication_log ?? null) ||
+    (followup.trim() || null) !== (incident.family_communication_followup ?? null)
+
+  async function save() {
+    setSaving(true)
+    try {
+      await updateIncidentCommunication(incident.id, {
+        parent_notified: notified,
+        parent_notification_method: notified ? (method || null) : null,
+        family_communication_log: log.trim() || null,
+        family_communication_followup: followup.trim() || null,
+      })
+      toast('Communication updated', 'success')
+      onSaved()
+    } catch (e) {
+      toast((e as Error).message, 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Read-only view for staff who can't manage this incident.
+  if (!canEdit) {
+    return (
+      <div className="rounded-xl border border-bg-muted bg-bg-card p-5">
+        <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-text">
+          <MessageSquare className="h-4 w-4" /> Family Communication
+        </h3>
+        <p className="text-sm text-text-muted">
+          {incident.parent_notified
+            ? <>Parents notified{incident.parent_notification_method ? ` via ${incident.parent_notification_method}` : ''}.</>
+            : 'Parents not yet notified.'}
+        </p>
+        {incident.family_communication_log && (
+          <div className="mt-3">
+            <p className="text-xs font-medium text-text-muted">Details</p>
+            <p className="whitespace-pre-wrap text-sm text-text-muted">{incident.family_communication_log}</p>
+          </div>
+        )}
+        {incident.family_communication_followup && (
+          <div className="mt-3">
+            <p className="text-xs font-medium text-text-muted">Follow-up needed</p>
+            <p className="whitespace-pre-wrap text-sm text-text-muted">{incident.family_communication_followup}</p>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="rounded-xl border border-bg-muted bg-bg-card p-5">
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-text">
+        <MessageSquare className="h-4 w-4" /> Family Communication
+      </h3>
+      <div className="space-y-3">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={notified}
+            onChange={(e) => setNotified(e.target.checked)}
+            className="h-4 w-4 rounded border-bg-muted text-primary-500 focus:ring-primary-200"
+          />
+          <span className="text-sm text-text">Parents/guardians have been notified</span>
+        </label>
+        {notified && (
+          <div>
+            <label className="mb-1 block text-xs font-medium text-text-muted">How were they notified?</label>
+            <select
+              value={method}
+              onChange={(e) => setMethod(e.target.value)}
+              className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+            >
+              <option value="">Select method…</option>
+              {NOTIFICATION_METHODS.map((m) => (
+                <option key={m} value={m.toLowerCase()}>{m}</option>
+              ))}
+            </select>
+          </div>
+        )}
+        <div>
+          <label className="mb-1 block text-xs font-medium text-text-muted">Communication details</label>
+          <textarea
+            value={log}
+            onChange={(e) => setLog(e.target.value)}
+            rows={3}
+            placeholder="What was shared with the family, when, and by whom…"
+            className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-text-muted">Follow-up needed</label>
+          <textarea
+            value={followup}
+            onChange={(e) => setFollowup(e.target.value)}
+            rows={2}
+            placeholder="Any outstanding follow-up with the family…"
+            className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[11px] text-text-light">Visible to staff only — never shown to families.</p>
+          <button
+            onClick={save}
+            disabled={!dirty || saving}
+            className="flex items-center gap-1.5 rounded-lg bg-primary-500 px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-600 disabled:bg-primary-300"
+          >
+            {saving && <Loader2 className="h-3 w-3 animate-spin" />}
+            Save
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
