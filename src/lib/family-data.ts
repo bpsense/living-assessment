@@ -52,6 +52,8 @@ export interface LinkedParent {
 export function useLinkedParents(studentId: string | undefined) {
   const [parents, setParents] = useState<LinkedParent[]>([])
   const [loading, setLoading] = useState(true)
+  const [tick, setTick] = useState(0)
+  const refetch = useCallback(() => setTick((t) => t + 1), [])
 
   useEffect(() => {
     if (!studentId) { setLoading(false); return }
@@ -84,9 +86,9 @@ export function useLinkedParents(studentId: string | undefined) {
 
     fetch()
     return () => { cancelled = true }
-  }, [studentId])
+  }, [studentId, tick])
 
-  return { parents, loading }
+  return { parents, loading, refetch }
 }
 
 // ============================================================
