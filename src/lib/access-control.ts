@@ -23,6 +23,10 @@ export interface AccessControl {
   canEditClassrooms: boolean
   /** Can view all students in the school (not scoped) */
   canViewAllStudents: boolean
+  /** Can import students via CSV (location/dept admin and up) */
+  canImportStudents: boolean
+  /** Can export reports — class CSV + per-student report (location/dept admin and up) */
+  canExportReports: boolean
   /** Can view the school profile page */
   canViewSchoolProfile: boolean
   /** Can edit school profile fields */
@@ -79,6 +83,10 @@ export function useAccessControl(): AccessControl {
     canEditClassrooms: accessLevel >= 5,
     // Level 4+ (dept admin and up) can view all students (within their scope)
     canViewAllStudents: accessLevel >= 4,
+    // Level 4+ (location/dept admin and up) can import students via CSV
+    canImportStudents: accessLevel >= 4,
+    // Level 4+ (location/dept admin and up) can export reports
+    canExportReports: accessLevel >= 4,
     // Everyone can view school profile (with filtering)
     canViewSchoolProfile: true,
     // Level 5+ (school admin and up) can edit school profile

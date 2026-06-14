@@ -62,7 +62,7 @@ export default function StudentProfile() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { profile } = useAuth()
-  const { role, formatStudentName } = useAccessControl()
+  const { role, formatStudentName, canExportReports } = useAccessControl()
   const { toast } = useToast()
   const [launchingSurvey, setLaunchingSurvey] = useState(false)
   const [showSISEdit, setShowSISEdit] = useState(false)
@@ -325,13 +325,15 @@ export default function StudentProfile() {
                   )}
                 </>
               )}
-              <button
-                onClick={() => navigate(`/export/${student.id}`)}
-                className="flex items-center gap-2 rounded-lg border border-bg-muted bg-bg-card px-4 py-2.5 text-sm font-medium text-text-muted transition-colors hover:bg-bg-muted"
-              >
-                <FileDown className="h-4 w-4" />
-                Export Report
-              </button>
+              {canExportReports && (
+                <button
+                  onClick={() => navigate(`/export/${student.id}`)}
+                  className="flex items-center gap-2 rounded-lg border border-bg-muted bg-bg-card px-4 py-2.5 text-sm font-medium text-text-muted transition-colors hover:bg-bg-muted"
+                >
+                  <FileDown className="h-4 w-4" />
+                  Export Report
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -68,7 +68,14 @@ function AppRoutes() {
         <Route path="/observe" element={<Observe />} />
         <Route path="/student/:id" element={<StudentProfile />} />
         <Route path="/student/:id/observe" element={<RecordObservation />} />
-        <Route path="/export/:id" element={<ExportReport />} />
+        <Route
+          path="/export/:id"
+          element={
+            <ProtectedRoute minAccessLevel={4}>
+              <ExportReport />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/profile" element={<Profile />} />
         <Route path="/department" element={<DepartmentDashboard />} />
         <Route path="/incident/:id" element={<IncidentReportPage />} />
