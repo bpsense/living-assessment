@@ -8,6 +8,7 @@
 import { useEffect, useRef } from 'react'
 import { X, ExternalLink, Eye } from 'lucide-react'
 import type { Observation } from '../../types/database'
+import { INTEREST_ENABLED } from '../../lib/features'
 
 // ── Props ────────────────────────────────────────────────────────
 
@@ -141,7 +142,7 @@ export default function ObservationPopup({
               <span className="h-1.5 w-1.5 rounded-full bg-[#0D7377]" />
               {competency.toFixed(1)}
             </span>
-            {interest > 0 && (
+            {INTEREST_ENABLED && interest > 0 && (
               <span className="inline-flex items-center gap-1 rounded-full bg-[#D4943A]/10 px-2 py-0.5 text-[10px] font-semibold text-[#D4943A]">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#D4943A]" />
                 {interest.toFixed(1)}

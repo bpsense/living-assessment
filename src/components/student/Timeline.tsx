@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import type { TimelineEntry } from '../../lib/student-data'
 import type { Dimension } from '../../types/database'
+import { INTEREST_ENABLED } from '../../lib/features'
 
 interface Props {
   entries: TimelineEntry[]
@@ -25,7 +26,10 @@ export default function Timeline({ entries, dimensions, pageSize = 10 }: Props) 
   const [showFilters, setShowFilters] = useState(false)
 
   const filtered = useMemo(() => {
-    let result = entries
+    // While interest surveys are hidden, drop interest-survey entries entirely.
+    let result = INTEREST_ENABLED
+      ? entries
+      : entries.filter((e) => e.type !== 'interest_survey')
     if (typeFilter !== 'all') {
       result = result.filter((e) => e.type === typeFilter)
     }
@@ -57,7 +61,9 @@ export default function Timeline({ entries, dimensions, pageSize = 10 }: Props) 
           )}
         >
           {/* Type chips */}
-          {(['all', 'observation', 'interest_survey'] as const).map((t) => (
+          {((INTEREST_ENABLED
+            ? ['all', 'observation', 'interest_survey']
+            : ['all', 'observation']) as TypeFilter[]).map((t) => (
             <button
               key={t}
               onClick={() => setTypeFilter(t)}

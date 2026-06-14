@@ -28,6 +28,7 @@ import {
 } from '../lib/report-data'
 import { classifyZones, type Zone } from '../lib/student-data'
 import { DimensionIcon } from '../components/student/DimensionIcon'
+import { INTEREST_ENABLED } from '../lib/features'
 
 // ============================================================
 // Competency level → colour helpers
@@ -296,15 +297,17 @@ export default function ExportPage() {
                     fillOpacity={0.2}
                     strokeWidth={2}
                   />
-                  <Radar
-                    name="Interest"
-                    dataKey="interest"
-                    stroke="#D4943A"
-                    fill="#D4943A"
-                    fillOpacity={0.1}
-                    strokeWidth={2}
-                    strokeDasharray="4 2"
-                  />
+                  {INTEREST_ENABLED && (
+                    <Radar
+                      name="Interest"
+                      dataKey="interest"
+                      stroke="#D4943A"
+                      fill="#D4943A"
+                      fillOpacity={0.1}
+                      strokeWidth={2}
+                      strokeDasharray="4 2"
+                    />
+                  )}
                   <Legend
                     verticalAlign="bottom"
                     wrapperStyle={{ fontSize: 11 }}
@@ -316,6 +319,7 @@ export default function ExportPage() {
         </section>
 
         {/* ---- ZONE MATRIX (2×2) ---- */}
+        {INTEREST_ENABLED && (
         <section>
           <h2 className="mb-3 text-lg font-bold text-text">
             Learning Zones
@@ -376,6 +380,7 @@ export default function ExportPage() {
             )}
           </div>
         </section>
+        )}
 
         {/* ---- DIMENSION DETAILS ---- */}
         <section>
@@ -449,21 +454,23 @@ export default function ExportPage() {
                     </div>
 
                     {/* Interest badge */}
-                    <div className="flex items-center gap-2 rounded-lg border border-accent-200 bg-accent-50 px-3 py-2">
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-text-light">
-                          Interest
-                        </p>
-                        <p className="text-sm font-bold text-accent-700">
-                          {getInterestLabel(dr.score.interest)}
-                          {dr.score.interest > 0 && (
-                            <span className="ml-1 text-xs font-normal text-accent-500">
-                              ({dr.score.interest.toFixed(1)}/5)
-                            </span>
-                          )}
-                        </p>
+                    {INTEREST_ENABLED && (
+                      <div className="flex items-center gap-2 rounded-lg border border-accent-200 bg-accent-50 px-3 py-2">
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-text-light">
+                            Interest
+                          </p>
+                          <p className="text-sm font-bold text-accent-700">
+                            {getInterestLabel(dr.score.interest)}
+                            {dr.score.interest > 0 && (
+                              <span className="ml-1 text-xs font-normal text-accent-500">
+                                ({dr.score.interest.toFixed(1)}/5)
+                              </span>
+                            )}
+                          </p>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Observations count */}
                     <div className="flex items-center gap-2 rounded-lg border border-bg-muted bg-bg px-3 py-2">
@@ -508,8 +515,9 @@ export default function ExportPage() {
             system.
           </p>
           <p className="mt-1 text-[10px] text-text-light">
-            Competency levels reflect educator observations. Interest levels are
-            based on student self-assessment surveys.
+            Competency levels reflect educator observations.
+            {INTEREST_ENABLED &&
+              ' Interest levels are based on student self-assessment surveys.'}
           </p>
         </footer>
       </div>

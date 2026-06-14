@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { clsx } from 'clsx'
+import { INTEREST_ENABLED } from '../lib/features'
 import {
   BarChart,
   Bar,
@@ -591,7 +592,7 @@ export default function ClassroomPage() {
               />
 
               {/* ---- Class Interest Pulse ---- */}
-              <ClassInterestPulse data={classInterestPulse} />
+              {INTEREST_ENABLED && <ClassInterestPulse data={classInterestPulse} />}
             </div>
           )}
         </section>
@@ -1300,14 +1301,16 @@ function BulkActions({
   return (
     <>
       <div className="flex shrink-0 items-center gap-2">
-        <button
-          onClick={startClassSurvey}
-          disabled={students.length === 0}
-          className="flex items-center gap-1.5 rounded-lg border border-accent-300 bg-accent-50 px-3 py-2 text-xs font-semibold text-accent-700 transition-colors hover:bg-accent-100 disabled:opacity-50 sm:text-sm"
-        >
-          <ClipboardList className="h-4 w-4" />
-          <span className="hidden sm:inline">Start Class</span> Survey
-        </button>
+        {INTEREST_ENABLED && (
+          <button
+            onClick={startClassSurvey}
+            disabled={students.length === 0}
+            className="flex items-center gap-1.5 rounded-lg border border-accent-300 bg-accent-50 px-3 py-2 text-xs font-semibold text-accent-700 transition-colors hover:bg-accent-100 disabled:opacity-50 sm:text-sm"
+          >
+            <ClipboardList className="h-4 w-4" />
+            <span className="hidden sm:inline">Start Class</span> Survey
+          </button>
+        )}
         <button
           onClick={exportReport}
           disabled={students.length === 0}
@@ -1319,7 +1322,7 @@ function BulkActions({
       </div>
 
       {/* ---- Survey modal ---- */}
-      {surveyModalOpen && (
+      {INTEREST_ENABLED && surveyModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
           onClick={() => setSurveyModalOpen(false)}

@@ -13,6 +13,7 @@ import LivingVisualization from '../components/student/LivingVisualization'
 import AmoebaEmptyState from '../components/student/AmoebaEmptyState'
 import CompetencySnapshot from '../components/student/CompetencySnapshot'
 import ZoneMatrix from '../components/student/ZoneMatrix'
+import { INTEREST_ENABLED } from '../lib/features'
 import AILearningGuide from '../components/student/AILearningGuide'
 import FamilySupportGuide from '../components/student/FamilySupportGuide'
 import Timeline from '../components/student/Timeline'
@@ -308,18 +309,20 @@ export default function StudentProfile() {
                     <ClipboardPen className="h-4 w-4" />
                     Record Observation
                   </button>
-                  <button
-                    onClick={launchInterestSurvey}
-                    disabled={launchingSurvey}
-                    className="flex items-center gap-2 rounded-lg border border-accent-300 bg-accent-50 px-4 py-2.5 text-sm font-medium text-accent-700 transition-colors hover:bg-accent-100 disabled:opacity-50"
-                  >
-                    {launchingSurvey ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <ClipboardList className="h-4 w-4" />
-                    )}
-                    Interest Survey
-                  </button>
+                  {INTEREST_ENABLED && (
+                    <button
+                      onClick={launchInterestSurvey}
+                      disabled={launchingSurvey}
+                      className="flex items-center gap-2 rounded-lg border border-accent-300 bg-accent-50 px-4 py-2.5 text-sm font-medium text-accent-700 transition-colors hover:bg-accent-100 disabled:opacity-50"
+                    >
+                      {launchingSurvey ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <ClipboardList className="h-4 w-4" />
+                      )}
+                      Interest Survey
+                    </button>
+                  )}
                 </>
               )}
               <button
@@ -456,7 +459,7 @@ export default function StudentProfile() {
       )}
 
       {/* ========== ZONE MATRIX (educator/admin only) ========== */}
-      {!isFamilyView && (
+      {!isFamilyView && INTEREST_ENABLED && (
         <section>
           <div className="glass-card p-5">
             <h2 className="mb-1 text-lg font-bold text-text">Learning Zones</h2>

@@ -15,6 +15,7 @@ import { useMemo, useId, useState, useRef, useEffect } from 'react'
 import type { DimensionScore } from '../../lib/student-data'
 import type { Observation } from '../../types/database'
 import ObservationPopup from './ObservationPopup'
+import { INTEREST_ENABLED } from '../../lib/features'
 
 interface Props {
   dimensionScores: DimensionScore[]
@@ -529,7 +530,7 @@ export default function LivingBlob({
           ))}
 
           {/* ── Interest dots (amber markers) ── */}
-          {interestDots.map((dot) => (
+          {INTEREST_ENABLED && interestDots.map((dot) => (
             <g
               key={`idot-${dot.id}`}
               style={{ cursor: 'pointer' }}
