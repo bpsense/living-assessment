@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthContext, useAuthProvider, useAuth } from './lib/auth'
+import { MESSAGING_ENABLED } from './lib/features'
 import { ToastProvider } from './components/Toast'
 import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -72,7 +73,7 @@ function AppRoutes() {
         <Route path="/department" element={<DepartmentDashboard />} />
         <Route path="/incident/:id" element={<IncidentReportPage />} />
         <Route path="/settings" element={<SchoolProfile />} />
-        <Route path="/messages" element={<Messages />} />
+        {MESSAGING_ENABLED && <Route path="/messages" element={<Messages />} />}
 
         {/* Learner routes */}
         <Route path="/learner/profile" element={<LearnerProfile />} />

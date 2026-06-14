@@ -44,6 +44,7 @@ import { useEducatorList, useDepartmentAdminList } from '../lib/educator-data'
 import { useFamilyList } from '../lib/family-data'
 import { useDepartmentLabel } from '../lib/department-label'
 import { SIDEBAR_ITEMS, SIDEBAR_BY_KEY, effectiveRoleFor, type EffectiveRole, type SidebarItem } from '../lib/sidebar-catalog'
+import { MESSAGING_ENABLED } from '../lib/features'
 import { useRolePermissions, resolveAccess, type RolePermissionMap } from '../lib/role-permissions'
 
 // ============================================================
@@ -111,6 +112,7 @@ function buildNavFromCatalog(
   const nav: NavItem[] = []
   for (const item of SIDEBAR_ITEMS) {
     if (folderChildKeys.has(item.key)) continue
+    if (!MESSAGING_ENABLED && item.key === 'messages') continue
     if (resolveAccess(item.key, role, perms) === 'hidden') continue
 
     if (item.children) {

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { clsx } from 'clsx'
-import { INTEREST_ENABLED } from '../lib/features'
+import { INTEREST_ENABLED, MESSAGING_ENABLED } from '../lib/features'
 import {
   BarChart,
   Bar,
@@ -260,30 +260,32 @@ export default function ClassroomPage() {
                   <Upload className="h-3.5 w-3.5" />
                   Import CSV
                 </button>
-                <button
-                  onClick={async () => {
-                    if (!classroom || !profile || creatingClassChat) return
-                    setCreatingClassChat(true)
-                    try {
-                      await createClassConversation(
-                        classroom.id,
-                        classroom.name,
-                        profile.id,
-                        classroom.school_id
-                      )
-                      navigate('/messages')
-                    } catch (err: any) {
-                      toast(err.message || 'Failed to open class chat', 'error')
-                    } finally {
-                      setCreatingClassChat(false)
-                    }
-                  }}
-                  disabled={creatingClassChat}
-                  className="flex items-center gap-1.5 rounded-lg border border-primary-300 bg-primary-50 px-3 py-2 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100 disabled:opacity-50"
-                >
-                  <MessageCircle className="h-3.5 w-3.5" />
-                  Class Chat
-                </button>
+                {MESSAGING_ENABLED && (
+                  <button
+                    onClick={async () => {
+                      if (!classroom || !profile || creatingClassChat) return
+                      setCreatingClassChat(true)
+                      try {
+                        await createClassConversation(
+                          classroom.id,
+                          classroom.name,
+                          profile.id,
+                          classroom.school_id
+                        )
+                        navigate('/messages')
+                      } catch (err: any) {
+                        toast(err.message || 'Failed to open class chat', 'error')
+                      } finally {
+                        setCreatingClassChat(false)
+                      }
+                    }}
+                    disabled={creatingClassChat}
+                    className="flex items-center gap-1.5 rounded-lg border border-primary-300 bg-primary-50 px-3 py-2 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100 disabled:opacity-50"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    Class Chat
+                  </button>
+                )}
               </>
             )}
             <BulkActions

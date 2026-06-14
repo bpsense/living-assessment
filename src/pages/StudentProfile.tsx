@@ -13,7 +13,7 @@ import LivingVisualization from '../components/student/LivingVisualization'
 import AmoebaEmptyState from '../components/student/AmoebaEmptyState'
 import CompetencySnapshot from '../components/student/CompetencySnapshot'
 import ZoneMatrix from '../components/student/ZoneMatrix'
-import { INTEREST_ENABLED } from '../lib/features'
+import { INTEREST_ENABLED, MESSAGING_ENABLED } from '../lib/features'
 import AILearningGuide from '../components/student/AILearningGuide'
 import FamilySupportGuide from '../components/student/FamilySupportGuide'
 import Timeline from '../components/student/Timeline'
@@ -440,7 +440,7 @@ export default function StudentProfile() {
       )}
 
       {/* ========== LEARNER MESSAGES (family view) ========== */}
-      {isFamilyView && student && profile && (
+      {isFamilyView && MESSAGING_ENABLED && student && profile && (
         <LearnerMessagesSection
           studentId={student.id}
           parentId={profile.id}
