@@ -11,7 +11,7 @@
  * the `observations` table directly (competency_id + assessed_age).
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowDown, ArrowRight, ArrowUp, ExternalLink, Loader2, Plus, X } from 'lucide-react'
+import { ArrowDown, ArrowRight, ArrowUp, ExternalLink, Loader2, Minus, Plus, X } from 'lucide-react'
 import { clsx } from 'clsx'
 import { format } from 'date-fns'
 import type { SnapshotRow } from '../../lib/competency-snapshot-data'
@@ -79,6 +79,18 @@ export default function CompetencyDetailModal({
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
 
+  // Assessed age — defaults to the learner's standard age; educators can step it
+  // up/down (±3) to assess against an older or younger expectation. A success at
+  // an older age reads as "above age expectation" even at a lower level.
+  const standardAge = row.standardAge ?? learnerAge
+  const ageLo = standardAge == null ? 1 : Math.max(1, standardAge - 3)
+  const ageHi = standardAge == null ? 16 : Math.min(16, standardAge + 3)
+  const [assessAge, setAssessAge] = useState<number | null>(standardAge)
+  const assessDescRaw =
+    assessAge != null ? (row.stepDescriptors?.[String(assessAge)] ?? '').trim() : ''
+  const assessDesc = assessDescRaw && assessDescRaw !== 'N/A' ? assessDescRaw : null
+  const ageRel = assessAge != null && standardAge != null ? assessAge - standardAge : 0
+
   // Recording needs a dimension (observations.dimension_id is NOT NULL); the
   // rare unassigned-competency case (no dimension) is view-only.
   const canRecord = audience === 'educator' && !!profile && dimensionId != null
@@ -118,7 +130,7 @@ export default function CompetencyDetailModal({
       student_id: studentId,
       dimension_id: dimensionId,
       competency_id: row.standard.id,
-      assessed_age: learnerAge,
+      assessed_age: assessAge,
       observer_id: profile!.id,
       rating,
       notes: notes.trim() || null,
@@ -143,6 +155,7 @@ export default function CompetencyDetailModal({
         assessor_id: profile!.id,
         assessed_at: observedAt,
         created_at: observedAt,
+        assessed_age: assessAge,
       },
     ])
     setLevel(null)
@@ -248,6 +261,7 @@ export default function CompetencyDetailModal({
                   <HistoryItem
                     key={h.id}
                     item={h}
+                    standardAge={standardAge}
                     observerName={observers.get(h.assessor_id)}
                     showObserver={audience === 'educator'}
                     /* Only observations within the recency window drive the position. */
@@ -271,6 +285,49 @@ export default function CompetencyDetailModal({
             <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-text-light">
               Record an observation
             </h4>
+            {standardAge != null && (
+              <div className="mb-2 rounded-lg border border-bg-muted bg-bg px-3 py-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-medium text-text-muted">Assessing at age</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setAssessAge((a) => Math.max(ageLo, (a ?? standardAge) - 1))}
+                      disabled={(assessAge ?? standardAge) <= ageLo}
+                      className="rounded-md border border-bg-muted p-1 text-text-muted transition-colors hover:bg-bg-muted disabled:opacity-40"
+                      aria-label="Assess a year younger"
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </button>
+                    <span className="w-6 text-center text-sm font-bold text-text">{assessAge}</span>
+                    <button
+                      type="button"
+                      onClick={() => setAssessAge((a) => Math.min(ageHi, (a ?? standardAge) + 1))}
+                      disabled={(assessAge ?? standardAge) >= ageHi}
+                      className="rounded-md border border-bg-muted p-1 text-text-muted transition-colors hover:bg-bg-muted disabled:opacity-40"
+                      aria-label="Assess a year older"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+                <p
+                  className={clsx(
+                    'mt-1 text-[10px] font-medium',
+                    ageRel > 0 ? 'text-primary-600' : ageRel < 0 ? 'text-accent-600' : 'text-text-light'
+                  )}
+                >
+                  {ageRel > 0
+                    ? `↑ Above the ${standardAge}yo standard — a success here reads as above age expectation`
+                    : ageRel < 0
+                      ? `↓ Below the ${standardAge}yo standard`
+                      : `At the ${standardAge}yo standard`}
+                </p>
+                {assessDesc && (
+                  <p className="mt-1 text-[11px] leading-relaxed text-text-muted">{assessDesc}</p>
+                )}
+              </div>
+            )}
             <div className="grid grid-cols-4 gap-1.5">
               {ASSESSMENT_LEVELS.map((lv) => (
                 <button
@@ -337,15 +394,20 @@ function TrendBadge({ trend }: { trend: Trend }) {
 
 function HistoryItem({
   item,
+  standardAge,
   observerName,
   showObserver,
   drivesPosition,
 }: {
   item: StandardAssessment
+  standardAge: number | null
   observerName: string | undefined
   showObserver: boolean
   drivesPosition: boolean
 }) {
+  const aa = item.assessed_age
+  const aboveStd = aa != null && standardAge != null && aa > standardAge
+  const belowStd = aa != null && standardAge != null && aa < standardAge
   const urls = item.notes ? item.notes.match(URL_REGEX) ?? [] : []
   const cleanNotes = item.notes ? item.notes.replace(URL_REGEX, '').trim() : ''
   return (
@@ -359,6 +421,26 @@ function HistoryItem({
         <span className="font-medium text-text-muted">
           {format(new Date(item.assessed_at), 'MMM d, yyyy')}
         </span>
+        {aa != null && (
+          <span
+            className={clsx(
+              'rounded px-1 py-0.5 text-[9px] font-semibold',
+              aboveStd
+                ? 'bg-primary-50 text-primary-700'
+                : belowStd
+                  ? 'bg-accent-50 text-accent-700'
+                  : 'bg-bg-muted text-text-muted'
+            )}
+            title={
+              standardAge != null && aa !== standardAge
+                ? `Assessed against the age-${aa} expectation (standard is age ${standardAge})`
+                : `Assessed at the age-${aa} standard`
+            }
+          >
+            age {aa}
+            {aboveStd ? ' ↑' : belowStd ? ' ↓' : ''}
+          </span>
+        )}
         {showObserver && (
           <>
             <span className="text-text-light">·</span>
