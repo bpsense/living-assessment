@@ -42,8 +42,22 @@ import { formatLevel } from '../../lib/standards-assignment-data'
 import { supabase } from '../../lib/supabase'
 import type { Competency, Dimension, Observation } from '../../types/database'
 import { DimensionIcon } from './DimensionIcon'
+import CompetencyDetailModal from './CompetencyDetailModal'
 import { setStudentSnapshotVisibility } from '../../lib/snapshot-visibility'
 import { useToast } from '../Toast'
+
+/** Compact label for a competency marker — full name shows on hover + click. */
+function shortLabel(name: string, max = 16): string {
+  if (name.length <= max) return name
+  let out = ''
+  for (const word of name.split(/\s+/)) {
+    if (out && (out + ' ' + word).length > max) break
+    out = out ? out + ' ' + word : word
+    if (out.length >= max) break
+  }
+  if (!out) out = name.slice(0, max)
+  return out.replace(/[\s,&]+$/, '') + '…'
+}
 
 export type SnapshotAudience = 'educator' | 'family'
 
@@ -59,6 +73,11 @@ interface Props {
   /** Called after the educator toggles family visibility so the page can
    *  refetch the student record. */
   onChangedVisibility?: () => void
+  /** observer_id -> display name, for the detail modal's history attribution. */
+  observers?: Map<string, string>
+  /** Called after an educator records an observation from the detail modal so
+   *  the page can refetch (snapshot + amoeba update). */
+  onObservationSaved?: () => void
   prefetched?: {
     dimensions: Dimension[]
     /** Direct observations that drive the competency snapshot. */
@@ -74,11 +93,16 @@ export default function CompetencySnapshot({
   audience,
   familyVisible = true,
   onChangedVisibility,
+  observers,
+  onObservationSaved,
   prefetched,
 }: Props) {
   const [competencies, setCompetencies] = useState<Competency[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [togglingVis, setTogglingVis] = useState(false)
+  const [selected, setSelected] = useState<{ row: SnapshotRow; dimension: Dimension | null } | null>(
+    null
+  )
   const familyView = audience === 'family'
   const { toast } = useToast()
 
@@ -169,34 +193,58 @@ export default function CompetencySnapshot({
     )
   }
 
-  // Competency markers aren't clickable (no detail modal in the competency view).
-  const noop = () => {}
-
   const subtitle =
     audience === 'family'
       ? `Where ${studentFirstName} stands today on each competency, weighted toward the most recent observations. The amoeba above shows how this has changed over time.`
-      : 'Spectrum position per competency, weighted across recent observations (90-day half-life) with an age-band shift applied.'
+      : 'Spectrum position per competency, weighted across recent observations (90-day half-life) with an age-band shift applied. Click any competency for its history.'
 
   return (
-    <Shell title="Competency Snapshot" subtitle={subtitle} action={headerAction}>
-      <TotalsStrip totals={snapshot.totals} />
+    <>
+      <Shell title="Competency Snapshot" subtitle={subtitle} action={headerAction}>
+        <TotalsStrip totals={snapshot.totals} />
 
-      <div className="mt-4 space-y-3">
-        {snapshot.groups.map((group) => (
-          <DomainPanel key={group.dimension.id} group={group} audience={audience} onRowClick={noop} />
-        ))}
+        <div className="mt-4 space-y-3">
+          {snapshot.groups.map((group) => (
+            <DomainPanel
+              key={group.dimension.id}
+              group={group}
+              audience={audience}
+              onRowClick={(row) => setSelected({ row, dimension: group.dimension })}
+            />
+          ))}
 
-        {snapshot.unassigned.length > 0 && (
-          <UnassignedPanel rows={snapshot.unassigned} audience={audience} onRowClick={noop} />
+          {snapshot.unassigned.length > 0 && (
+            <UnassignedPanel
+              rows={snapshot.unassigned}
+              audience={audience}
+              onRowClick={(row) => setSelected({ row, dimension: null })}
+            />
+          )}
+        </div>
+
+        {snapshot.learnerAge === null && (
+          <p className="mt-3 text-xs text-text-muted">
+            Add a date of birth to surface age-relative positions; competencies currently show as untimed.
+          </p>
         )}
-      </div>
+      </Shell>
 
-      {snapshot.learnerAge === null && (
-        <p className="mt-3 text-xs text-text-muted">
-          Add a date of birth to surface age-relative positions; competencies currently show as untimed.
-        </p>
+      {selected && (
+        <CompetencyDetailModal
+          key={selected.row.standard.id}
+          row={selected.row}
+          dimensionId={selected.dimension?.id ?? null}
+          dimensionName={selected.dimension?.name ?? null}
+          studentId={studentId}
+          schoolId={schoolId}
+          learnerAge={snapshot.learnerAge}
+          audience={audience}
+          observers={observers ?? new Map()}
+          onClose={() => setSelected(null)}
+          onObservationSaved={onObservationSaved}
+        />
       )}
-    </Shell>
+    </>
   )
 }
 
@@ -529,7 +577,7 @@ function Marker({
         transform: `translate(${translate}, 0)`,
       }}
     >
-      <span className="font-mono">{row.standard.code}</span>
+      <span className="max-w-[7.5rem] truncate">{shortLabel(row.standard.code)}</span>
       {!isGhost && <span aria-hidden>·</span>}
       {!isGhost && <span>{levelLabel}</span>}
       {!isGhost && audience === 'educator' && <TrendIcon trend={row.trend} />}
@@ -589,10 +637,10 @@ function UntimedChip({
     <button
       type="button"
       onClick={onClick}
-      title={row.standard.description}
+      title={`${row.standard.code} — ${row.standard.description}`}
       className="inline-flex items-center gap-1 rounded-full bg-bg-muted px-2 py-0.5 text-[11px] font-medium text-text-muted hover:bg-bg-card"
     >
-      <span className="font-mono">{row.standard.code}</span>
+      <span className="max-w-[7.5rem] truncate">{shortLabel(row.standard.code)}</span>
       <span aria-hidden>·</span>
       <span>{levelLabel}</span>
       {audience === 'educator' && row.latest && <TrendIcon trend={row.trend} />}
