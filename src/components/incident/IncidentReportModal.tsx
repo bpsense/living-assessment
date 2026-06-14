@@ -9,6 +9,8 @@ import {
   FileImage,
   File as FileIcon,
   Trash2,
+  Eye,
+  EyeOff,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
@@ -78,6 +80,10 @@ interface StudentTag {
   last_name: string
   role: IncidentStudentRole
   notes: string
+  /** Per-student severity override (null = inherit the incident severity). */
+  severity: IncidentSeverity | null
+  /** Whether this student's family may see the incident. */
+  shared_with_family: boolean
 }
 
 // ============================================================
@@ -191,8 +197,12 @@ export default function IncidentReportModal({ open, onClose }: Props) {
   const [witnesses, setWitnesses] = useState('')
   const [parentNotified, setParentNotified] = useState(false)
   const [notificationMethod, setNotificationMethod] = useState('')
+  const [commLog, setCommLog] = useState('')
+  const [commFollowup, setCommFollowup] = useState('')
   const [assignedTo, setAssignedTo] = useState('')
   const [assignedToName, setAssignedToName] = useState('')
+
+  const isAdmin = profile?.role === 'admin'
 
   // Students
   const [students, setStudents] = useState<StudentTag[]>([])
@@ -238,6 +248,8 @@ export default function IncidentReportModal({ open, onClose }: Props) {
         setWitnesses('')
         setParentNotified(false)
         setNotificationMethod('')
+        setCommLog('')
+        setCommFollowup('')
         setAssignedTo('')
         setAssignedToName('')
         setStudents([])
@@ -287,6 +299,8 @@ export default function IncidentReportModal({ open, onClose }: Props) {
         last_name: student.last_name,
         role: 'involved',
         notes: '',
+        severity: null,
+        shared_with_family: false,
       },
     ])
   }
@@ -301,6 +315,14 @@ export default function IncidentReportModal({ open, onClose }: Props) {
 
   function handleStudentNotesChange(studentId: string, notes: string) {
     setStudents((prev) => prev.map((s) => s.student_id === studentId ? { ...s, notes } : s))
+  }
+
+  function handleStudentSeverityChange(studentId: string, severity: IncidentSeverity | null) {
+    setStudents((prev) => prev.map((s) => s.student_id === studentId ? { ...s, severity } : s))
+  }
+
+  function handleStudentVisibilityToggle(studentId: string) {
+    setStudents((prev) => prev.map((s) => s.student_id === studentId ? { ...s, shared_with_family: !s.shared_with_family } : s))
   }
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -346,12 +368,16 @@ export default function IncidentReportModal({ open, onClose }: Props) {
           witnesses: witnesses.trim() || null,
           parent_notified: parentNotified,
           parent_notification_method: parentNotified ? notificationMethod || null : null,
+          family_communication_log: commLog.trim() || null,
+          family_communication_followup: commFollowup.trim() || null,
           assigned_to: assignedTo || null,
         },
         students: students.map((s) => ({
           student_id: s.student_id,
           role: s.role,
           notes: s.notes || undefined,
+          severity: s.severity,
+          shared_with_family: s.shared_with_family,
         })),
         classroom_ids: classroomIds,
       })
@@ -525,6 +551,38 @@ export default function IncidentReportModal({ open, onClose }: Props) {
                       placeholder="Notes for this student (optional)..."
                       className="mt-2 w-full rounded border border-bg-muted bg-bg-card px-2 py-1 text-xs text-text placeholder:text-text-light focus:outline-none"
                     />
+                    {isAdmin && (
+                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-bg-muted pt-2">
+                        <label className="flex items-center gap-1.5 text-[11px] text-text-muted">
+                          Severity
+                          <select
+                            value={s.severity ?? ''}
+                            onChange={(e) => handleStudentSeverityChange(s.student_id, e.target.value ? (e.target.value as IncidentSeverity) : null)}
+                            className="rounded border border-bg-muted bg-bg-card px-2 py-1 text-[11px] text-text focus:outline-none"
+                          >
+                            <option value="">
+                              Inherit{severity ? ` (${SEVERITY_LEVELS.find((l) => l.value === severity)?.label})` : ''}
+                            </option>
+                            {SEVERITY_LEVELS.map((l) => (
+                              <option key={l.value} value={l.value}>{l.label}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => handleStudentVisibilityToggle(s.student_id)}
+                          className={clsx(
+                            'flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium transition-colors',
+                            s.shared_with_family
+                              ? 'bg-success-50 text-success-700 hover:bg-success-100'
+                              : 'bg-bg-muted text-text-muted hover:bg-bg-muted/80'
+                          )}
+                        >
+                          {s.shared_with_family ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                          {s.shared_with_family ? 'Family can see' : 'Hidden from family'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -634,8 +692,9 @@ export default function IncidentReportModal({ open, onClose }: Props) {
             )}
           </div>
 
-          {/* 11. Parent Notification */}
+          {/* 11. Family Communication */}
           <div className="space-y-2">
+            <label className="mb-1 block text-xs font-medium text-text-muted">Family Communication</label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -657,6 +716,21 @@ export default function IncidentReportModal({ open, onClose }: Props) {
                 ))}
               </select>
             )}
+            <textarea
+              value={commLog}
+              onChange={(e) => setCommLog(e.target.value)}
+              rows={2}
+              placeholder="Communication details — what was shared with the family, when, and by whom (optional)..."
+              className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+            />
+            <textarea
+              value={commFollowup}
+              onChange={(e) => setCommFollowup(e.target.value)}
+              rows={2}
+              placeholder="Follow-up needed with the family (optional)..."
+              className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+            />
+            <p className="text-[11px] text-text-light">Visible to staff only — never shown to families.</p>
           </div>
 
           {/* 12. Assign Follow-up */}

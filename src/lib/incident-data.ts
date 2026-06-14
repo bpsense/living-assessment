@@ -454,7 +454,15 @@ export function useUnreadIncidentNotifications(profileId: string | undefined) {
 
 export interface CreateIncidentData {
   report: IncidentReportInsert
-  students: { student_id: string; role: IncidentStudentRole; notes?: string }[]
+  students: {
+    student_id: string
+    role: IncidentStudentRole
+    notes?: string
+    /** Per-student severity override (null = inherit incident severity). */
+    severity?: IncidentSeverity | null
+    /** Whether this student's family may see the incident. */
+    shared_with_family?: boolean
+  }[]
   classroom_ids: string[]
 }
 
@@ -478,6 +486,8 @@ export async function createIncidentReport(data: CreateIncidentData): Promise<st
       student_id: s.student_id,
       role: s.role,
       notes: s.notes ?? null,
+      severity: s.severity ?? null,
+      shared_with_family: s.shared_with_family ?? false,
     }))
 
     const { error: studErr } = await supabase
