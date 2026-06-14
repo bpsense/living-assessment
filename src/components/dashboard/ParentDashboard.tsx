@@ -7,6 +7,7 @@ import LinkStudentModal from './LinkStudentModal'
 import { useAuth } from '../../lib/auth'
 import { fetchParentConversations, type ConversationWithDetails } from '../../lib/messaging-data'
 import type { ParentDashboardData } from '../../lib/dashboard-data'
+import { INTEREST_ENABLED } from '../../lib/features'
 
 interface Props {
   data: ParentDashboardData
@@ -70,7 +71,7 @@ export default function ParentDashboard({ data, userName, hideAddLearner }: Prop
       </div>
 
       {/* ---- Survey Prompts ---- */}
-      {data.surveyPrompts.length > 0 && (
+      {INTEREST_ENABLED && data.surveyPrompts.length > 0 && (
         <section className="space-y-2">
           {data.surveyPrompts.map((prompt) => (
             <div
@@ -255,10 +256,12 @@ export default function ParentDashboard({ data, userName, hideAddLearner }: Prop
                           <span className="inline-block h-2 w-2 rounded-full bg-primary-500" />
                           Competency
                         </span>
-                        <span className="flex items-center gap-1">
-                          <span className="inline-block h-2 w-2 rounded-full bg-accent-500" />
-                          Interest
-                        </span>
+                        {INTEREST_ENABLED && (
+                          <span className="flex items-center gap-1">
+                            <span className="inline-block h-2 w-2 rounded-full bg-accent-500" />
+                            Interest
+                          </span>
+                        )}
                       </div>
                       <MiniBlob dimensionScores={dimensionScores} />
                     </div>

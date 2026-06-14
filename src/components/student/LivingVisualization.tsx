@@ -16,6 +16,7 @@ import type { DimensionScore } from '../../lib/student-data'
 import type { Snapshot } from '../../lib/living-data'
 import type { Observation } from '../../types/database'
 import { interpolateScores, decayDimensionScores } from '../../lib/living-data'
+import { INTEREST_ENABLED } from '../../lib/features'
 import LivingBlob from './LivingBlob'
 import TimelinePlayback from './TimelinePlayback'
 
@@ -429,15 +430,17 @@ export default function LivingVisualization({
               Educator-assessed skill level across each dimension
             </p>
           </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="inline-block h-3.5 w-3.5 rounded-full bg-[#D4943A] shadow-sm" />
-              <span className="text-sm font-semibold text-text">Interest</span>
+          {INTEREST_ENABLED && (
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="inline-block h-3.5 w-3.5 rounded-full bg-[#D4943A] shadow-sm" />
+                <span className="text-sm font-semibold text-text">Interest</span>
+              </div>
+              <p className="pl-[22px] text-xs leading-relaxed text-text-muted">
+                Learner-reported curiosity and engagement
+              </p>
             </div>
-            <p className="pl-[22px] text-xs leading-relaxed text-text-muted">
-              Learner-reported curiosity and engagement
-            </p>
-          </div>
+          )}
           <div className="mt-1 border-t border-bg-muted pt-4 space-y-2.5">
             <p className="text-[11px] font-medium uppercase tracking-wider text-text-light">Levels</p>
             {(['Emerging', 'Developing', 'Achieving', 'Exceeding'] as const).map((level, i) => (
@@ -468,10 +471,12 @@ export default function LivingVisualization({
           <span className="inline-block h-3 w-3 rounded-full bg-[#0D7377]" />
           <span className="font-medium">Competency</span>
         </span>
-        <span className="flex items-center gap-1.5 text-xs text-text-muted">
-          <span className="inline-block h-3 w-3 rounded-full bg-[#D4943A]" />
-          <span className="font-medium">Interest</span>
-        </span>
+        {INTEREST_ENABLED && (
+          <span className="flex items-center gap-1.5 text-xs text-text-muted">
+            <span className="inline-block h-3 w-3 rounded-full bg-[#D4943A]" />
+            <span className="font-medium">Interest</span>
+          </span>
+        )}
       </div>
 
       {/* ── Family-friendly insight cards ── */}
@@ -606,15 +611,17 @@ function ExpandedBlobModal({
               Educator-assessed skill level across each dimension
             </p>
           </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="inline-block h-4 w-4 rounded-full bg-[#D4943A] shadow-sm" />
-              <span className="text-sm font-semibold text-text">Interest</span>
+          {INTEREST_ENABLED && (
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="inline-block h-4 w-4 rounded-full bg-[#D4943A] shadow-sm" />
+                <span className="text-sm font-semibold text-text">Interest</span>
+              </div>
+              <p className="pl-[24px] text-xs leading-relaxed text-text-muted">
+                Learner-reported curiosity and engagement
+              </p>
             </div>
-            <p className="pl-[24px] text-xs leading-relaxed text-text-muted">
-              Learner-reported curiosity and engagement
-            </p>
-          </div>
+          )}
           <div className="mt-1 border-t border-bg-muted pt-4 space-y-2.5">
             <p className="text-[11px] font-medium uppercase tracking-wider text-text-light">Levels</p>
             {(['Emerging', 'Developing', 'Achieving', 'Exceeding'] as const).map((level, i) => (
@@ -645,10 +652,12 @@ function ExpandedBlobModal({
           <span className="inline-block h-3 w-3 rounded-full bg-[#0D7377]" />
           <span className="font-medium">Competency</span>
         </span>
-        <span className="flex items-center gap-1.5 text-xs text-text-muted">
-          <span className="inline-block h-3 w-3 rounded-full bg-[#D4943A]" />
-          <span className="font-medium">Interest</span>
-        </span>
+        {INTEREST_ENABLED && (
+          <span className="flex items-center gap-1.5 text-xs text-text-muted">
+            <span className="inline-block h-3 w-3 rounded-full bg-[#D4943A]" />
+            <span className="font-medium">Interest</span>
+          </span>
+        )}
       </div>
 
       {/* Timeline playback at the bottom */}
@@ -693,7 +702,7 @@ function FamilyInsights({ scores }: { scores: DimensionScore[] }) {
           color="primary"
         />
       )}
-      {mostInterested && (
+      {INTEREST_ENABLED && mostInterested && (
         <InsightCard
           emoji="💡"
           title="Most Interested In"
@@ -702,7 +711,7 @@ function FamilyInsights({ scores }: { scores: DimensionScore[] }) {
           color="accent"
         />
       )}
-      {growthOp && (
+      {INTEREST_ENABLED && growthOp && (
         <InsightCard
           emoji="🌱"
           title="Growth Opportunity"

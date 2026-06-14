@@ -7,6 +7,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import type { DimensionScore } from '../../lib/student-data'
+import { INTEREST_ENABLED } from '../../lib/features'
 
 interface Props {
   dimensionScores: DimensionScore[]
@@ -39,15 +40,17 @@ export default function MiniRadar({ dimensionScores }: Props) {
           dot={false}
         />
         {/* Interest polygon (amber, dashed) */}
-        <Radar
-          dataKey="interest"
-          stroke="#D4943A"
-          fill="#D4943A"
-          fillOpacity={0.1}
-          strokeWidth={1.5}
-          strokeDasharray="4 2"
-          dot={false}
-        />
+        {INTEREST_ENABLED && (
+          <Radar
+            dataKey="interest"
+            stroke="#D4943A"
+            fill="#D4943A"
+            fillOpacity={0.1}
+            strokeWidth={1.5}
+            strokeDasharray="4 2"
+            dot={false}
+          />
+        )}
       </RadarChart>
     </ResponsiveContainer>
   )

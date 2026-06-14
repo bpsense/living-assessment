@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { INTEREST_ENABLED } from './features'
 import {
   subDays,
   startOfWeek,
@@ -352,7 +353,7 @@ function computeAttentionFlags(
         const avgComp =
           dimObs.reduce((sum, o) => sum + Number(o.rating), 0) / dimObs.length
 
-        if (interest >= 4 && avgComp <= 2) {
+        if (INTEREST_ENABLED && interest >= 4 && avgComp <= 2) {
           flags.push({
             student_id: student.id,
             student_name: name,
