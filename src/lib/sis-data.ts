@@ -275,6 +275,35 @@ export function useTeacherNotes(studentId: string | undefined): UseTeacherNotesR
   return { notes, loading, error, addNote, updateNote, deleteNote, refetch }
 }
 
+/**
+ * Add the same teacher note to one or more students in a single batch insert.
+ * Used by the global "Quick Note" action so a teacher can jot one note for a
+ * single learner or a whole group at once. Returns the number of notes written.
+ *
+ * Teacher notes are a contextual data source only — they do NOT feed competency
+ * scores (those come from the `observations` table).
+ */
+export async function addTeacherNoteForStudents(
+  studentIds: string[],
+  data: { content: string; note_type: NoteType; is_confidential: boolean; school_id: string; author_id: string }
+): Promise<number> {
+  if (studentIds.length === 0) return 0
+
+  const rows = studentIds.map((student_id) => ({
+    student_id,
+    school_id: data.school_id,
+    author_id: data.author_id,
+    content: data.content,
+    note_type: data.note_type,
+    is_confidential: data.is_confidential,
+  }))
+
+  const { error } = await supabase.from('teacher_notes').insert(rows)
+  if (error) throw error
+
+  return rows.length
+}
+
 // ============================================================
 // useStudentDocuments — CRUD for student profile documents
 // ============================================================
