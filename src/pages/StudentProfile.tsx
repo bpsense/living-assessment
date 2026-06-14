@@ -375,6 +375,8 @@ export default function StudentProfile() {
           audience={isFamilyView ? 'family' : 'educator'}
           familyVisible={student.family_snapshot_visible}
           onChangedVisibility={refetch}
+          observers={observers}
+          onObservationSaved={refetch}
           prefetched={{
             dimensions: visibleDimensions,
             observations,
