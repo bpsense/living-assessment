@@ -87,6 +87,12 @@ export type Zone = 'below' | 'at' | 'above' | 'untimed'
  *  same-day assessment. */
 export const DECAY_HALF_LIFE_DAYS = 90
 
+/** Observations older than this (days) are excluded from the snapshot's
+ *  "current" position. The snapshot reflects only recent standing — the last
+ *  few assessments within this window — mirroring the amoeba's recency bias.
+ *  ~2 months. */
+export const RECENT_WINDOW_DAYS = 60
+
 export function decayWeight(
   daysAgo: number,
   halfLifeDays: number = DECAY_HALF_LIFE_DAYS
