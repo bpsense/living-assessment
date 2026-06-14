@@ -3,6 +3,7 @@ import { clsx } from 'clsx'
 import { X, Search, Loader2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import { useEducatorClassroomScope } from '../lib/educator-data'
 import ObservationForm from './observation/ObservationForm'
 import type { Student } from '../types/database'
 
@@ -32,76 +33,24 @@ function StudentSearch({
   const [results, setResults] = useState<Student[]>([])
   const [loading, setLoading] = useState(false)
   const [recentStudents, setRecentStudents] = useState<Student[]>([])
-  /** Educator's assigned classrooms (id + name). null until loaded. */
-  const [classrooms, setClassrooms] = useState<{ id: string; name: string }[] | null>(null)
-  /** Selected classroom filter; null = all of the educator's classrooms. */
-  const [selectedClassroom, setSelectedClassroom] = useState<string | null>(null)
-  const [noClassrooms, setNoClassrooms] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const isAdmin = role === 'admin'
-
-  // Classroom IDs in the current scope (selected one, or all assigned).
-  const scopedClassroomIds = !classrooms
-    ? null
-    : selectedClassroom
-      ? [selectedClassroom]
-      : classrooms.map((c) => c.id)
+  const {
+    isAdmin,
+    classrooms,
+    selectedClassroom,
+    setSelectedClassroom,
+    noClassrooms,
+    scopedClassroomIds,
+    fetchActiveStudentIds,
+  } = useEducatorClassroomScope({ educatorId, role })
 
   // Focus on mount
   useEffect(() => {
     const timer = setTimeout(() => inputRef.current?.focus(), 100)
     return () => clearTimeout(timer)
   }, [])
-
-  // Fetch educator's assigned classrooms (educators only)
-  useEffect(() => {
-    if (isAdmin) {
-      // Admins see all students — no classroom filter
-      setClassrooms(null)
-      return
-    }
-
-    async function fetchClassrooms() {
-      const { data } = await supabase
-        .from('educator_classrooms')
-        .select('classroom_id, classrooms(id, name)')
-        .eq('educator_id', educatorId)
-
-      const rooms = (data ?? [])
-        .map((r) => {
-          // Supabase types the joined relation as an array; it's to-one here.
-          const rel = (r as { classrooms: { id: string; name: string } | { id: string; name: string }[] | null }).classrooms
-          const c = Array.isArray(rel) ? rel[0] : rel
-          return c ? { id: c.id, name: c.name } : null
-        })
-        .filter((c): c is { id: string; name: string } => c !== null)
-        .sort((a, b) => a.name.localeCompare(b.name))
-
-      if (rooms.length === 0) {
-        setNoClassrooms(true)
-        setClassrooms([])
-      } else {
-        setNoClassrooms(false)
-        setClassrooms(rooms)
-      }
-    }
-    fetchClassrooms()
-  }, [educatorId, isAdmin])
-
-  // Fetch active student IDs in the current classroom scope (educators only).
-  const fetchActiveStudentIds = useCallback(
-    async (classroomIds: string[]): Promise<string[]> => {
-      const { data } = await supabase
-        .from('student_classrooms')
-        .select('student_id')
-        .in('classroom_id', classroomIds)
-        .eq('status', 'active')
-      return [...new Set((data ?? []).map((r) => r.student_id))]
-    },
-    []
-  )
 
   // Load recent students (first 6) — scoped for educators, active-only.
   useEffect(() => {

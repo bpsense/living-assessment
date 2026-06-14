@@ -558,3 +558,116 @@ export async function inviteEducator(
     }
   }
 }
+
+// ============================================================
+// useEducatorClassroomScope
+// Shared classroom scoping for the floating-action-button student
+// pickers (Quick Observation's single-select typeahead and Quick Note's
+// multi-select roster). Educators are scoped to the active students in
+// their assigned classrooms; admins bypass scoping and see all students
+// in the school. Each picker keeps its own list-fetching behavior — this
+// hook only owns the classroom assignments, the filter selection, and the
+// active-student lookup they share.
+// ============================================================
+
+export interface EducatorClassroomScope {
+  /** True when the current user is an admin — bypasses classroom scoping. */
+  isAdmin: boolean
+  /**
+   * The educator's assigned classrooms (id + name), sorted by name.
+   * `null` until loaded, and always `null` for admins (no scoping).
+   */
+  classrooms: { id: string; name: string }[] | null
+  /** Selected classroom filter; `null` = all of the educator's classrooms. */
+  selectedClassroom: string | null
+  setSelectedClassroom: (id: string | null) => void
+  /** True when the educator has no classroom assignments. */
+  noClassrooms: boolean
+  /**
+   * Classroom IDs in the current scope (the selected one, or all assigned).
+   * `null` for admins or before the educator's classrooms have loaded.
+   */
+  scopedClassroomIds: string[] | null
+  /** Fetch the IDs of active students enrolled in the given classrooms. */
+  fetchActiveStudentIds: (classroomIds: string[]) => Promise<string[]>
+}
+
+export function useEducatorClassroomScope({
+  educatorId,
+  role,
+}: {
+  /** Current user's ID — used to fetch classroom assignments for educators */
+  educatorId: string
+  /** Current user's role — admins bypass classroom scoping */
+  role: string
+}): EducatorClassroomScope {
+  /** Educator's assigned classrooms (id + name). null until loaded. */
+  const [classrooms, setClassrooms] = useState<{ id: string; name: string }[] | null>(null)
+  /** Selected classroom filter; null = all of the educator's classrooms. */
+  const [selectedClassroom, setSelectedClassroom] = useState<string | null>(null)
+  const [noClassrooms, setNoClassrooms] = useState(false)
+
+  const isAdmin = role === 'admin'
+
+  // Classroom IDs in the current scope (selected one, or all assigned).
+  const scopedClassroomIds = !classrooms
+    ? null
+    : selectedClassroom
+      ? [selectedClassroom]
+      : classrooms.map((c) => c.id)
+
+  // Fetch educator's assigned classrooms (educators only). Admins see all
+  // students with no classroom scoping, so `classrooms` stays at its initial null.
+  useEffect(() => {
+    if (isAdmin) return
+
+    async function fetchClassrooms() {
+      const { data } = await supabase
+        .from('educator_classrooms')
+        .select('classroom_id, classrooms(id, name)')
+        .eq('educator_id', educatorId)
+
+      const rooms = (data ?? [])
+        .map((r) => {
+          // Supabase types the joined relation as an array; it's to-one here.
+          const rel = (r as { classrooms: { id: string; name: string } | { id: string; name: string }[] | null }).classrooms
+          const c = Array.isArray(rel) ? rel[0] : rel
+          return c ? { id: c.id, name: c.name } : null
+        })
+        .filter((c): c is { id: string; name: string } => c !== null)
+        .sort((a, b) => a.name.localeCompare(b.name))
+
+      if (rooms.length === 0) {
+        setNoClassrooms(true)
+        setClassrooms([])
+      } else {
+        setNoClassrooms(false)
+        setClassrooms(rooms)
+      }
+    }
+    fetchClassrooms()
+  }, [educatorId, isAdmin])
+
+  // Fetch active student IDs in the current classroom scope (educators only).
+  const fetchActiveStudentIds = useCallback(
+    async (classroomIds: string[]): Promise<string[]> => {
+      const { data } = await supabase
+        .from('student_classrooms')
+        .select('student_id')
+        .in('classroom_id', classroomIds)
+        .eq('status', 'active')
+      return [...new Set((data ?? []).map((r) => r.student_id))]
+    },
+    []
+  )
+
+  return {
+    isAdmin,
+    classrooms,
+    selectedClassroom,
+    setSelectedClassroom,
+    noClassrooms,
+    scopedClassroomIds,
+    fetchActiveStudentIds,
+  }
+}
