@@ -40,6 +40,7 @@ import EditClassroomModal from '../components/classroom/EditClassroomModal'
 import DeleteClassroomConfirm from '../components/classroom/DeleteClassroomConfirm'
 import { useClassroomView, updateStudentClassroomStatus } from '../lib/classroom-data'
 import { useAuth } from '../lib/auth'
+import { useAccessControl } from '../lib/access-control'
 import { useToast } from '../components/Toast'
 import { supabase } from '../lib/supabase'
 import { assignClassroom, unassignClassroom, updateClassroomEducatorRole, type ClassroomEducatorRole } from '../lib/educator-data'
@@ -105,6 +106,7 @@ export default function ClassroomPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { actualRole, profile } = useAuth()
+  const { canImportStudents } = useAccessControl()
   const { toast } = useToast()
   const {
     classroom,
@@ -253,13 +255,6 @@ export default function ClassroomPage() {
                   <UserPlus className="h-3.5 w-3.5" />
                   Add Learner
                 </button>
-                <button
-                  onClick={() => setShowCsvModal(true)}
-                  className="flex items-center gap-1.5 rounded-lg border border-primary-300 bg-primary-50 px-3 py-2 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100"
-                >
-                  <Upload className="h-3.5 w-3.5" />
-                  Import CSV
-                </button>
                 {MESSAGING_ENABLED && (
                   <button
                     onClick={async () => {
@@ -287,6 +282,15 @@ export default function ClassroomPage() {
                   </button>
                 )}
               </>
+            )}
+            {canImportStudents && (
+              <button
+                onClick={() => setShowCsvModal(true)}
+                className="flex items-center gap-1.5 rounded-lg border border-primary-300 bg-primary-50 px-3 py-2 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                Import CSV
+              </button>
             )}
             <BulkActions
               students={students}
@@ -1172,6 +1176,7 @@ function BulkActions({
   classroomName: string
 }) {
   const { profile } = useAuth()
+  const { canExportReports } = useAccessControl()
   const { toast } = useToast()
   const navigate = useNavigate()
 
@@ -1313,14 +1318,16 @@ function BulkActions({
             <span className="hidden sm:inline">Start Class</span> Survey
           </button>
         )}
-        <button
-          onClick={exportReport}
-          disabled={students.length === 0}
-          className="flex items-center gap-1.5 rounded-lg border border-bg-muted bg-bg-card px-3 py-2 text-xs font-semibold text-text-muted transition-colors hover:bg-bg-muted disabled:opacity-50 sm:text-sm"
-        >
-          <Download className="h-4 w-4" />
-          <span className="hidden sm:inline">Export</span> Report
-        </button>
+        {canExportReports && (
+          <button
+            onClick={exportReport}
+            disabled={students.length === 0}
+            className="flex items-center gap-1.5 rounded-lg border border-bg-muted bg-bg-card px-3 py-2 text-xs font-semibold text-text-muted transition-colors hover:bg-bg-muted disabled:opacity-50 sm:text-sm"
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Export</span> Report
+          </button>
+        )}
       </div>
 
       {/* ---- Survey modal ---- */}
