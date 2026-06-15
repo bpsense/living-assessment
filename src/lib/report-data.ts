@@ -8,6 +8,8 @@ import type {
   Observation,
   InterestSurvey,
   Profile,
+  ReportingPeriod,
+  SchoolContext,
 } from '../types/database'
 import type { DimensionScore } from './scoring'
 import type { AcademicPeriod } from './scoring'
@@ -36,7 +38,6 @@ export interface ReportData {
   dimensions: Dimension[]
   dimensionScores: DimensionScore[]
   dimensionReports: DimensionReportData[]
-  availablePeriods: AcademicPeriod[]
 }
 
 // ============================================================
@@ -66,57 +67,109 @@ export function getInterestLabel(score: number): string {
 }
 
 // ============================================================
-// Build available academic periods from observations
+// School-defined reporting periods → concrete date ranges
 // ============================================================
 
-function buildPeriods(observations: Observation[]): AcademicPeriod[] {
-  if (observations.length === 0) return []
+export const DEFAULT_ACADEMIC_YEAR_START_MONTH = 9 // September
 
-  const monthSet = new Set<string>()
-  for (const o of observations) {
-    const d = new Date(o.observed_at)
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    monthSet.add(key)
+/** Academic start year → label, e.g. 2024 → "2024–2025". */
+export function academicYearLabel(startYear: number): string {
+  return `${startYear}–${startYear + 1}`
+}
+
+/** The academic start year that contains `date`, given the anchor month. */
+function academicYearOf(date: Date, anchorMonth: number): number {
+  const month = date.getMonth() + 1
+  return month >= anchorMonth ? date.getFullYear() : date.getFullYear() - 1
+}
+
+/**
+ * Resolve a reporting period to concrete dates for a given academic start year.
+ * Months at/after the anchor belong to `startYear`; earlier months roll into
+ * `startYear + 1`. A trailing guard keeps the range forward-facing for unusual
+ * periods that straddle the anchor in reverse.
+ */
+function resolveReportingPeriod(
+  period: ReportingPeriod,
+  startYear: number,
+  anchorMonth: number
+): { start: Date; end: Date } {
+  const yearFor = (m: number) => (m >= anchorMonth ? startYear : startYear + 1)
+  const start = new Date(yearFor(period.startMonth), period.startMonth - 1, 1)
+  let end = new Date(yearFor(period.endMonth), period.endMonth, 0, 23, 59, 59, 999)
+  if (end < start) {
+    end = new Date(yearFor(period.endMonth) + 1, period.endMonth, 0, 23, 59, 59, 999)
   }
+  return { start, end }
+}
 
-  // Also include current month even if no observations yet
-  const now = new Date()
-  const currentKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-  monthSet.add(currentKey)
+/** Distinct academic start years drawn from observations, plus the current one, descending. */
+function buildAcademicYears(observations: Observation[], anchorMonth: number): number[] {
+  const years = new Set<number>()
+  years.add(academicYearOf(new Date(), anchorMonth))
+  for (const o of observations) {
+    years.add(academicYearOf(new Date(o.observed_at), anchorMonth))
+  }
+  return [...years].sort((a, b) => b - a)
+}
 
-  const periods: AcademicPeriod[] = [...monthSet]
-    .sort()
-    .reverse()
-    .map((key) => {
-      const [y, m] = key.split('-').map(Number)
-      const start = new Date(y, m - 1, 1)
-      const end = new Date(y, m, 0, 23, 59, 59, 999)
-      const label = start.toLocaleDateString('en-US', {
-        month: 'long',
-        year: 'numeric',
-      })
-      return { key, label, start, end }
-    })
+/**
+ * Build a composite period (bounding box + disjoint ranges) for the selected
+ * reporting periods in the chosen academic year. Returns null when nothing is
+ * selected, which makes the report fall back to all-time scoring.
+ */
+function buildCompositePeriod(
+  reportingPeriods: ReportingPeriod[],
+  selectedIds: string[],
+  startYear: number,
+  anchorMonth: number
+): AcademicPeriod | null {
+  const selected = reportingPeriods.filter((p) => selectedIds.includes(p.id))
+  if (selected.length === 0) return null
 
-  return periods
+  const ranges = selected.map((p) => resolveReportingPeriod(p, startYear, anchorMonth))
+  const start = new Date(Math.min(...ranges.map((r) => r.start.getTime())))
+  const end = new Date(Math.max(...ranges.map((r) => r.end.getTime())))
+  const names = selected.map((p) => p.name.trim() || 'Untitled period').join(', ')
+
+  return {
+    key: `${startYear}:${selected.map((p) => p.id).join(',')}`,
+    label: `${names} · ${academicYearLabel(startYear)}`,
+    start,
+    end,
+    ranges,
+  }
 }
 
 // ============================================================
 // Main hook
 // ============================================================
 
-export interface UseReportOptions {
-  studentId: string | undefined
-  frameworkId: string | null
-  periodKey: string | null
+/** A reporting period resolved to concrete dates for the selected academic year. */
+export interface ReportingPeriodOption {
+  id: string
+  name: string
+  /** Resolved date range for the selected year, e.g. "Sep 2024 – Dec 2024". */
+  rangeLabel: string
+  selected: boolean
 }
 
 export interface UseReportResult {
   data: ReportData | null
   loading: boolean
   error: string | null
-  setPeriodKey: (key: string | null) => void
-  selectedPeriodKey: string | null
+  /** School-defined reporting periods, resolved for the selected year. */
+  reportingPeriodOptions: ReportingPeriodOption[]
+  /** Academic start years available to choose from, descending. */
+  availableYears: number[]
+  /** Selected academic start year (e.g. 2024 → "2024–2025"). */
+  selectedYear: number
+  setSelectedYear: (year: number) => void
+  /** Ids of the currently selected reporting periods. */
+  selectedPeriodIds: string[]
+  togglePeriod: (id: string) => void
+  /** Human label for the selected period(s), for the report header. */
+  periodLabel: string
 }
 
 export function useReportData(studentId: string | undefined): UseReportResult {
@@ -130,7 +183,8 @@ export function useReportData(studentId: string | undefined): UseReportResult {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const [selectedPeriodKey, setPeriodKey] = useState<string | null>(null)
+  const [selectedYear, setSelectedYearState] = useState<number | null>(null)
+  const [selectedPeriodIds, setSelectedPeriodIds] = useState<string[] | null>(null)
 
   useEffect(() => {
     if (!studentId) return
@@ -224,11 +278,61 @@ export function useReportData(studentId: string | undefined): UseReportResult {
 
   // ── Derived data ──
 
-  const availablePeriods = buildPeriods(observations)
+  const settings = (school?.settings ?? {}) as SchoolContext
+  const anchorMonth = settings.academic_year_start_month ?? DEFAULT_ACADEMIC_YEAR_START_MONTH
+  const reportingPeriods = settings.reporting_periods ?? []
+  const availableYears = buildAcademicYears(observations, anchorMonth)
 
-  // Auto-select current period if not set
-  const effectivePeriodKey = selectedPeriodKey ?? (availablePeriods[0]?.key ?? null)
-  const selectedPeriod = availablePeriods.find((p) => p.key === effectivePeriodKey) ?? null
+  // Academic year: default to the one containing today.
+  const effectiveYear = selectedYear ?? academicYearOf(new Date(), anchorMonth)
+
+  // Default selection: the period whose range contains today, else the first one.
+  const defaultSelectedIds: string[] = (() => {
+    if (reportingPeriods.length === 0) return []
+    const today = new Date()
+    const current = reportingPeriods.find((p) => {
+      const r = resolveReportingPeriod(p, effectiveYear, anchorMonth)
+      return today >= r.start && today <= r.end
+    })
+    return [current?.id ?? reportingPeriods[0].id]
+  })()
+  const effectiveSelectedIds = selectedPeriodIds ?? defaultSelectedIds
+
+  const selectedPeriod = buildCompositePeriod(
+    reportingPeriods,
+    effectiveSelectedIds,
+    effectiveYear,
+    anchorMonth
+  )
+  const periodLabel = selectedPeriod?.label ?? academicYearLabel(effectiveYear)
+
+  // Resolve each period to a display range for the selected year.
+  const fmtMonth = (d: Date) =>
+    d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+  const reportingPeriodOptions: ReportingPeriodOption[] = reportingPeriods.map((p) => {
+    const r = resolveReportingPeriod(p, effectiveYear, anchorMonth)
+    return {
+      id: p.id,
+      name: p.name.trim() || 'Untitled period',
+      rangeLabel: `${fmtMonth(r.start)} – ${fmtMonth(r.end)}`,
+      selected: effectiveSelectedIds.includes(p.id),
+    }
+  })
+
+  const setSelectedYear = (year: number) => setSelectedYearState(year)
+  const togglePeriod = (id: string) =>
+    setSelectedPeriodIds((prev) => {
+      const base = prev ?? defaultSelectedIds
+      return base.includes(id) ? base.filter((x) => x !== id) : [...base, id]
+    })
+
+  // Predicate: does a date fall within the selected period (any sub-range)?
+  const inSelectedPeriod = (d: Date): boolean => {
+    if (!selectedPeriod) return true
+    return selectedPeriod.ranges
+      ? selectedPeriod.ranges.some((r) => d >= r.start && d <= r.end)
+      : d >= selectedPeriod.start && d <= selectedPeriod.end
+  }
 
   // Compute scores for the selected period
   const competencyMap = computeCompetencyForPeriod(observations, dimensions, selectedPeriod)
@@ -271,12 +375,14 @@ export function useReportData(studentId: string | undefined): UseReportResult {
           new Date(b.observed_at).getTime() - new Date(a.observed_at).getTime()
       )
 
-    // If a period is selected, get the latest observation with notes within that period or before
-    const relevantObs = selectedPeriod
+    // Prefer the latest note within the selected period(s); otherwise fall back
+    // to the latest note at/before the period end (dimObs is sorted newest-first).
+    const withinPeriod = dimObs.filter((o) => inSelectedPeriod(new Date(o.observed_at)))
+    const beforeEnd = selectedPeriod
       ? dimObs.filter((o) => new Date(o.observed_at) <= selectedPeriod.end)
       : dimObs
 
-    const latestWithNotes = relevantObs[0] ?? null
+    const latestWithNotes = withinPeriod[0] ?? beforeEnd[0] ?? null
 
     return {
       dimension: dim,
@@ -299,7 +405,6 @@ export function useReportData(studentId: string | undefined): UseReportResult {
           dimensions,
           dimensionScores,
           dimensionReports,
-          availablePeriods,
         }
       : null
 
@@ -307,7 +412,12 @@ export function useReportData(studentId: string | undefined): UseReportResult {
     data,
     loading,
     error,
-    setPeriodKey,
-    selectedPeriodKey: effectivePeriodKey,
+    reportingPeriodOptions,
+    availableYears,
+    selectedYear: effectiveYear,
+    setSelectedYear,
+    selectedPeriodIds: effectiveSelectedIds,
+    togglePeriod,
+    periodLabel,
   }
 }

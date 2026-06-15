@@ -358,6 +358,19 @@ export interface ObservationWithDetails extends Observation {
 // School Pedagogical Context
 // ============================================================
 
+/**
+ * A school-defined reporting period (e.g. "Fall Term", "Q2"). Stored as a
+ * month range; the calendar year is supplied at report time. `endMonth` may be
+ * earlier in the calendar than `startMonth` for periods that cross the academic
+ * year's anchor (e.g. a full year Sep–Jun).
+ */
+export interface ReportingPeriod {
+  id: string
+  name: string
+  startMonth: number // 1–12
+  endMonth: number // 1–12
+}
+
 export interface SchoolContext {
   mission?: string
   core_values?: string
@@ -367,6 +380,10 @@ export interface SchoolContext {
   curriculum_framework?: string
   standards_notes?: string
   department_label?: 'Department' | 'Location'
+  /** Calendar month (1–12) the academic year begins. Default 9 (September). */
+  academic_year_start_month?: number
+  /** School-defined reporting periods used by the report export. */
+  reporting_periods?: ReportingPeriod[]
 }
 
 export interface SchoolDocument {

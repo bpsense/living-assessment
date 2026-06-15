@@ -216,6 +216,12 @@ export interface AcademicPeriod {
   label: string
   start: Date
   end: Date
+  /**
+   * Optional disjoint sub-ranges. When present, an observation counts if it
+   * falls within ANY range (used for multi-period reports). `start`/`end`
+   * remain the overall bounding box.
+   */
+  ranges?: { start: Date; end: Date }[]
 }
 
 /**
@@ -233,13 +239,15 @@ export function computeObservationScoresForPeriod(
   const scores = new Map<string, { competency: number; currentMonthCount: number }>()
   const obs = filterUnlinked ? observations.filter((o) => !o.assignment_id) : observations
 
+  const inPeriod = (d: Date) =>
+    period.ranges
+      ? period.ranges.some((r) => d >= r.start && d <= r.end)
+      : d >= period.start && d <= period.end
+
   for (const dim of dimensions) {
     const dimObs = obs.filter((o) => o.dimension_id === dim.id)
 
-    const periodObs = dimObs.filter((o) => {
-      const d = new Date(o.observed_at)
-      return d >= period.start && d <= period.end
-    })
+    const periodObs = dimObs.filter((o) => inPeriod(new Date(o.observed_at)))
 
     if (periodObs.length > 0) {
       const sum = periodObs.reduce((acc, o) => acc + Number(o.rating), 0)
