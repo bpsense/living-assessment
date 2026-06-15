@@ -23,38 +23,37 @@ import {
 import { clsx } from 'clsx'
 import {
   useReportData,
-  getCompetencyLevel,
-  getCompetencyLabel,
   getInterestLabel,
   academicYearLabel,
 } from '../lib/report-data'
+import { useCompetencyLevels, scoreToLevelKey } from '../lib/competency-levels'
 import { classifyZones, type Zone } from '../lib/student-data'
 import { DimensionIcon } from '../components/student/DimensionIcon'
 import { INTEREST_ENABLED } from '../lib/features'
 
 // ============================================================
-// Competency level → colour helpers
+// Competency level → colour helpers (keyed by stable level key)
 // ============================================================
 
 const LEVEL_COLOR: Record<string, string> = {
   emerging: 'text-alert-600',
   developing: 'text-caution-600',
-  practicing: 'text-primary-700',
-  proficient: 'text-success-600',
+  achieving: 'text-primary-700',
+  mastery: 'text-success-600',
 }
 
 const LEVEL_BG: Record<string, string> = {
   emerging: 'bg-alert-50 border-alert-200',
   developing: 'bg-caution-50 border-caution-200',
-  practicing: 'bg-primary-50 border-primary-200',
-  proficient: 'bg-success-50 border-success-200',
+  achieving: 'bg-primary-50 border-primary-200',
+  mastery: 'bg-success-50 border-success-200',
 }
 
 const LEVEL_DOT: Record<string, string> = {
   emerging: 'bg-alert-500',
   developing: 'bg-caution-500',
-  practicing: 'bg-primary-500',
-  proficient: 'bg-success-500',
+  achieving: 'bg-primary-500',
+  mastery: 'bg-success-500',
 }
 
 // ============================================================
@@ -114,6 +113,7 @@ export default function ExportPage() {
     togglePeriod,
     periodLabel,
   } = useReportData(id)
+  const { labelForScore } = useCompetencyLevels()
 
   function handlePrint() {
     window.print()
@@ -449,7 +449,7 @@ export default function ExportPage() {
           <div className="space-y-5">
             {dimensionReports.map((dr) => {
               const level = dr.score.competency > 0
-                ? getCompetencyLevel(dr.score.competency)
+                ? scoreToLevelKey(dr.score.competency)
                 : null
 
               return (
@@ -505,7 +505,7 @@ export default function ExportPage() {
                           )}
                         >
                           {dr.score.competency > 0
-                            ? getCompetencyLabel(dr.score.competency)
+                            ? labelForScore(dr.score.competency)
                             : 'Not assessed'}
                         </p>
                       </div>

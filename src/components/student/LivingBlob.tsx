@@ -27,6 +27,8 @@ interface Props {
   showLabels?: boolean
   /** Whether to show level ring labels */
   showLevelLabels?: boolean
+  /** School-customized names for the 4 level rings (index 0–3). Falls back to defaults. */
+  levelLabels?: string[]
   /** Callback when a dimension is clicked */
   onDimensionClick?: (dimensionId: string) => void
   /** All observations up to current snapshot (for popup) */
@@ -143,6 +145,7 @@ export default function LivingBlob({
   className,
   showLabels = true,
   showLevelLabels = true,
+  levelLabels,
   onDimensionClick,
   observations,
   observers,
@@ -423,7 +426,7 @@ export default function LivingBlob({
                     opacity={0.9}
                     letterSpacing="0.02em"
                   >
-                    {LEVEL_META[i].label}
+                    {levelLabels?.[i] ?? LEVEL_META[i].label}
                   </text>
                 ))}
             </g>

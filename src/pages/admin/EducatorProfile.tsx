@@ -12,6 +12,7 @@ import { clsx } from 'clsx'
 import { format } from 'date-fns'
 import { useAuth } from '../../lib/auth'
 import { useToast } from '../../components/Toast'
+import { useCompetencyLevels } from '../../lib/competency-levels'
 import {
   useEducatorProfile,
   assignClassroom,
@@ -22,9 +23,8 @@ import {
 // Rating helpers
 // ============================================================
 
-function getRatingLabel(rating: number): string {
+function getRatingLabel(rating: number, labels: string[]): string {
   const level = Math.min(Math.ceil(rating), 4)
-  const labels = ['Emerging', 'Developing', 'Achieving', 'Mastery']
   const base = labels[level - 1] ?? String(rating)
   const fraction = rating - (level - 1)
   if (fraction <= 0.34) return `${base} ⅓`
@@ -34,7 +34,8 @@ function getRatingLabel(rating: number): string {
 
 function RatingBadge({ rating }: { rating: number }) {
   const r = Number(rating)
-  const label = getRatingLabel(r)
+  const { labels } = useCompetencyLevels()
+  const label = getRatingLabel(r, labels)
   return (
     <span
       className={clsx(

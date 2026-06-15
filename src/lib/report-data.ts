@@ -41,22 +41,12 @@ export interface ReportData {
 }
 
 // ============================================================
-// Competency level helpers
+// Interest level helper
 // ============================================================
-
-export type CompetencyLevel = 'emerging' | 'developing' | 'practicing' | 'proficient'
-
-export function getCompetencyLevel(score: number): CompetencyLevel {
-  if (score < 1.5) return 'emerging'
-  if (score < 2.5) return 'developing'
-  if (score < 3.5) return 'practicing'
-  return 'proficient'
-}
-
-export function getCompetencyLabel(score: number): string {
-  const level = getCompetencyLevel(score)
-  return level.charAt(0).toUpperCase() + level.slice(1)
-}
+//
+// Competency level labels now live in src/lib/competency-levels.ts (the single
+// reference point, school-customizable). Use useCompetencyLevels() /
+// scoreToLevelKey there instead of the old getCompetencyLevel/getCompetencyLabel.
 
 export function getInterestLabel(score: number): string {
   if (score <= 0) return 'Not assessed'

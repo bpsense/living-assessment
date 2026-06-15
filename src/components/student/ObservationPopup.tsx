@@ -9,6 +9,7 @@ import { useEffect, useRef } from 'react'
 import { X, ExternalLink, Eye } from 'lucide-react'
 import type { Observation } from '../../types/database'
 import { INTEREST_ENABLED } from '../../lib/features'
+import { useCompetencyLevels } from '../../lib/competency-levels'
 
 // ── Props ────────────────────────────────────────────────────────
 
@@ -79,6 +80,7 @@ export default function ObservationPopup({
   onViewDetails,
 }: Props) {
   const popupRef = useRef<HTMLDivElement>(null)
+  const { labelForScore } = useCompetencyLevels()
 
   // Close on Escape
   useEffect(() => {
@@ -196,7 +198,7 @@ export default function ObservationPopup({
                     <span
                       className={`ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${ratingInfo.bg} ${ratingInfo.color}`}
                     >
-                      {ratingInfo.label}
+                      {labelForScore(obs.rating) || ratingInfo.label}
                     </span>
                   </div>
 

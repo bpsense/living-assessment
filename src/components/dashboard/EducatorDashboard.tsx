@@ -10,6 +10,7 @@ import {
   Clock,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { useCompetencyLevels } from '../../lib/competency-levels'
 import type {
   EducatorDashboardData,
   FlagType,
@@ -51,18 +52,12 @@ const FLAG_CONFIG: Record<
   },
 }
 
-const RATING_LABELS: Record<number, string> = {
-  1: 'Emerging',
-  2: 'Developing',
-  3: 'Achieving',
-  4: 'Mastery',
-}
-
 // ============================================================
 // Component
 // ============================================================
 
 export default function EducatorDashboard({ data, userName }: Props) {
+  const { labelForScore } = useCompetencyLevels()
   const navigate = useNavigate()
 
   const greeting = getGreeting()
@@ -237,7 +232,7 @@ export default function EducatorDashboard({ data, userName }: Props) {
                       </span>
                     </div>
                     <div className="mt-0.5 flex items-center gap-2 text-[11px] text-text-light">
-                      <span>{RATING_LABELS[item.rating] ?? item.rating}</span>
+                      <span>{labelForScore(item.rating) || item.rating}</span>
                       <span>&middot;</span>
                       <span>by {item.observer_name}</span>
                     </div>
