@@ -18,6 +18,7 @@ import {
   Trophy,
   Compass,
   Anchor,
+  Check,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import {
@@ -25,6 +26,7 @@ import {
   getCompetencyLevel,
   getCompetencyLabel,
   getInterestLabel,
+  academicYearLabel,
 } from '../lib/report-data'
 import { classifyZones, type Zone } from '../lib/student-data'
 import { DimensionIcon } from '../components/student/DimensionIcon'
@@ -104,8 +106,13 @@ export default function ExportPage() {
     data,
     loading,
     error,
-    setPeriodKey,
-    selectedPeriodKey,
+    reportingPeriodOptions,
+    availableYears,
+    selectedYear,
+    setSelectedYear,
+    selectedPeriodIds,
+    togglePeriod,
+    periodLabel,
   } = useReportData(id)
 
   function handlePrint() {
@@ -149,15 +156,13 @@ export default function ExportPage() {
     school,
     dimensionScores,
     dimensionReports,
-    availablePeriods,
   } = data
 
   const age = student.date_of_birth
     ? differenceInYears(new Date(), new Date(student.date_of_birth))
     : null
 
-  const selectedPeriod = availablePeriods.find((p) => p.key === selectedPeriodKey)
-  const periodLabel = selectedPeriod?.label ?? 'Current'
+  const hasPeriodSelection = selectedPeriodIds.length > 0
 
   const classified = classifyZones(dimensionScores)
 
@@ -183,33 +188,86 @@ export default function ExportPage() {
           <ArrowLeft className="h-4 w-4" /> Back to Profile
         </button>
 
-        <div className="glass-card flex flex-wrap items-end gap-4 p-5">
-          {/* Period selector */}
-          <div className="flex-1">
-            <label className="mb-1 block text-xs font-semibold text-text-muted">
-              Academic Period
-            </label>
-            <select
-              value={selectedPeriodKey ?? ''}
-              onChange={(e) => setPeriodKey(e.target.value || null)}
-              className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+        <div className="glass-card space-y-4 p-5">
+          <div className="flex flex-wrap items-end gap-4">
+            {/* School year selector */}
+            <div className="w-full max-w-[220px]">
+              <label className="mb-1 block text-xs font-semibold text-text-muted">
+                School Year
+              </label>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                className="w-full rounded-lg border border-bg-muted bg-bg px-3 py-2 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+              >
+                {availableYears.map((y) => (
+                  <option key={y} value={y}>
+                    {academicYearLabel(y)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex-1" />
+
+            {/* Export button */}
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-2 rounded-lg bg-primary-500 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-600"
             >
-              {availablePeriods.map((p) => (
-                <option key={p.key} value={p.key}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
+              <Printer className="h-4 w-4" />
+              Export PDF
+            </button>
           </div>
 
-          {/* Export button */}
-          <button
-            onClick={handlePrint}
-            className="flex items-center gap-2 rounded-lg bg-primary-500 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-600"
-          >
-            <Printer className="h-4 w-4" />
-            Export PDF
-          </button>
+          {/* Reporting period multi-select */}
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-text-muted">
+              Reporting Periods
+            </label>
+            {reportingPeriodOptions.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-bg-muted bg-bg px-3 py-2.5 text-xs text-text-muted">
+                No reporting periods configured yet. Set them up in{' '}
+                <span className="font-medium text-text">
+                  School Profile → Reporting Periods
+                </span>
+                . Showing all observations for now.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {reportingPeriodOptions.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => togglePeriod(opt.id)}
+                    className={clsx(
+                      'flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors',
+                      opt.selected
+                        ? 'border-primary-500 bg-primary-50 text-primary-700'
+                        : 'border-bg-muted text-text-muted hover:border-primary-200 hover:bg-bg-muted'
+                    )}
+                  >
+                    <span
+                      className={clsx(
+                        'flex h-4 w-4 shrink-0 items-center justify-center rounded border',
+                        opt.selected
+                          ? 'border-primary-500 bg-primary-500 text-white'
+                          : 'border-bg-muted'
+                      )}
+                    >
+                      {opt.selected && <Check className="h-3 w-3" />}
+                    </span>
+                    <span>
+                      <span className="font-medium">{opt.name}</span>
+                      <span className="ml-1.5 text-xs text-text-light">
+                        {opt.rangeLabel}
+                      </span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -479,7 +537,9 @@ export default function ExportPage() {
                           Observations
                         </p>
                         <p className="text-sm font-bold text-text">
-                          {dr.score.observation_count}
+                          {hasPeriodSelection
+                            ? dr.score.current_month_observation_count
+                            : dr.score.observation_count}
                         </p>
                       </div>
                     </div>

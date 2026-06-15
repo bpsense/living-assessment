@@ -19,12 +19,23 @@ import {
   ExternalLink,
   CheckCircle,
   XCircle,
+  Plus,
+  CalendarDays,
 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { useAccessControl } from '../lib/access-control'
 import { useSchoolProfile, useSchoolProfileVisibility, updateSchoolProfileVisibility } from '../lib/school-data'
 import { DimensionIcon } from '../components/student/DimensionIcon'
-import type { SchoolContext, SchoolDocument, Dimension, SchoolProfileSectionKey, SchoolProfileVisibility } from '../types/database'
+import type { SchoolContext, SchoolDocument, Dimension, ReportingPeriod, SchoolProfileSectionKey, SchoolProfileVisibility } from '../types/database'
+
+// ============================================================
+// Month names for reporting-period selects (index 0 = January)
+// ============================================================
+
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+]
 
 
 // ============================================================
@@ -373,6 +384,8 @@ export default function SchoolProfile() {
       curriculum_framework: settings.curriculum_framework ?? '',
       standards_notes: settings.standards_notes ?? '',
       department_label: settings.department_label,
+      academic_year_start_month: settings.academic_year_start_month ?? 9,
+      reporting_periods: settings.reporting_periods ?? [],
     })
     setFormInitialized(true)
   }
@@ -383,6 +396,41 @@ export default function SchoolProfile() {
     },
     []
   )
+
+  // ── Reporting period editors (saved via the page's Save Changes button) ──
+
+  const setAcademicYearStartMonth = useCallback((month: number) => {
+    setFormState((prev) => ({ ...prev, academic_year_start_month: month }))
+  }, [])
+
+  const addReportingPeriod = useCallback(() => {
+    setFormState((prev) => ({
+      ...prev,
+      reporting_periods: [
+        ...(prev.reporting_periods ?? []),
+        { id: crypto.randomUUID(), name: '', startMonth: 9, endMonth: 6 },
+      ],
+    }))
+  }, [])
+
+  const updateReportingPeriod = useCallback(
+    (id: string, patch: Partial<ReportingPeriod>) => {
+      setFormState((prev) => ({
+        ...prev,
+        reporting_periods: (prev.reporting_periods ?? []).map((p) =>
+          p.id === id ? { ...p, ...patch } : p
+        ),
+      }))
+    },
+    []
+  )
+
+  const removeReportingPeriod = useCallback((id: string) => {
+    setFormState((prev) => ({
+      ...prev,
+      reporting_periods: (prev.reporting_periods ?? []).filter((p) => p.id !== id),
+    }))
+  }, [])
 
   const handleSave = useCallback(async () => {
     await updateSchoolContext(formState)
@@ -534,6 +582,114 @@ export default function SchoolProfile() {
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Reporting periods */}
+      {canEditSchoolProfile && (
+        <div className="glass-card p-5">
+          <div className="mb-1 flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-primary-500" />
+            <h3 className="text-sm font-semibold text-text">Reporting Periods</h3>
+          </div>
+          <p className="mb-4 text-xs text-text-muted">
+            Define the terms your school reports on (e.g. &ldquo;Fall Term&rdquo;, &ldquo;Quarter 2&rdquo;).
+            These appear when exporting a learner report, where you pick a school year and one or
+            more periods. Remember to <span className="font-medium text-text">Save Changes</span>.
+          </p>
+
+          {/* Academic year start month */}
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <label className="text-xs font-medium text-text-muted">
+              Academic year starts in
+            </label>
+            <select
+              value={formState.academic_year_start_month ?? 9}
+              onChange={(e) => setAcademicYearStartMonth(Number(e.target.value))}
+              className="rounded-lg border border-bg-muted bg-bg px-2.5 py-1.5 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+            >
+              {MONTHS.map((m, i) => (
+                <option key={m} value={i + 1}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Period rows */}
+          <div className="space-y-2">
+            {(formState.reporting_periods ?? []).length === 0 && (
+              <p className="rounded-lg border border-dashed border-bg-muted px-3 py-3 text-xs text-text-light">
+                No reporting periods yet. Add one below.
+              </p>
+            )}
+            {(formState.reporting_periods ?? []).map((period) => (
+              <div
+                key={period.id}
+                className="flex flex-wrap items-center gap-2 rounded-lg border border-bg-muted bg-bg p-2"
+              >
+                <input
+                  type="text"
+                  value={period.name}
+                  onChange={(e) =>
+                    updateReportingPeriod(period.id, { name: e.target.value })
+                  }
+                  placeholder="Period name (e.g. Fall Term)"
+                  className="min-w-[140px] flex-1 rounded-md border border-bg-muted bg-bg-card px-2.5 py-1.5 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+                />
+                <div className="flex items-center gap-1.5">
+                  <select
+                    value={period.startMonth}
+                    onChange={(e) =>
+                      updateReportingPeriod(period.id, {
+                        startMonth: Number(e.target.value),
+                      })
+                    }
+                    className="rounded-md border border-bg-muted bg-bg-card px-2 py-1.5 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+                  >
+                    {MONTHS.map((m, i) => (
+                      <option key={m} value={i + 1}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="text-xs text-text-light">to</span>
+                  <select
+                    value={period.endMonth}
+                    onChange={(e) =>
+                      updateReportingPeriod(period.id, {
+                        endMonth: Number(e.target.value),
+                      })
+                    }
+                    className="rounded-md border border-bg-muted bg-bg-card px-2 py-1.5 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+                  >
+                    {MONTHS.map((m, i) => (
+                      <option key={m} value={i + 1}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeReportingPeriod(period.id)}
+                  className="rounded-md p-1.5 text-text-light transition-colors hover:bg-alert-50 hover:text-alert-600"
+                  aria-label="Remove reporting period"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={addReportingPeriod}
+            className="mt-3 flex items-center gap-1.5 rounded-lg border border-dashed border-primary-300 px-3 py-2 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50"
+          >
+            <Plus className="h-4 w-4" />
+            Add reporting period
+          </button>
         </div>
       )}
 
