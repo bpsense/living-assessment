@@ -6,24 +6,8 @@ import { useAuth } from '../../lib/auth'
 import { useToast } from '../Toast'
 import { DimensionIcon } from '../student/DimensionIcon'
 import { standardAgeForDate } from '../../lib/age-utils'
+import { useCompetencyLevels } from '../../lib/competency-levels'
 import type { Dimension, Competency, ObservationRating } from '../../types/database'
-
-// ============================================================
-// Rating level config
-// ============================================================
-
-interface RatingLevel {
-  value: ObservationRating
-  label: string
-  descriptor: string
-}
-
-const RATING_LEVELS: RatingLevel[] = [
-  { value: 1, label: 'Emerging', descriptor: 'Beginning to explore; needs significant support' },
-  { value: 2, label: 'Developing', descriptor: 'Growing understanding; needs some scaffolding' },
-  { value: 3, label: 'Achieving', descriptor: 'Applying skills with increasing independence' },
-  { value: 4, label: 'Mastery', descriptor: 'Demonstrates strong, consistent mastery' },
-]
 
 // Placeholder text per-dimension for the narrative textarea
 const DIMENSION_PLACEHOLDERS: Record<string, string> = {
@@ -84,6 +68,14 @@ export default function ObservationForm({
 }: ObservationFormProps) {
   const { profile } = useAuth()
   const { toast } = useToast()
+  const { levels } = useCompetencyLevels()
+
+  // Rating buttons: value 1–4 with school-customized name + descriptor.
+  const ratingLevels = levels.map((lvl, i) => ({
+    value: (i + 1) as ObservationRating,
+    label: lvl.name,
+    descriptor: lvl.descriptor,
+  }))
 
   const [dimensions, setDimensions] = useState<Dimension[]>([])
   const [selectedDimension, setSelectedDimension] = useState<string | null>(
@@ -474,7 +466,7 @@ export default function ObservationForm({
           )}
         </label>
         <div className={clsx('grid gap-2', compact ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-4')}>
-          {RATING_LEVELS.map((level) => (
+          {ratingLevels.map((level) => (
             <button
               key={level.value}
               onClick={() => setRating(level.value)}

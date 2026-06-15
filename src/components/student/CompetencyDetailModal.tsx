@@ -18,10 +18,10 @@ import type { SnapshotRow } from '../../lib/competency-snapshot-data'
 import { RECENT_WINDOW_DAYS, ZONE_LABEL, ZONE_TOKEN, type Trend } from '../../lib/competency-snapshot'
 import {
   ASSESSMENT_LEVELS,
-  formatLevel,
   type AssessmentLevel,
   type StandardAssessment,
 } from '../../lib/standards-assignment-data'
+import { useCompetencyLevels } from '../../lib/competency-levels'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import { useToast } from '../Toast'
@@ -70,6 +70,7 @@ export default function CompetencyDetailModal({
 }: Props) {
   const { profile } = useAuth()
   const { toast } = useToast()
+  const { labelForKey } = useCompetencyLevels()
   const cardRef = useRef<HTMLDivElement>(null)
 
   // Observations recorded within this modal session (optimistic; supplements
@@ -232,7 +233,7 @@ export default function CompetencyDetailModal({
                       LEVEL_TONE[row.latest.level].chip
                     )}
                   >
-                    {formatLevel(row.latest.level)}
+                    {labelForKey(row.latest.level)}
                   </span>
                 )}
                 {audience === 'educator' && <TrendBadge trend={row.trend} />}
@@ -341,7 +342,7 @@ export default function CompetencyDetailModal({
                       : 'border-bg-muted bg-bg text-text-muted hover:border-primary-300'
                   )}
                 >
-                  {formatLevel(lv)}
+                  {labelForKey(lv)}
                 </button>
               ))}
             </div>
@@ -405,6 +406,7 @@ function HistoryItem({
   showObserver: boolean
   drivesPosition: boolean
 }) {
+  const { labelForKey } = useCompetencyLevels()
   const aa = item.assessed_age
   const aboveStd = aa != null && standardAge != null && aa > standardAge
   const belowStd = aa != null && standardAge != null && aa < standardAge
@@ -453,7 +455,7 @@ function HistoryItem({
             LEVEL_TONE[item.level].chip
           )}
         >
-          {formatLevel(item.level)}
+          {labelForKey(item.level)}
         </span>
       </div>
       {cleanNotes && (

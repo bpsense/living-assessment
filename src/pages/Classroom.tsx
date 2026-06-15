@@ -50,6 +50,7 @@ import AddStudentModal from '../components/classroom/AddStudentModal'
 import CsvImportModal from '../components/classroom/CsvImportModal'
 import ClassroomAnalysis from '../components/classroom/ClassroomAnalysis'
 import { createClassConversation } from '../lib/messaging-data'
+import { useCompetencyLevels } from '../lib/competency-levels'
 import type { DimensionScore } from '../lib/student-data'
 import type { Student, Dimension, StudentContact } from '../types/database'
 
@@ -88,14 +89,6 @@ const LEVEL_TEXT: Record<number, string> = {
   2: 'text-caution-600',
   3: 'text-primary-700',
   4: 'text-success-600',
-}
-
-const LEVEL_LABEL: Record<number, string> = {
-  0: '—',
-  1: 'Emerging',
-  2: 'Developing',
-  3: 'Achieving',
-  4: 'Mastery',
 }
 
 // ============================================================
@@ -676,6 +669,8 @@ function StudentCard({
 }) {
   const initials =
     `${student.first_name[0]}${student.last_name[0]}`.toUpperCase()
+  const { labelForIndex } = useCompetencyLevels()
+  const levelLabel = (level: number) => (level <= 0 ? '—' : labelForIndex(level - 1))
   const hasScores = scores.some((d) => d.competency > 0 || d.interest > 0)
 
   return (
@@ -750,7 +745,7 @@ function StudentCard({
           return (
             <div
               key={dim.id}
-              title={`${dim.name}: ${LEVEL_LABEL[level]}`}
+              title={`${dim.name}: ${levelLabel(level)}`}
               className={clsx(
                 'h-2.5 w-2.5 rounded-full transition-transform group-hover:scale-110',
                 LEVEL_BG[level]
@@ -978,6 +973,8 @@ function CompetencyHeatmap({
   studentScoresMap: Map<string, DimensionScore[]>
   onStudentClick: (id: string) => void
 }) {
+  const { labelForIndex } = useCompetencyLevels()
+  const levelLabel = (level: number) => (level <= 0 ? '—' : labelForIndex(level - 1))
   return (
     <div className="glass-card p-5">
       <h3 className="mb-1 text-base font-bold text-text">
@@ -994,7 +991,7 @@ function CompetencyHeatmap({
             <span
               className={clsx('inline-block h-3 w-3 rounded-sm', LEVEL_BG[l])}
             />
-            {LEVEL_LABEL[l]}
+            {levelLabel(l)}
           </span>
         ))}
         <span className="flex items-center gap-1">
@@ -1056,7 +1053,7 @@ function CompetencyHeatmap({
                               : LEVEL_BG_LIGHT[level],
                             level > 0 && LEVEL_TEXT[level]
                           )}
-                          title={`${dim.name}: ${LEVEL_LABEL[level]}${ds?.competency ? ` (${ds.competency.toFixed(1)})` : ''}`}
+                          title={`${dim.name}: ${levelLabel(level)}${ds?.competency ? ` (${ds.competency.toFixed(1)})` : ''}`}
                         >
                           {level > 0 ? level : ''}
                         </div>

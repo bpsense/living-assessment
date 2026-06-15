@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
 import { notifyDepartmentLabelChanged } from '../lib/department-label'
+import { DEFAULT_COMPETENCY_LEVELS, notifyCompetencyLevelsChanged } from '../lib/competency-levels'
 import { Link } from 'react-router-dom'
 import { clsx } from 'clsx'
 import {
@@ -26,7 +27,7 @@ import { useAuth } from '../lib/auth'
 import { useAccessControl } from '../lib/access-control'
 import { useSchoolProfile, useSchoolProfileVisibility, updateSchoolProfileVisibility } from '../lib/school-data'
 import { DimensionIcon } from '../components/student/DimensionIcon'
-import type { SchoolContext, SchoolDocument, Dimension, ReportingPeriod, SchoolProfileSectionKey, SchoolProfileVisibility } from '../types/database'
+import type { SchoolContext, SchoolDocument, Dimension, ReportingPeriod, CompetencyLevelConfig, SchoolProfileSectionKey, SchoolProfileVisibility } from '../types/database'
 
 // ============================================================
 // Month names for reporting-period selects (index 0 = January)
@@ -386,6 +387,7 @@ export default function SchoolProfile() {
       department_label: settings.department_label,
       academic_year_start_month: settings.academic_year_start_month ?? 9,
       reporting_periods: settings.reporting_periods ?? [],
+      competency_levels: settings.competency_levels ?? DEFAULT_COMPETENCY_LEVELS,
     })
     setFormInitialized(true)
   }
@@ -434,7 +436,24 @@ export default function SchoolProfile() {
 
   const handleSave = useCallback(async () => {
     await updateSchoolContext(formState)
+    // Broadcast so open views pick up any competency-label changes live.
+    notifyCompetencyLevelsChanged()
   }, [formState, updateSchoolContext])
+
+  const setCompetencyLevel = useCallback(
+    (index: number, patch: Partial<CompetencyLevelConfig>) => {
+      setFormState((prev) => {
+        const base = prev.competency_levels ?? DEFAULT_COMPETENCY_LEVELS
+        return {
+          ...prev,
+          competency_levels: base.map((lvl, i) =>
+            i === index ? { ...lvl, ...patch } : lvl
+          ),
+        }
+      })
+    },
+    []
+  )
 
   const handleFileUpload = useCallback(
     async (files: FileList | File[]) => {
@@ -885,6 +904,49 @@ export default function SchoolProfile() {
           </div>
         )}
       </Section>
+      )}
+
+      {/* Competency level labels */}
+      {canEditSchoolProfile && (
+        <div className="glass-card p-5">
+          <div className="mb-1 flex items-center gap-2">
+            <Layers className="h-4 w-4 text-primary-500" />
+            <h3 className="text-sm font-semibold text-text">Competency Levels</h3>
+          </div>
+          <p className="mb-4 text-xs text-text-muted">
+            Customize the names and descriptions for the 4 competency levels (lowest to highest).
+            These words are the single reference used everywhere competency appears — the map,
+            observation assessments, dashboards, and exported reports. Remember to{' '}
+            <span className="font-medium text-text">Save Changes</span>.
+          </p>
+
+          <div className="space-y-2">
+            {(formState.competency_levels ?? DEFAULT_COMPETENCY_LEVELS).map((lvl, i) => (
+              <div
+                key={i}
+                className="flex flex-wrap items-center gap-2 rounded-lg border border-bg-muted bg-bg p-2"
+              >
+                <span className="w-14 shrink-0 text-xs font-medium text-text-light">
+                  Level {i + 1}
+                </span>
+                <input
+                  type="text"
+                  value={lvl.name}
+                  onChange={(e) => setCompetencyLevel(i, { name: e.target.value })}
+                  placeholder={DEFAULT_COMPETENCY_LEVELS[i].name}
+                  className="w-32 shrink-0 rounded-md border border-bg-muted bg-bg-card px-2.5 py-1.5 text-sm font-medium text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+                />
+                <input
+                  type="text"
+                  value={lvl.descriptor}
+                  onChange={(e) => setCompetencyLevel(i, { descriptor: e.target.value })}
+                  placeholder={DEFAULT_COMPETENCY_LEVELS[i].descriptor}
+                  className="min-w-[180px] flex-1 rounded-md border border-bg-muted bg-bg-card px-2.5 py-1.5 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Section 6: Supporting Documents */}

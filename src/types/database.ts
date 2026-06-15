@@ -384,6 +384,18 @@ export interface SchoolContext {
   academic_year_start_month?: number
   /** School-defined reporting periods used by the report export. */
   reporting_periods?: ReportingPeriod[]
+  /**
+   * School-customizable display names + descriptors for the 4 competency levels
+   * (index 0 → score 1 … index 3 → score 4). The underlying level keys, numeric
+   * scale, and thresholds are fixed; only these labels vary. Always length 4.
+   */
+  competency_levels?: CompetencyLevelConfig[]
+}
+
+/** Display name + descriptor for one competency level (see SchoolContext.competency_levels). */
+export interface CompetencyLevelConfig {
+  name: string
+  descriptor: string
 }
 
 export interface SchoolDocument {

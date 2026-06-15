@@ -17,6 +17,7 @@ import type { Snapshot } from '../../lib/living-data'
 import type { Observation } from '../../types/database'
 import { interpolateScores, decayDimensionScores } from '../../lib/living-data'
 import { INTEREST_ENABLED } from '../../lib/features'
+import { useCompetencyLevels } from '../../lib/competency-levels'
 import LivingBlob from './LivingBlob'
 import TimelinePlayback from './TimelinePlayback'
 
@@ -222,6 +223,8 @@ export default function LivingVisualization({
   observations,
   observers,
 }: Props) {
+  const { labels: levelLabels } = useCompetencyLevels()
+
   // Baseline = the assigned standard age at the earliest snapshot. The decay is
   // keyed to the standard age (Dec-1 rule), which steps up each September — so the
   // blob rescales at the start of each school year, not on the birthday.
@@ -410,6 +413,7 @@ export default function LivingVisualization({
             size={familyView ? 600 : 740}
             showLabels
             showLevelLabels={!familyView}
+            levelLabels={levelLabels}
             onDimensionClick={onDimensionClick}
             observations={snapshotObservations}
             observers={observers}
@@ -443,9 +447,9 @@ export default function LivingVisualization({
           )}
           <div className="mt-1 border-t border-bg-muted pt-4 space-y-2.5">
             <p className="text-[11px] font-medium uppercase tracking-wider text-text-light">Levels</p>
-            {(['Emerging', 'Developing', 'Achieving', 'Exceeding'] as const).map((level, i) => (
-              <div key={level} className="flex items-center gap-2">
-                {level === 'Exceeding' ? (
+            {levelLabels.map((level, i) => (
+              <div key={i} className="flex items-center gap-2">
+                {i === 3 ? (
                   <span
                     className="inline-block h-2 w-5 rounded-sm border border-[#D8D4CA]"
                     style={{ background: 'transparent' }}
@@ -537,6 +541,7 @@ function ExpandedBlobModal({
   gradeTransitionLabel?: string | null
   currentGradeLabel?: string
 }) {
+  const { labels: levelLabels } = useCompetencyLevels()
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-bg/95 backdrop-blur-sm">
       {/* Top bar */}
@@ -589,6 +594,7 @@ function ExpandedBlobModal({
               size={900}
               showLabels
               showLevelLabels={!familyView}
+              levelLabels={levelLabels}
               onDimensionClick={onDimensionClick}
               observations={snapshotObservations}
               observers={observers}
@@ -624,9 +630,9 @@ function ExpandedBlobModal({
           )}
           <div className="mt-1 border-t border-bg-muted pt-4 space-y-2.5">
             <p className="text-[11px] font-medium uppercase tracking-wider text-text-light">Levels</p>
-            {(['Emerging', 'Developing', 'Achieving', 'Exceeding'] as const).map((level, i) => (
-              <div key={level} className="flex items-center gap-2">
-                {level === 'Exceeding' ? (
+            {levelLabels.map((level, i) => (
+              <div key={i} className="flex items-center gap-2">
+                {i === 3 ? (
                   <span
                     className="inline-block h-2.5 w-6 rounded-sm border border-[#D8D4CA]"
                     style={{ background: 'transparent' }}

@@ -38,7 +38,7 @@ import {
   type Zone,
   type Trend,
 } from '../../lib/competency-snapshot'
-import { formatLevel } from '../../lib/standards-assignment-data'
+import { useCompetencyLevels } from '../../lib/competency-levels'
 import { supabase } from '../../lib/supabase'
 import type { Competency, Dimension, Observation } from '../../types/database'
 import { DimensionIcon } from './DimensionIcon'
@@ -551,9 +551,10 @@ function Marker({
   audience: SnapshotAudience
   onClick: () => void
 }) {
+  const { labelForKey } = useCompetencyLevels()
   const tone = ZONE_TOKEN[row.zone]
   const isGhost = row.isGhost
-  const levelLabel = row.latest ? formatLevel(row.latest.level) : 'Not assessed'
+  const levelLabel = row.latest ? labelForKey(row.latest.level) : 'Not assessed'
   // Decide anchoring so markers near the edges stay inside the track.
   const align: 'start' | 'center' | 'end' =
     row.barPercent < 15 ? 'start' : row.barPercent > 85 ? 'end' : 'center'
@@ -632,7 +633,8 @@ function UntimedChip({
   audience: SnapshotAudience
   onClick: () => void
 }) {
-  const levelLabel = row.latest ? formatLevel(row.latest.level) : 'Not assessed'
+  const { labelForKey } = useCompetencyLevels()
+  const levelLabel = row.latest ? labelForKey(row.latest.level) : 'Not assessed'
   return (
     <button
       type="button"
