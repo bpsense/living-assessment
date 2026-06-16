@@ -29,6 +29,7 @@ import ExportReport from './pages/Export'
 import NotFound from './pages/NotFound'
 import SchoolsPage from './pages/system/Schools'
 import SystemActivity from './pages/system/SystemActivity'
+import SystemAudit from './pages/system/Audit'
 import UsersPage from './pages/admin/Users'
 import LearnerProfile from './pages/LearnerProfile'
 import Permissions from './pages/admin/Permissions'
@@ -88,6 +89,14 @@ function AppRoutes() {
         {/* System admin routes */}
         <Route path="/system/schools" element={<SchoolsPage />} />
         <Route path="/system/activity" element={<SystemActivity />} />
+        <Route
+          path="/system/audit"
+          element={
+            <ProtectedRoute minAccessLevel={6}>
+              <SystemAudit />
+            </ProtectedRoute>
+          }
+        />
 
         {/* User management — dept admins (4) and up */}
         <Route

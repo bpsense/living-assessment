@@ -1546,3 +1546,34 @@ export interface TranslationRecordWithDetails extends TranslationRecord {
   translator_name?: string
   reviewer_name?: string
 }
+
+// ============================================================
+// Activity Log — super-admin audit trail (migration 094)
+// Append-only; written only by SECURITY DEFINER triggers, read only by
+// system admins. No Insert/Update aliases — never written from the client.
+// ============================================================
+export type ActivityEventType = 'login' | 'insert' | 'update' | 'delete'
+export type ActivityCategory = 'auth' | 'data'
+
+export interface ActivityLog {
+  id: number
+  occurred_at: string
+  event_type: ActivityEventType
+  category: ActivityCategory
+  /** auth.uid() at write time; null for service-role / edge-function / seed writes. */
+  actor_id: string | null
+  /** Derived school association; null when not resolvable or platform-level. */
+  school_id: string | null
+  /** Source table for data events; null for login events. */
+  table_name: string | null
+  /** Affected row's id (text-cast to tolerate any PK type); null for login. */
+  record_id: string | null
+  /**
+   * Compact change payload:
+   * - insert: full new row
+   * - delete: full old row
+   * - update: { [column]: { old, new } } for changed columns only
+   * - login: null
+   */
+  changed: Record<string, unknown> | null
+}

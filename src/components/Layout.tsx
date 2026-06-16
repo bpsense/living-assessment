@@ -165,6 +165,7 @@ function getNavItems(
       { to: '/', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
       { to: '/system/schools', label: 'Schools', icon: <Building2 className="h-5 w-5" /> },
       { to: '/system/activity', label: 'Activity', icon: <Activity className="h-5 w-5" /> },
+      { to: '/system/audit', label: 'Logins & Activity', icon: <ClipboardList className="h-5 w-5" /> },
       { to: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
     ]
   }
