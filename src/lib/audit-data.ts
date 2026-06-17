@@ -30,6 +30,8 @@ export interface AuditRow {
   schoolName: string
   tableName: string | null
   recordId: string | null
+  /** Source IP for login events; null for data events and pre-096 logins. */
+  ipAddress: string | null
   changed: Record<string, unknown> | null
 }
 
@@ -80,7 +82,11 @@ async function resolveActors(raw: ActivityLog[], cache: ActorCache): Promise<voi
   }
 }
 
-function mapRows(raw: ActivityLog[], cache: ActorCache, schoolMap: Map<string, string>): AuditRow[] {
+function mapRows(
+  raw: ActivityLog[],
+  cache: ActorCache,
+  schoolMap: Map<string, string>,
+): AuditRow[] {
   return raw.map((r) => {
     const cached = r.actor_id ? cache.get(r.actor_id) : undefined
     return {
@@ -95,6 +101,7 @@ function mapRows(raw: ActivityLog[], cache: ActorCache, schoolMap: Map<string, s
       schoolName: r.school_id ? (schoolMap.get(r.school_id) ?? 'Unknown school') : '—',
       tableName: r.table_name,
       recordId: r.record_id,
+      ipAddress: r.ip_address,
       changed: r.changed,
     }
   })
