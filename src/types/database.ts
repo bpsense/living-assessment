@@ -1568,6 +1568,8 @@ export interface ActivityLog {
   table_name: string | null
   /** Affected row's id (text-cast to tolerate any PK type); null for login. */
   record_id: string | null
+  /** Source IP of a login event (auth.sessions.ip); null for data events and pre-096 logins. */
+  ip_address: string | null
   /**
    * Compact change payload:
    * - insert: full new row

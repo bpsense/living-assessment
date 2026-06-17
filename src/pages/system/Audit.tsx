@@ -8,6 +8,7 @@ import {
   Trash2,
   ChevronRight,
   ShieldAlert,
+  Globe,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useAuth } from '../../lib/auth'
@@ -319,6 +320,14 @@ export default function Audit() {
                               {r.recordId && (
                                 <span className="ml-1 font-mono text-text-light">· {shortId(r.recordId)}</span>
                               )}
+                            </span>
+                          ) : r.eventType === 'login' && r.ipAddress ? (
+                            <span
+                              className="inline-flex items-center gap-1 font-mono text-xs text-text-light"
+                              title="Source IP address"
+                            >
+                              <Globe className="h-3 w-3" />
+                              {r.ipAddress}
                             </span>
                           ) : (
                             '—'
