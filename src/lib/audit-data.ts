@@ -17,6 +17,12 @@ export interface AuditFilters {
   to: string | null
 }
 
+/** Coarse location for a login IP. Fields are null when unresolved or unknown. */
+export interface IpGeo {
+  countryCode: string | null
+  region: string | null
+}
+
 /** A single audit row with actor + school names already resolved for display. */
 export interface AuditRow {
   id: number
@@ -30,6 +36,10 @@ export interface AuditRow {
   schoolName: string
   tableName: string | null
   recordId: string | null
+  /** Source IP for login events; null for data events and pre-096 logins. */
+  ipAddress: string | null
+  /** Coarse location resolved from ipAddress; null until resolved or if unavailable. */
+  geo: IpGeo | null
   changed: Record<string, unknown> | null
 }
 
@@ -42,6 +52,8 @@ export interface UseAuditLogResult {
 }
 
 type ActorCache = Map<string, { full_name: string; role: UserRole }>
+/** Resolved coarse location per login IP; null = requested-but-unresolved (don't re-ask). */
+type GeoCache = Map<string, IpGeo | null>
 
 /** "System / service" stands in for the null actor (service-role / edge / seed writes). */
 const SYSTEM_ACTOR = 'System / service'
@@ -80,7 +92,45 @@ async function resolveActors(raw: ActivityLog[], cache: ActorCache): Promise<voi
   }
 }
 
-function mapRows(raw: ActivityLog[], cache: ActorCache, schoolMap: Map<string, string>): AuditRow[] {
+/**
+ * Resolve coarse location for any login IPs not already in the geo cache (best-effort).
+ * Goes through the system-admin-only resolve-ip-geo edge function, which caches each IP
+ * server-side so the upstream provider sees a given IP at most once. Every requested IP
+ * is recorded in the cache (null when unresolved) so it is never re-requested in-session.
+ */
+async function resolveGeo(raw: ActivityLog[], cache: GeoCache): Promise<void> {
+  const missing = [
+    ...new Set(
+      raw
+        .filter((r) => r.event_type === 'login' && !!r.ip_address && !cache.has(r.ip_address))
+        .map((r) => r.ip_address as string),
+    ),
+  ]
+  if (missing.length === 0) return
+  try {
+    const { data, error } = await supabase.functions.invoke('resolve-ip-geo', { body: { ips: missing } })
+    const results = !error && data ? ((data as { results?: Record<string, IpGeo | null> }).results ?? {}) : {}
+    for (const ip of missing) cache.set(ip, results[ip] ?? null)
+  } catch {
+    // Geo is non-essential; on failure the row simply shows its IP without a location.
+    for (const ip of missing) cache.set(ip, null)
+  }
+}
+
+/** Re-attach geo from the cache to already-mapped rows (used after resolveGeo resolves). */
+function applyGeo(rows: AuditRow[], geoCache: GeoCache): AuditRow[] {
+  return rows.map((row) => {
+    const g = row.ipAddress ? (geoCache.get(row.ipAddress) ?? null) : null
+    return row.geo === g ? row : { ...row, geo: g }
+  })
+}
+
+function mapRows(
+  raw: ActivityLog[],
+  cache: ActorCache,
+  schoolMap: Map<string, string>,
+  geoCache: GeoCache,
+): AuditRow[] {
   return raw.map((r) => {
     const cached = r.actor_id ? cache.get(r.actor_id) : undefined
     return {
@@ -95,6 +145,8 @@ function mapRows(raw: ActivityLog[], cache: ActorCache, schoolMap: Map<string, s
       schoolName: r.school_id ? (schoolMap.get(r.school_id) ?? 'Unknown school') : '—',
       tableName: r.table_name,
       recordId: r.record_id,
+      ipAddress: r.ip_address,
+      geo: r.ip_address ? (geoCache.get(r.ip_address) ?? null) : null,
       changed: r.changed,
     }
   })
@@ -117,6 +169,8 @@ export function useAuditLog(allSchools: School[], filters: AuditFilters, enabled
 
   // Actor profile cache, kept across pages and filter changes (read synchronously).
   const actorCacheRef = useRef<ActorCache>(new Map())
+  // Login-IP → location cache, shared across pages (resolved lazily, best-effort).
+  const geoCacheRef = useRef<GeoCache>(new Map())
   // Guards against out-of-order responses (filters change while a fetch is in flight).
   const reqIdRef = useRef(0)
   // Highest page loaded, so loadMore() knows what to fetch next.
@@ -143,9 +197,13 @@ export function useAuditLog(allSchools: School[], filters: AuditFilters, enabled
       }
       await resolveActors(raw, actorCacheRef.current)
       if (cancelled || reqId !== reqIdRef.current) return
-      setRows(mapRows(raw, actorCacheRef.current, schoolMap))
+      setRows(mapRows(raw, actorCacheRef.current, schoolMap, geoCacheRef.current))
       setHasMore(raw.length === PAGE_SIZE)
       setLoading(false)
+      // Progressive enhancement: resolve login-IP locations, then fill them in.
+      await resolveGeo(raw, geoCacheRef.current)
+      if (cancelled || reqId !== reqIdRef.current) return
+      setRows((prev) => applyGeo(prev, geoCacheRef.current))
     }
 
     loadFirstPage()
@@ -170,9 +228,13 @@ export function useAuditLog(allSchools: School[], filters: AuditFilters, enabled
     await resolveActors(raw, actorCacheRef.current)
     if (reqId !== reqIdRef.current) return
     pageRef.current = next
-    setRows((prev) => [...prev, ...mapRows(raw, actorCacheRef.current, schoolMap)])
+    setRows((prev) => [...prev, ...mapRows(raw, actorCacheRef.current, schoolMap, geoCacheRef.current)])
     setHasMore(raw.length === PAGE_SIZE)
     setLoading(false)
+    // Progressive enhancement: resolve the newly loaded page's login-IP locations.
+    await resolveGeo(raw, geoCacheRef.current)
+    if (reqId !== reqIdRef.current) return
+    setRows((prev) => applyGeo(prev, geoCacheRef.current))
   }, [loading, hasMore, filters, schoolMap])
 
   return { rows, loading, error, hasMore, loadMore }

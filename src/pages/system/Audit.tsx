@@ -8,6 +8,7 @@ import {
   Trash2,
   ChevronRight,
   ShieldAlert,
+  Globe,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useAuth } from '../../lib/auth'
@@ -66,6 +67,23 @@ function displayValue(v: unknown): string {
   if (v === null || v === undefined) return '∅'
   if (typeof v === 'object') return JSON.stringify(v)
   return String(v)
+}
+
+// Coarse login location from the ISO country code, expanded to a full English name
+// (falling back to the raw code for unknown/invalid codes). Country-only by product
+// decision: geo.region is always null today, but kept in the shape for easy re-add.
+const COUNTRY_NAMES = new Intl.DisplayNames(['en'], { type: 'region' })
+function formatGeo(geo: AuditRow['geo']): string {
+  if (!geo) return ''
+  let country = ''
+  if (geo.countryCode) {
+    try {
+      country = COUNTRY_NAMES.of(geo.countryCode) ?? geo.countryCode
+    } catch {
+      country = geo.countryCode
+    }
+  }
+  return [geo.region, country].filter(Boolean).join(', ')
 }
 
 /** Expanded detail for a data event: a field-level diff (update) or the full row JSON (insert/delete). */
@@ -283,6 +301,7 @@ export default function Audit() {
                   const meta = eventMeta(r.eventType)
                   const canExpand = !!r.changed
                   const isOpen = expanded.has(r.id)
+                  const geoLabel = formatGeo(r.geo)
                   return (
                     <Fragment key={r.id}>
                       <tr
@@ -318,6 +337,21 @@ export default function Audit() {
                               <span className="font-mono text-text">{r.tableName}</span>
                               {r.recordId && (
                                 <span className="ml-1 font-mono text-text-light">· {shortId(r.recordId)}</span>
+                              )}
+                            </span>
+                          ) : r.eventType === 'login' && r.ipAddress ? (
+                            <span className="flex flex-col gap-0.5">
+                              <span
+                                className="inline-flex items-center gap-1 font-mono text-xs text-text-light"
+                                title="Source IP address"
+                              >
+                                <Globe className="h-3 w-3" />
+                                {r.ipAddress}
+                              </span>
+                              {geoLabel && (
+                                <span className="ml-4 text-[11px] text-text-light" title="Approximate location (IP-based)">
+                                  {geoLabel}
+                                </span>
                               )}
                             </span>
                           ) : (
