@@ -27,6 +27,8 @@ interface Props {
   showLabels?: boolean
   /** Whether to show level ring labels */
   showLevelLabels?: boolean
+  /** Whether to show the competency/interest dots (disable for a clean mini blob) */
+  showDots?: boolean
   /** School-customized names for the 4 level rings (index 0–3). Falls back to defaults. */
   levelLabels?: string[]
   /** Callback when a dimension is clicked */
@@ -145,6 +147,7 @@ export default function LivingBlob({
   className,
   showLabels = true,
   showLevelLabels = true,
+  showDots = true,
   levelLabels,
   onDimensionClick,
   observations,
@@ -500,7 +503,7 @@ export default function LivingBlob({
           )}
 
           {/* ── Competency dots (on blob edge) ── */}
-          {compDots.map((dot) => (
+          {showDots && compDots.map((dot) => (
             <g key={`cdot-${dot.id}`}>
               {/* Subtle halo behind competency dot */}
               <circle
@@ -533,7 +536,7 @@ export default function LivingBlob({
           ))}
 
           {/* ── Interest dots (amber markers) ── */}
-          {INTEREST_ENABLED && interestDots.map((dot) => (
+          {INTEREST_ENABLED && showDots && interestDots.map((dot) => (
             <g
               key={`idot-${dot.id}`}
               style={{ cursor: 'pointer' }}
