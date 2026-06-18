@@ -10,11 +10,14 @@
  *      the 73 age-banded competencies (ported from scripts/seed-boundless-framework.ts).
  *   2. Ensure a "Demo" classroom.
  *   3. Ensure a silent "Demo Educator" auth user + profile (the observer).
- *   4. Upsert 10 fictional learners (deterministic per-school ids).
- *   5. Regenerate ~2 school years of monthly observations with a BIG
- *      year-over-year step (year 1 ≈ Emerging, year 2 ≈ Achieving/Mastery) so
- *      the amoeba clearly shrinks ~2 pts scrubbing back across the Sept boundary,
- *      assessing 90% of each learner's age-appropriate competencies 3× per month.
+ *   4. Upsert 10 fictional learners — aged to fit the Demo class's age band
+ *      (deterministic per-school ids).
+ *   5. Regenerate ~2 school years of monthly observations that grow smoothly
+ *      from Emerging toward each archetype's ceiling (active month-to-month
+ *      movement). The visualization's ×0.75 September rescale turns each new
+ *      school year into a clear step-down, so the amoeba visibly shrinks
+ *      scrubbing back across September (~2-pt span over the two years).
+ *      90% of each learner's age-appropriate competencies assessed 3×/month.
  *
  * No supabase-js / Node / Deno imports — the client is injected, so the same
  * code runs in both runtimes. Idempotent: safe to re-run.
@@ -107,24 +110,51 @@ type Arch =
 interface Learner {
   first: string
   last: string
-  dob: string
-  grade: string
   pronouns: string
   arch: Arch
 }
 
+// Names + archetypes only. Ages (DOB + grade) are derived from the Demo
+// classroom's age band at seed time (see learnerDob), so the cohort always
+// matches the class it lives in.
 const LEARNERS: Learner[] = [
-  { first: 'Mateo', last: 'Reyes', dob: '2016-09-22', grade: '4', pronouns: 'he/him', arch: 'highAcademic' },
-  { first: 'Amara', last: 'Okafor', dob: '2016-11-30', grade: '4', pronouns: 'she/her', arch: 'strongAllRounder' },
-  { first: 'Sofia', last: 'Marchetti', dob: '2017-02-14', grade: '4', pronouns: 'she/her', arch: 'creativeSpike' },
-  { first: 'Kai', last: 'Nakamura', dob: '2017-05-08', grade: '4', pronouns: 'he/him', arch: 'academicStrongSocialLow' },
-  { first: 'Noor', last: 'Haddad', dob: '2016-07-19', grade: '4', pronouns: 'she/her', arch: 'solidMid' },
-  { first: 'Liam', last: 'Gallagher', dob: '2017-10-03', grade: '3', pronouns: 'he/him', arch: 'strugglerGrowing' },
-  { first: 'Yuki', last: 'Tanaka', dob: '2017-12-12', grade: '3', pronouns: 'they/them', arch: 'oneStruggle' },
-  { first: 'Elena', last: 'Volkova', dob: '2018-03-25', grade: '3', pronouns: 'she/her', arch: 'lateBloomer' },
-  { first: 'Omar', last: 'Hassan', dob: '2018-01-18', grade: '3', pronouns: 'he/him', arch: 'developing' },
-  { first: 'Priya', last: 'Sharma', dob: '2017-08-29', grade: '3', pronouns: 'she/her', arch: 'highSocial' },
+  { first: 'Mateo', last: 'Reyes', pronouns: 'he/him', arch: 'highAcademic' },
+  { first: 'Amara', last: 'Okafor', pronouns: 'she/her', arch: 'strongAllRounder' },
+  { first: 'Sofia', last: 'Marchetti', pronouns: 'she/her', arch: 'creativeSpike' },
+  { first: 'Kai', last: 'Nakamura', pronouns: 'he/him', arch: 'academicStrongSocialLow' },
+  { first: 'Noor', last: 'Haddad', pronouns: 'she/her', arch: 'solidMid' },
+  { first: 'Liam', last: 'Gallagher', pronouns: 'he/him', arch: 'strugglerGrowing' },
+  { first: 'Yuki', last: 'Tanaka', pronouns: 'they/them', arch: 'oneStruggle' },
+  { first: 'Elena', last: 'Volkova', pronouns: 'she/her', arch: 'lateBloomer' },
+  { first: 'Omar', last: 'Hassan', pronouns: 'he/him', arch: 'developing' },
+  { first: 'Priya', last: 'Sharma', pronouns: 'she/her', arch: 'highSocial' },
 ]
+
+// Default age band for an auto-created Demo class (when the school has no
+// pre-set range). Covers the full competency set; learners spread across it.
+const DEFAULT_AGE_MIN = 8
+const DEFAULT_AGE_MAX = 11
+
+// Latest school-year start in the seed window (Sep 2025). Ages are anchored
+// here so the CURRENT roster sits squarely in the class band.
+const CURRENT_SY = 2025
+
+/**
+ * DOB + grade for learner `i`, derived from the class age band. Each learner's
+ * CURRENT-year standard age is spread across [ageMin, ageMax], so the roster
+ * reads in-band today; a year earlier they were one younger (still sensible).
+ * Birth months Jul–Nov keep both the Dec-1 standard age AND the present-day real
+ * age equal to that target (birthday already passed by Dec 1, not yet by June).
+ */
+function learnerDob(i: number, ageMin: number, ageMax: number): { dob: string; grade: string } {
+  const span = Math.max(0, ageMax - ageMin)
+  const curAge = ageMin + (span === 0 ? 0 : i % (span + 1)) // current standard age, in-band
+  const birthYear = CURRENT_SY - curAge // age `curAge` on Dec 1 2025
+  const month = 7 + (i % 5) // 7..11 (Jul–Nov)
+  const day = 4 + ((i * 7) % 22) // 4..25
+  const dob = `${birthYear}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  return { dob, grade: String(Math.max(1, curAge - 5)) } // US: age 12 ≈ grade 7
+}
 
 // Per-archetype "flavor" for each dimension by display_order:
 //   0 Think Deeply · 1 Create Boldly · 2 Reason & Solve · 3 Communicate ·
@@ -155,7 +185,7 @@ for (const [y, mStart, mEnd] of [
 }
 const BASELINE = { y: 2024, m: 8 }
 const elapsed = (y: number, m: number) => y * 12 + m - (BASELINE.y * 12 + BASELINE.m)
-const YEAR_BOUNDARY = elapsed(2025, 8) // 12 — Sep 2025, start of year 2
+const SPAN = elapsed(2026, 5) // 21 — full span Sep 2024 → Jun 2026
 
 // ── Deterministic helpers (FNV-1a + xorshift) so re-runs are identical ──
 function fnv(seed: string): number {
@@ -200,19 +230,21 @@ function standardAgeForDate(dob: string, date: Date): number {
   return ageOnDate(dob, new Date(schoolYearStart, 11, 1))
 }
 
-// ── Raw-rating target with the big year-over-year step ────────────
-// Year 1 stays flat-low (Emerging); year 2 jumps high (Achieving/Mastery).
-// The visualization later multiplies year 2 by the ×0.75 September rescale, so
-// these raw targets land the displayed blob ~2 pts higher in year 2.
+// ── Growth curve: continuous month-to-month movement across both years ──
+// Per-archetype progress shape over the full span. Raw grows smoothly from
+// Emerging (1) toward the archetype ceiling, so the amoeba visibly morphs every
+// month. The visualization's ×0.75 September rescale then turns each new school
+// year into a clear step-down (the "shrink scrubbing back across September"),
+// while the overall 2-year displayed span is ~2 pts.
+function progress(arch: Arch, t: number): number {
+  if (arch === 'lateBloomer') return Math.pow(t, 1.9) // slow start, accelerates
+  if (arch === 'solidMid' || arch === 'developing') return 1 - Math.pow(1 - t, 1.3) // gentle
+  return 1 - Math.pow(1 - t, 1.6) // ease-out: quick early gains, tapering
+}
 function rawTarget(arch: Arch, di: number, el: number): number {
   const ceiling = CEILINGS[arch][di] // 1.8 – 4.0
-  if (el < YEAR_BOUNDARY) {
-    const t = el / (YEAR_BOUNDARY - 3) // Sep24..Jun25 (9 active months) → 0..1
-    return 1.0 + 0.35 * Math.min(1, t) // ~1.0 → ~1.35, all Emerging
-  }
-  const t = (el - YEAR_BOUNDARY) / (elapsed(2026, 5) - YEAR_BOUNDARY) // Sep25..Jun26 → 0..1
-  const base = 3.3 + ((ceiling - 1) / 3) * 0.6 // 3.46 – 3.9 by archetype/dimension
-  return Math.min(4, base + 0.15 * t)
+  const p = progress(arch, el / SPAN)
+  return 1 + p * (ceiling - 1)
 }
 
 const LEVEL_NAME = ['', 'Emerging', 'Developing', 'Achieving', 'Mastery']
@@ -321,23 +353,29 @@ export async function seedSchoolDemo(
   }
   for (const arr of compsByDim.values()) arr.sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
 
-  // ── 3. Demo classroom ───────────────────────────────────────────
+  // ── 3. Demo classroom (+ its age band — learners are aged to fit it) ──
   let { data: room } = await client
     .from('classrooms')
-    .select('id')
+    .select('id, age_min, age_max')
     .eq('school_id', schoolId)
     .eq('name', 'Demo')
     .maybeSingle()
   if (!room) {
     const { data: created, error } = await client
       .from('classrooms')
-      .insert({ school_id: schoolId, name: 'Demo' })
-      .select('id')
+      .insert({ school_id: schoolId, name: 'Demo', age_min: DEFAULT_AGE_MIN, age_max: DEFAULT_AGE_MAX })
+      .select('id, age_min, age_max')
       .single()
     if (error) throw new Error(`classroom create failed: ${error.message}`)
     room = created
   }
   const classroomId = room!.id as string
+  const ageMin = room!.age_min ?? DEFAULT_AGE_MIN
+  const ageMax = room!.age_max ?? DEFAULT_AGE_MAX
+  // DOB + grade per learner, aged to fit the class band (shared by the student
+  // rows and the observation generator so assessed_age stays consistent).
+  const meta = LEARNERS.map((_, i) => learnerDob(i, ageMin, ageMax))
+  log(`Demo classroom ${classroomId} (ages ${ageMin}–${ageMax})`)
 
   // ── 4. Demo educator (silent auth user + profile) — the observer ─
   const educatorEmail = `demo-educator-${schoolId}@demo.invalid`
@@ -380,8 +418,8 @@ export async function seedSchoolDemo(
     classroom_id: classroomId,
     first_name: l.first,
     last_name: l.last,
-    date_of_birth: l.dob,
-    grade_level: l.grade,
+    date_of_birth: meta[i].dob,
+    grade_level: meta[i].grade,
     pronouns: l.pronouns,
     enrollment_date: '2024-09-01',
     student_status: 'active',
@@ -400,7 +438,7 @@ export async function seedSchoolDemo(
       for (let di = 0; di < dims.length; di++) {
         const dim = dims[di]
         const target = rawTarget(l.arch, di, el)
-        const ageStd = standardAgeForDate(l.dob, new Date(Date.UTC(y, m, 15)))
+        const ageStd = standardAgeForDate(meta[li].dob, new Date(Date.UTC(y, m, 15)))
         const pool = (compsByDim.get(dim.id) ?? []).filter(
           (c) =>
             (c.age_band_start == null || c.age_band_start <= ageStd) &&

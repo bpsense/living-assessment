@@ -45,7 +45,7 @@ import { useToast } from '../components/Toast'
 import { supabase } from '../lib/supabase'
 import { assignClassroom, unassignClassroom, updateClassroomEducatorRole, type ClassroomEducatorRole } from '../lib/educator-data'
 import { DimensionIcon } from '../components/student/DimensionIcon'
-import MiniRadar from '../components/dashboard/MiniRadar'
+import MiniBlob from '../components/dashboard/MiniBlob'
 import AddStudentModal from '../components/classroom/AddStudentModal'
 import CsvImportModal from '../components/classroom/CsvImportModal'
 import ClassroomAnalysis from '../components/classroom/ClassroomAnalysis'
@@ -726,10 +726,11 @@ function StudentCard({
         </div>
       </div>
 
-      {/* Mini Radar */}
+      {/* Mini amoeba — same blob shape (and age-decayed scores) as the
+          student profile's current-state Living Visualization. */}
       <div className="-mx-1">
         {hasScores ? (
-          <MiniRadar dimensionScores={scores} />
+          <MiniBlob dimensionScores={scores} />
         ) : (
           <div className="flex h-[180px] items-center justify-center">
             <p className="text-[11px] text-text-light">No data yet</p>
