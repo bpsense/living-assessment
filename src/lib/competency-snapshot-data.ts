@@ -111,7 +111,6 @@ function competencyAsStandard(c: Competency, fallbackSchoolId: string): Standard
 function observationAsAssessment(o: Observation): StandardAssessment {
   return {
     id: o.id,
-    student_assignment_id: '',
     student_id: o.student_id,
     school_id: o.school_id,
     standard_id: o.competency_id as string,

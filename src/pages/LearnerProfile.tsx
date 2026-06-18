@@ -1,18 +1,15 @@
 /**
  * LearnerProfile.tsx — Read-only profile view for learner role.
  * Shows the learner's own student record, classrooms (active + archived),
- * per-classroom assignment kanban, and observation progress.
+ * and observation progress.
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { clsx } from 'clsx'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
-import { Loader2, User, School, BarChart3, BookOpen, ClipboardList, Star, Archive } from 'lucide-react'
+import { Loader2, User, School, BarChart3, BookOpen, Star, Archive } from 'lucide-react'
 import type { Student, Dimension, Observation } from '../types/database'
-import AssignmentKanban from '../components/learner/AssignmentKanban'
-import { fetchLearnerAssignments, groupAssignmentsByClassroom, type LearnerAssignment } from '../lib/learner-assignments-data'
 
 interface DimensionProgress {
   dimension: Dimension
@@ -34,10 +31,8 @@ export default function LearnerProfile() {
   const [student, setStudent] = useState<Student | null>(null)
   const [allClassrooms, setAllClassrooms] = useState<ClassroomInfo[]>([])
   const [progress, setProgress] = useState<DimensionProgress[]>([])
-  const [assignments, setAssignments] = useState<LearnerAssignment[]>([])
   const [loading, setLoading] = useState(true)
   const [schoolName, setSchoolName] = useState('')
-  const [selectedClassroomId, setSelectedClassroomId] = useState<string>('all')
 
   const activeClassrooms = useMemo(
     () => allClassrooms.filter((c) => c.status === 'active'),
@@ -47,16 +42,6 @@ export default function LearnerProfile() {
     () => allClassrooms.filter((c) => c.status === 'archived'),
     [allClassrooms]
   )
-
-  const assignmentsByClassroom = useMemo(
-    () => groupAssignmentsByClassroom(assignments),
-    [assignments]
-  )
-
-  const filteredAssignments = useMemo(() => {
-    if (selectedClassroomId === 'all') return assignments
-    return assignmentsByClassroom.get(selectedClassroomId) ?? []
-  }, [assignments, assignmentsByClassroom, selectedClassroomId])
 
   useEffect(() => {
     if (!profile?.student_id) {
@@ -145,29 +130,11 @@ export default function LearnerProfile() {
 
       setProgress(dimProgress)
 
-      // Fetch assignments for kanban
-      try {
-        const learnerAssignments = await fetchLearnerAssignments(studentData.id)
-        setAssignments(learnerAssignments)
-      } catch (err) {
-        console.error('[LearnerProfile] Failed to fetch assignments:', err)
-      }
-
       setLoading(false)
     }
 
     loadData()
   }, [profile?.student_id])
-
-  const refetchAssignments = useCallback(async () => {
-    if (!student) return
-    try {
-      const learnerAssignments = await fetchLearnerAssignments(student.id)
-      setAssignments(learnerAssignments)
-    } catch (err) {
-      console.error('[LearnerProfile] Failed to refetch assignments:', err)
-    }
-  }, [student])
 
   if (loading) {
     return (
@@ -269,55 +236,6 @@ export default function LearnerProfile() {
           </div>
         </section>
       )}
-
-      {/* My Assignments — per-classroom kanban */}
-      <section className="glass-card p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <ClipboardList className="h-5 w-5 text-primary-600" />
-          <h2 className="text-base font-bold text-text">My Assignments</h2>
-          {assignments.length > 0 && (
-            <span className="rounded-full bg-bg-muted px-2 py-0.5 text-xs font-medium text-text-muted">
-              {filteredAssignments.length}
-            </span>
-          )}
-        </div>
-
-        {/* Classroom tabs (only when enrolled in >1 classroom) */}
-        {activeClassrooms.length > 1 && assignments.length > 0 && (
-          <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
-            <button
-              onClick={() => setSelectedClassroomId('all')}
-              className={clsx(
-                'shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition',
-                selectedClassroomId === 'all'
-                  ? 'bg-primary-500 text-white'
-                  : 'text-text-muted hover:bg-bg-muted'
-              )}
-            >
-              All ({assignments.length})
-            </button>
-            {activeClassrooms.map((c) => {
-              const count = assignmentsByClassroom.get(c.id)?.length ?? 0
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => setSelectedClassroomId(c.id)}
-                  className={clsx(
-                    'shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition',
-                    selectedClassroomId === c.id
-                      ? 'bg-primary-500 text-white'
-                      : 'text-text-muted hover:bg-bg-muted'
-                  )}
-                >
-                  {c.name} ({count})
-                </button>
-              )
-            })}
-          </div>
-        )}
-
-        <AssignmentKanban assignments={filteredAssignments} onUpdate={refetchAssignments} />
-      </section>
 
       {/* Dimension progress */}
       <section className="glass-card p-5">

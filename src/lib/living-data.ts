@@ -92,7 +92,6 @@ export function snapshotToDimensionScores(
       observation_count: 0,
       current_month_observation_count: 0,
       latest_observation: null,
-      competency_breakdown: undefined,
     }
   })
 }

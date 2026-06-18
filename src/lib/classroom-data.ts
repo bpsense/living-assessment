@@ -241,7 +241,6 @@ export function useClassroomView(
             observation_count: 0,
             current_month_observation_count: obsScores.get(d.id)?.currentMonthCount ?? 0,
             latest_observation: null,
-            competency_breakdown: undefined,
           }))
           scoresMap.set(st.id, studentScores)
         }

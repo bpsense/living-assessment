@@ -101,7 +101,6 @@ describe('decayWeight (exponential decay)', () => {
 function mk(level: StandardAssessment['level'], iso: string): StandardAssessment {
   return {
     id: `id-${iso}-${level}`,
-    student_assignment_id: 'sa',
     student_id: 's',
     school_id: 'sch',
     standard_id: 'std',
