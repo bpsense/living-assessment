@@ -38,9 +38,18 @@ export interface AuthState {
   setActiveSchool: (schoolId: string | null) => void
   /** List of all schools (populated only for system admins) */
   allSchools: School[]
-  /** Numeric access level: 6=sysadmin, 5=school admin, 4=dept admin, 3=educator, 2=parent, 1=learner */
+  /** Numeric access level of the ACTUAL user: 6=sysadmin … 1=learner (unaffected by impersonation) */
   accessLevel: AccessLevel
+  /** Access level of the role currently being VIEWED — equals accessLevel unless impersonating */
+  effectiveAccessLevel: AccessLevel
+  /** True when viewing as another role and/or impersonating a specific user */
+  isImpersonating: boolean
+  /** The actual authenticated user's id (never swapped by impersonation) */
+  actualUserId: string | null
 }
+
+/** sessionStorage key for the system-admin view context (active school + impersonation). */
+const VIEW_CTX_KEY = 'sproutmap.viewctx'
 
 export const AuthContext = createContext<AuthState | undefined>(undefined)
 
@@ -70,21 +79,33 @@ export function useAuthProvider(): AuthState {
   const [departmentAdminIds, setDepartmentAdminIds] = useState<string[]>([])
   const [activeSchoolId, setActiveSchoolId] = useState<string | null>(null)
   const [allSchools, setAllSchools] = useState<School[]>([])
+  /**
+   * When impersonating a SPECIFIC user, this holds that user's full profile so
+   * `profile` reflects their identity (id, school_id, student_id, role) — not
+   * just an overridden role. Null for role-only view-as or no impersonation.
+   */
+  const [impersonatedProfile, setImpersonatedProfile] = useState<Profile | null>(null)
+  /** Gates persistence until the saved view context has been restored once. */
+  const [restored, setRestored] = useState(false)
 
-  // Override profile fields based on viewAsRole and active school context
+  // The effective profile the rest of the app renders against.
   const profile = useMemo(() => {
     if (!rawProfile) return null
+    // Full identity swap when impersonating a specific user (their profile loaded).
+    if (viewAsUserId && impersonatedProfile && impersonatedProfile.id === viewAsUserId) {
+      return impersonatedProfile
+    }
     let p = rawProfile
-    // Override role for view-as mode
+    // Role-only view-as (e.g. the "Admin" pill, no specific user).
     if (viewAsRole && viewAsRole !== rawProfile.role) {
       p = { ...p, role: viewAsRole }
     }
-    // Override school_id when system admin views a specific school
+    // System admin browsing a specific school (no impersonation).
     if (isSystemAdmin && activeSchoolId && activeSchoolId !== rawProfile.school_id) {
       p = { ...p, school_id: activeSchoolId }
     }
     return p
-  }, [rawProfile, viewAsRole, isSystemAdmin, activeSchoolId])
+  }, [rawProfile, viewAsRole, viewAsUserId, impersonatedProfile, isSystemAdmin, activeSchoolId])
 
   /**
    * Try to fetch the profile. If it doesn't exist, call the
@@ -238,9 +259,11 @@ export function useAuthProvider(): AuthState {
     setViewAsRole(null)
     setViewAsUserId(null)
     setViewAsUserName(null)
+    setImpersonatedProfile(null)
     setIsSystemAdmin(false)
     setActiveSchoolId(null)
     setAllSchools([])
+    try { sessionStorage.removeItem(VIEW_CTX_KEY) } catch { /* ignore */ }
   }, [])
 
   const resetPassword = useCallback(async (email: string) => {
@@ -266,11 +289,30 @@ export function useAuthProvider(): AuthState {
     setViewAsRole(role)
     setViewAsUserId(userId ?? null)
     setViewAsUserName(userName ?? null)
-
-    // Reset impersonated dept admin status; reload it if we're now
-    // impersonating a specific educator.
     setViewAsDepartmentAdminIds([])
-    if (userId && role === 'educator') {
+
+    if (!userId) {
+      // Role-only view-as (or exit) — no specific identity to load.
+      setImpersonatedProfile(null)
+      return
+    }
+
+    // Load the impersonated user's full profile so the app renders as THEM, and
+    // pin the active school to theirs (so "be a user" and the school context agree).
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          const p = data as Profile
+          setImpersonatedProfile(p)
+          if (p.school_id) setActiveSchoolId(p.school_id)
+        }
+      })
+
+    if (role === 'educator') {
       supabase
         .from('department_admins')
         .select('department_id')
@@ -285,14 +327,64 @@ export function useAuthProvider(): AuthState {
 
   const setActiveSchool = useCallback((schoolId: string | null) => {
     setActiveSchoolId(schoolId)
-    // Clear impersonation when switching schools
+    // Deliberately switching schools clears any impersonation (the impersonated
+    // user belongs to the previous school).
     setViewAsRole(null)
     setViewAsUserId(null)
     setViewAsUserName(null)
     setViewAsDepartmentAdminIds([])
+    setImpersonatedProfile(null)
   }, [])
 
+  // Restore the saved view context (active school + impersonation) once, after
+  // the real profile + sysadmin status are known. System admins only.
+  useEffect(() => {
+    if (restored || loading || !rawProfile) return
+    if (!isSystemAdmin) {
+      setRestored(true)
+      return
+    }
+    try {
+      const raw = sessionStorage.getItem(VIEW_CTX_KEY)
+      if (raw) {
+        const ctx = JSON.parse(raw) as {
+          activeSchoolId?: string | null
+          viewAsRole?: UserRole | null
+          viewAsUserId?: string | null
+          viewAsUserName?: string | null
+        }
+        if (ctx.activeSchoolId) setActiveSchoolId(ctx.activeSchoolId)
+        if (ctx.viewAsUserId) {
+          setViewAs(ctx.viewAsRole ?? null, ctx.viewAsUserId, ctx.viewAsUserName ?? null)
+        } else if (ctx.viewAsRole) {
+          setViewAsRole(ctx.viewAsRole)
+        }
+      }
+    } catch {
+      /* ignore malformed context */
+    }
+    setRestored(true)
+  }, [restored, loading, rawProfile, isSystemAdmin, setViewAs])
+
+  // Persist the view context so navigation + reloads keep "as user X in school Y".
+  useEffect(() => {
+    if (!restored) return
+    try {
+      if (activeSchoolId || viewAsRole || viewAsUserId) {
+        sessionStorage.setItem(
+          VIEW_CTX_KEY,
+          JSON.stringify({ activeSchoolId, viewAsRole, viewAsUserId, viewAsUserName })
+        )
+      } else {
+        sessionStorage.removeItem(VIEW_CTX_KEY)
+      }
+    } catch {
+      /* ignore quota / disabled storage */
+    }
+  }, [restored, activeSchoolId, viewAsRole, viewAsUserId, viewAsUserName])
+
   const actualRole = rawProfile?.role ?? null
+  const actualUserId = rawProfile?.id ?? user?.id ?? null
   // When impersonating a specific user, reflect THEIR dept admin status.
   // Otherwise fall through to the actual viewer's status.
   const isDepartmentAdmin = viewAsUserId
@@ -307,6 +399,19 @@ export function useAuthProvider(): AuthState {
     if (actualRole === 'learner') return 1
     return 1 as AccessLevel
   }, [isSystemAdmin, actualRole, isDepartmentAdmin])
+
+  // The role/level currently being VIEWED. Equals the actual values unless the
+  // user is impersonating another role or a specific user.
+  const effectiveRole: UserRole = profile?.role ?? actualRole ?? 'educator'
+  const isImpersonating = !!viewAsUserId || (!!viewAsRole && viewAsRole !== actualRole)
+  const effectiveAccessLevel: AccessLevel = useMemo(() => {
+    if (!isImpersonating) return accessLevel
+    if (effectiveRole === 'admin') return 5
+    if (effectiveRole === 'educator') return isDepartmentAdmin ? 4 : 3
+    if (effectiveRole === 'parent') return 2
+    if (effectiveRole === 'learner') return 1
+    return 1 as AccessLevel
+  }, [isImpersonating, effectiveRole, isDepartmentAdmin, accessLevel])
 
   return {
     user,
@@ -332,5 +437,8 @@ export function useAuthProvider(): AuthState {
     setActiveSchool,
     allSchools,
     accessLevel,
+    effectiveAccessLevel,
+    isImpersonating,
+    actualUserId,
   }
 }

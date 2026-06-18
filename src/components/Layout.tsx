@@ -286,7 +286,7 @@ function getSwitchableRoles(actualRole: UserRole): ViewAsPill[] {
 }
 
 export default function Layout() {
-  const { profile, actualRole, signOut, viewAsRole, setViewAs, viewAsUserId, viewAsUserName, isSystemAdmin, activeSchoolId, setActiveSchool } = useAuth()
+  const { profile, actualRole, signOut, viewAsRole, setViewAs, viewAsUserId, viewAsUserName, isSystemAdmin, isImpersonating, activeSchoolId, setActiveSchool } = useAuth()
   const { isDepartmentAdmin, accessLevel } = useAccessControl()
   const navigate = useNavigate()
   const location = useLocation()
@@ -348,7 +348,7 @@ export default function Layout() {
   const { permissions } = useRolePermissions(effectiveRole)
   const navItems = getNavItems(effectiveRole, isSystemAdmin, isAllSchoolsView, permissions, deptLabel)
   // Hide FAB when impersonating (read-only context) or in All Schools view
-  const showFab = (role === 'educator' || role === 'admin' || isSystemAdmin) && !isAllSchoolsView && !viewAsUserId
+  const showFab = (role === 'educator' || role === 'admin' || isSystemAdmin) && !isAllSchoolsView && !isImpersonating
 
   // Assign FAB action: open class mode on a classroom page, individual mode on a
   // student page, else route to the assignments hub.

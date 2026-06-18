@@ -181,7 +181,7 @@ export default function ClassroomPage() {
           ================================================================ */}
       <div>
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/classrooms')}
           className="mb-3 flex items-center gap-1 text-sm text-text-muted transition-colors hover:text-text"
         >
           <ArrowLeft className="h-4 w-4" /> Back
