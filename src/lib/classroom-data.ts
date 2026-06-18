@@ -12,6 +12,7 @@ import type {
 import { computeObservationScores, type DimensionScore } from './scoring'
 import { ageDecayFactor } from './living-data'
 import { standardAgeForDate } from './age-utils'
+import { fetchAllRows } from './supabase-paged'
 
 // ============================================================
 // Types
@@ -186,12 +187,17 @@ export function useClassroomView(
 
         // 4. Observations + interest surveys + contacts. Per-dimension competency
         //    averages for the classroom mini-amoebas come from observations.
-        const [obsRes, surveyRes, contactsRes] = await Promise.all([
-          supabase
-            .from('observations')
-            .select('*')
-            .in('student_id', studentIds)
-            .order('observed_at', { ascending: true }),
+        //    Observations are paged past the API row cap (1000) so a dense class
+        //    doesn't silently load only the earliest rows — which skewed every
+        //    roster amoeba toward a small, lopsided, near-Emerging shape.
+        const [allObservations, surveyRes, contactsRes] = await Promise.all([
+          fetchAllRows<Observation>(() =>
+            supabase
+              .from('observations')
+              .select('*', { count: 'exact' })
+              .in('student_id', studentIds)
+              .order('observed_at', { ascending: true })
+          ),
           supabase
             .from('interest_surveys')
             .select('*')
@@ -206,7 +212,6 @@ export function useClassroomView(
 
         if (cancelled) return
 
-        const allObservations = (obsRes.data ?? []) as Observation[]
         const allSurveys = (surveyRes.data ?? []) as InterestSurvey[]
 
         // Per-student contacts map
