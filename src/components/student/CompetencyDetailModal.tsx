@@ -147,7 +147,6 @@ export default function CompetencyDetailModal({
       ...prev,
       {
         id: `local-${observedAt}`,
-        student_assignment_id: '',
         student_id: studentId,
         school_id: schoolId,
         standard_id: row.standard.id,

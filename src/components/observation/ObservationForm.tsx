@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { clsx } from 'clsx'
-import { Loader2, Link as LinkIcon, ClipboardList, Minus, Plus } from 'lucide-react'
+import { Loader2, Link as LinkIcon, Minus, Plus } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import { useToast } from '../Toast'
@@ -95,12 +95,6 @@ export default function ObservationForm({
   const [selectedCompetency, setSelectedCompetency] = useState<string | null>(null)
   const [loadingComps, setLoadingComps] = useState(false)
 
-  // Assignment linking
-  const [assignments, setAssignments] = useState<
-    { id: string; title: string; student_assignment_id: string | null }[]
-  >([])
-  const [selectedAssignment, setSelectedAssignment] = useState<string>('')
-
   // Fetch dimensions
   useEffect(() => {
     async function load() {
@@ -115,36 +109,6 @@ export default function ObservationForm({
     }
     load()
   }, [schoolId])
-
-  // Fetch active assignments for this student
-  useEffect(() => {
-    async function loadAssignments() {
-      // Get student_assignments for this student, joined with assignment title
-      const { data } = await supabase
-        .from('student_assignments')
-        .select('id, assignment_id, assignments!inner(id, title, status)')
-        .eq('student_id', studentId)
-        .in('status', ['assigned', 'in_progress', 'submitted', 'graded'])
-
-      if (data) {
-        const items = data.map((sa: any) => ({
-          id: sa.assignments.id as string,
-          title: sa.assignments.title as string,
-          student_assignment_id: sa.id as string,
-        }))
-        // Deduplicate by assignment id (just in case)
-        const seen = new Set<string>()
-        setAssignments(
-          items.filter((a) => {
-            if (seen.has(a.id)) return false
-            seen.add(a.id)
-            return true
-          })
-        )
-      }
-    }
-    loadAssignments()
-  }, [studentId])
 
   // Update if preselected changes
   useEffect(() => {
@@ -246,11 +210,6 @@ export default function ObservationForm({
       ? `${notes}\n\nEvidence: ${evidenceUrl}`.trim()
       : notes || null
 
-    // Find the selected assignment's student_assignment_id
-    const linkedAssignment = selectedAssignment
-      ? assignments.find((a) => a.id === selectedAssignment)
-      : null
-
     const { error } = await supabase.from('observations').insert({
       school_id: schoolId,
       student_id: studentId,
@@ -261,8 +220,6 @@ export default function ObservationForm({
       observer_id: profile!.id,
       rating: rating,
       notes: notesWithEvidence,
-      assignment_id: linkedAssignment?.id || null,
-      student_assignment_id: linkedAssignment?.student_assignment_id || null,
     })
 
     setSaving(false)
@@ -277,7 +234,6 @@ export default function ObservationForm({
     setRating(null)
     setNotes('')
     setEvidenceUrl('')
-    setSelectedAssignment('')
     setSelectedCompetency(null)
     setAssessedAge(null)
     if (!preselectedDimensionId) setSelectedDimension(null)
@@ -532,32 +488,6 @@ export default function ObservationForm({
           />
         </div>
       </div>
-
-      {/* ---- Link to Assignment (optional) ---- */}
-      {assignments.length > 0 && (
-        <div>
-          <label htmlFor="obs-assignment" className="mb-2 block text-sm font-semibold text-text">
-            Link to Assignment
-            <span className="ml-1 text-xs font-normal text-text-light">(optional)</span>
-          </label>
-          <div className="relative">
-            <ClipboardList className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
-            <select
-              id="obs-assignment"
-              value={selectedAssignment}
-              onChange={(e) => setSelectedAssignment(e.target.value)}
-              className="w-full appearance-none rounded-xl border border-bg-muted bg-bg py-2.5 pl-10 pr-4 text-sm text-text focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
-            >
-              <option value="">No assignment</option>
-              {assignments.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.title}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      )}
 
       {/* ---- Save ---- */}
       <button

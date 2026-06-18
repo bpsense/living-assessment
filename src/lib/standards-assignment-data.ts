@@ -25,7 +25,6 @@ export const LEVEL_SCORE: Record<AssessmentLevel, number> = {
  */
 export interface StandardAssessment {
   id: string
-  student_assignment_id: string
   student_id: string
   school_id: string
   standard_id: string
