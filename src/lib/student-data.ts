@@ -10,6 +10,7 @@ import type {
 } from '../types/database'
 import { buildDimensionScores } from './scoring'
 import type { DimensionScore } from './scoring'
+import { fetchAllRows } from './supabase-paged'
 
 // Re-export scoring types so existing imports from student-data continue to work
 export type { DimensionScore, Zone, ZoneClassification } from './scoring'
@@ -148,7 +149,7 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
         const [
           classroomsRes,
           dimensionsRes,
-          observationsRes,
+          observationsData,
           surveysRes,
         ] = await Promise.all([
           classroomIds.length > 0
@@ -160,12 +161,17 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
             .eq('school_id', stu.school_id)
             .eq('is_active', true)
             .order('display_order'),
-          supabase
-            .from('observations')
-            .select('*')
-            .eq('student_id', studentId)
-            .gte('observed_at', observationCutoff.toISOString())
-            .order('observed_at', { ascending: false }),
+          // Paged past the API row cap (1000) so the full lookback window loads
+          // — otherwise a dense history silently truncates to the most recent
+          // ~1000 rows, collapsing the timeline to a few months.
+          fetchAllRows<Observation>(() =>
+            supabase
+              .from('observations')
+              .select('*', { count: 'exact' })
+              .eq('student_id', studentId)
+              .gte('observed_at', observationCutoff.toISOString())
+              .order('observed_at', { ascending: false })
+          ),
           supabase
             .from('interest_surveys')
             .select('*')
@@ -183,7 +189,6 @@ export function useStudentProfile(studentId: string | undefined): StudentProfile
         // Primary classroom for backward compat
         const classroomData = classroomsList.find((c) => c.is_primary) ?? classroomsList[0] ?? null
         const dimensionsData = (dimensionsRes.data ?? []) as Dimension[]
-        const observationsData = (observationsRes.data ?? []) as Observation[]
         const surveysData = (surveysRes.data ?? []) as InterestSurvey[]
 
         setClassroom(classroomData ? { ...classroomData } : null)
