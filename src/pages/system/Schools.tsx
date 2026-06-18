@@ -80,15 +80,26 @@ export default function Schools() {
 
     const slug = newSchoolSlug || newSchoolName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 
-    const { error } = await supabase.from('schools').insert({
-      name: newSchoolName,
-      slug,
-    })
+    const { data: created, error } = await supabase
+      .from('schools')
+      .insert({ name: newSchoolName, slug })
+      .select('id')
+      .single()
 
     if (error) {
       setCreateError(error.message)
       setCreating(false)
       return
+    }
+
+    // Seed the default "Demo" class (Boundless framework + 10 learners + ~2
+    // years of observations). The edge function returns immediately and runs
+    // the heavy seed server-side, so this resolves fast; the roster fills in a
+    // short while. Non-fatal if it can't start — the school is already created.
+    try {
+      await supabase.functions.invoke('seed-school-demo', { body: { school_id: created.id } })
+    } catch (seedErr) {
+      console.warn('Demo-class seeding could not be started:', seedErr)
     }
 
     // Refresh — reload the page to refetch allSchools in auth context
