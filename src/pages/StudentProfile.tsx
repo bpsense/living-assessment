@@ -5,8 +5,10 @@ import { Loader2, AlertCircle, ClipboardPen, ClipboardList, ArrowLeft, FileDown,
 import { useStudentProfile } from '../lib/student-data'
 import { useAuth } from '../lib/auth'
 import { useAccessControl } from '../lib/access-control'
+import { usePageAccess } from '../lib/role-permissions'
 import { useToast } from '../components/Toast'
 import { supabase } from '../lib/supabase'
+import AssignModal from '../components/assignment/AssignModal'
 import { smoothSnapshots, snapshotToDimensionScores } from '../lib/living-data'
 import { buildSnapshotsFromObservations } from '../lib/observation-snapshots'
 import LivingVisualization from '../components/student/LivingVisualization'
@@ -25,6 +27,7 @@ import StudentIncidents from '../components/student/StudentIncidents'
 import LearnerMessagesSection from '../components/student/LearnerMessagesSection'
 import StudentContextDoc from '../components/student/StudentContextDoc'
 import StudentClassroomsManager from '../components/student/StudentClassroomsManager'
+import StudentAssignmentsSection from '../components/student/StudentAssignmentsSection'
 
 // ============================================================
 // Student avatar with fallback initials
@@ -63,8 +66,10 @@ export default function StudentProfile() {
   const navigate = useNavigate()
   const { profile } = useAuth()
   const { role, formatStudentName, canExportReports } = useAccessControl()
+  const { canEdit: canAssign } = usePageAccess('assignments')
   const { toast } = useToast()
   const [launchingSurvey, setLaunchingSurvey] = useState(false)
+  const [showAssignModal, setShowAssignModal] = useState(false)
   const [showSISEdit, setShowSISEdit] = useState(false)
   const [showStudentNumber, setShowStudentNumber] = useState(false)
   const [copiedNumber, setCopiedNumber] = useState(false)
@@ -309,6 +314,15 @@ export default function StudentProfile() {
                     <ClipboardPen className="h-4 w-4" />
                     Record Observation
                   </button>
+                  {canAssign && (
+                    <button
+                      onClick={() => setShowAssignModal(true)}
+                      className="flex items-center gap-2 rounded-lg border border-primary-300 bg-primary-50 px-4 py-2.5 text-sm font-medium text-primary-700 transition-colors hover:bg-primary-100"
+                    >
+                      <ClipboardList className="h-4 w-4" />
+                      Assign
+                    </button>
+                  )}
                   {INTEREST_ENABLED && (
                     <button
                       onClick={launchInterestSurvey}
@@ -389,6 +403,9 @@ export default function StudentProfile() {
         />
       )}
 
+      {/* ========== ASSIGNMENTS (educator: all + visibility toggle; family: visible only) ========== */}
+      <StudentAssignmentsSection studentId={student.id} familyView={isFamilyView} />
+
       {/* ========== CLASSROOM ENROLLMENTS (educator/admin only) ========== */}
       {!isFamilyView && (
         <section className="glass-card p-5">
@@ -457,6 +474,18 @@ export default function StudentProfile() {
           onClose={() => setShowSISEdit(false)}
           student={student}
           onSaved={refetch}
+        />
+      )}
+
+      {showAssignModal && (
+        <AssignModal
+          open={showAssignModal}
+          onClose={() => setShowAssignModal(false)}
+          mode="individual"
+          schoolId={student.school_id}
+          studentId={student.id}
+          studentName={formatStudentName(student.first_name, student.last_name)}
+          onAssigned={refetch}
         />
       )}
 

@@ -39,7 +39,8 @@ import type { UserRole } from '../types/database'
 import QuickObserveModal from './QuickObserveModal'
 import QuickNoteModal from './QuickNoteModal'
 import IncidentReportModal from './incident/IncidentReportModal'
-import SpeedDial from './SpeedDial'
+import SpeedDial, { type SpeedDialAction } from './SpeedDial'
+import AssignModal from './assignment/AssignModal'
 import SchoolSwitcher from './SchoolSwitcher'
 import NotificationBell from './incident/NotificationBell'
 import { useEducatorList, useDepartmentAdminList } from '../lib/educator-data'
@@ -47,7 +48,7 @@ import { useFamilyList } from '../lib/family-data'
 import { useDepartmentLabel } from '../lib/department-label'
 import { SIDEBAR_ITEMS, SIDEBAR_BY_KEY, effectiveRoleFor, type EffectiveRole, type SidebarItem } from '../lib/sidebar-catalog'
 import { MESSAGING_ENABLED } from '../lib/features'
-import { useRolePermissions, resolveAccess, type RolePermissionMap } from '../lib/role-permissions'
+import { useRolePermissions, resolveAccess, usePageAccess, type RolePermissionMap } from '../lib/role-permissions'
 
 // ============================================================
 // Icon registry — catalog stores icon names as strings; we resolve
@@ -292,6 +293,7 @@ export default function Layout() {
   const [quickObserveOpen, setQuickObserveOpen] = useState(false)
   const [quickNoteOpen, setQuickNoteOpen] = useState(false)
   const [incidentReportOpen, setIncidentReportOpen] = useState(false)
+  const [assignOpen, setAssignOpen] = useState(false)
   const [schoolName, setSchoolName] = useState<string>('')
   const [openDropdown, setOpenDropdown] = useState<ViewAsPill | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -347,6 +349,18 @@ export default function Layout() {
   const navItems = getNavItems(effectiveRole, isSystemAdmin, isAllSchoolsView, permissions, deptLabel)
   // Hide FAB when impersonating (read-only context) or in All Schools view
   const showFab = (role === 'educator' || role === 'admin' || isSystemAdmin) && !isAllSchoolsView && !viewAsUserId
+
+  // Assign FAB action: open class mode on a classroom page, individual mode on a
+  // student page, else route to the assignments hub.
+  const { canEdit: canAssign } = usePageAccess('assignments')
+  const fabSchoolId = isSystemAdmin ? activeSchoolId : profile?.school_id
+  const classroomMatch = location.pathname.match(/^\/classroom\/([0-9a-fA-F-]+)/)
+  const studentMatch = location.pathname.match(/^\/student\/([0-9a-fA-F-]+)/)
+  const assignContext: { mode: 'class' | 'individual'; id: string } | null = classroomMatch
+    ? { mode: 'class', id: classroomMatch[1] }
+    : studentMatch
+      ? { mode: 'individual', id: studentMatch[1] }
+      : null
   // System admins can switch roles when viewing a specific school, but not in the "All Schools" view
   const switchableRoles = isAllSchoolsView ? [] : getSwitchableRoles(isSystemAdmin ? 'admin' : (actualRole ?? role))
 
@@ -721,6 +735,17 @@ export default function Layout() {
       {showFab && (
         <SpeedDial
           actions={[
+            ...(canAssign
+              ? [
+                  {
+                    icon: <ClipboardList className="h-4 w-4" />,
+                    label: 'Assign',
+                    onClick: () =>
+                      assignContext && fabSchoolId ? setAssignOpen(true) : navigate('/assignments'),
+                    color: 'bg-primary-500 hover:bg-primary-600',
+                  } satisfies SpeedDialAction,
+                ]
+              : []),
             {
               icon: <Eye className="h-4 w-4" />,
               label: 'Quick Observation',
@@ -760,6 +785,18 @@ export default function Layout() {
         open={incidentReportOpen}
         onClose={() => setIncidentReportOpen(false)}
       />
+
+      {/* ============ Assign Modal (context from current route) ============ */}
+      {assignOpen && assignContext && fabSchoolId && (
+        <AssignModal
+          open={assignOpen}
+          onClose={() => setAssignOpen(false)}
+          mode={assignContext.mode}
+          schoolId={fabSchoolId}
+          classroomId={assignContext.mode === 'class' ? assignContext.id : undefined}
+          studentId={assignContext.mode === 'individual' ? assignContext.id : undefined}
+        />
+      )}
     </div>
   )
 }

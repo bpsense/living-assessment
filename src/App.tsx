@@ -22,6 +22,9 @@ import SchoolProfile from './pages/SchoolProfile'
 import StudentProfile from './pages/StudentProfile'
 import RecordObservation from './pages/RecordObservation'
 import ClassroomPage from './pages/Classroom'
+import Assignments from './pages/Assignments'
+import AssignmentDetail from './pages/AssignmentDetail'
+import AssignmentLibrary from './pages/AssignmentLibrary'
 import DepartmentDashboard from './pages/DepartmentDashboard'
 import InterestSurvey from './pages/InterestSurvey'
 import ResetPassword from './pages/ResetPassword'
@@ -69,6 +72,9 @@ function AppRoutes() {
         <Route path="/observe" element={<Observe />} />
         <Route path="/student/:id" element={<StudentProfile />} />
         <Route path="/student/:id/observe" element={<RecordObservation />} />
+        <Route path="/assignments" element={<Assignments />} />
+        <Route path="/assignment-library" element={<AssignmentLibrary />} />
+        <Route path="/assignments/:assignmentId" element={<AssignmentDetail />} />
         <Route
           path="/export/:id"
           element={

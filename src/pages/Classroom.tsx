@@ -41,8 +41,10 @@ import DeleteClassroomConfirm from '../components/classroom/DeleteClassroomConfi
 import { useClassroomView, updateStudentClassroomStatus } from '../lib/classroom-data'
 import { useAuth } from '../lib/auth'
 import { useAccessControl } from '../lib/access-control'
+import { usePageAccess } from '../lib/role-permissions'
 import { useToast } from '../components/Toast'
 import { supabase } from '../lib/supabase'
+import AssignModal from '../components/assignment/AssignModal'
 import { assignClassroom, unassignClassroom, updateClassroomEducatorRole, type ClassroomEducatorRole } from '../lib/educator-data'
 import { DimensionIcon } from '../components/student/DimensionIcon'
 import MiniBlob from '../components/dashboard/MiniBlob'
@@ -100,6 +102,7 @@ export default function ClassroomPage() {
   const navigate = useNavigate()
   const { actualRole, profile } = useAuth()
   const { canImportStudents } = useAccessControl()
+  const { canEdit: canAssign } = usePageAccess('assignments')
   const { toast } = useToast()
   const {
     classroom,
@@ -126,6 +129,7 @@ export default function ClassroomPage() {
   const [newEducatorRole, setNewEducatorRole] = useState<ClassroomEducatorRole>('lead')
   const [showAddStudentModal, setShowAddStudentModal] = useState(false)
   const [showCsvModal, setShowCsvModal] = useState(false)
+  const [showAssignModal, setShowAssignModal] = useState(false)
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card')
   const [rosterFilter, setRosterFilter] = useState<'active' | 'archived'>('active')
   const [creatingClassChat, setCreatingClassChat] = useState(false)
@@ -275,6 +279,15 @@ export default function ClassroomPage() {
                   </button>
                 )}
               </>
+            )}
+            {canAssign && (
+              <button
+                onClick={() => setShowAssignModal(true)}
+                className="flex items-center gap-1.5 rounded-lg border border-primary-300 bg-primary-50 px-3 py-2 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100"
+              >
+                <ClipboardList className="h-3.5 w-3.5" />
+                Assign
+              </button>
             )}
             {canImportStudents && (
               <button
@@ -617,6 +630,18 @@ export default function ClassroomPage() {
           classroomId={classroom.id}
           schoolId={classroom.school_id}
           onImported={refetch}
+        />
+      )}
+
+      {showAssignModal && classroom && (
+        <AssignModal
+          open={showAssignModal}
+          onClose={() => setShowAssignModal(false)}
+          mode="class"
+          schoolId={classroom.school_id}
+          classroomId={classroom.id}
+          classroomName={classroom.name}
+          onAssigned={refetch}
         />
       )}
 
