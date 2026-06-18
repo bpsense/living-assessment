@@ -10,11 +10,64 @@ import {
   ArrowUpDown,
   Loader2,
   TrendingUp,
+  LayoutDashboard,
 } from 'lucide-react'
 import { useAuth } from '../../lib/auth'
 import { useSystemDashboard, type SchoolRow } from '../../lib/system-data'
 import Sparkline from '../../components/system/Sparkline'
 import { clsx } from 'clsx'
+import Schools from './Schools'
+import Audit from './Audit'
+import SystemUsersTab from './SystemUsersTab'
+
+type SystemTab = 'overview' | 'schools' | 'users' | 'activity'
+
+const SYSTEM_TABS: { key: SystemTab; label: string; icon: typeof Building2 }[] = [
+  { key: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { key: 'schools', label: 'Schools', icon: Building2 },
+  { key: 'users', label: 'Users', icon: Users },
+  { key: 'activity', label: 'Activity & Logins', icon: Activity },
+]
+
+/**
+ * The system-admin home: one tabbed surface across all schools. System admins
+ * are not attached to a school — this is their dashboard.
+ */
+export default function SystemDashboard() {
+  const [tab, setTab] = useState<SystemTab>('overview')
+  return (
+    <div className="mx-auto max-w-7xl px-1">
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold text-text">System Admin</h1>
+        <p className="mt-1 text-sm text-text-muted">Across all schools on the platform.</p>
+      </div>
+
+      {/* Tab bar */}
+      <div className="mb-5 flex gap-1 overflow-x-auto border-b border-bg-muted">
+        {SYSTEM_TABS.map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={clsx(
+              'flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition-colors',
+              tab === key
+                ? 'border-primary-500 text-primary-700'
+                : 'border-transparent text-text-muted hover:text-text'
+            )}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'overview' && <OverviewTab />}
+      {tab === 'schools' && <Schools />}
+      {tab === 'users' && <SystemUsersTab />}
+      {tab === 'activity' && <Audit />}
+    </div>
+  )
+}
 
 type SortKey = 'name' | 'learners' | 'educators' | 'classrooms' | 'obs' | 'activity'
 type SortDir = 'asc' | 'desc'
@@ -53,7 +106,7 @@ function compareSchoolRow(a: SchoolRow, b: SchoolRow, key: SortKey, dir: SortDir
   }
 }
 
-export default function SystemDashboard() {
+function OverviewTab() {
   const { allSchools, setActiveSchool } = useAuth()
   const navigate = useNavigate()
   const data = useSystemDashboard(allSchools, true)
@@ -80,15 +133,7 @@ export default function SystemDashboard() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-text">Platform Overview</h1>
-        <p className="mt-1 text-sm text-text-muted">
-          Adoption and activity across {data.kpis.totalSchools} school
-          {data.kpis.totalSchools !== 1 ? 's' : ''}
-        </p>
-      </div>
-
+    <div>
       {data.error && (
         <div className="mb-6 rounded-lg border border-alert-200 bg-alert-50 px-4 py-3 text-sm text-alert-700">
           {data.error}

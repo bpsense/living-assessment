@@ -12,8 +12,10 @@ export interface AccessControl {
   role: UserRole
   /** The user's actual role from the database */
   actualRole: UserRole | null
-  /** Numeric access level: 6=sysadmin, 5=school_admin, 4=dept_admin, 3=educator, 2=parent, 1=learner */
+  /** Numeric access level of the ACTUAL user: 6=sysadmin, 5=school_admin, 4=dept_admin, 3=educator, 2=parent, 1=learner */
   accessLevel: AccessLevel
+  /** Access level of the role being VIEWED — equals accessLevel unless impersonating */
+  effectiveAccessLevel: AccessLevel
   isSystemAdmin: boolean
   isDepartmentAdmin: boolean
   departmentAdminIds: string[]
@@ -62,55 +64,51 @@ export function useAccessControl(): AccessControl {
     isSystemAdmin,
     isDepartmentAdmin,
     departmentAdminIds,
-    viewAsUserId,
     accessLevel,
+    effectiveAccessLevel,
+    isImpersonating,
   } = useAuth()
 
   const role = profile?.role ?? 'educator'
-  const isImpersonating = !!viewAsUserId
+  // While impersonating, the view is read-only (writes would run as the actual
+  // user, not the impersonated one), so every WRITE affordance is suppressed.
+  // VIEW affordances follow the impersonated role's level so the screen matches
+  // what that user would actually see.
+  const canWrite = !isImpersonating
 
   return {
     role,
     actualRole,
     accessLevel,
+    effectiveAccessLevel,
     isSystemAdmin,
     isDepartmentAdmin,
     departmentAdminIds,
 
-    // Level 3+ (educator and up) can edit students
-    canEditStudents: accessLevel >= 3,
-    // Level 5+ (school admin and up) can edit classrooms
-    canEditClassrooms: accessLevel >= 5,
-    // Level 4+ (dept admin and up) can view all students (within their scope)
-    canViewAllStudents: accessLevel >= 4,
-    // Level 4+ (location/dept admin and up) can import students via CSV
-    canImportStudents: accessLevel >= 4,
-    // Level 4+ (location/dept admin and up) can export reports
-    canExportReports: accessLevel >= 4,
-    // Everyone can view school profile (with filtering)
-    canViewSchoolProfile: true,
-    // Level 5+ (school admin and up) can edit school profile
-    canEditSchoolProfile: accessLevel >= 5,
-    // Level 4+ (dept admin and up) can view families
-    canViewFamilies: accessLevel >= 4,
-    // Level 4+ (dept admin and up) can invite users
-    canInviteUsers: accessLevel >= 4,
-    // Level 5+ (school admin and up) can manage dimensions
-    canManageDimensions: accessLevel >= 5,
-    // Level 5+ (school admin and up) can manage standards
-    canManageStandards: accessLevel >= 5,
-    // Level 4+ (dept admin and up) can manage users
-    canManageUsers: accessLevel >= 4,
-    // Level 4+ can deactivate users below them
-    canDeactivateUsers: accessLevel >= 4,
-    // Level 4+ (dept admin and up) can change roles of users below them
-    canChangeRoles: accessLevel >= 4,
-    // Level 5+ can use view-as
-    canViewAsOtherRole: accessLevel >= 5,
-    // Parent, learner, or impersonation mode = read-only
-    isReadOnly: accessLevel <= 2 || isImpersonating,
+    // ---- WRITE affordances: suppressed while impersonating ----
+    canEditStudents: canWrite && effectiveAccessLevel >= 3,
+    canEditClassrooms: canWrite && effectiveAccessLevel >= 5,
+    canImportStudents: canWrite && effectiveAccessLevel >= 4,
+    canEditSchoolProfile: canWrite && effectiveAccessLevel >= 5,
+    canInviteUsers: canWrite && effectiveAccessLevel >= 4,
+    canManageDimensions: canWrite && effectiveAccessLevel >= 5,
+    canManageStandards: canWrite && effectiveAccessLevel >= 5,
+    canManageUsers: canWrite && effectiveAccessLevel >= 4,
+    canDeactivateUsers: canWrite && effectiveAccessLevel >= 4,
+    canChangeRoles: canWrite && effectiveAccessLevel >= 4,
 
-    canManageUser: (targetLevel: AccessLevel) => accessLevel > targetLevel,
+    // ---- VIEW affordances: follow the role being viewed ----
+    canViewAllStudents: effectiveAccessLevel >= 4,
+    canExportReports: effectiveAccessLevel >= 4,
+    canViewSchoolProfile: true,
+    canViewFamilies: effectiveAccessLevel >= 4,
+
+    // Only the ACTUAL user's level decides whether the view-as switcher exists.
+    canViewAsOtherRole: accessLevel >= 5,
+    // Parent, learner, or any impersonation = read-only.
+    isReadOnly: effectiveAccessLevel <= 2 || isImpersonating,
+
+    canManageUser: (targetLevel: AccessLevel) => effectiveAccessLevel > targetLevel,
 
     formatStudentName: (firstName: string, lastName: string) => {
       // Parents and learners see "First L." for privacy

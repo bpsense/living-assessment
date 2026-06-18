@@ -172,7 +172,7 @@ function ProfileSetupNeeded() {
 // ============================================================
 
 export default function Dashboard() {
-  const { profile, loading, user, isSystemAdmin, activeSchoolId } = useAuth()
+  const { profile, loading, user, isSystemAdmin, activeSchoolId, isImpersonating } = useAuth()
 
   // Still checking auth / fetching profile
   if (loading) {
@@ -189,16 +189,15 @@ export default function Dashboard() {
     return <DashboardSkeleton />
   }
 
-  // System admin with "All Schools" view
-  if (isSystemAdmin && activeSchoolId === null) {
+  // System admin home = the All-Schools system dashboard, but only when they
+  // haven't entered a school or stepped into a user's view.
+  if (isSystemAdmin && activeSchoolId === null && !isImpersonating) {
     return <SystemDashboard />
   }
 
-  // System admin viewing a specific school — show that school's admin dashboard
-  if (isSystemAdmin) {
-    return <AdminView />
-  }
-
+  // Otherwise render the dashboard for the EFFECTIVE role — so impersonation
+  // (profile is swapped to the impersonated user) and a system admin browsing a
+  // specific school (profile.role = their own admin role) both resolve here.
   switch (profile.role) {
     case 'admin':
       return <AdminView />

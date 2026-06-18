@@ -89,6 +89,11 @@ export default function StudentProfile() {
   } = useStudentProfile(id)
 
   const isFamilyView = role === 'parent'
+  // Stable back target that stays inside the current (active) school — avoids
+  // navigate(-1) walking browser history back across school / All-Schools
+  // boundaries (the system-admin "back changes schools" bug). Family view
+  // returns to their dashboard; staff to the learners list.
+  const backTarget = isFamilyView ? '/' : '/students'
 
   // Filter dimensions for family view — only show those marked visible_to_family
   const visibleDimensions = useMemo(
@@ -210,7 +215,7 @@ export default function StudentProfile() {
           <h2 className="mt-3 text-lg font-semibold text-text">Unable to load profile</h2>
           <p className="mt-1 text-sm text-text-muted">{error ?? 'Learner not found.'}</p>
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(backTarget)}
             className="mt-4 rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-600"
           >
             Go back
@@ -235,7 +240,7 @@ export default function StudentProfile() {
       <section>
         {/* Back link */}
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate(backTarget)}
           className="mb-4 flex items-center gap-1 text-sm text-text-muted transition-colors hover:text-text"
         >
           <ArrowLeft className="h-4 w-4" />
