@@ -37,6 +37,8 @@ export type ItemAccess = 'hidden' | 'view' | 'edit'
 export type SidebarKey =
   | 'dashboard'
   | 'classrooms'
+  | 'assignments'
+  | 'assignment_library'
   | 'messages'
   | 'incidents'
   | 'departments'
@@ -109,6 +111,20 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     icon: 'School',
     to: '/classrooms',
     defaultAccess: { admin: 'edit', dept_admin: 'edit', educator: 'edit', parent: 'view', learner: 'hidden' },
+  },
+  {
+    key: 'assignments',
+    label: 'Assignments',
+    icon: 'ClipboardList',
+    to: '/assignments',
+    defaultAccess: { admin: 'edit', dept_admin: 'edit', educator: 'edit', parent: 'view', learner: 'view' },
+  },
+  {
+    key: 'assignment_library',
+    label: 'Assignment Library',
+    icon: 'BookOpen',
+    to: '/assignment-library',
+    defaultAccess: { admin: 'edit', dept_admin: 'edit', educator: 'edit', parent: 'hidden', learner: 'hidden' },
   },
   {
     key: 'messages',
