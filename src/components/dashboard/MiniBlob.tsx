@@ -19,6 +19,7 @@ export default function MiniBlob({ dimensionScores }: Props) {
       size={200}
       showLabels={false}
       showLevelLabels={false}
+      showDots={false}
     />
   )
 }

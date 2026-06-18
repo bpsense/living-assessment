@@ -7,12 +7,10 @@ import type {
   Dimension,
   InterestSurvey,
   StudentContact,
-  Observation,
 } from '../types/database'
-import { computeObservationScores, type DimensionScore } from './scoring'
+import type { DimensionScore } from './scoring'
 import { ageDecayFactor } from './living-data'
 import { standardAgeForDate } from './age-utils'
-import { fetchAllRows } from './supabase-paged'
 
 // ============================================================
 // Types
@@ -185,19 +183,12 @@ export function useClassroomView(
           return
         }
 
-        // 4. Observations + interest surveys + contacts. Per-dimension competency
-        //    averages for the classroom mini-amoebas come from observations.
-        //    Observations are paged past the API row cap (1000) so a dense class
-        //    doesn't silently load only the earliest rows — which skewed every
-        //    roster amoeba toward a small, lopsided, near-Emerging shape.
-        const [allObservations, surveyRes, contactsRes] = await Promise.all([
-          fetchAllRows<Observation>(() =>
-            supabase
-              .from('observations')
-              .select('*', { count: 'exact' })
-              .in('student_id', studentIds)
-              .order('observed_at', { ascending: true })
-          ),
+        // 4. Current per-dimension scores (server-aggregated RPC → ~students×8 rows,
+        //    NOT the full raw history) + interest surveys + contacts, in parallel.
+        //    Aggregating server-side keeps a dense class from shipping tens of
+        //    thousands of observations to the browser just to draw mini-amoebas.
+        const [scoreRes, surveyRes, contactsRes] = await Promise.all([
+          supabase.rpc('classroom_current_scores', { p_classroom_id: classroomId }),
           supabase
             .from('interest_surveys')
             .select('*')
@@ -214,6 +205,28 @@ export function useClassroomView(
 
         const allSurveys = (surveyRes.data ?? []) as InterestSurvey[]
 
+        // Index RPC scores by student → dimension, plus earliest obs per student.
+        type ScoreRow = {
+          student_id: string
+          dimension_id: string
+          competency: number
+          current_month_count: number
+          earliest_observed_at: string | null
+        }
+        const compByStudent = new Map<string, Map<string, { competency: number; cmCount: number }>>()
+        const earliestByStudent = new Map<string, string>()
+        for (const r of (scoreRes.data ?? []) as ScoreRow[]) {
+          let m = compByStudent.get(r.student_id)
+          if (!m) {
+            m = new Map()
+            compByStudent.set(r.student_id, m)
+          }
+          m.set(r.dimension_id, { competency: Number(r.competency) || 0, cmCount: r.current_month_count ?? 0 })
+          if (r.earliest_observed_at && !earliestByStudent.has(r.student_id)) {
+            earliestByStudent.set(r.student_id, r.earliest_observed_at)
+          }
+        }
+
         // Per-student contacts map
         const contactsMap = new Map<string, StudentContact[]>()
         for (const c of (contactsRes.data ?? []) as StudentContact[]) {
@@ -223,24 +236,20 @@ export function useClassroomView(
         }
         if (!cancelled) setStudentContactsMap(contactsMap)
 
-        // 5. Build per-student current dimension scores.
-        //    Competency comes from observations (current-month avg, else latest);
-        //    interest comes from the most recent interest survey response.
+        // 5. Build per-student current dimension scores from the RPC, applying the
+        //    same Dec-1 age-rescale decay (×0.75/yr) the profile's live view uses,
+        //    so the roster mini-amoeba mirrors the student's current-state blob.
         const scoresMap = new Map<string, DimensionScore[]>()
         const now = new Date()
         for (const st of studentsData) {
-          const stObs = allObservations.filter((o) => o.student_id === st.id)
-          const obsScores = computeObservationScores(stObs, dimsData)
-          // Match the student profile's CURRENT-state amoeba: apply the same
-          // age-rescale decay (×0.75/yr, keyed to the Dec-1 standard age) that
-          // LivingVisualization applies to its live view, so the roster
-          // thumbnail is a faithful mini of what you'd see clicking in.
           let decay = 1
-          if (st.date_of_birth && stObs.length > 0) {
-            const baseAge = standardAgeForDate(st.date_of_birth, new Date(stObs[0].observed_at))
+          const earliest = earliestByStudent.get(st.id)
+          if (st.date_of_birth && earliest) {
+            const baseAge = standardAgeForDate(st.date_of_birth, new Date(earliest))
             const curAge = standardAgeForDate(st.date_of_birth, now)
             if (baseAge != null && curAge != null) decay = ageDecayFactor(curAge, baseAge)
           }
+          const dimScores = compByStudent.get(st.id)
           // Pick the most recent survey for this student.
           const latestSurvey = allSurveys
             .filter((s) => s.student_id === st.id)
@@ -254,10 +263,10 @@ export function useClassroomView(
             dimension_name: d.name,
             icon: d.icon,
             display_order: d.display_order,
-            competency: (obsScores.get(d.id)?.competency ?? 0) * decay,
+            competency: (dimScores?.get(d.id)?.competency ?? 0) * decay,
             interest: typeof responses[d.id] === 'number' ? responses[d.id] : 0,
             observation_count: 0,
-            current_month_observation_count: obsScores.get(d.id)?.currentMonthCount ?? 0,
+            current_month_observation_count: dimScores?.get(d.id)?.cmCount ?? 0,
             latest_observation: null,
           }))
           scoresMap.set(st.id, studentScores)
