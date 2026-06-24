@@ -57,6 +57,45 @@ function jsonResponse(body: unknown, status = 200) {
   })
 }
 
+// ── Auth helpers ───────────────────────────────────────────────
+// Verify the caller's JWT and load their authorization facts. The heavy
+// work below runs as service-role (RLS-bypassing), so every request MUST
+// pass through here first and then be checked against the target school.
+
+async function requireUser(req: Request, url: string, serviceKey: string, anonKey: string) {
+  const authHeader = req.headers.get('Authorization')
+  if (!authHeader) return { error: 'Missing authorization', status: 401 as const }
+  const token = authHeader.replace('Bearer ', '')
+  const userClient = createClient(url, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  })
+  const {
+    data: { user },
+    error,
+  } = await userClient.auth.getUser(token)
+  if (error || !user) return { error: 'Unauthorized', status: 401 as const }
+
+  const svc = createClient(url, serviceKey)
+  const [{ data: caller }, { data: sysRow }] = await Promise.all([
+    svc.from('profiles').select('school_id, role').eq('id', user.id).maybeSingle(),
+    svc.from('system_admins').select('user_id').eq('user_id', user.id).maybeSingle(),
+  ])
+  const isSysAdmin = !!sysRow
+  if (!caller && !isSysAdmin) return { error: 'Profile not found', status: 403 as const }
+  return { caller: caller as { school_id: string; role: string } | null, isSysAdmin }
+}
+
+function authorizedForSchool(
+  caller: { school_id: string; role: string } | null,
+  isSysAdmin: boolean,
+  schoolId: string | null | undefined,
+  roles: string[],
+) {
+  if (isSysAdmin) return true
+  if (!caller || !schoolId) return false
+  return caller.school_id === schoolId && roles.includes(caller.role)
+}
+
 function scoreToLevel(score: number): string {
   if (score < 1.5) return 'Emerging'
   if (score < 2.5) return 'Developing'
@@ -79,19 +118,32 @@ Deno.serve(async (req: Request) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!
     const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY')!
+
+    // Require a valid signed-in caller, then authorize against the target school.
+    const auth = await requireUser(req, supabaseUrl, serviceKey, anonKey)
+    if ('error' in auth) return jsonResponse({ error: auth.error }, auth.status)
+    if (!authorizedForSchool(auth.caller, auth.isSysAdmin, school_id, ['admin', 'educator'])) {
+      return jsonResponse({ error: 'Forbidden' }, 403)
+    }
 
     const sb = createClient(supabaseUrl, serviceKey)
 
     // 1. Fetch student info (age/grade)
     const { data: student } = await sb
       .from('students')
-      .select('id, first_name, last_name, date_of_birth, grade_level')
+      .select('id, first_name, last_name, date_of_birth, grade_level, school_id')
       .eq('id', student_id)
       .single()
 
     if (!student) {
       return jsonResponse({ error: 'Student not found' }, 404)
+    }
+
+    // The student must actually belong to the (already authorized) school.
+    if ((student as any).school_id !== school_id) {
+      return jsonResponse({ error: 'Student does not belong to this school' }, 403)
     }
 
     const studentAge = student.date_of_birth
