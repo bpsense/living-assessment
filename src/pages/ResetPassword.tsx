@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
-import { GraduationCap, Loader2, Lock, CheckCircle } from 'lucide-react'
+import { Loader2, Lock, CheckCircle } from 'lucide-react'
+import { SproutMapMark } from '../brand/SproutMapLogo'
 
 export default function ResetPassword() {
   const navigate = useNavigate()
@@ -66,9 +67,7 @@ export default function ResetPassword() {
       <div className="w-full max-w-sm">
         {/* Logo / brand */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-500">
-            <GraduationCap className="h-8 w-8 text-white" />
-          </div>
+          <SproutMapMark variant="tile" size={64} className="mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-text">SproutMap</h1>
           <p className="mt-1 text-sm text-text-muted">Set your new password</p>
         </div>

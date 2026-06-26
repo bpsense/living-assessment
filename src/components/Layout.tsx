@@ -16,7 +16,6 @@ import {
   PlusCircle,
   User,
   LogOut,
-  GraduationCap,
   Eye,
   MapPin,
   ChevronDown,
@@ -35,6 +34,7 @@ import {
   Sprout,
   Archive,
 } from 'lucide-react'
+import { SproutMapLogo } from '../brand/SproutMapLogo'
 import type { UserRole } from '../types/database'
 import QuickObserveModal from './QuickObserveModal'
 import QuickNoteModal from './QuickNoteModal'
@@ -380,11 +380,8 @@ export default function Layout() {
       {/* ============ Desktop sidebar ============ */}
       <aside className="glass-chrome fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-white/40 md:flex print:!hidden">
         {/* Brand */}
-        <div className="flex h-16 items-center gap-2.5 border-b border-white/30 px-5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-500">
-            <GraduationCap className="h-4 w-4 text-white" />
-          </div>
-          <span className="text-sm font-bold text-text">SproutMap</span>
+        <div className="flex h-16 items-center border-b border-white/30 px-5">
+          <SproutMapLogo size={26} />
         </div>
 
         {/* Nav links */}
@@ -428,11 +425,8 @@ export default function Layout() {
         {/* Top bar (mobile brand + desktop school name & user) */}
         <header className="glass-chrome sticky top-0 z-20 flex h-14 items-center justify-between border-b border-white/30 px-4 md:px-6 print:!hidden">
           {/* Mobile brand */}
-          <div className="flex items-center gap-2 md:hidden">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-500">
-              <GraduationCap className="h-3.5 w-3.5 text-white" />
-            </div>
-            <span className="text-sm font-bold text-text">SproutMap</span>
+          <div className="flex items-center md:hidden">
+            <SproutMapLogo size={22} />
           </div>
 
           {/* Desktop: school name or school switcher for system admins */}
