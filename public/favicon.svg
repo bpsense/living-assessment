@@ -1,13 +1,1 @@
-<?xml version="1.0"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  
-  <rect width="64" height="64" rx="14" ry="14" fill="#0D7377"></rect>
-  <g transform="translate(32 33)" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-    
-    <path d="M-18 -3 L0 -11 L18 -3 L0 5 Z" fill="white"></path>
-    
-    <path d="M14 -1 L14 9"></path>
-    
-    <path d="M-11 1 L-11 7 C-11 11 11 11 11 7 L11 1"></path>
-  </g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="64" height="64"><defs><mask id="k"><rect width="100" height="100" fill="#fff"></rect><path d="M49.5 70 C48 60 49 54 49.4 43 C49.8 54 50.8 60 49.5 70 Z" fill="#000"></path><path d="M48.6 57 C38.5 60 30 55.5 25.5 45.5 C35 43 44.5 49 48.6 57 Z" fill="#000"></path><path d="M50 48 C58 50 64.5 46.5 68.5 39 C60.5 37 53.5 41.5 50 48 Z" fill="#000"></path></mask><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0F8488"></stop><stop offset="1" stop-color="#0B5F62"></stop></linearGradient></defs><rect width="100" height="100" rx="22" fill="url(#g)"></rect><g transform="translate(20,20) scale(0.6)"><path d="M46.51 11.15 C59.46 11.35 62.98 15.11 73.62 26.54 C84.26 37.98 83.60 39.62 85.91 53.51 C88.22 67.40 91.52 68.69 82.17 78.00 C72.83 87.30 66.17 88.86 51.29 87.98 C36.41 87.10 38.49 85.11 27.08 74.74 C15.66 64.37 9.40 62.78 9.02 49.57 C8.65 36.36 15.56 36.20 25.69 25.82 C35.81 15.45 33.57 10.96 46.51 11.15 Z" fill="#fff" mask="url(#k)"></path><circle cx="50" cy="37" r="3.2" fill="#D4943A"></circle></g></svg>
