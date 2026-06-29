@@ -1,0 +1,45 @@
+name: RLS isolation tests
+
+# Tenant-isolation regression gate. Boots a throwaway Supabase stack, applies ALL
+# migrations from scratch, and runs the self-contained RLS suite. A failed assertion
+# makes psql exit non-zero (ON_ERROR_STOP) and fails the check.
+#
+# NOTE: this is the repo's first GitHub Actions workflow. The RLS *test* is validated
+# (it passes against production), but the CI plumbing below — `supabase start` booting
+# from a fresh DB + config.toml — should be confirmed on its first run and the
+# config.toml reconciled with the pinned CLI version if needed.
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/tests/**'
+      - '.github/workflows/rls-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/tests/**'
+
+jobs:
+  rls:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local Supabase (applies all migrations to a fresh DB)
+        run: supabase start
+
+      - name: Run RLS isolation suite
+        run: |
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+            -v ON_ERROR_STOP=1 \
+            -f supabase/tests/rls/tenant_isolation_test.sql
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop || true
